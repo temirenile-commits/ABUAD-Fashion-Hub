@@ -20,6 +20,7 @@ export interface LiveProduct {
   is_featured: boolean;
   locked: boolean;
   video_url?: string;
+  created_at?: string;
   stock_count: number;
   views_count: number;
   sales_count: number;

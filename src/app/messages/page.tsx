@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Send, Image as ImageIcon, Check, CheckCheck, Phone, MessageCircle } from 'lucide-react';
@@ -21,7 +21,7 @@ interface ChatPartner {
   role: string;
 }
 
-export default function MessagesPage() {
+function MessagesContent() {
   const searchParams = useSearchParams();
   const initialPartnerId = searchParams.get('vendorId');
   
@@ -210,5 +210,13 @@ export default function MessagesPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<div className="container" style={{padding: '4rem', textAlign: 'center'}}><h2>Loading messages...</h2></div>}>
+      <MessagesContent />
+    </Suspense>
   );
 }
