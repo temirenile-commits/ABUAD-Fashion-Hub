@@ -1,35 +1,68 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { CheckCircle, MessageCircle, Star, Package, Users, Calendar } from 'lucide-react';
-import { VENDORS, PRODUCTS } from '@/lib/data';
-import ProductCard from '@/components/ProductCard';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import ProductCard, { LiveProduct } from '@/components/ProductCard';
 import styles from './vendor.module.css';
 
-export async function generateStaticParams() {
-  return VENDORS.map((v) => ({ slug: v.slug }));
+interface Props {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ id?: string }>;
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({ params, searchParams }: Props) {
+  const { id } = await searchParams;
   const { slug } = await params;
-  const vendor = VENDORS.find((v) => v.slug === slug);
+
+  if (!id) return { title: 'Brand' };
+
+  const { data: vendor } = await supabaseAdmin
+    .from('brands')
+    .select('name, description')
+    .eq('id', id)
+    .single();
+
   if (!vendor) return { title: 'Vendor Not Found' };
   return { title: `${vendor.name} – Campus Brand`, description: vendor.description };
 }
 
-export default async function VendorPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function VendorPage({ params, searchParams }: Props) {
+  const { id } = await searchParams;
   const { slug } = await params;
-  const vendor = VENDORS.find((v) => v.slug === slug);
-  if (!vendor) notFound();
 
-  const vendorProducts = PRODUCTS.filter((p) => p.brandId === vendor.id);
+  if (!id) notFound();
+
+  // Fetch brand data
+  const { data: vendorData, error: vendorError } = await supabaseAdmin
+    .from('brands')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (vendorError || !vendorData) notFound();
+
+  // Fetch vendor products
+  const { data: productsData } = await supabaseAdmin
+    .from('products')
+    .select(`
+      *,
+      brands (name, whatsapp_number)
+    `)
+    .eq('brand_id', id);
+
+  const vendorProducts = (productsData || []) as any[] as LiveProduct[];
+  const vendor = vendorData;
+  
   const waMessage = `Hi ${vendor.name}! I found you on ABUAD Fashion Hub. I'd love to know more about your products.`;
+  const whatsapp = vendor.whatsapp_number.replace('+', '');
+  const fallbackCover = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&auto=format&fit=crop';
 
   return (
     <main>
       {/* Cover */}
       <div className={styles.cover}>
         <Image
-          src={vendor.coverImage}
+          src={fallbackCover}
           alt={vendor.name}
           fill
           priority
@@ -43,7 +76,13 @@ export default async function VendorPage({ params }: { params: Promise<{ slug: s
         {/* Profile Row */}
         <div className={styles.profileRow}>
           <div className={styles.logoWrap}>
-            <span className={styles.logoText}>{vendor.logo}</span>
+            <span className={styles.logoText}>
+              {vendor.logo_url && vendor.logo_url.startsWith('http') ? (
+                <Image src={vendor.logo_url} alt={vendor.name} fill style={{objectFit: 'cover', borderRadius: '12px'}} />
+              ) : (
+                vendor.name.substring(0, 2).toUpperCase()
+              )}
+            </span>
           </div>
 
           <div className={styles.profileInfo}>
@@ -56,13 +95,13 @@ export default async function VendorPage({ params }: { params: Promise<{ slug: s
                 </div>
               )}
             </div>
-            <span className={`badge badge-teal`}>{vendor.category}</span>
+            <span className={`badge badge-teal`}>Fashion</span>
             <p className={styles.description}>{vendor.description}</p>
           </div>
 
           <div className={styles.profileActions}>
             <a
-              href={`https://wa.me/${vendor.whatsapp}?text=${encodeURIComponent(waMessage)}`}
+              href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(waMessage)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-whatsapp"
@@ -76,10 +115,10 @@ export default async function VendorPage({ params }: { params: Promise<{ slug: s
         {/* Stats Bar */}
         <div className={styles.statsBar}>
           {[
-            { icon: <Star size={16} />, value: vendor.rating, label: 'Rating' },
-            { icon: <Package size={16} />, value: vendor.products, label: 'Products' },
-            { icon: <Users size={16} />, value: vendor.followers, label: 'Followers' },
-            { icon: <Calendar size={16} />, value: `${vendor.joinedYear}`, label: 'Member Since' },
+            { icon: <Star size={16} />, value: '4.8', label: 'Rating' },
+            { icon: <Package size={16} />, value: vendorProducts.length, label: 'Products' },
+            { icon: <Users size={16} />, value: '1.2k', label: 'Followers' },
+            { icon: <Calendar size={16} />, value: new Date(vendor.created_at).getFullYear(), label: 'Member Since' },
           ].map(({ icon, value, label }) => (
             <div key={label} className={styles.statItem}>
               {icon}

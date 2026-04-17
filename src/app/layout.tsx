@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
-import Navbar from '@/components/Navbar';
+import { CartProvider } from '@/context/CartContext';
+import LayoutWrapper from '@/components/LayoutWrapper';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#08090a',
+  themeColor: '#080010',
 };
 
 export default function RootLayout({
@@ -27,23 +28,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Navbar />
-        {children}
-        <footer
-          style={{
-            borderTop: '1px solid var(--border)',
-            padding: '2rem 0',
-            marginTop: '4rem',
-            textAlign: 'center',
-            color: 'var(--text-400)',
-            fontSize: '0.85rem',
-          }}
-        >
-          <div className="container">
-            © 2026 ABUAD Fashion Hub. Empowering Campus Entrepreneurs.
-          </div>
-        </footer>
+        <CartProvider>
+          <LayoutWrapper>
+            {children}
+          </LayoutWrapper>
+        </CartProvider>
       </body>
     </html>
   );
 }
+

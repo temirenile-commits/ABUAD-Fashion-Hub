@@ -1,6 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Store,
   User,
@@ -12,13 +13,15 @@ import {
   Layers,
   ShieldCheck,
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import styles from './onboarding.module.css';
 
 const STEPS = [
   { id: 1, label: 'Account Type', icon: <User size={20} /> },
   { id: 2, label: 'Brand Details', icon: <Store size={20} /> },
   { id: 3, label: 'Upload Assets', icon: <Camera size={20} /> },
-  { id: 4, label: 'Verification', icon: <ShieldCheck size={20} /> },
+  { id: 4, label: 'Terms', icon: <Layers size={20} /> },
+  { id: 5, label: 'Verification', icon: <ShieldCheck size={20} /> },
 ];
 
 const VENDOR_TYPES = [
@@ -31,8 +34,14 @@ const PRODUCT_CATEGORIES = ['Clothing', 'Footwear', 'Bags', 'Accessories', 'Jewe
 const SERVICE_TYPES = ['Makeup Artist', 'Fashion Designer', 'Stylist', 'Photographer', 'Hair Stylist'];
 
 export default function OnboardingPage() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [vendorType, setVendorType] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+
   const [form, setForm] = useState({
     brandName: '',
     description: '',
@@ -42,8 +51,63 @@ export default function OnboardingPage() {
     instagram: '',
   });
 
-  const next = () => setStep((s) => Math.min(s + 1, 4));
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/auth/login?redirect=/onboarding');
+      } else {
+        setUser(session.user);
+      }
+    };
+    checkUser();
+  }, [router]);
+
+  const next = () => setStep((s) => Math.min(s + 1, 5));
   const prev = () => setStep((s) => Math.max(s - 1, 1));
+
+  const handleSubmit = async () => {
+    if (!user) return;
+    setLoading(true);
+    setErrorMsg('');
+
+    try {
+      // 1. Create the Brand
+      const { data: brand, error: brandError } = await supabase
+        .from('brands')
+        .insert({
+          owner_id: user.id,
+          name: form.brandName,
+          description: form.description,
+          whatsapp_number: form.whatsapp,
+          verified: false,
+          delivery_preference: 'platform',
+          subscription_plan: 'free',
+          terms_accepted: acceptedTerms,
+        })
+        .select()
+        .single();
+
+      if (brandError) throw brandError;
+
+      // 2. Update user role in public.users to 'vendor'
+      const { error: userUpdateError } = await supabase
+        .from('users')
+        .update({ role: 'vendor' })
+        .eq('id', user.id);
+
+      if (userUpdateError) throw userUpdateError;
+
+      // 3. Success -> Dashboard
+      router.push('/dashboard/vendor');
+
+    } catch (error: any) {
+      console.error(error);
+      setErrorMsg(error.message || 'An error occurred during brand registration.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="container">
@@ -51,8 +115,14 @@ export default function OnboardingPage() {
         {/* Header */}
         <div className={styles.header}>
           <h1>Start Selling on ABUAD Fashion Hub</h1>
-          <p>Join 50+ campus brands already growing their business — it&apos;s free!</p>
+          <p>Join campus brands already growing their business — it&apos;s free!</p>
         </div>
+
+        {errorMsg && (
+          <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center' }}>
+            {errorMsg}
+          </div>
+        )}
 
         {/* Progress Stepper */}
         <div className={styles.stepper}>
@@ -184,7 +254,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── STEP 3: Upload Assets ── */}
+          {/* ── STEP 3: Upload Assets (Simplified for now) ── */}
           {step === 3 && (
             <div className={styles.stepContent}>
               <h2 className={styles.stepTitle}>Upload your brand assets</h2>
@@ -195,21 +265,77 @@ export default function OnboardingPage() {
                   <Upload size={28} className={styles.uploadIcon} />
                   <h3>Brand Logo</h3>
                   <p>PNG, JPG or SVG — max 5MB</p>
-                  <button className="btn btn-secondary btn-sm">Choose File</button>
+                  <button className="btn btn-secondary btn-sm" disabled>Coming Soon</button>
                 </div>
 
                 <div className={`${styles.uploadBox} ${styles.uploadBoxLarge}`}>
                   <Upload size={28} className={styles.uploadIcon} />
                   <h3>Product / Portfolio Photos</h3>
                   <p>Upload up to 10 images (JPG, PNG — max 10MB each)</p>
-                  <button className="btn btn-secondary btn-sm">Choose Files</button>
+                  <button className="btn btn-secondary btn-sm" disabled>Coming Soon</button>
                 </div>
               </div>
+              <p style={{ textAlign: 'center', color: 'var(--text-400)', marginTop: '1rem', fontSize: '0.9rem' }}>
+                You can skip this step and upload directly from your dashboard later.
+              </p>
             </div>
           )}
 
-          {/* ── STEP 4: Verification ── */}
+          {/* ── STEP 4: Terms & Conditions ── */}
           {step === 4 && (
+            <div className={styles.stepContent}>
+              <h2 className={styles.stepTitle}>Vendor Terms & Conditions</h2>
+              <p className={styles.stepDesc}>Please review and accept our platform rules to continue.</p>
+              
+              <div className={styles.termsBox}>
+                <h3>ABUAD FASHION HUB – VENDOR TERMS & CONDITIONS</h3>
+                <p><strong>Effective Date: April 17, 2026</strong></p>
+                
+                <h4>1. Eligibility</h4>
+                <ul>
+                  <li>Vendors must be affiliated with ABRUAD (student, staff, or recognized entrepreneur).</li>
+                  <li>Vendors must provide accurate registration information.</li>
+                </ul>
+
+                <h4>5. Listing Fees</h4>
+                <ul>
+                  <li>First 5 product/service listings are free.</li>
+                  <li>Additional listings: ₦200 per listing OR ₦1,500 monthly subscription.</li>
+                </ul>
+
+                <h4>6. Commission Structure</h4>
+                <ul>
+                  <li>The Platform charges a commission of 7.5% – 10% on each completed transaction.</li>
+                  <li>Commission is automatically deducted before payout.</li>
+                </ul>
+
+                <h4>7. Payments & Escrow</h4>
+                <ul>
+                  <li>All customer payments are processed through the Platform.</li>
+                  <li>Funds are held in escrow until order completion.</li>
+                  <li>Payouts released after customer confirms delivery or 24-48h auto-release.</li>
+                </ul>
+
+                <h4>9. Delivery Policy</h4>
+                <p><strong>Option A: Platform Delivery</strong> — Platform manages riders.</p>
+                <p><strong>Option B: Vendor Delivery</strong> — Vendor is solely responsible.</p>
+                
+                <p><em>... (Full Terms available in policy documents)</em></p>
+              </div>
+
+              <label className={styles.termsCheckbox}>
+                <input 
+                  type="checkbox" 
+                  checked={acceptedTerms} 
+                  onChange={(e) => setAcceptedTerms(e.target.checked)} 
+                />
+                <span>I have read and agree to the ABUAD Fashion Hub Vendor Terms & Conditions.</span>
+              </label>
+            </div>
+          )}
+
+          {/* ── STEP 5: Verification ── */}
+          {step === 5 && (
             <div className={styles.stepContent}>
               <h2 className={styles.stepTitle}>Apply for Verified Badge</h2>
               <p className={styles.stepDesc}>
@@ -223,11 +349,7 @@ export default function OnboardingPage() {
                 </div>
                 <div className={styles.verifyItem}>
                   <CheckCircle size={16} style={{ color: 'var(--success)' }} />
-                  <span>Proof of brand (social media page, product samples)</span>
-                </div>
-                <div className={styles.verifyItem}>
-                  <Layers size={16} style={{ color: 'var(--accent)' }} />
-                  <span>Admin review typically takes 24–48 hours</span>
+                  <span>Proof of brand (portfolio, social media)</span>
                 </div>
               </div>
 
@@ -235,20 +357,20 @@ export default function OnboardingPage() {
                 <div className={styles.uploadBox}>
                   <ShieldCheck size={28} className={styles.uploadIcon} />
                   <h3>Student ID Card</h3>
-                  <p>Clear scan or photo of your ABUAD ID</p>
-                  <button className="btn btn-secondary btn-sm">Upload ID</button>
+                  <button className="btn btn-secondary btn-sm" disabled>Coming Soon</button>
                 </div>
                 <div className={styles.uploadBox}>
                   <Camera size={28} className={styles.uploadIcon} />
                   <h3>Brand Proof</h3>
-                  <p>Screenshot of your social media, or sample product photos</p>
-                  <button className="btn btn-secondary btn-sm">Upload Proof</button>
+                  <button className="btn btn-secondary btn-sm" disabled>Coming Soon</button>
                 </div>
               </div>
 
               <div className={styles.skipVerify}>
-                <span>You can skip verification for now and apply later from your dashboard.</span>
-                <button className={styles.skipBtn}>Skip for now →</button>
+                <span>You can finalize your brand registration now.</span>
+                <button className={styles.skipBtn} onClick={handleSubmit} disabled={loading}>
+                  {loading ? 'Finalizing...' : 'Finalize Registration →'}
+                </button>
               </div>
             </div>
           )}
@@ -256,7 +378,7 @@ export default function OnboardingPage() {
           {/* Navigation */}
           <div className={styles.navButtons}>
             {step > 1 ? (
-              <button className="btn btn-ghost" onClick={prev}>
+              <button className="btn btn-ghost" onClick={prev} disabled={loading}>
                 <ArrowLeft size={16} /> Back
               </button>
             ) : (
@@ -265,13 +387,17 @@ export default function OnboardingPage() {
               </Link>
             )}
 
-            {step < 4 ? (
-              <button className="btn btn-primary" onClick={next} disabled={step === 1 && !vendorType}>
+            {step < 5 ? (
+              <button 
+                className="btn btn-primary" 
+                onClick={next} 
+                disabled={(step === 1 && !vendorType) || (step === 4 && !acceptedTerms)}
+              >
                 Continue <ArrowRight size={16} />
               </button>
             ) : (
-              <button className="btn btn-primary">
-                <CheckCircle size={16} /> Submit Application
+              <button className="btn btn-primary" onClick={handleSubmit} disabled={loading}>
+                <CheckCircle size={16} /> {loading ? 'Finalizing...' : 'Finalize Registration'}
               </button>
             )}
           </div>

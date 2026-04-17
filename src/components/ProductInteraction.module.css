@@ -1,0 +1,82 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.quantitySection {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-200);
+}
+
+.qtyControls {
+  display: flex;
+  align-items: center;
+  background: var(--bg-100);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.qtyBtn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-200);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.qtyBtn:hover {
+  background: var(--bg-300);
+}
+
+.qtyValue {
+  width: 40px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--text-100);
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.cartBtn, .buyBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.cartBtn {
+  background: var(--bg-100);
+  border-color: var(--border);
+}
+
+.cartBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+@media (max-width: 600px) {
+  .actions {
+    flex-direction: column;
+  }
+}

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import VendorCard from '@/components/VendorCard';
-import { VENDORS } from '@/lib/data';
+import VendorCard, { LiveVendor } from '@/components/VendorCard';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { CheckCircle, Crown, TrendingUp } from 'lucide-react';
 import styles from './vendors.module.css';
 
@@ -9,10 +9,24 @@ export const metadata: Metadata = {
   description: 'Discover and shop from verified fashion brands and vendors at ABUAD.',
 };
 
-export default function VendorsPage() {
-  const verified = VENDORS.filter((v) => v.verified);
-  const unverified = VENDORS.filter((v) => !v.verified);
-  const topVendors = [...VENDORS].sort((a, b) => b.followers - a.followers).slice(0, 3);
+export const revalidate = 60; // Revalidate every 60s
+
+export default async function VendorsPage() {
+  const { data: brands, error } = await supabaseAdmin
+    .from('brands')
+    .select(`
+      *,
+      products ( id )
+    `);
+
+  const LIVE_VENDORS = (brands || []).map((brand) => ({
+    ...brand,
+    followers: Math.floor(Math.random() * 5000), // Mock stat until follower DB logic
+  })) as any as LiveVendor[];
+
+  const verified = LIVE_VENDORS.filter((v) => v.verified);
+  const unverified = LIVE_VENDORS.filter((v) => !v.verified);
+  const topVendors = [...LIVE_VENDORS].sort((a, b) => Number(b.followers) - Number(a.followers)).slice(0, 3);
 
   return (
     <main className="container">
@@ -22,7 +36,7 @@ export default function VendorsPage() {
           <div>
             <h1>Campus Brand Directory</h1>
             <p className={styles.subtitle}>
-              Discover {VENDORS.length} fashion brands on the ABUAD campus
+              Discover {LIVE_VENDORS.length} fashion brands on the ABUAD campus
             </p>
           </div>
           <div className={styles.headerStats}>
@@ -38,36 +52,44 @@ export default function VendorsPage() {
         </div>
 
         {/* Top 3 Leaderboard */}
-        <section className={styles.leaderboard}>
-          <div className={styles.leaderboardHead}>
-            <TrendingUp size={18} style={{ color: 'var(--primary)' }} />
-            <h2>Top Brands This Week</h2>
-          </div>
-          <div className={styles.leaderboardGrid}>
-            {topVendors.map((vendor, i) => (
-              <div
-                key={vendor.id}
-                className={`card ${styles.leaderCard} ${i === 0 ? styles.leaderFirst : ''}`}
-              >
-                <div className={styles.leaderRank}>
-                  {i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}
-                </div>
-                <div className={styles.leaderLogo}>{vendor.logo}</div>
-                <div className={styles.leaderInfo}>
-                  <div className={styles.leaderName}>
-                    {vendor.name}
-                    {vendor.verified && <CheckCircle size={14} className="verified-icon" />}
+        {topVendors.length > 0 && (
+          <section className={styles.leaderboard}>
+            <div className={styles.leaderboardHead}>
+              <TrendingUp size={18} style={{ color: 'var(--primary)' }} />
+              <h2>Top Brands This Week</h2>
+            </div>
+            <div className={styles.leaderboardGrid}>
+              {topVendors.map((vendor, i) => (
+                <div
+                  key={vendor.id}
+                  className={`card ${styles.leaderCard} ${i === 0 ? styles.leaderFirst : ''}`}
+                >
+                  <div className={styles.leaderRank}>
+                    {i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}
                   </div>
-                  <p className={styles.leaderCat}>{vendor.category}</p>
+                  <div className={styles.leaderLogo}>
+                    {vendor.logo_url && vendor.logo_url.startsWith('http') ? (
+                       <img src={vendor.logo_url} alt="Logo" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%'}} />
+                    ) : (
+                      vendor.name.substring(0, 2).toUpperCase()
+                    )}
+                  </div>
+                  <div className={styles.leaderInfo}>
+                    <div className={styles.leaderName}>
+                      {vendor.name}
+                      {vendor.verified && <CheckCircle size={14} className="verified-icon" />}
+                    </div>
+                    <p className={styles.leaderCat}>{vendor.category || 'Fashion'}</p>
+                  </div>
+                  <div className={styles.leaderFollowers}>
+                    <span className={styles.followerNum}>{vendor.followers}</span>
+                    <span className={styles.followerLabel}>followers</span>
+                  </div>
                 </div>
-                <div className={styles.leaderFollowers}>
-                  <span className={styles.followerNum}>{vendor.followers}</span>
-                  <span className={styles.followerLabel}>followers</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Verified Vendors */}
         <section className={styles.section}>

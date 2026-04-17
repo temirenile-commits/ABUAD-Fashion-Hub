@@ -1,25 +1,69 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Star, MessageCircle } from 'lucide-react';
-import { Product, formatPrice, getDiscount } from '@/lib/data';
+import { Heart, Star, MessageCircle, ShoppingBag } from 'lucide-react';
 import styles from './ProductCard.module.css';
 
+import { formatPrice, getDiscount } from '@/lib/utils';
+import { useCart } from '@/context/CartContext';
+
+// Joined Database Type Structure
+export interface LiveProduct {
+  id: string;
+  brand_id: string;
+  title: string;
+  description: string;
+  price: number;
+  original_price: number | null;
+  category: string;
+  media_urls: string[];
+  is_featured: boolean;
+  locked: boolean;
+  video_url?: string;
+  stock_count: number;
+  views_count: number;
+  sales_count: number;
+  boost_level: number;
+  brands: {
+    id: string;
+    owner_id: string;
+    name: string;
+    whatsapp_number: string;
+    verified: boolean;
+    logo_url?: string;
+  };
+  rating?: number;
+  reviews?: number;
+  sold?: number;
+}
+
 interface Props {
-  product: Product;
+  product: LiveProduct;
 }
 
 export default function ProductCard({ product }: Props) {
-  const discount = product.originalPrice
-    ? getDiscount(product.price, product.originalPrice)
+  const { addToCart } = useCart();
+  const discount = product.original_price
+    ? getDiscount(product.price, product.original_price)
     : null;
+
+  const imageUrl = product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60';
+  const brandName = product.brands?.name || 'Unknown Brand';
+  const whatsapp = product.brands?.whatsapp_number || '';
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product);
+    // Notification or visual feedback could be added here
+  };
 
   return (
     <Link href={`/product/${product.id}`} className={styles.card}>
-      {/* Image */}
+      {/* ... (previous image section) */}
       <div className={styles.imageWrap}>
         <Image
-          src={product.image}
+          src={imageUrl}
           alt={product.title}
           fill
           sizes="(max-width: 768px) 50vw, 25vw"
@@ -28,17 +72,21 @@ export default function ProductCard({ product }: Props) {
 
         {/* Overlays */}
         <div className={styles.overlays}>
-          {discount && (
+          {discount && discount > 0 ? (
             <span className={`badge badge-flash ${styles.discountBadge}`}>
               -{discount}%
             </span>
-          )}
-          {product.trending && !discount && (
-            <span className={`badge badge-brand ${styles.discountBadge}`}>
-              🔥 Hot
-            </span>
-          )}
+          ) : null}
         </div>
+
+        {/* Add to Cart Quick Access */}
+        <button
+          className={styles.addToCartQuick}
+          aria-label="Add to cart"
+          onClick={handleAddToCart}
+        >
+          <ShoppingBag size={18} />
+        </button>
 
         {/* Wishlist */}
         <button
@@ -48,47 +96,39 @@ export default function ProductCard({ product }: Props) {
         >
           <Heart size={16} />
         </button>
-
-        {/* Hover overlay */}
-        <div className={styles.hoverOverlay}>
-          <span className={styles.quickView}>Quick View</span>
-        </div>
       </div>
 
       {/* Info */}
       <div className={styles.info}>
-        <p className={styles.brand}>{product.brand}</p>
+        <p className={styles.brand}>{brandName}</p>
         <h3 className={styles.title}>{product.title}</h3>
-
-        {/* Rating */}
-        <div className={styles.ratingRow}>
-          <Star size={12} fill="currentColor" className="star-filled" />
-          <span className={styles.ratingNum}>{product.rating}</span>
-          <span className={styles.ratingCount}>({product.reviews})</span>
-          <span className={styles.sold}>{product.sold} sold</span>
-        </div>
 
         {/* Price */}
         <div className={styles.priceRow}>
           <span className={styles.price}>{formatPrice(product.price)}</span>
-          {product.originalPrice && (
+          {product.original_price && product.original_price > product.price && (
             <span className={styles.originalPrice}>
-              {formatPrice(product.originalPrice)}
+              {formatPrice(product.original_price)}
             </span>
           )}
         </div>
 
         {/* CTA */}
         <div className={styles.cta}>
-          <a
-            href={`https://wa.me/${product.whatsapp}?text=Hi! I'm interested in: ${encodeURIComponent(product.title)} (${formatPrice(product.price)}) from ABUAD Fashion Hub.`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`btn btn-whatsapp btn-sm ${styles.waBtn}`}
-            onClick={(e) => e.stopPropagation()}
+          <button
+            onClick={handleAddToCart}
+            className={`btn btn-primary btn-sm ${styles.cartButton}`}
           >
-            <MessageCircle size={14} /> Contact Seller
-          </a>
+            <ShoppingBag size={14} /> Add to Cart
+          </button>
+          
+          <Link
+            href={`/product/${product.id}#enquiry`}
+            onClick={(e) => e.stopPropagation()}
+            className={`btn btn-secondary btn-sm ${styles.chatButton}`}
+          >
+            <MessageCircle size={14} /> Enquire
+          </Link>
         </div>
       </div>
     </Link>

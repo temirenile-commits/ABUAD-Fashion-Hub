@@ -1,0 +1,103 @@
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 2rem;
+}
+
+.card {
+  max-width: 550px;
+  width: 100%;
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--bg-100);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+.iconWrap {
+  width: 100px;
+  height: 100px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 2rem;
+}
+
+.checkIcon {
+  color: var(--success);
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  color: var(--text-400);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 3rem;
+}
+
+.escrowFlow {
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 3rem;
+  text-align: left;
+}
+
+.flowItem {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.flowIcon {
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.flowItem h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.flowItem p {
+  font-size: 0.85rem;
+  color: var(--text-400);
+  line-height: 1.4;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.support {
+  font-size: 0.9rem;
+  color: var(--text-500);
+}
+
+.support a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .title { font-size: 2rem; }
+  .card { padding: 3rem 1.5rem; }
+}

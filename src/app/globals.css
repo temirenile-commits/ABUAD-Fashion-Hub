@@ -1,62 +1,69 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600;1,700&display=swap');
 
 /* ============================================
    CSS DESIGN SYSTEM - ABUAD FASHION HUB
-   Style Mix: Jumia Commerce + ASOS Lifestyle + Temu Vibrancy
+   Brand Identity: Deep Royal Purple + Metallic Gold
+   Inspired by ABUAD Fashion Hub App Icon
    ============================================ */
 
 :root {
-  /* Core Palette - Dark Premium */
-  --bg-000: #08090a;
-  --bg-100: #111214;
-  --bg-200: #1a1c1f;
-  --bg-300: #242629;
-  --bg-400: #2e3035;
+  /* Core Palette - Deep Royal Purple */
+  --bg-000: #080010;
+  --bg-100: #0e0018;
+  --bg-200: #160020;
+  --bg-300: #1f002e;
+  --bg-400: #2a003d;
 
   /* Text */
-  --text-100: #f5f6f7;
-  --text-200: #c8cad0;
-  --text-300: #8b8f99;
-  --text-400: #5a5d66;
+  --text-100: #f8f4ff;
+  --text-200: #d4c8e8;
+  --text-300: #9b8ab8;
+  --text-400: #6b5a88;
+  --text-500: #4a3a66;
 
-  /* Primary Brand: Vibrant Rose (fashion energy) */
-  --primary: #ff2d55;
-  --primary-hover: #e0183e;
-  --primary-soft: rgba(255, 45, 85, 0.12);
-  --primary-glow: 0 0 20px rgba(255, 45, 85, 0.35);
+  /* Primary Brand: Metallic Gold (from icon) */
+  --primary: #c9a14a;
+  --primary-light: #e6be6d;
+  --primary-dark: #a8813a;
+  --primary-hover: #b8903a;
+  --primary-soft: rgba(201, 161, 74, 0.12);
+  --primary-glow: 0 0 24px rgba(201, 161, 74, 0.4);
 
-  /* Secondary: Electric Gold (Jumia/Temu commerce feel) */
-  --secondary: #ffaa00;
-  --secondary-hover: #e09500;
-  --secondary-soft: rgba(255, 170, 0, 0.12);
-  --secondary-glow: 0 0 20px rgba(255, 170, 0, 0.3);
+  /* Secondary: Royal Gold Swirls */
+  --secondary: #d4af37;
+  --secondary-hover: #bf953f;
+  --secondary-soft: rgba(212, 175, 55, 0.12);
+  --secondary-glow: 0 0 20px rgba(212, 175, 55, 0.35);
 
-  /* Accent: Teal (ASOS edge) */
-  --accent: #00c9a7;
-  --accent-soft: rgba(0, 201, 167, 0.12);
+  /* Accent: Royal Purple (deeper brand tone) */
+  --accent: #9b59b6;
+  --accent-rgb: 155, 89, 182;
+  --accent-soft: rgba(155, 89, 182, 0.15);
 
   /* Functional */
-  --success: #22c55e;
+  --success: #10b981;
   --error: #ef4444;
-  --warning: #f59e0b;
-  --info: #3b82f6;
+  --warning: #d4af37;
+  --info: #6c63ff;
 
-  /* Borders */
-  --border: rgba(255, 255, 255, 0.07);
-  --border-hover: rgba(255, 255, 255, 0.14);
-  --border-active: rgba(255, 45, 85, 0.5);
+  /* Borders — gold-tinted */
+  --border: rgba(201, 161, 74, 0.12);
+  --border-hover: rgba(201, 161, 74, 0.28);
+  --border-active: rgba(201, 161, 74, 0.6);
 
-  /* Gradients */
-  --grad-brand: linear-gradient(135deg, #ff2d55 0%, #ff6b35 50%, #ffaa00 100%);
-  --grad-brand-soft: linear-gradient(135deg, rgba(255, 45, 85, 0.15) 0%, rgba(255, 170, 0, 0.1) 100%);
-  --grad-dark: linear-gradient(180deg, #111214 0%, #08090a 100%);
-  --grad-card: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.92) 100%);
+  /* Gradients - Premium Gold Metallic */
+  --grad-brand: linear-gradient(135deg, #c9a14a 0%, #d4af37 45%, #bf953f 70%, #c9a14a 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(201, 161, 74, 0.15) 0%, rgba(212, 175, 55, 0.08) 100%);
+  --grad-purple: linear-gradient(135deg, #0e0018 0%, #2a003d 100%);
+  --grad-card: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.95) 100%);
+  --grad-gold-shimmer: linear-gradient(90deg, #c9a14a 0%, #d4af37 30%, #c9a14a 60%, #bf953f 80%, #c9a14a 100%);
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
-  --shadow-card: 0 2px 8px rgba(0,0,0,0.4);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.6);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.7);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.8);
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.5);
+  --shadow-gold: 0 4px 20px rgba(201, 161, 74, 0.25);
 
   /* Radii */
   --radius-sm: 6px;
@@ -68,6 +75,7 @@
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-display: 'Outfit', 'Inter', sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
 
   /* Transitions */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);

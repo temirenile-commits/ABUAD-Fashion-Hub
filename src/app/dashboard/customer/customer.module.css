@@ -1,0 +1,213 @@
+.page {
+  padding-top: 3rem;
+  padding-bottom: 5rem;
+  min-height: 80vh;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1rem;
+  color: var(--text-400);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 3rem;
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  color: var(--text-400);
+  font-size: 1.1rem;
+}
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 2rem;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.empty {
+  padding: 4rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.5rem;
+}
+
+.emptyIcon {
+  color: var(--text-500);
+  opacity: 0.5;
+}
+
+.orderList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Order Card */
+.orderCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.orderHeader {
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.orderId {
+  display: block;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.orderDate {
+  font-size: 0.8rem;
+  color: var(--text-400);
+}
+
+.statusBadge {
+  padding: 0.4rem 0.75rem;
+  border-radius: 2rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.paid { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.ready { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.picked_up, .in_transit { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.delivered, .confirmed, .completed { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+
+.orderBody {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.itemImg {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-300);
+}
+
+.itemImg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.itemInfo {
+  flex: 1;
+}
+
+.itemInfo h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.itemInfo p {
+  font-size: 0.85rem;
+  color: var(--text-400);
+  margin-bottom: 0.5rem;
+}
+
+.price {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.escrowBanner {
+  padding: 0.75rem 1.5rem;
+  background: rgba(var(--accent-rgb), 0.05);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-300);
+}
+
+/* Sidebar */
+.sideCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.statsCard h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.statLine {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.statLine span:first-child { color: var(--text-400); }
+.statLine span:last-child { font-weight: 700; }
+
+.wishlistCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-decoration: none;
+  background: linear-gradient(135deg, var(--bg-200), var(--bg-300));
+  transition: transform 0.2s;
+}
+
+.wishlistCard:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary);
+}
+
+.wishlistCard p {
+  font-size: 0.85rem;
+  color: var(--text-400);
+}
+
+@media (max-width: 968px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+}

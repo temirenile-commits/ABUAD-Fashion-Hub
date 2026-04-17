@@ -1,0 +1,262 @@
+.page {
+  display: flex;
+  height: calc(100vh - 80px); /* Adjust for navbar */
+  background-color: var(--bg-000);
+  gap: 1px;
+  border: 1px solid var(--border);
+  margin-top: 1rem;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 320px;
+  background-color: var(--bg-100);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+}
+
+.sidebarHeader {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebarHeader h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-100);
+}
+
+.chatList {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.chatItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.chatItem:hover {
+  background-color: var(--bg-200);
+}
+
+.chatActive {
+  background-color: var(--bg-300);
+  border-left: 3px solid var(--primary);
+}
+
+.chatAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--grad-brand);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.chatInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.chatNameRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.25rem;
+}
+
+.chatNameRow h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-100);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chatTime {
+  font-size: 0.75rem;
+  color: var(--text-400);
+}
+
+.chatPreview {
+  font-size: 0.82rem;
+  color: var(--text-300);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.noChats {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-400);
+  font-size: 0.9rem;
+}
+
+/* Chat Area */
+.chatArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-000);
+}
+
+.chatHeader {
+  padding: 1rem 1.5rem;
+  background-color: var(--bg-100);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.backBtn {
+  display: none;
+  color: var(--text-300);
+}
+
+.chatTitleInfo h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-100);
+  margin-bottom: 0.1rem;
+}
+
+.chatTitleInfo span {
+  font-size: 0.75rem;
+  color: var(--success);
+  font-weight: 600;
+}
+
+.headerActions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.messageScroll {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.messageWrapper {
+  display: flex;
+  width: 100%;
+}
+
+.messageSent {
+  justify-content: flex-end;
+}
+
+.messageReceived {
+  justify-content: flex-start;
+}
+
+.messageBubble {
+  max-width: 70%;
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--radius-lg);
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+
+.messageSent .messageBubble {
+  background: var(--primary);
+  color: var(--bg-000);
+  border-bottom-right-radius: 4px;
+}
+
+.messageReceived .messageBubble {
+  background: var(--bg-200);
+  color: var(--text-100);
+  border-bottom-left-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.messageFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+  font-size: 0.65rem;
+  opacity: 0.8;
+}
+
+.inputArea {
+  padding: 1rem 1.5rem;
+  background-color: var(--bg-100);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.textField {
+  flex: 1;
+  background-color: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 0.75rem 1.25rem;
+  color: var(--text-100);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.textField:focus {
+  border-color: var(--primary);
+}
+
+.attachBtn, .sendBtn {
+  background: none;
+  border: none;
+  color: var(--text-300);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast);
+}
+
+.sendBtn {
+  color: var(--primary);
+}
+
+.sendBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.emptyChat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-400);
+  gap: 1.5rem;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none; /* In mobile, we should probably toggle visibility */
+  }
+}

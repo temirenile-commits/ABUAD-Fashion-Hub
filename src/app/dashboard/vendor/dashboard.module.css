@@ -1,22 +1,17 @@
-.dashboardContainer {
+.page {
   display: flex;
-  min-height: 100vh;
-  gap: 2rem;
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  gap: 2.5rem;
+  padding: 3rem 0 5rem;
+  min-height: calc(100vh - 80px);
 }
 
 /* Sidebar */
 .sidebar {
-  width: 280px;
-  padding: 2rem 1.5rem;
+  width: 260px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
-  height: calc(100vh - 4rem);
-  position: sticky;
-  top: 2rem;
 }
 
 .brandInfo {
@@ -25,145 +20,332 @@
   gap: 1rem;
 }
 
-.brandAvatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  background: var(--gradient-primary);
+.logo {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-md);
+  background: var(--grad-brand);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 1.2rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: #fff;
+  font-size: 1.1rem;
 }
 
-.sideNav {
+.brandName {
+  font-size: 1.1rem;
+  margin-bottom: 0.2rem;
+}
+
+.nav {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.sideNav a {
+.navItem {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.85rem 1rem;
-  border-radius: 8px;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
+  gap: 0.75rem;
+  padding: 0.8rem 1rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-300);
+  font-size: 0.95rem;
   font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
 }
 
-.sideNav a:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
+.navItem:hover {
+  background: var(--bg-200);
+  color: var(--text-100);
 }
 
-.sideNav a.active {
-  background: rgba(225, 29, 72, 0.1);
-  color: var(--accent-rose);
-  border-left: 3px solid var(--accent-rose);
+.navActive {
+  background: var(--bg-300);
+  border-color: var(--border);
+  color: var(--primary);
 }
 
-/* Main Content */
-.mainContent {
+/* Main */
+.main {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
 }
 
-.mainContent header h2 {
-  font-size: 2rem;
+.tabContent {
+  animation: fadeUp 0.3s var(--ease-out) forwards;
+}
+
+.title {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: var(--text-400);
+  margin-bottom: 2rem;
 }
 
 /* Stats Row */
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
 }
 
 .statCard {
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
 }
 
-.statCard h3 {
+.statLabel {
+  font-size: 0.85rem;
+  color: var(--text-300);
+  margin-bottom: 0.5rem;
+}
+
+.statValue {
+  font-family: var(--font-display);
   font-size: 2rem;
-  font-family: var(--font-heading);
+  font-weight: 800;
+  color: var(--text-100);
+  margin-bottom: 0.5rem;
 }
 
-/* Content Section/Table */
-.contentSection {
-  padding: 1.5rem;
+.statSub {
+  font-size: 0.8rem;
+  color: var(--text-400);
+  margin-top: auto;
+}
+
+.withdrawBtn {
+  margin-top: 1rem;
+}
+
+/* Activity Feed */
+.activityFeed h3 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.transactionList {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.75rem;
 }
 
-.tableWrapper {
-  overflow-x: auto;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-.table th {
-  padding: 1rem;
-  color: var(--text-muted);
-  font-weight: 500;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.table td {
-  padding: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-}
-
-.actionButtons {
+.txRow {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
-.iconBtn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-light);
-  color: var(--text-primary);
-  border-radius: 6px;
-  padding: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.txIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-300);
+  color: var(--text-200);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.iconBtn:hover {
-  background: rgba(255, 255, 255, 0.1);
+.txInfo { flex: 1; }
+
+.txInfo h4 {
+  font-size: 0.95rem;
 }
 
-.iconBtn.danger:hover {
-  background: rgba(225, 29, 72, 0.15);
-  border-color: rgba(225, 29, 72, 0.3);
-  color: var(--accent-rose);
+.txInfo span {
+  font-size: 0.8rem;
+  color: var(--text-400);
+}
+
+.txAmountPos {
+  margin-left: auto;
+  color: var(--success);
+  font-weight: 700;
+}
+
+.txAmountNeg {
+  margin-left: auto;
+  color: var(--text-300);
+  font-weight: 700;
+}
+
+
+/* Orders */
+.orderList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.orderCard {
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+.orderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.orderId {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--text-300);
+}
+
+.orderDate {
+  font-size: 0.85rem;
+  color: var(--text-400);
+}
+
+.orderBody {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.orderInfo h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.35rem;
+}
+
+.orderPrice {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.statusCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.statusBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.statusWarning {
+  background: rgba(212, 175, 55, 0.1);
+  color: #d4af37;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.statusInfo {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.statusSuccess {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.statusDesc {
+  font-size: 0.75rem;
+  color: var(--text-400);
 }
 
 @media (max-width: 900px) {
-  .dashboardContainer {
-    flex-direction: column;
-    padding: 1rem;
-  }
-  
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: static;
-  }
+  .page { flex-direction: column; }
+  .sidebar { width: 100%; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
+  .statsGrid { grid-template-columns: 1fr; }
+  .orderBody { flex-direction: column; gap: 1rem; }
+  .statusCol { align-items: flex-start; }
+  .statusBox { align-items: flex-start; }
+}
+
+/* Enquiries */
+.enquiryList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.enquiryCard {
+  background: var(--bg-100);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  transition: all var(--transition-base);
+}
+
+.enquiryCard:hover {
+  border-color: var(--primary);
+  background: var(--bg-050);
+}
+
+.enquiryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.enquirySender {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-100);
+}
+
+.enquiryDate {
+  font-size: 0.75rem;
+  color: var(--text-400);
+}
+
+.enquiryContent {
+  font-size: 0.95rem;
+  color: var(--text-200);
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+  background: var(--bg-200);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--primary);
+}
+
+.enquiryActions {
+  display: flex;
+  justify-content: flex-end;
 }

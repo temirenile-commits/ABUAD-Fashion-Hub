@@ -1,14 +1,11 @@
-import type { Metadata } from 'next';
+'use client';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MessageCircle, Star, CheckCircle, Layers } from 'lucide-react';
-import { SERVICES } from '@/lib/data';
+import { supabase } from '@/lib/supabase';
+import { formatPrice } from '@/lib/utils';
 import styles from './services.module.css';
-
-export const metadata: Metadata = {
-  title: 'Fashion Services',
-  description: 'Book makeup artists, photographers, stylists, and tailors on ABUAD campus.',
-};
 
 const SERVICE_TYPES = [
   { label: 'All', value: 'all' },
@@ -19,6 +16,34 @@ const SERVICE_TYPES = [
 ];
 
 export default function ServicesPage() {
+  const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+
+  useEffect(() => {
+    async function fetchServices() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('services')
+        .select(`
+          *,
+          brands (
+            name,
+            verified,
+            whatsapp_number
+          )
+        `);
+
+      if (!error && data) {
+        setServices(data);
+      }
+      setLoading(false);
+    }
+    fetchServices();
+  }, []);
+
+  const filtered = services.filter((s) => filter === 'all' || s.service_type === filter);
+
   return (
     <main className="container">
       <div className={styles.page}>
@@ -38,85 +63,101 @@ export default function ServicesPage() {
         {/* Type Filter Pills */}
         <div className={styles.typeFilter}>
           {SERVICE_TYPES.map((t) => (
-            <span key={t.value} className={`${styles.typePill} ${t.value === 'all' ? styles.typeActive : ''}`}>
+            <button 
+              key={t.value} 
+              className={`${styles.typePill} ${filter === t.value ? styles.typeActive : ''}`}
+              onClick={() => setFilter(t.value)}
+            >
               {t.label}
-            </span>
+            </button>
           ))}
         </div>
 
         {/* Services Grid */}
-        <div className={styles.grid}>
-          {SERVICES.map((svc) => {
-            const waMessage = `Hi ${svc.brand}! I found you on ABUAD Fashion Hub and I'm interested in your service: *${svc.title}*. Please share more details.`;
-            return (
-              <div key={svc.id} className={styles.serviceCard}>
-                {/* Image */}
-                <div className={styles.imgWrap}>
-                  <Image
-                    src={svc.image}
-                    alt={svc.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 340px"
-                    className={styles.img}
-                  />
-                  <div className={styles.imgGradient} />
-                  <span className={`badge badge-gold ${styles.typeBadge}`}>
-                    {svc.serviceType}
-                  </span>
-                  {svc.verified && (
-                    <div className={styles.verifiedBadge}>
-                      <CheckCircle size={13} className="verified-icon" />
-                      <span>Verified</span>
+        {loading ? (
+          <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-400)' }}>
+            Loading campus services...
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-400)' }}>
+             No services found in this category.
+          </div>
+        ) : (
+          <div className={styles.grid}>
+            {filtered.map((svc) => {
+              const brand = svc.brands;
+              const waMessage = `Hi ${brand.name}! I found you on ABUAD Fashion Hub and I'm interested in your service: *${svc.title}*. Please share more details.`;
+              const whatsapp = brand.whatsapp_number.replace('+', '');
+
+              return (
+                <div key={svc.id} className={styles.serviceCard}>
+                  {/* Image */}
+                  <div className={styles.imgWrap}>
+                    <Image
+                      src={svc.portfolio_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60'}
+                      alt={svc.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 340px"
+                      className={styles.img}
+                    />
+                    <div className={styles.imgGradient} />
+                    <span className={`badge badge-gold ${styles.typeBadge}`}>
+                      {svc.service_type}
+                    </span>
+                    {brand.verified && (
+                      <div className={styles.verifiedBadge}>
+                        <CheckCircle size={13} className="verified-icon" />
+                        <span>Verified</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className={styles.cardBody}>
+                    <div className={styles.brandRow}>
+                      <span className={styles.brandName}>{brand.name}</span>
+                      {brand.verified && <CheckCircle size={13} className="verified-icon" />}
                     </div>
-                  )}
+
+                    <h3 className={styles.title}>{svc.title}</h3>
+                    <p className={styles.description}>{svc.description}</p>
+
+                    {/* Rating placeholder */}
+                    <div className={styles.ratingRow}>
+                      <div className="stars">
+                        {[1,2,3,4,5].map((s) => (
+                          <Star
+                            key={s}
+                            size={12}
+                            fill={s <= 4 ? 'currentColor' : 'none'}
+                            className={s <= 4 ? 'star-filled' : 'star-empty'}
+                          />
+                        ))}
+                      </div>
+                      <span className={styles.ratingNum}>4.8</span>
+                    </div>
+
+                    {/* Footer */}
+                    <div className={styles.cardFooter}>
+                      <div className={styles.pricing}>
+                        <span className={styles.priceLabel}>Starting from</span>
+                        <span className={styles.price}>{formatPrice(svc.price)}</span>
+                      </div>
+                      <a
+                        href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(waMessage)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`btn btn-whatsapp btn-sm`}
+                      >
+                        <MessageCircle size={14} /> Book Now
+                      </a>
+                    </div>
+                  </div>
                 </div>
-
-                {/* Content */}
-                <div className={styles.cardBody}>
-                  <div className={styles.brandRow}>
-                    <span className={styles.brandName}>{svc.brand}</span>
-                    {svc.verified && <CheckCircle size={13} className="verified-icon" />}
-                  </div>
-
-                  <h3 className={styles.title}>{svc.title}</h3>
-                  <p className={styles.description}>{svc.description}</p>
-
-                  {/* Rating */}
-                  <div className={styles.ratingRow}>
-                    <div className="stars">
-                      {[1,2,3,4,5].map((s) => (
-                        <Star
-                          key={s}
-                          size={12}
-                          fill={s <= Math.round(svc.rating) ? 'currentColor' : 'none'}
-                          className={s <= Math.round(svc.rating) ? 'star-filled' : 'star-empty'}
-                        />
-                      ))}
-                    </div>
-                    <span className={styles.ratingNum}>{svc.rating}</span>
-                    <span className={styles.ratingCount}>({svc.reviews} reviews)</span>
-                  </div>
-
-                  {/* Footer */}
-                  <div className={styles.cardFooter}>
-                    <div className={styles.pricing}>
-                      <span className={styles.priceLabel}>Starting from</span>
-                      <span className={styles.price}>{svc.price}</span>
-                    </div>
-                    <a
-                      href={`https://wa.me/${svc.whatsapp}?text=${encodeURIComponent(waMessage)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`btn btn-whatsapp btn-sm`}
-                    >
-                      <MessageCircle size={14} /> Book Now
-                    </a>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* CTA for Service Providers */}
         <div className={styles.providerCta}>

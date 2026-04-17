@@ -1,9 +1,18 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SlidersHorizontal, Grid3X3, LayoutList, Search, X } from 'lucide-react';
-import ProductCard from '@/components/ProductCard';
-import { PRODUCTS, CATEGORIES } from '@/lib/data';
+import ProductCard, { LiveProduct } from '@/components/ProductCard';
+import { supabase } from '@/lib/supabase';
+import { formatPrice } from '@/lib/utils';
 import styles from './explore.module.css';
+
+const CATEGORIES = [
+  { id: 'all', label: 'All Items', icon: '✨' },
+  { id: 'Clothing', label: 'Clothing', icon: '🧥' },
+  { id: 'Shoes', label: 'Footwear', icon: '👟' },
+  { id: 'Accessories', label: 'Accessories', icon: '🧢' },
+  { id: 'Bags', label: 'Bags', icon: '👜' },
+];
 
 const SORT_OPTIONS = [
   { value: 'trending', label: 'Trending' },
@@ -20,19 +29,44 @@ export default function ExplorePage() {
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
 
-  const filtered = PRODUCTS.filter((p) => {
+  // Live Data State
+  const [products, setProducts] = useState<LiveProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          brands(id, owner_id, name, whatsapp_number)
+        `);
+        
+      if (!error && data) {
+        setProducts(data as any as LiveProduct[]);
+      } else {
+        console.error('Fetch products error:', error);
+      }
+      setLoading(false);
+    }
+    fetchProducts();
+  }, []);
+
+  const filtered = products.filter((p) => {
     const matchCategory = selectedCategory === 'all' || p.category === selectedCategory;
     const matchSearch =
       search === '' ||
       p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.brand.toLowerCase().includes(search.toLowerCase());
+      (p.brands?.name || '').toLowerCase().includes(search.toLowerCase());
     return matchCategory && matchSearch;
   }).sort((a, b) => {
     switch (sort) {
       case 'price-asc': return a.price - b.price;
       case 'price-desc': return b.price - a.price;
-      case 'rating': return b.rating - a.rating;
-      default: return b.sold - a.sold;
+      case 'rating': return (b.rating || 0) - (a.rating || 0);
+      case 'newest': return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      default: return (b.sold || 0) - (a.sold || 0);
     }
   });
 
@@ -43,13 +77,14 @@ export default function ExplorePage() {
         <div className={styles.pageHeader}>
           <div>
             <h1 className={styles.pageTitle}>Explore Fashion</h1>
-            <p className={styles.pageSubtitle}>{filtered.length} products available</p>
+            <p className={styles.pageSubtitle}>
+              {loading ? 'Loading...' : `${filtered.length} products available`}
+            </p>
           </div>
         </div>
 
         {/* Toolbar */}
         <div className={styles.toolbar}>
-          {/* Search */}
           <div className={styles.searchWrap}>
             <Search size={15} className={styles.searchIcon} />
             <input
@@ -66,7 +101,6 @@ export default function ExplorePage() {
             )}
           </div>
 
-          {/* Sort */}
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
@@ -79,7 +113,6 @@ export default function ExplorePage() {
             ))}
           </select>
 
-          {/* View Toggle */}
           <div className={styles.viewToggle}>
             <button
               className={`${styles.viewBtn} ${view === 'grid' ? styles.viewActive : ''}`}
@@ -119,7 +152,11 @@ export default function ExplorePage() {
         </div>
 
         {/* Products */}
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-300)' }}>
+            Loading live catalog...
+          </div>
+        ) : filtered.length === 0 ? (
           <div className={styles.empty}>
             <p>No products found. Try a different search or category.</p>
             <button className="btn btn-secondary" onClick={() => { setSearch(''); setSelectedCategory('all'); }}>

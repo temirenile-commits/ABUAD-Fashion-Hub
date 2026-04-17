@@ -8,20 +8,27 @@ import {
   Share2,
   ShieldCheck,
   Package,
-  ArrowLeft,
   CheckCircle,
 } from 'lucide-react';
-import { PRODUCTS, VENDORS, formatPrice, getDiscount } from '@/lib/data';
-import ProductCard from '@/components/ProductCard';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import ProductCard, { LiveProduct } from '@/components/ProductCard';
+import ProductInteraction from '@/components/ProductInteraction';
+import { formatPrice, getDiscount } from '@/lib/utils';
+import ProductEnquiry from '@/components/ProductEnquiry';
 import styles from './product.module.css';
 
-export async function generateStaticParams() {
-  return PRODUCTS.map((p) => ({ id: p.id }));
+interface Props {
+  params: Promise<{ id: string }>;
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+export async function generateMetadata({ params }: Props) {
   const { id } = await params;
-  const product = PRODUCTS.find((p) => p.id === id);
+  const { data: product } = await supabaseAdmin
+    .from('products')
+    .select('title, description')
+    .eq('id', id)
+    .single();
+
   if (!product) return { title: 'Product Not Found' };
   return {
     title: product.title,
@@ -29,21 +36,52 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProductPage({ params }: Props) {
   const { id } = await params;
-  const product = PRODUCTS.find((p) => p.id === id);
-  if (!product) notFound();
 
-  const vendor = VENDORS.find((v) => v.id === product.brandId);
-  const discount = product.originalPrice
-    ? getDiscount(product.price, product.originalPrice)
+  // Fetch product with brand details
+  const { data: productData, error } = await supabaseAdmin
+    .from('products')
+    .select(`
+      *,
+      brands (
+        id,
+        owner_id,
+        name,
+        verified,
+        whatsapp_number,
+        logo_url
+      )
+    `)
+    .eq('id', id)
+    .single();
+
+  if (error || !productData) notFound();
+
+  const product = productData as unknown as LiveProduct;
+  const vendor = product.brands;
+  
+  const discount = product.original_price
+    ? getDiscount(product.price, product.original_price)
     : null;
 
-  const relatedProducts = PRODUCTS.filter(
-    (p) => p.id !== product.id && p.category === product.category
-  ).slice(0, 4);
+  // Fetch related products (same category)
+  const { data: relatedData } = await supabaseAdmin
+    .from('products')
+    .select(`
+      *,
+      brands (id, owner_id, name, whatsapp_number)
+    `)
+    .eq('category', product.category)
+    .neq('id', product.id)
+    .limit(4);
+
+  const relatedProducts = (relatedData || []) as unknown as LiveProduct[];
 
   const waMessage = `Hi! I'm interested in: *${product.title}* priced at *${formatPrice(product.price)}* from ABUAD Fashion Hub. Is it available?`;
+  const whatsappNumber = vendor.whatsapp_number.replace('+', '');
+
+  const mainImage = product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60';
 
   return (
     <main className="container">
@@ -63,22 +101,22 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <div className={styles.gallery}>
             <div className={styles.mainImg}>
               <Image
-                src={product.images[0]}
+                src={mainImage}
                 alt={product.title}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority
                 className={styles.mainImgEl}
               />
-              {discount && (
+              {discount && discount > 0 ? (
                 <span className={`badge badge-flash ${styles.imgDiscount}`}>
                   -{discount}% OFF
                 </span>
-              )}
+              ) : null}
             </div>
-            {product.images.length > 1 && (
+            {product.media_urls && product.media_urls.length > 1 && (
               <div className={styles.thumbs}>
-                {product.images.map((img, i) => (
+                {product.media_urls.map((img, i) => (
                   <div key={i} className={`${styles.thumb} ${i === 0 ? styles.thumbActive : ''}`}>
                     <Image src={img} alt={`${product.title} ${i + 1}`} fill sizes="80px" className={styles.thumbImg} />
                   </div>
@@ -91,38 +129,38 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <div className={styles.infoPanel}>
             {/* Brand */}
             <div className={styles.brandRow}>
-              <Link href={vendor ? `/vendor/${vendor.slug}` : '#'} className={styles.brandLink}>
-                {product.brand}
+              <Link href={`/vendor/${vendor.name.toLowerCase().replace(/\s+/g, '-')}?id=${vendor.id}`} className={styles.brandLink}>
+                {vendor.name}
               </Link>
-              {vendor?.verified && <CheckCircle size={14} className="verified-icon" />}
+              {vendor.verified && <CheckCircle size={14} className="verified-icon" />}
             </div>
 
             <h1 className={styles.productTitle}>{product.title}</h1>
 
-            {/* Rating */}
+            {/* Rating Placeholder */}
             <div className={styles.ratingRow}>
               <div className="stars">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <Star
                     key={s}
                     size={14}
-                    fill={s <= Math.round(product.rating) ? 'currentColor' : 'none'}
-                    className={s <= Math.round(product.rating) ? 'star-filled' : 'star-empty'}
+                    fill={s <= 4 ? 'currentColor' : 'none'}
+                    className={s <= 4 ? 'star-filled' : 'star-empty'}
                   />
                 ))}
               </div>
-              <span className={styles.ratingNum}>{product.rating}</span>
-              <span className={styles.ratingCount}>{product.reviews} reviews</span>
-              <span className={styles.sold}>{product.sold} sold</span>
+              <span className={styles.ratingNum}>4.5</span>
+              <span className={styles.ratingCount}>12 reviews</span>
+              <span className={styles.sold}>5 sold</span>
             </div>
 
             {/* Price */}
             <div className={styles.priceBlock}>
               <span className={styles.price}>{formatPrice(product.price)}</span>
-              {product.originalPrice && (
+              {product.original_price && product.original_price > product.price && (
                 <>
                   <span className={styles.originalPrice}>
-                    {formatPrice(product.originalPrice)}
+                    {formatPrice(product.original_price)}
                   </span>
                   <span className={`badge badge-flash`}>Save {discount}%</span>
                 </>
@@ -144,44 +182,59 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
 
-            {/* CTA */}
-            <div className={styles.ctaGroup}>
-              <a
-                href={`https://wa.me/${product.whatsapp}?text=${encodeURIComponent(waMessage)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`btn btn-whatsapp btn-lg ${styles.waBtnFull}`}
-              >
-                <MessageCircle size={20} />
-                Contact Seller on WhatsApp
-              </a>
+            {/* Interaction (Cart/Buy) */}
+            <ProductInteraction product={product} />
 
-              <div className={styles.secondaryCtas}>
+            {/* Enquiry Section */}
+            <div id="enquiry">
+              <ProductEnquiry 
+                productId={product.id}
+                productTitle={product.title}
+                vendorId={vendor.owner_id}
+                vendorName={vendor.name}
+              />
+            </div>
+
+            {/* Support CTA (WhatsApp only as fallback) */}
+            <div className={styles.supportCtas}>
+              <div className={styles.secondaryActions}>
+                <a
+                  href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(waMessage)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-ghost btn-sm"
+                  title="WhatsApp Alternative"
+                  style={{ gap: '0.5rem', opacity: 0.7 }}
+                >
+                  <MessageCircle size={16} style={{ color: '#25D366' }} />
+                  Inquiry via WhatsApp
+                </a>
                 <button className="btn btn-ghost btn-icon" aria-label="Wishlist">
                   <Heart size={18} />
-                </button>
-                <button className="btn btn-ghost btn-icon" aria-label="Share">
-                  <Share2 size={18} />
                 </button>
               </div>
             </div>
 
             {/* Vendor Card Mini */}
-            {vendor && (
-              <Link href={`/vendor/${vendor.slug}`} className={styles.vendorMini}>
-                <div className={styles.vendorMiniLogo}>{vendor.logo}</div>
-                <div className={styles.vendorMiniInfo}>
-                  <div className={styles.vendorMiniName}>
-                    {vendor.name}
-                    {vendor.verified && <CheckCircle size={13} className="verified-icon" />}
-                  </div>
-                  <p className={styles.vendorMiniStats}>
-                    {vendor.products} products · ⭐ {vendor.rating}
-                  </p>
+            <Link href={`/vendor/${vendor.name.toLowerCase().replace(/\s+/g, '-')}?id=${vendor.id}`} className={styles.vendorMini}>
+              <div className={styles.vendorMiniLogo}>
+                {vendor.logo_url ? (
+                  <Image src={vendor.logo_url} alt={vendor.name} fill style={{objectFit: 'cover'}} />
+                ) : (
+                  vendor.name.substring(0, 2).toUpperCase()
+                )}
+              </div>
+              <div className={styles.vendorMiniInfo}>
+                <div className={styles.vendorMiniName}>
+                  {vendor.name}
+                  {vendor.verified && <CheckCircle size={13} className="verified-icon" />}
                 </div>
-                <span className={styles.vendorMiniArrow}>→</span>
-              </Link>
-            )}
+                <p className={styles.vendorMiniStats}>
+                  Visit Store
+                </p>
+              </div>
+              <span className={styles.vendorMiniArrow}>→</span>
+            </Link>
           </div>
         </div>
 

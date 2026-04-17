@@ -2,49 +2,58 @@
   position: sticky;
   top: 0;
   z-index: 200;
-  background: rgba(8, 9, 10, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(13, 0, 20, 0.85); /* Deep purple glass */
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid var(--border);
 }
 
 .nav {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  padding-top: 0.85rem;
-  padding-bottom: 0.85rem;
+  gap: 1.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
 }
 
 /* Logo */
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  font-family: var(--font-display);
-  font-size: 1.1rem;
+  gap: 0.75rem;
+  font-family: var(--font-serif); /* More elegant serif */
+  font-size: 1.25rem;
   font-weight: 800;
   white-space: nowrap;
   flex-shrink: 0;
+  transition: transform var(--transition-base);
+}
+
+.logo:hover {
+  transform: scale(1.02);
 }
 
 .logoIcon {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
-  background: var(--grad-brand);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--grad-brand); /* Gold shimmer */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--bg-000); /* Dark text on gold icon */
   flex-shrink: 0;
+  box-shadow: var(--shadow-gold);
 }
 
 .logoSub {
   color: var(--text-200);
-  font-weight: 600;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  opacity: 0.8;
 }
 
 /* Nav Links */
@@ -56,22 +65,24 @@
 }
 
 .navLink {
-  padding: 0.4rem 0.85rem;
+  padding: 0.5rem 1rem;
   border-radius: var(--radius-full);
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 0.92rem;
+  font-weight: 600;
   color: var(--text-200);
   transition: all var(--transition-fast);
+  letter-spacing: 0.01em;
 }
 
 .navLink:hover {
-  color: var(--text-100);
-  background: var(--bg-300);
+  color: var(--primary);
+  background: var(--primary-soft);
 }
 
 .navLink.active {
   color: var(--primary);
   background: var(--primary-soft);
+  box-shadow: inset 0 0 0 1px var(--border-active);
 }
 
 /* Search Bar */
@@ -79,17 +90,19 @@
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  background: var(--bg-300);
+  gap: 0.75rem;
+  background: var(--bg-100);
   border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  padding: 0.5rem 1rem;
-  max-width: 420px;
-  transition: border-color var(--transition-fast);
+  border-radius: var(--radius-lg);
+  padding: 0.6rem 1.25rem;
+  max-width: 480px;
+  transition: all var(--transition-fast);
 }
 
 .searchBar:focus-within {
   border-color: var(--primary);
+  background: var(--bg-000);
+  box-shadow: 0 0 0 3px rgba(201, 161, 74, 0.1);
 }
 
 .searchIcon { color: var(--text-400); flex-shrink: 0; }
@@ -100,7 +113,7 @@
   border: none;
   outline: none;
   color: var(--text-100);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
 }
 
 .searchBar input::placeholder { color: var(--text-400); }
@@ -111,6 +124,27 @@
   align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
+}
+
+.cartTrigger {
+  position: relative;
+}
+
+.cartBadge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-200);
 }
 
 .menuToggle {
