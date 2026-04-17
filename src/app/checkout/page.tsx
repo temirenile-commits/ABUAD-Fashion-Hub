@@ -72,7 +72,7 @@ function CheckoutContent() {
           totalAmount: finalTotal,
           deliveryMethod: deliveryMethod,
           shippingAddress: address,
-          items: cart.map(item => ({
+          items: cart.map((item: LiveProduct & { quantity: number }) => ({
             brandId: item.brand_id,
             productId: item.id,
             quantity: item.quantity,
@@ -212,7 +212,7 @@ function CheckoutContent() {
             <div className={`card ${styles.summaryCard}`}>
               <h2>Order Summary</h2>
               
-              {cart.map((item) => (
+              {cart.map((item: LiveProduct & { quantity: number }) => (
                 <div key={item.id} className={styles.summaryItem}>
                   <div className={styles.itemImage}>
                     <img src={item.media_urls?.[0]} alt={item.title} />
