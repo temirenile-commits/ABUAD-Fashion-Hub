@@ -1,0 +1,150 @@
+.cover {
+  position: relative;
+  height: 300px;
+  overflow: hidden;
+  background: var(--bg-300);
+}
+
+.coverImg { object-fit: cover; }
+
+.coverOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(8,9,10,0.8) 100%);
+}
+
+/* Profile Row */
+.profileRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-top: -48px;
+  position: relative;
+  z-index: 10;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.logoWrap {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-lg);
+  background: var(--grad-brand);
+  border: 4px solid var(--bg-000);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logoText {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.6rem;
+  color: #fff;
+}
+
+.profileInfo { flex: 1; min-width: 220px; }
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.name { font-size: clamp(1.5rem, 4vw, 2rem); }
+
+.verifiedPill {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #3b82f6;
+  padding: 0.2rem 0.7rem;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.description {
+  font-size: 0.9rem;
+  color: var(--text-300);
+  margin-top: 0.6rem;
+  max-width: 500px;
+  line-height: 1.5;
+}
+
+.profileActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Stats Bar */
+.statsBar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  margin: 1.5rem 0;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--text-400);
+}
+
+.statItem > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.statValue {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-100);
+}
+
+.statLabel { font-size: 0.75rem; color: var(--text-400); }
+
+/* Products */
+.productsSection {
+  padding: 1rem 0 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.productsTitle { font-size: 1.5rem; }
+
+.productsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.emptyProducts {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-400);
+  background: var(--bg-200);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-xl);
+}
+
+@media (max-width: 600px) {
+  .cover { height: 180px; }
+  .profileRow { flex-direction: column; margin-top: -40px; }
+  .profileActions { flex-direction: row; }
+}

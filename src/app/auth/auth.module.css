@@ -1,0 +1,137 @@
+.page {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+}
+
+.back {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-400);
+  transition: color var(--transition-fast);
+}
+.back:hover { color: var(--text-100); }
+
+.card {
+  width: 100%;
+  max-width: 440px;
+  padding: 2.5rem;
+  animation: fadeUp 0.4s var(--ease-out) forwards;
+}
+
+.cardHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.cardLogo {
+  width: 52px;
+  height: 52px;
+  background: var(--grad-brand);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.cardHeader h2 { font-size: 1.6rem; }
+.cardHeader p { color: var(--text-400); font-size: 0.9rem; }
+
+/* Role Toggle */
+.roleToggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.roleBtn {
+  padding: 0.65rem;
+  background: var(--bg-300);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-400);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.roleBtn:hover { color: var(--text-100); border-color: var(--border-hover); }
+
+.roleActive {
+  background: var(--primary-soft);
+  border-color: rgba(255,45,85,0.4);
+  color: var(--primary);
+}
+
+/* Form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.passWrap {
+  position: relative;
+}
+
+.passWrap .form-input {
+  padding-right: 2.8rem;
+}
+
+.eyeBtn {
+  position: absolute;
+  right: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-400);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.forgotRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.divText {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.88rem;
+  color: var(--text-400);
+}
+
+.link {
+  color: var(--primary);
+  font-weight: 600;
+}
+.link:hover { text-decoration: underline; }

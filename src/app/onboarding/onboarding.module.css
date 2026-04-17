@@ -1,0 +1,267 @@
+.page {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 3rem 0 5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.header {
+  text-align: center;
+}
+
+.header h1 {
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  margin-bottom: 0.5rem;
+}
+
+.header p { color: var(--text-400); }
+
+/* Stepper */
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.stepperItem {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+
+.stepCircle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg-300);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-400);
+  flex-shrink: 0;
+  transition: all var(--transition-base);
+  z-index: 1;
+}
+
+.stepActive {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.stepDone {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.stepLabel {
+  position: absolute;
+  bottom: -1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.7rem;
+  color: var(--text-400);
+}
+
+.stepLabelActive { color: var(--primary); font-weight: 600; }
+
+.stepLine {
+  width: 80px;
+  height: 2px;
+  background: var(--border);
+  flex-shrink: 0;
+  transition: background var(--transition-base);
+}
+
+.stepLineDone { background: var(--success); }
+
+/* Card */
+.card {
+  padding: 2.5rem;
+  margin-top: 1rem;
+}
+
+.stepContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.stepTitle { font-size: 1.6rem; }
+.stepDesc { color: var(--text-400); font-size: 0.95rem; }
+
+/* Type Selection */
+.typeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.typeCard {
+  position: relative;
+  background: var(--bg-300);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.typeCard:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-400);
+}
+
+.typeSelected {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.typeEmoji { font-size: 2.5rem; }
+.typeCard h3 { font-size: 1rem; }
+.typeCard p { font-size: 0.8rem; color: var(--text-400); }
+
+.typeCheck {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  color: var(--primary);
+}
+
+/* Form */
+.formGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.optionPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.optPill {
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 500;
+  background: var(--bg-300);
+  border: 1px solid var(--border);
+  color: var(--text-300);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.optPill:hover { color: var(--text-100); border-color: var(--border-hover); }
+
+.optActive {
+  background: var(--primary-soft);
+  border-color: rgba(255, 45, 85, 0.4);
+  color: var(--primary);
+}
+
+/* Upload Areas */
+.uploadAreas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.uploadBox {
+  background: var(--bg-300);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  transition: border-color var(--transition-fast);
+  cursor: pointer;
+}
+
+.uploadBox:hover { border-color: var(--primary); }
+
+.uploadBoxLarge { grid-column: span 2; }
+
+.uploadIcon { color: var(--text-400); }
+.uploadBox h3 { font-size: 1rem; }
+.uploadBox p { font-size: 0.8rem; color: var(--text-400); }
+
+/* Verification */
+.verifyInfo {
+  background: var(--bg-300);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.verifyItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.88rem;
+  color: var(--text-200);
+}
+
+.skipVerify {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: var(--bg-300);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  color: var(--text-400);
+}
+
+.skipBtn {
+  background: transparent;
+  border: none;
+  color: var(--secondary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.skipBtn:hover { text-decoration: underline; }
+
+/* Nav Buttons */
+.navButtons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 600px) {
+  .card { padding: 1.5rem; }
+  .typeGrid { grid-template-columns: 1fr; }
+  .uploadAreas { grid-template-columns: 1fr; }
+  .uploadBoxLarge { grid-column: span 1; }
+  .stepLine { width: 40px; }
+}

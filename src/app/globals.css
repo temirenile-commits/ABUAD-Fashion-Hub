@@ -1,0 +1,361 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap');
+
+/* ============================================
+   CSS DESIGN SYSTEM - ABUAD FASHION HUB
+   Style Mix: Jumia Commerce + ASOS Lifestyle + Temu Vibrancy
+   ============================================ */
+
+:root {
+  /* Core Palette - Dark Premium */
+  --bg-000: #08090a;
+  --bg-100: #111214;
+  --bg-200: #1a1c1f;
+  --bg-300: #242629;
+  --bg-400: #2e3035;
+
+  /* Text */
+  --text-100: #f5f6f7;
+  --text-200: #c8cad0;
+  --text-300: #8b8f99;
+  --text-400: #5a5d66;
+
+  /* Primary Brand: Vibrant Rose (fashion energy) */
+  --primary: #ff2d55;
+  --primary-hover: #e0183e;
+  --primary-soft: rgba(255, 45, 85, 0.12);
+  --primary-glow: 0 0 20px rgba(255, 45, 85, 0.35);
+
+  /* Secondary: Electric Gold (Jumia/Temu commerce feel) */
+  --secondary: #ffaa00;
+  --secondary-hover: #e09500;
+  --secondary-soft: rgba(255, 170, 0, 0.12);
+  --secondary-glow: 0 0 20px rgba(255, 170, 0, 0.3);
+
+  /* Accent: Teal (ASOS edge) */
+  --accent: #00c9a7;
+  --accent-soft: rgba(0, 201, 167, 0.12);
+
+  /* Functional */
+  --success: #22c55e;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+
+  /* Borders */
+  --border: rgba(255, 255, 255, 0.07);
+  --border-hover: rgba(255, 255, 255, 0.14);
+  --border-active: rgba(255, 45, 85, 0.5);
+
+  /* Gradients */
+  --grad-brand: linear-gradient(135deg, #ff2d55 0%, #ff6b35 50%, #ffaa00 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(255, 45, 85, 0.15) 0%, rgba(255, 170, 0, 0.1) 100%);
+  --grad-dark: linear-gradient(180deg, #111214 0%, #08090a 100%);
+  --grad-card: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.92) 100%);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.4);
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 999px;
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Outfit', 'Inter', sans-serif;
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+  --transition-fast: 0.15s var(--ease-out);
+  --transition-base: 0.25s var(--ease-out);
+  --transition-slow: 0.4s var(--ease-out);
+}
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-000);
+  color: var(--text-100);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+input, textarea, select, button { font-family: inherit; }
+
+/* ============================================
+   LAYOUT UTILITIES
+   ============================================ */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.container-wide {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* ============================================
+   GLASS / CARD COMPONENTS
+   ============================================ */
+.glass {
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.card {
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-base);
+}
+
+.card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* ============================================
+   BUTTON SYSTEM
+   ============================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  white-space: nowrap;
+  transition: all var(--transition-base);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.btn-primary {
+  background: var(--grad-brand);
+  color: #fff;
+  box-shadow: var(--primary-glow);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 28px rgba(255, 45, 85, 0.5);
+}
+.btn-primary:active { transform: translateY(0); }
+
+.btn-secondary {
+  background: var(--bg-300);
+  color: var(--text-100);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover {
+  background: var(--bg-400);
+  border-color: var(--border-hover);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-200);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover {
+  background: var(--bg-300);
+  color: var(--text-100);
+}
+
+.btn-whatsapp {
+  background: #25D366;
+  color: #fff;
+  box-shadow: 0 0 16px rgba(37, 211, 102, 0.35);
+}
+.btn-whatsapp:hover {
+  background: #1ebe5b;
+  box-shadow: 0 0 24px rgba(37, 211, 102, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-sm { padding: 0.45rem 1rem; font-size: 0.8rem; }
+.btn-lg { padding: 0.9rem 2rem; font-size: 1rem; }
+.btn-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border-radius: var(--radius-md);
+}
+
+/* ============================================
+   BADGE SYSTEM
+   ============================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.badge-brand { background: var(--primary-soft); color: var(--primary); border: 1px solid rgba(255,45,85,0.2); }
+.badge-gold { background: var(--secondary-soft); color: var(--secondary); border: 1px solid rgba(255,170,0,0.2); }
+.badge-teal { background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(0,201,167,0.2); }
+.badge-success { background: rgba(34,197,94,0.1); color: var(--success); border: 1px solid rgba(34,197,94,0.2); }
+.badge-flash { background: var(--grad-brand); color: #fff; }
+
+/* ============================================
+   FORM UTILITIES
+   ============================================ */
+.form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.form-label { font-size: 0.85rem; font-weight: 600; color: var(--text-200); }
+
+.form-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background: var(--bg-300);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-100);
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 45, 85, 0.15);
+}
+.form-input::placeholder { color: var(--text-400); }
+
+.form-select {
+  appearance: none;
+  background: var(--bg-300);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-100);
+  padding: 0.8rem 2.5rem 0.8rem 1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b8f99' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+}
+.form-select:focus { outline: none; border-color: var(--primary); }
+
+/* ============================================
+   TEXT UTILITIES
+   ============================================ */
+.text-gradient {
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================
+   VERIFIED BADGE
+   ============================================ */
+.verified-icon { color: #3b82f6; flex-shrink: 0; }
+
+/* ============================================
+   SKELETON LOADER
+   ============================================ */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-300) 25%, var(--bg-400) 50%, var(--bg-300) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes shimmer { to { background-position: -200% center; } }
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pulse-ring {
+  0%   { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.anim-fade-up { animation: fadeUp 0.5s var(--ease-out) forwards; }
+.anim-fade-in { animation: fadeIn 0.4s var(--ease-out) forwards; }
+
+/* Staggered children */
+.stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger > *:nth-child(6) { animation-delay: 0.3s; }
+.stagger > *:nth-child(7) { animation-delay: 0.35s; }
+.stagger > *:nth-child(8) { animation-delay: 0.4s; }
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-100); }
+::-webkit-scrollbar-thumb { background: var(--bg-400); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-400); }
+
+/* ============================================
+   DIVIDER
+   ============================================ */
+.divider { height: 1px; background: var(--border); width: 100%; }
+
+/* ============================================
+   STAR RATING
+   ============================================ */
+.stars { display: flex; gap: 2px; }
+.star-filled { color: var(--secondary); }
+.star-empty { color: var(--text-400); }
