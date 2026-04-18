@@ -7,56 +7,56 @@
    ============================================ */
 
 :root {
-  /* Core Palette - Deep Royal Purple */
-  --bg-000: #080010;
-  --bg-100: #0e0018;
-  --bg-200: #160020;
-  --bg-300: #1f002e;
-  --bg-400: #2a003d;
+  /* Core Palette - Pure Black */
+  --bg-000: #000000;
+  --bg-100: #080808;
+  --bg-200: #121212;
+  --bg-300: #1a1a1a;
+  --bg-400: #252525;
 
   /* Text */
-  --text-100: #f8f4ff;
-  --text-200: #d4c8e8;
-  --text-300: #9b8ab8;
-  --text-400: #6b5a88;
-  --text-500: #4a3a66;
+  --text-100: #ffffff;
+  --text-200: #e0e0e0;
+  --text-300: #b0b0b0;
+  --text-400: #808080;
+  --text-500: #505050;
 
-  /* Primary Brand: Metallic Gold (from icon) */
-  --primary: #c9a14a;
-  --primary-light: #e6be6d;
-  --primary-dark: #a8813a;
-  --primary-hover: #b8903a;
-  --primary-soft: rgba(201, 161, 74, 0.12);
-  --primary-glow: 0 0 24px rgba(201, 161, 74, 0.4);
+  /* Primary Brand: Metallic Gold */
+  --primary: #d4af37;
+  --primary-light: #f1d592;
+  --primary-dark: #b8860b;
+  --primary-hover: #e5c158;
+  --primary-soft: rgba(212, 175, 55, 0.12);
+  --primary-glow: 0 0 24px rgba(212, 175, 55, 0.4);
 
-  /* Secondary: Royal Gold Swirls */
-  --secondary: #d4af37;
-  --secondary-hover: #bf953f;
-  --secondary-soft: rgba(212, 175, 55, 0.12);
-  --secondary-glow: 0 0 20px rgba(212, 175, 55, 0.35);
+  /* Secondary: Classic Gold */
+  --secondary: #c9a14a;
+  --secondary-hover: #b8903a;
+  --secondary-soft: rgba(201, 161, 74, 0.12);
+  --secondary-glow: 0 0 20px rgba(201, 161, 74, 0.35);
 
-  /* Accent: Royal Purple (deeper brand tone) */
-  --accent: #9b59b6;
-  --accent-rgb: 155, 89, 182;
-  --accent-soft: rgba(155, 89, 182, 0.15);
+  /* Accent: Platinum/White (for contrast) */
+  --accent: #f8f8f8;
+  --accent-rgb: 248, 248, 248;
+  --accent-soft: rgba(248, 248, 248, 0.15);
 
   /* Functional */
-  --success: #10b981;
-  --error: #ef4444;
-  --warning: #d4af37;
-  --info: #6c63ff;
+  --success: #00c853;
+  --error: #ff5252;
+  --warning: #ffab00;
+  --info: #2979ff;
 
-  /* Borders — gold-tinted */
-  --border: rgba(201, 161, 74, 0.12);
-  --border-hover: rgba(201, 161, 74, 0.28);
-  --border-active: rgba(201, 161, 74, 0.6);
+  /* Borders — Minimalist Gold/Grey */
+  --border: rgba(212, 175, 55, 0.15);
+  --border-hover: rgba(212, 175, 55, 0.3);
+  --border-active: rgba(212, 175, 55, 0.6);
 
   /* Gradients - Premium Gold Metallic */
-  --grad-brand: linear-gradient(135deg, #c9a14a 0%, #d4af37 45%, #bf953f 70%, #c9a14a 100%);
-  --grad-brand-soft: linear-gradient(135deg, rgba(201, 161, 74, 0.15) 0%, rgba(212, 175, 55, 0.08) 100%);
-  --grad-purple: linear-gradient(135deg, #0e0018 0%, #2a003d 100%);
-  --grad-card: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.95) 100%);
-  --grad-gold-shimmer: linear-gradient(90deg, #c9a14a 0%, #d4af37 30%, #c9a14a 60%, #bf953f 80%, #c9a14a 100%);
+  --grad-brand: linear-gradient(135deg, #d4af37 0%, #f1d592 50%, #b8860b 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.05) 100%);
+  --grad-dark: linear-gradient(180deg, #121212 0%, #000000 100%);
+  --grad-card: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.9) 100%);
+  --grad-gold-shimmer: linear-gradient(90deg, #d4af37 0%, #f1d592 50%, #d4af37 100%);
 
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.6);

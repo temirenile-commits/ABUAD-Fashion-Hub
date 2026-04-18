@@ -1,49 +1,38 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import {
-  ArrowRight,
   TrendingUp,
   CheckCircle,
   Zap,
   ShoppingBag,
-  Star,
-  Play,
+  ArrowRight,
+  ShieldCheck,
+  Truck,
+  RotateCcw
 } from 'lucide-react';
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
-import { formatPrice } from '@/lib/utils';
 import VendorCard, { LiveVendor } from '@/components/VendorCard';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import styles from './page.module.css';
 
-const CATEGORIES = [
-  { id: 'all', label: 'All Items', icon: '✨' },
-  { id: 'Clothing', label: 'Clothing', icon: '🧥' },
-  { id: 'Shoes', label: 'Footwear', icon: '👟' },
-  { id: 'Accessories', label: 'Accessories', icon: '🧢' },
-  { id: 'Bags', label: 'Bags', icon: '👜' },
-];
+// New Jumia-style Components
+import CategorySidebar from '@/components/CategorySidebar';
+import MainSlider from '@/components/MainSlider';
+import HeroExtras from '@/components/HeroExtras';
+import TopCategories from '@/components/TopCategories';
+import FlashSales from '@/components/FlashSales';
 
-export const revalidate = 60; // Revalidate every minute
+export const revalidate = 60;
 
 export default async function Home() {
-  // 1. Fetch Featured Products (Mosaic)
-  const { data: mosaicData } = await supabaseAdmin
-    .from('products')
-    .select('*, brands(id, owner_id, name, whatsapp_number)')
-    .eq('is_featured', true)
-    .limit(4);
-
-  const mosaicProducts = (mosaicData || []) as any[] as LiveProduct[];
-
-  // 2. Fetch Trending Products
+  // Fetch trending products
   const { data: trendingData } = await supabaseAdmin
     .from('products')
-    .select('*, brands(id, owner_id, name, whatsapp_number)')
-    .limit(8); // For now, just taking top 8 since we don't have complex trending logic yet
+    .select('*, brands(id, owner_id, name, whatsapp_number, logo_url)')
+    .limit(8);
 
   const trendingProducts = (trendingData || []) as any[] as LiveProduct[];
 
-  // 3. Fetch Verified Brands
+  // Fetch verified brands
   const { data: brandsData } = await supabaseAdmin
     .from('brands')
     .select('*')
@@ -52,211 +41,100 @@ export default async function Home() {
 
   const featuredVendors = (brandsData || []) as any[] as LiveVendor[];
 
-  // 4. Fetch Featured Services
-  const { data: servicesData } = await supabaseAdmin
-    .from('services')
-    .select('*, brands(id, owner_id, name, whatsapp_number)')
-    .limit(4);
-
-  const featuredServices = (servicesData || []) as any[];
-
-  // 5. Fetch Collection Reels (Paid only)
-  const { data: reelsData } = await supabaseAdmin
-    .from('brand_reels')
-    .select('*, brands(name, logo_url)')
-    .eq('is_paid', true)
-    .limit(10);
-
-  const activeReels = (reelsData || []) as any[];
+  // Mock Flash Sales (using first 5 products)
+  const flashSaleItems = trendingProducts.slice(0, 5).map(p => ({
+    id: p.id,
+    title: p.title,
+    price: Math.floor(p.price * 0.8), // 20% off for dummy
+    oldPrice: p.price,
+    image: p.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500',
+    discount: 20
+  }));
 
   return (
-    <main>
-      {/* ───── HERO ───── */}
-      <section className={styles.hero}>
-        <div className={styles.heroGlow} />
-        <div className={`container ${styles.heroInner}`}>
-          <div className={`${styles.heroContent} anim-fade-up`}>
-            <div className={`badge badge-brand ${styles.heroBadge}`}>
-              <Zap size={12} /> #1 ABUAD Campus Fashion Marketplace
+    <main className={styles.main}>
+      {/* ───── JUMIA HERO TRIFECTA ───── */}
+      <section className={styles.heroSection}>
+        <div className="container-wide">
+          <div className={styles.heroGrid}>
+            <div className={styles.heroCategoryCol}>
+              <CategorySidebar />
             </div>
-
-            <h1 className={styles.heroTitle}>
-              Discover <span className="text-gradient">Premium</span> Campus
-              Fashion
-            </h1>
-
-            <p className={styles.heroSub}>
-              Shop from verified student brands, connect with fashion
-              services, and discover what&apos;s trending on campus — all in one
-              place.
-            </p>
-
-            <div className={styles.heroActions}>
-              <Link href="/explore" className="btn btn-primary btn-lg">
-                <ShoppingBag size={18} /> Shop Now
-              </Link>
-              <Link href="/onboarding" className="btn btn-ghost btn-lg">
-                Sell on ABUAD Hub <ArrowRight size={18} />
-              </Link>
+            <div className={styles.heroMainCol}>
+              <MainSlider />
             </div>
-
-            <div className={styles.heroStats}>
-              {[
-                { num: 'Verified', label: 'Brands' },
-                { num: 'Escrow', label: 'Payments' },
-                { num: 'Fast', label: 'Logistics' },
-              ].map(({ num, label }) => (
-                <div key={label} className={styles.heroStat}>
-                  <span className={styles.heroStatNum}>{num}</span>
-                  <span className={styles.heroStatLabel}>{label}</span>
-                </div>
-              ))}
+            <div className={styles.heroExtraCol}>
+              <HeroExtras />
             </div>
-          </div>
-
-          {/* Hero Product Mosaic */}
-          <div className={`${styles.heroMosaic} anim-fade-in`}>
-            {mosaicProducts.length > 0 ? (
-              <div className={styles.mosaicGrid}>
-                {mosaicProducts.map((p, i) => (
-                  <div key={p.id} className={`${styles.mosaicItem} ${i === 0 ? styles.mosaicBig : ''}`}>
-                    <Image
-                      src={p.media_urls?.[0] || ''}
-                      alt={p.title}
-                      fill
-                      sizes="300px"
-                      className={styles.mosaicImg}
-                    />
-                    <div className={styles.mosaicOverlay}>
-                      <span>{p.title}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className={styles.mosaicPlaceholder}>
-                <ShoppingBag size={48} color="var(--text-400)" />
-              </div>
-            )}
           </div>
         </div>
       </section>
 
-      {/* ───── PROMO BAR ───── */}
-      <div className={styles.promoBar}>
-        <div className={`container ${styles.promoInner}`}>
-          <span className={`badge badge-flash`}>⚡ Campus News</span>
-          <span className={styles.promoText}>
-            Phase 3 Marketplace is now LIVE with Secure Escrow Payments!
-          </span>
-          <Link href="/explore" className={`btn btn-secondary btn-sm`}>
-            Browse Now
-          </Link>
-        </div>
-      </div>
-
-      {/* ───── BRAND REELS (PREMIUM) ───── */}
-      {activeReels.length > 0 && (
-        <section className={`${styles.reelsSection} anim-fade-in`}>
-          <div className="container">
-            <div className={styles.sectionHead}>
-              <div className={styles.sectionTitleGroup}>
-                <Play size={20} className={styles.sectionIconGold} />
-                <h2>Collection Reels</h2>
-                <span className={`badge badge-gold`}>Premium</span>
-              </div>
-            </div>
+      <div className="container-wide">
+        {/* ───── SERVICE BAR ───── */}
+        <div className={styles.serviceBar}>
+          <div className={styles.serviceItem}>
+            <ShieldCheck size={20} className={styles.goldIcon} />
+            <span>Escrow Protected Payments</span>
           </div>
-          <div className={styles.reelsTrack}>
-            <div className={styles.reelsInner}>
-              {activeReels.map((reel) => (
-                <div key={reel.id} className={styles.reelItem}>
-                  <video
-                    src={reel.video_url}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    className={styles.reelVideo}
-                  />
-                  <div className={styles.reelOverlay}>
-                    <div className={styles.reelBrand}>
-                      <div className={styles.reelLogo}>
-                        {reel.brands.logo_url ? (
-                          <img src={reel.brands.logo_url} alt="" />
-                        ) : (
-                          reel.brands.name.charAt(0)
-                        )}
-                      </div>
-                      <span>{reel.brands.name}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className={styles.serviceItem}>
+            <Truck size={20} className={styles.goldIcon} />
+            <span>Fast Campus Delivery</span>
           </div>
-        </section>
-      )}
-
-      {/* ───── CATEGORIES ───── */}
-      <section className={`container ${styles.section}`}>
-        <div className={styles.sectionHead}>
-          <h2>Shop by Category</h2>
-          <Link href="/explore" className={styles.seeAll}>
-            See all <ArrowRight size={14} />
-          </Link>
-        </div>
-        <div className={styles.categoryGrid}>
-          {CATEGORIES.map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/explore?category=${cat.id}`}
-              className={styles.categoryChip}
-            >
-              <span className={styles.categoryIcon}>{cat.icon}</span>
-              <span>{cat.label}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ───── TRENDING PRODUCTS ───── */}
-      <section className={`container ${styles.section}`}>
-        <div className={styles.sectionHead}>
-          <div className={styles.sectionTitleGroup}>
-            <TrendingUp size={20} className={styles.sectionIcon} />
-            <h2>Trending on Campus</h2>
+          <div className={styles.serviceItem}>
+            <RotateCcw size={20} className={styles.goldIcon} />
+            <span>Easy 24h Returns</span>
           </div>
-          <Link href="/explore" className={styles.seeAll}>
-            View all <ArrowRight size={14} />
-          </Link>
+          <div className={styles.serviceItem}>
+            <Zap size={20} className={styles.goldIcon} />
+            <span>Verified Student Brands</span>
+          </div>
         </div>
 
-        <div className={`${styles.productGrid} stagger`}>
-          {trendingProducts.length > 0 ? (
-            trendingProducts.map((product) => (
-              <div key={product.id} className="anim-fade-up">
-                <ProductCard product={product} />
-              </div>
-            ))
-          ) : (
-            <p style={{ color: 'var(--text-400)', gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>
-              No items listed yet. Check back soon!
-            </p>
-          )}
+        {/* ───── CIRCLE CATEGORIES (Mobile Discovery) ───── */}
+        <div className={styles.mobileCategorySection}>
+          <TopCategories />
         </div>
-      </section>
 
-      {/* ───── FEATURED VENDORS ───── */}
-      <section className={`${styles.vendorsSection}`}>
-        <div className={`container ${styles.section}`}>
+        {/* ───── FLASH SALES ───── */}
+        <FlashSales items={flashSaleItems} />
+
+        {/* ───── TRENDING PRODUCTS ───── */}
+        <section className={styles.section}>
           <div className={styles.sectionHead}>
             <div className={styles.sectionTitleGroup}>
-              <CheckCircle size={20} className={styles.sectionIconBlue} />
-              <h2>Verified Campus Brands</h2>
+              <TrendingUp size={20} className={styles.sectionIcon} />
+              <h2>Trending on Campus</h2>
+            </div>
+            <Link href="/explore" className={styles.seeAll}>
+              View all <ArrowRight size={14} />
+            </Link>
+          </div>
+
+          <div className={`${styles.productGrid} stagger`}>
+            {trendingProducts.length > 0 ? (
+              trendingProducts.map((product) => (
+                <div key={product.id} className="anim-fade-up">
+                  <ProductCard product={product} />
+                </div>
+              ))
+            ) : (
+              <p style={{ color: 'var(--text-400)', gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>
+                Catalog update in progress. Check back soon!
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* ───── FEATURED VENDORS ───── */}
+        <section className={styles.section}>
+          <div className={styles.sectionHead}>
+            <div className={styles.sectionTitleGroup}>
+              <CheckCircle size={20} className={styles.goldIcon} />
+              <h2>Official Campus Stores</h2>
             </div>
             <Link href="/vendors" className={styles.seeAll}>
-              All Vendors <ArrowRight size={14} />
+              Full Retailer List <ArrowRight size={14} />
             </Link>
           </div>
           <div className={`${styles.vendorGrid} stagger`}>
@@ -268,72 +146,30 @@ export default async function Home() {
               ))
             ) : (
               <p style={{ color: 'var(--text-400)', gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>
-                Join our verified vendor program today!
+                Becoming a verified vendor...
               </p>
             )}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ───── SERVICES SECTION ───── */}
-      <section className={`container ${styles.section}`}>
-        <div className={styles.sectionHead}>
-          <h2>Campus Fashion Services</h2>
-          <Link href="/services" className={styles.seeAll}>
-            All Services <ArrowRight size={14} />
-          </Link>
-        </div>
-        <div className={styles.servicesGrid}>
-          {featuredServices.length > 0 ? (
-            featuredServices.map((svc) => (
-              <div key={svc.id} className={styles.serviceCard}>
-                <div className={styles.serviceImgWrap}>
-                  <Image
-                    src={svc.portfolio_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60'}
-                    alt={svc.title}
-                    fill
-                    sizes="300px"
-                    className={styles.serviceImg}
-                  />
-                  <div className={styles.serviceOverlay} />
-                  <span className={`badge badge-gold ${styles.serviceTypeBadge}`}>
-                    {svc.service_type}
-                  </span>
-                </div>
-                <div className={styles.serviceBody}>
-                  <h3 className={styles.serviceTitle}>{svc.title}</h3>
-                  <p className={styles.serviceBrand}>{svc.brands.name}</p>
-                  <div className={styles.serviceFooter}>
-                    <div className={styles.serviceRating}>
-                      <Star size={12} fill="currentColor" className="star-filled" />
-                      <span>{svc.rating || 4.8}</span>
-                    </div>
-                    <span className={styles.servicePrice}>{formatPrice(svc.price)}</span>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p style={{ color: 'var(--text-400)', gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>
-              Service marketplace opening soon!
+        {/* ───── CTA BANNER ───── */}
+        <section className={styles.ctaBanner}>
+          <div className={styles.ctaContent}>
+            <div className={styles.ctaIcon}>
+              <ShoppingBag size={48} />
+            </div>
+            <h2>Got a Fashion Brand on Campus?</h2>
+            <p>
+              Join the elite ecosystem of student brands. Sell securely, ship faster.
             </p>
-          )}
-        </div>
-      </section>
-
-      {/* ───── CTA BANNER ───── */}
-      <section className={`container ${styles.ctaBanner}`}>
-        <div className={styles.ctaContent}>
-          <h2>Got a Fashion Brand on Campus?</h2>
-          <p>
-            Join verified vendors already growing their business on ABUAD
-            Fashion Hub. Safe escrow payments and faster delivery.
-          </p>
-          <Link href="/onboarding" className="btn btn-primary btn-lg">
-            Start Selling Today <ArrowRight size={18} />
-          </Link>
-        </div>
-      </section>
+            <div className={styles.ctaActions}>
+              <Link href="/onboarding" className="btn btn-primary btn-lg">
+                Activate Your Store <ArrowRight size={18} />
+              </Link>
+            </div>
+          </div>
+        </section>
+      </div>
     </main>
   );
 }

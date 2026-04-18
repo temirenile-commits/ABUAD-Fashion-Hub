@@ -1,6 +1,7 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import MobileBottomNav from '@/components/MobileBottomNav';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -13,7 +14,10 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   return (
     <>
       <Navbar />
-      {children}
+      <div style={{ minHeight: 'calc(100vh - 64px)' }}>
+        {children}
+      </div>
+      <MobileBottomNav />
       <footer
         style={{
           borderTop: '1px solid var(--border)',

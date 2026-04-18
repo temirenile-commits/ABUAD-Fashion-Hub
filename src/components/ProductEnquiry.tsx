@@ -61,6 +61,20 @@ export default function ProductEnquiry({ productId, productTitle, vendorId, vend
     if (sendError) {
       setError('Failed to send enquiry. Please try again.');
     } else {
+      // 🔔 Trigger Notification for Vendor
+      try {
+        await supabase.from('notifications').insert({
+          user_id: vendorId,
+          type: 'enquiry_reply',
+          title: 'New Product Enquiry',
+          content: `Someone is interested in your "${productTitle}" product.`,
+          link: `/dashboard/vendor`,
+          is_read: false
+        });
+      } catch (err) {
+        console.warn('Notifications table not ready yet, skipping notification insert.');
+      }
+
       setSent(true);
       setHistory(prev => [...prev, newMsg]);
       setMessage('');

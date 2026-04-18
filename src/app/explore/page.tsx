@@ -8,10 +8,12 @@ import styles from './explore.module.css';
 
 const CATEGORIES = [
   { id: 'all', label: 'All Items', icon: '✨' },
-  { id: 'Clothing', label: 'Clothing', icon: '🧥' },
-  { id: 'Shoes', label: 'Footwear', icon: '👟' },
-  { id: 'Accessories', label: 'Accessories', icon: '🧢' },
-  { id: 'Bags', label: 'Bags', icon: '👜' },
+  { id: 'Mens-Fashion', label: "Men's Fashion", icon: '👕' },
+  { id: 'Womens-Fashion', label: "Women's Fashion", icon: '👗' },
+  { id: 'Traditional-Wear', label: "Traditional", icon: '✂️' },
+  { id: 'Footwear', label: "Footwear", icon: '👟' },
+  { id: 'Accessories', label: "Accessories", icon: '⌚' },
+  { id: 'Bags', label: "Bags", icon: '👜' },
 ];
 
 const SORT_OPTIONS = [
@@ -36,12 +38,35 @@ export default function ExplorePage() {
   useEffect(() => {
     async function fetchProducts() {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('products')
         .select(`
           *,
           brands(id, owner_id, name, whatsapp_number)
         `);
+      
+      // Category Filter
+      if (selectedCategory !== 'all') {
+        // Handle mapped labels for DB values
+        const dbCategory = selectedCategory.replace(/-/g, ' '); 
+        query = query.ilike('category', `%${dbCategory}%`);
+      }
+
+      // Search Filter
+      if (search) {
+        query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+      }
+
+      // Sorting
+      switch (sort) {
+        case 'price-asc': query = query.order('price', { ascending: true }); break;
+        case 'price-desc': query = query.order('price', { ascending: false }); break;
+        case 'rating': query = query.order('rating', { ascending: false }); break;
+        case 'newest': query = query.order('created_at', { ascending: false }); break;
+        default: query = query.order('sold', { ascending: false }); break;
+      }
+
+      const { data, error } = await query;
         
       if (!error && data) {
         setProducts(data as any as LiveProduct[]);
@@ -51,24 +76,9 @@ export default function ExplorePage() {
       setLoading(false);
     }
     fetchProducts();
-  }, []);
+  }, [selectedCategory, search, sort]);
 
-  const filtered = products.filter((p) => {
-    const matchCategory = selectedCategory === 'all' || p.category === selectedCategory;
-    const matchSearch =
-      search === '' ||
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      (p.brands?.name || '').toLowerCase().includes(search.toLowerCase());
-    return matchCategory && matchSearch;
-  }).sort((a, b) => {
-    switch (sort) {
-      case 'price-asc': return a.price - b.price;
-      case 'price-desc': return b.price - a.price;
-      case 'rating': return (b.rating || 0) - (a.rating || 0);
-      case 'newest': return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-      default: return (b.sold || 0) - (a.sold || 0);
-    }
-  });
+  const filtered = products; // Data is already filtered by Supabase query
 
   return (
     <main className="container">

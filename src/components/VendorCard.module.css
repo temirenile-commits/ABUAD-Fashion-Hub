@@ -37,7 +37,7 @@
 .coverGradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(8,0,16,0.95) 0%, transparent 70%);
+  background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 70%);
 }
 
 /* Logo */

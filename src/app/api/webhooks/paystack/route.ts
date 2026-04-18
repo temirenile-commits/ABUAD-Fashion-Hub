@@ -47,22 +47,47 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Batch update failed' }, { status: 500 });
       }
 
-      // 3. Create transaction records for each order
-      const transactionPromises = orders.map((order) => {
-        return supabaseAdmin.from('transactions').insert({
+      // 3. Process each order: Decrement stock, create notifications, and record transactions
+      for (const order of orders) {
+        // A. Decrement Stock
+        await supabaseAdmin.rpc('decrement_product_stock', { 
+          prod_id: order.product_id, 
+          qty: 1 // Assuming 1 for now, or fetch from order if quantity is added
+        });
+
+        // B. Create Transaction record
+        await supabaseAdmin.from('transactions').insert({
           order_id: order.id,
           brand_id: order.brand_id,
           user_id: order.customer_id,
           type: 'payment_in',
           amount: order.total_amount,
           status: 'success',
-          description: `Escrow payment secured for ${order.id.slice(0, 8)}`,
+          description: `Escrow payment secured for order #${order.id.slice(0, 8)}`,
         });
-      });
 
-      await Promise.all(transactionPromises);
+        // C. Notify Buyer
+        await supabaseAdmin.from('notifications').insert({
+          user_id: order.customer_id,
+          type: 'order_update',
+          title: 'Order Confirmed! 🎉',
+          content: `Your payment has been secured. The vendor is now preparing your order #${order.id.slice(0, 8)}.`,
+          link: '/dashboard/customer',
+          is_read: false
+        });
 
-      console.log(`[WEBHOOK] ${orders.length} orders updated to 'paid' for reference ${reference}`);
+        // D. Notify Vendor
+        await supabaseAdmin.from('notifications').insert({
+          user_id: order.brand_owner_id || order.brand_id, // Fallback to brand_id if owner not joined
+          type: 'new_order',
+          title: 'You have a new order! 💸',
+          content: `A customer just purchased an item. Start processing order #${order.id.slice(0, 8)} to release your funds.`,
+          link: '/dashboard/vendor',
+          is_read: false
+        });
+      }
+
+      console.log(`[WEBHOOK] ${orders.length} orders processed successfully for reference ${reference}`);
     }
 
     return NextResponse.json({ status: 'success' }, { status: 200 });

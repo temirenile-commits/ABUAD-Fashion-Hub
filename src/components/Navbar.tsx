@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Search, Heart, User, Menu, X, Store, Home, Layers, LogOut, LayoutDashboard, ShoppingBag, MessageCircle } from 'lucide-react';
+import { Search, Heart, User, Menu, X, Store, Home, Layers, LogOut, LayoutDashboard, ShoppingBag, MessageCircle, Bell } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/context/CartContext';
 import CartDrawer from './CartDrawer';
@@ -72,73 +72,60 @@ export default function Navbar() {
       <nav className={`container-wide ${styles.nav}`}>
         {/* Logo */}
         <Link href="/" className={styles.logo}>
-          <span className={styles.logoIcon}>AF</span>
-          <span>
-            <span className="text-gradient">ABUAD</span>{' '}
+          <div className={styles.logoIcon}>AFH</div>
+          <div className={styles.logoText}>
+            <span className="text-gradient">ABUAD</span>
             <span className={styles.logoSub}>Fashion Hub</span>
-          </span>
+          </div>
         </Link>
 
-        {/* Desktop Links */}
-        <div className={styles.navLinks}>
-          {navLinks.map(link => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`${styles.navLink} ${pathname === link.href ? styles.active : ''}`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Search Bar (desktop) */}
+        {/* Search Bar (Jumia Style - Center) */}
         <div className={styles.searchBar}>
-          <Search size={15} className={styles.searchIcon} />
-          <input type="text" placeholder="Search products, brands..." />
+          <Search size={18} className={styles.searchIcon} />
+          <input type="text" placeholder="Search products, brands and services..." />
+          <button className={styles.searchBtn}>SEARCH</button>
         </div>
 
-        {/* Actions */}
+        {/* Actions (Right) */}
         <div className={styles.actions}>
-          <Link href="/wishlist" className="btn btn-icon btn-ghost" aria-label="Wishlist">
-            <Heart size={18} />
-          </Link>
-
-          <button 
-            className={`btn btn-icon btn-ghost ${styles.cartTrigger}`} 
-            aria-label="Toggle Cart"
-            onClick={() => setCartOpen(true)}
-          >
-            <ShoppingBag size={19} />
-            {getItemCount() > 0 && <span className={styles.cartBadge}>{getItemCount()}</span>}
-          </button>
-          
           {user ? (
-            <div className={styles.userMenu}>
-              <Link href={dashboardLink} className="btn btn-secondary btn-sm">
-                <LayoutDashboard size={15} /> Dashboard
+            <div className={styles.actionItem}>
+              <Link href={dashboardLink} className={styles.actionLink}>
+                <User size={20} />
+                <span>Account</span>
               </Link>
-              <button onClick={handleLogout} className="btn btn-ghost btn-sm" aria-label="Logout">
-                <LogOut size={15} />
-              </button>
             </div>
           ) : (
-            <>
-              <Link href="/auth/login" className="btn btn-secondary btn-sm">
-                <User size={15} /> Login
+            <div className={styles.actionItem}>
+              <Link href="/auth/login" className={styles.actionLink}>
+                <User size={20} />
+                <span>Login</span>
               </Link>
-              <Link href="/auth/register" className="btn btn-primary btn-sm">
-                Join Free
-              </Link>
-            </>
+            </div>
           )}
 
-          <button
-            className={`${styles.menuToggle}`}
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
+          <div className={styles.actionItem}>
+            <Link href="/notifications" className={styles.actionLink} aria-label="Notifications">
+              <Bell size={20} />
+            </Link>
+          </div>
+
+          <div className={styles.actionItem}>
+            <Link href="https://wa.me/2347045592604" target="_blank" className={styles.actionLink}>
+              <MessageCircle size={20} />
+              <span>Help</span>
+            </Link>
+          </div>
+
+          <button 
+            className={styles.cartBtn} 
+            onClick={() => setCartOpen(true)}
           >
-            {menuOpen ? <X size={20} /> : <Menu size={20} />}
+            <div className={styles.iconWrap}>
+              <ShoppingBag size={20} />
+              {getItemCount() > 0 && <span className={styles.cartBadge}>{getItemCount()}</span>}
+            </div>
+            <span>Cart</span>
           </button>
         </div>
       </nav>

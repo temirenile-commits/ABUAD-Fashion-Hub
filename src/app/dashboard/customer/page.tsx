@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingBag, Truck, CheckCircle, Clock, Package, Loader2, ArrowRight, MessageCircle } from 'lucide-react';
+import { ShoppingBag, Truck, CheckCircle, Clock, Package, Loader2, ArrowRight, MessageCircle, Bell } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
 import styles from './customer.module.css';
@@ -190,7 +190,10 @@ export default function CustomerDashboard() {
           </Link>
 
           <div className={`card ${styles.enquiryCardSmall}`}>
-            <h3>Recent Enquiries</h3>
+            <div className={styles.sectionHeaderIcon}>
+              <Bell size={18} className={styles.goldIcon} />
+              <h3>Notifications & Enquiries</h3>
+            </div>
             <div className={styles.enquiryBriefList}>
               {enquiries.slice(0, 3).map(enq => (
                 <div key={enq.id} className={styles.enquiryBriefItem}>
@@ -201,7 +204,10 @@ export default function CustomerDashboard() {
                   </div>
                 </div>
               ))}
-              {enquiries.length === 0 && <p className={styles.emptyText}>No active enquiries.</p>}
+              {enquiries.length === 0 && <p className={styles.emptyText}>No active notifications.</p>}
+              <Link href="/notifications" className={styles.viewAllLink}>
+                View all notifications <ArrowRight size={12} />
+              </Link>
             </div>
           </div>
         </div>

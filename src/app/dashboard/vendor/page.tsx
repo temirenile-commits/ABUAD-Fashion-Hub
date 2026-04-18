@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
 import styles from './dashboard.module.css';
@@ -18,6 +18,15 @@ export default function VendorDashboard() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [enquiries, setEnquiries] = useState<any[]>([]);
   const [reels, setReels] = useState<any[]>([]);
+  const [newProduct, setNewProduct] = useState({
+    title: '',
+    description: '',
+    price: '',
+    originalPrice: '',
+    category: 'Clothing',
+    stockCount: '10',
+    mediaUrls: [] as string[]
+  });
 
   useEffect(() => {
     async function fetchVendorData() {
@@ -50,7 +59,7 @@ export default function VendorDashboard() {
         `)
         .eq('brand_id', brandData.id)
         .order('created_at', { ascending: false });
-      
+
       setOrders(ordersData || []);
 
       // Fetch Transactions
@@ -67,7 +76,7 @@ export default function VendorDashboard() {
         .select('*, sender:sender_id(name)')
         .eq('receiver_id', session.user.id)
         .order('created_at', { ascending: false });
-      
+
       setEnquiries(enqData || []);
 
       // Fetch Reels
@@ -76,7 +85,7 @@ export default function VendorDashboard() {
         .select('*')
         .eq('brand_id', brandData.id)
         .order('created_at', { ascending: false });
-      
+
       setReels(reelData || []);
 
       setLoading(false);
@@ -84,6 +93,56 @@ export default function VendorDashboard() {
 
     fetchVendorData();
   }, [router]);
+
+  const fetchProducts = async (brandId: string) => {
+    const { data } = await supabase
+      .from('products')
+      .select('*')
+      .eq('brand_id', brandId)
+      .order('created_at', { ascending: false });
+    setProducts(data || []);
+  };
+
+  const handleProductSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!brand) return;
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newProduct,
+          brandId: brand.id,
+          ownerId: brand.owner_id
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setIsAddingProduct(false);
+        setNewProduct({
+          title: '',
+          description: '',
+          price: '',
+          originalPrice: '',
+          category: 'Clothing',
+          stockCount: '10',
+          mediaUrls: []
+        });
+        await fetchProducts(brand.id);
+        alert('Product listed successfully!');
+      } else {
+        alert(data.error || 'Failed to list product');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
@@ -97,7 +156,7 @@ export default function VendorDashboard() {
         body: JSON.stringify({ orderId, status: newStatus, vendorId: session.user.id })
       });
       const data = await res.json();
-      
+
       if (data.success) {
         // Refresh orders locally
         const refreshed = orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
@@ -138,7 +197,7 @@ export default function VendorDashboard() {
 
         <nav className={styles.nav}>
           <button className={`${styles.navItem} ${activeTab === 'overview' ? styles.navActive : ''}`} onClick={() => setActiveTab('overview')}>
-             <TrendingUp size={18} /> Overview
+            <TrendingUp size={18} /> Overview
           </button>
           <button className={`${styles.navItem} ${activeTab === 'orders' ? styles.navActive : ''}`} onClick={() => setActiveTab('orders')}>
             <Package size={18} /> Orders & Fulfillment
@@ -150,7 +209,7 @@ export default function VendorDashboard() {
             <Wallet size={18} /> Wallet & Payouts
           </button>
           <button className={`${styles.navItem} ${activeTab === 'enquiries' ? styles.navActive : ''}`} onClick={() => setActiveTab('enquiries')}>
-            <MessageCircle size={18} /> Enquiries
+            <Bell size={18} /> Notifications & Enquiries
           </button>
           <button className={`${styles.navItem} ${activeTab === 'services' ? styles.navActive : ''}`} onClick={() => setActiveTab('services')}>
             <Scissors size={18} /> Services
@@ -172,18 +231,18 @@ export default function VendorDashboard() {
         {activeTab === 'overview' && (
           <div className={styles.tabContent}>
             <h1 className={styles.title}>Business Overview</h1>
-          <div className={`${styles.verificationBanner} ${styles[brand?.verification_status || 'pending']}`}>
-            {brand?.verification_status === 'verified' ? (
-              <CheckCircle size={16} />
-            ) : (
-              <AlertTriangle size={16} />
-            )}
-            <span>Status: {brand?.verification_status?.toUpperCase() || 'NOT SUBMITTED'}</span>
-            {brand?.verification_status !== 'verified' && (
-              <button className="btn btn-ghost btn-sm" style={{marginLeft: 'auto'}}>Complete Verification</button>
-            )}
-          </div>
-            
+            <div className={`${styles.verificationBanner} ${styles[brand?.verification_status || 'pending']}`}>
+              {brand?.verification_status === 'verified' ? (
+                <CheckCircle size={16} />
+              ) : (
+                <AlertTriangle size={16} />
+              )}
+              <span>Status: {brand?.verification_status?.toUpperCase() || 'NOT SUBMITTED'}</span>
+              {brand?.verification_status !== 'verified' && (
+                <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }}>Complete Verification</button>
+              )}
+            </div>
+
             <div className={styles.statsGrid}>
               <div className={styles.statCard}>
                 <div className={styles.statHead}>
@@ -265,7 +324,7 @@ export default function VendorDashboard() {
         {activeTab === 'wallet' && (
           <div className={styles.tabContent}>
             <h1 className={styles.title}>Wallet & Escrow Balance</h1>
-            
+
             <div className={styles.statsGrid}>
               <div className={styles.statCard}>
                 <span className={styles.statLabel}>Available Balance</span>
@@ -282,12 +341,12 @@ export default function VendorDashboard() {
               <div className={styles.statCard}>
                 <span className={styles.statLabel}>Total Sales</span>
                 <span className={styles.statValue}>
-                   {formatPrice(transactions.filter(tx => tx.type === 'payment_in').reduce((acc, curr) => acc + Number(curr.amount), 0))}
+                  {formatPrice(transactions.filter(tx => tx.type === 'payment_in').reduce((acc, curr) => acc + Number(curr.amount), 0))}
                 </span>
                 <p className={styles.statSub}>Before platform commissions</p>
               </div>
             </div>
-            
+
             <div className={styles.activityFeed}>
               <h3>Recent Transactions</h3>
               <div className={styles.transactionList}>
@@ -328,19 +387,19 @@ export default function VendorDashboard() {
                       <span className={styles.orderId}>#{order.id.slice(0, 8).toUpperCase()}</span>
                       <span className={styles.orderDate}>{new Date(order.created_at).toLocaleDateString()}</span>
                     </div>
-                    
+
                     <div className={styles.orderBody}>
                       <div className={styles.orderInfo}>
                         <h3>{order.products?.title || 'Fashion Item'}</h3>
                         <span className={styles.orderPrice}>{formatPrice(Number(order.total_amount))}</span>
                       </div>
-                      
+
                       <div className={styles.statusCol}>
                         {order.status === 'paid' && (
                           <div className={styles.statusBox}>
                             <div className={styles.actionRow}>
                               <button className="btn btn-primary btn-sm" onClick={() => updateOrderStatus(order.id, 'accepted')}>Accept Order</button>
-                              <button className="btn btn-ghost btn-sm" style={{color: 'var(--primary)'}} onClick={() => updateOrderStatus(order.id, 'cancelled')}>Reject</button>
+                              <button className="btn btn-ghost btn-sm" style={{ color: 'var(--primary)' }} onClick={() => updateOrderStatus(order.id, 'cancelled')}>Reject</button>
                             </div>
                           </div>
                         )}
@@ -353,14 +412,14 @@ export default function VendorDashboard() {
                           <div className={styles.statusBox}>
                             <div className={styles.deliverySelector}>
                               <p>Select Delivery Method:</p>
-                              <button className="btn btn-primary btn-sm" style={{width: '100%', marginBottom: '0.5rem'}} onClick={() => updateOrderStatus(order.id, 'ready')}>Use Platform Delivery</button>
-                              <button className="btn btn-ghost btn-sm" style={{width: '100%'}} onClick={() => updateOrderStatus(order.id, 'in_transit')}>I will Deliver Personally</button>
+                              <button className="btn btn-primary btn-sm" style={{ width: '100%', marginBottom: '0.5rem' }} onClick={() => updateOrderStatus(order.id, 'ready')}>Use Platform Delivery</button>
+                              <button className="btn btn-ghost btn-sm" style={{ width: '100%' }} onClick={() => updateOrderStatus(order.id, 'in_transit')}>I will Deliver Personally</button>
                             </div>
                           </div>
                         )}
                         {order.status === 'in_transit' && (
                           <div className={styles.statusBox}>
-                             <button className="btn btn-secondary btn-sm" onClick={() => updateOrderStatus(order.id, 'delivered')}>Mark as Delivered</button>
+                            <button className="btn btn-secondary btn-sm" onClick={() => updateOrderStatus(order.id, 'delivered')}>Mark as Delivered</button>
                           </div>
                         )}
                         {order.status === 'ready' && (
@@ -386,7 +445,7 @@ export default function VendorDashboard() {
                         )}
                         {order.status === 'pending' && (
                           <div className={styles.statusBox}>
-                            <span className={`${styles.statusBadge}`} style={{background: 'var(--bg-200)'}}>
+                            <span className={`${styles.statusBadge}`} style={{ background: 'var(--bg-200)' }}>
                               Pending Payment
                             </span>
                           </div>
@@ -405,9 +464,9 @@ export default function VendorDashboard() {
         {/* Enquiries Tab */}
         {activeTab === 'enquiries' && (
           <div className={styles.tabContent}>
-            <h1 className={styles.title}>Product Enquiries</h1>
-            <p className={styles.subtitle}>Respond to customer questions to drive more sales.</p>
-            
+            <h1 className={styles.title}>Notifications & Enquiries</h1>
+            <p className={styles.subtitle}>Track product enquiries and system alerts here.</p>
+
             <div className={styles.enquiryList}>
               {enquiries.length > 0 ? (
                 enquiries.map((enq) => (
@@ -449,16 +508,24 @@ export default function VendorDashboard() {
                   <h2>List New Product</h2>
                   <button className="btn btn-ghost btn-sm" onClick={() => setIsAddingProduct(false)}>Cancel</button>
                 </div>
-                
-                <div className={styles.productForm}>
+                <form onSubmit={handleProductSubmit} className={styles.productForm}>
                   <div className={styles.formRow}>
                     <div className={styles.inputGroup}>
                       <label>Product Name</label>
-                      <input type="text" placeholder="e.g. Classic Vintage Denim Jacket" />
+                      <input
+                        type="text"
+                        placeholder="e.g. Classic Vintage Denim Jacket"
+                        required
+                        value={newProduct.title}
+                        onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
+                      />
                     </div>
                     <div className={styles.inputGroup}>
                       <label>Category</label>
-                      <select>
+                      <select
+                        value={newProduct.category}
+                        onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                      >
                         <option>Clothing</option>
                         <option>Shoes</option>
                         <option>Accessories</option>
@@ -471,56 +538,59 @@ export default function VendorDashboard() {
                   <div className={styles.formRow}>
                     <div className={styles.inputGroup}>
                       <label>Price (₦)</label>
-                      <input type="number" placeholder="0.00" />
-                      
-                      {/* Pricing Intelligence Widget */}
-                      <div className={styles.pricingIntel}>
-                        <div className={styles.intelHead}>
-                          <Info size={14} />
-                          <span>Pricing Intelligence</span>
-                        </div>
-                        <div className={styles.intelBody}>
-                          <p>Avg. price for <strong>Clothing</strong>: ₦12,500</p>
-                          <div className={styles.intelBar}>
-                            <div className={styles.intelMarker} style={{left: '40%'}} title="Market Average"></div>
-                          </div>
-                          <span>Aim for ₦8k - ₦15k for best conversion.</span>
-                        </div>
-                      </div>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        required
+                        value={newProduct.price}
+                        onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                      />
                     </div>
                     <div className={styles.inputGroup}>
-                      <label>Stock Count (Optional)</label>
-                      <input type="number" placeholder="Enter quantity (Leave empty for unlimited)" />
+                      <label>Stock Count</label>
+                      <input
+                        type="number"
+                        placeholder="10"
+                        value={newProduct.stockCount}
+                        onChange={(e) => setNewProduct({ ...newProduct, stockCount: e.target.value })}
+                      />
                     </div>
                   </div>
 
                   <div className={styles.inputGroup}>
                     <label>Description</label>
-                    <textarea placeholder="Tell your customers about the material, fit, and style..." rows={4}></textarea>
+                    <textarea
+                      placeholder="Tell your customers about the material, fit, and style..."
+                      rows={4}
+                      value={newProduct.description}
+                      onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                    ></textarea>
                   </div>
 
-                  <div className={styles.mediaUploads}>
-                    <div className={styles.uploadBox}>
-                      <ImageIcon size={24} />
-                      <span>Add Images (Max 5)</span>
-                    </div>
-                    <div className={styles.uploadBox}>
-                      <Video size={24} />
-                      <span>Upload Video Poster (₦200 rate)</span>
-                    </div>
+                  <div className={styles.inputGroup}>
+                    <label>Product Image URL</label>
+                    <input
+                      type="text"
+                      placeholder="https://..."
+                      required
+                      value={newProduct.mediaUrls[0] || ''}
+                      onChange={(e) => setNewProduct({ ...newProduct, mediaUrls: [e.target.value] })}
+                    />
                   </div>
 
                   <div className={styles.formFooter}>
                     <div className={styles.billingNote}>
-                       {products.length >= 5 ? (
-                         <p>Listing Fee: <strong>₦200</strong> (Wallet: {formatPrice(brand?.wallet_balance || 0)})</p>
-                       ) : (
-                         <p>Listing: <strong>FREE</strong> ({5 - products.length} credits remaining)</p>
-                       )}
+                      {products.length >= 5 ? (
+                        <p>Listing Fee: <strong>₦200</strong> (Wallet: {formatPrice(brand?.wallet_balance || 0)})</p>
+                      ) : (
+                        <p>Listing: <strong>FREE</strong> ({5 - products.length} credits remaining)</p>
+                      )}
                     </div>
-                    <button className="btn btn-primary btn-lg">Post Product to Marketplace</button>
+                    <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
+                      {loading ? 'Processing...' : 'Post Product to Marketplace'}
+                    </button>
                   </div>
-                </div>
+                </form>
               </div>
             )}
 
@@ -541,7 +611,7 @@ export default function VendorDashboard() {
                   </div>
                   <div className={styles.invActions}>
                     <button className="btn btn-ghost btn-sm">Edit</button>
-                    <button className="btn btn-ghost btn-sm" style={{color: 'var(--primary)'}}>Delete</button>
+                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--primary)' }}>Delete</button>
                   </div>
                 </div>
               ))}
@@ -561,8 +631,8 @@ export default function VendorDashboard() {
                 <span>Available Balance</span>
                 <h2>{formatPrice(brand?.wallet_balance || 0)}</h2>
                 <div className={styles.walletActions}>
-                  <button 
-                    className="btn btn-primary" 
+                  <button
+                    className="btn btn-primary"
                     disabled={!brand?.wallet_balance || brand.wallet_balance < 1000}
                     onClick={() => setIsWithdrawing(true)}
                   >
@@ -571,7 +641,7 @@ export default function VendorDashboard() {
                 </div>
                 <p className={styles.minWithdrawal}>Minimum withdrawal: ₦1,000</p>
               </div>
-              
+
               <div className={styles.walletEscrow}>
                 <span>Escrow (Pending)</span>
                 <h3>{formatPrice(orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled').reduce((acc, curr) => acc + curr.vendor_earning, 0))}</h3>
@@ -580,28 +650,28 @@ export default function VendorDashboard() {
             </div>
 
             {isWithdrawing && (
-              <div className={styles.formContainer} style={{marginTop: '2rem'}}>
+              <div className={styles.formContainer} style={{ marginTop: '2rem' }}>
                 <div className={styles.formHead}>
                   <h2>Request Payout</h2>
                   <button className="btn btn-ghost btn-sm" onClick={() => setIsWithdrawing(false)}>Cancel</button>
                 </div>
                 <div className={styles.productForm}>
-                   <div className={styles.inputGroup}>
-                     <label>Amount to Withdraw (₦)</label>
-                     <input type="number" placeholder="0.00" autoFocus />
-                     <p className={styles.formHint}>Available: <strong>{formatPrice(brand?.wallet_balance || 0)}</strong></p>
-                   </div>
-                   <div className={styles.inputGroup}>
-                     <label>Bank Account Details</label>
-                     <div className={styles.bankPreview}>
-                       <CreditCard size={18} />
-                       <div>
-                         <p>{brand?.bank_name || 'No Bank Added'}</p>
-                         <span>{brand?.bank_account_number || 'Update in settings'}</span>
-                       </div>
-                     </div>
-                   </div>
-                   <button className="btn btn-primary btn-lg" disabled={!brand?.bank_account_number}>Confirm Withdrawal Request</button>
+                  <div className={styles.inputGroup}>
+                    <label>Amount to Withdraw (₦)</label>
+                    <input type="number" placeholder="0.00" autoFocus />
+                    <p className={styles.formHint}>Available: <strong>{formatPrice(brand?.wallet_balance || 0)}</strong></p>
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label>Bank Account Details</label>
+                    <div className={styles.bankPreview}>
+                      <CreditCard size={18} />
+                      <div>
+                        <p>{brand?.bank_name || 'No Bank Added'}</p>
+                        <span>{brand?.bank_account_number || 'Update in settings'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button className="btn btn-primary btn-lg" disabled={!brand?.bank_account_number}>Confirm Withdrawal Request</button>
                 </div>
               </div>
             )}
@@ -634,7 +704,7 @@ export default function VendorDashboard() {
           <div className={styles.tabContent}>
             <h1 className={styles.title}>Performance Insights</h1>
             <p className={styles.subtitle}>Understand how your brand is growing on campus.</p>
-            
+
             <div className={styles.analyticsPlaceholder}>
               <BarChart3 size={48} />
               <h3>Visualizing your growth...</h3>
@@ -736,8 +806,8 @@ export default function VendorDashboard() {
           <span>Inv</span>
         </button>
         <button className={`${styles.mobNavItem} ${activeTab === 'enquiries' ? styles.mobNavActive : ''}`} onClick={() => setActiveTab('enquiries')}>
-          <MessageCircle className={styles.mobNavIcon} />
-          <span>Chat</span>
+          <Bell className={styles.mobNavIcon} />
+          <span>Notifs</span>
         </button>
         <button className={`${styles.mobNavItem} ${activeTab === 'payments' ? styles.mobNavActive : ''}`} onClick={() => setActiveTab('payments')}>
           <Wallet className={styles.mobNavIcon} />

@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Star, MessageCircle, ShoppingBag } from 'lucide-react';
+import { Heart, Star, MessageCircle, ShoppingBag, ShieldCheck } from 'lucide-react';
 import styles from './ProductCard.module.css';
 
 import { formatPrice, getDiscount } from '@/lib/utils';
@@ -61,7 +61,6 @@ export default function ProductCard({ product }: Props) {
 
   return (
     <Link href={`/product/${product.id}`} className={styles.card}>
-      {/* ... (previous image section) */}
       <div className={styles.imageWrap}>
         <Image
           src={imageUrl}
@@ -71,65 +70,46 @@ export default function ProductCard({ product }: Props) {
           className={styles.image}
         />
 
-        {/* Overlays */}
-        <div className={styles.overlays}>
-          {discount && discount > 0 ? (
-            <span className={`badge badge-flash ${styles.discountBadge}`}>
-              -{discount}%
-            </span>
-          ) : null}
-        </div>
+        {product.stock_count === 0 && (
+          <div className={styles.soldOutBadge}>Sold Out</div>
+        )}
 
-        {/* Add to Cart Quick Access */}
-        <button
-          className={styles.addToCartQuick}
-          aria-label="Add to cart"
-          onClick={handleAddToCart}
-        >
-          <ShoppingBag size={18} />
-        </button>
-
-        {/* Wishlist */}
-        <button
-          className={styles.wishlistBtn}
-          aria-label="Add to wishlist"
-          onClick={(e) => e.preventDefault()}
-        >
-          <Heart size={16} />
-        </button>
+        {discount && discount > 0 && product.stock_count > 0 && (
+          <span className={styles.discountBadge}>-{discount}%</span>
+        )}
+        
+        {product.brands?.verified && (
+          <div className={styles.verifiedBadge}>
+            <ShieldCheck size={10} /> Official
+          </div>
+        )}
       </div>
 
-      {/* Info */}
       <div className={styles.info}>
-        <p className={styles.brand}>{brandName}</p>
         <h3 className={styles.title}>{product.title}</h3>
-
-        {/* Price */}
         <div className={styles.priceRow}>
           <span className={styles.price}>{formatPrice(product.price)}</span>
           {product.original_price && product.original_price > product.price && (
-            <span className={styles.originalPrice}>
-              {formatPrice(product.original_price)}
-            </span>
+            <span className={styles.oldPrice}>{formatPrice(product.original_price)}</span>
           )}
         </div>
-
-        {/* CTA */}
-        <div className={styles.cta}>
-          <button
-            onClick={handleAddToCart}
-            className={`btn btn-primary btn-sm ${styles.cartButton}`}
-          >
-            <ShoppingBag size={14} /> Add to Cart
-          </button>
-          
-          <Link
-            href={`/product/${product.id}#enquiry`}
-            onClick={(e) => e.stopPropagation()}
-            className={`btn btn-secondary btn-sm ${styles.chatButton}`}
-          >
-            <MessageCircle size={14} /> Enquire
-          </Link>
+        
+        <div className={styles.footer}>
+          <div className={styles.rating}>
+            <Star size={10} fill="currentColor" />
+            <span>{product.rating || 4.5}</span>
+          </div>
+          {product.stock_count > 0 ? (
+            <button 
+              className={styles.quickAdd}
+              onClick={handleAddToCart}
+              aria-label="Add to cart"
+            >
+              <ShoppingBag size={14} />
+            </button>
+          ) : (
+            <span className={styles.outOfStockText}>Out of Stock</span>
+          )}
         </div>
       </div>
     </Link>

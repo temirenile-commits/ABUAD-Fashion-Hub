@@ -120,7 +120,7 @@
 
 .catActive {
   background: var(--primary-soft);
-  border-color: rgba(255,45,85,0.4);
+  border-color: var(--primary);
   color: var(--primary);
 }
 
