@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
     if (event.event === 'charge.success') {
       const orderId = event.data.reference;
-      
+
       // Update the order status to paid
       const { data: order, error } = await supabaseAdmin
         .from('orders')
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         .eq('id', orderId)
         .select()
         .single();
-        
+
       if (error) {
         console.error('Error updating order:', error);
         return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
