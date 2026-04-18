@@ -12,15 +12,23 @@ export async function POST(req: Request) {
 
     // Phase 3 Logic: Platform takes 7.5% commission
     const commissionRate = 0.075;
+    const deliveryFee = deliveryMethod === 'platform' ? 1500 : 0;
 
     // We will create multiple order records, one for each unique product/vendor combination in the cart.
     // They will all share the same Paystack transaction reference for tracking.
     const batchReference = `BATCH-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-    const orderPromises = items.map(async (item: any) => {
-      const itemTotal = item.price * (item.quantity || 1);
-      const commissionAmount = itemTotal * commissionRate;
-      const vendorEarning = itemTotal - commissionAmount;
+    const orderPromises = items.map(async (item: any, index: number) => {
+      const isFirst = index === 0;
+      const baseItemTotal = item.price * (item.quantity || 1);
+      
+      // If platform delivery, we add the whole fee to the first order's total for accounting.
+      const itemDeliveryFee = isFirst ? deliveryFee : 0;
+      const itemTotal = baseItemTotal + itemDeliveryFee;
+      
+      const baseCommission = baseItemTotal * commissionRate;
+      const totalCommission = baseCommission + itemDeliveryFee; // Hub takes 7.5% + delivery fee
+      const vendorEarning = baseItemTotal - baseCommission;
 
       return supabaseAdmin
         .from('orders')
@@ -28,13 +36,13 @@ export async function POST(req: Request) {
           customer_id: userId,
           brand_id: item.brandId,
           product_id: item.productId,
-          total_amount: itemTotal, // Individual item total
-          commission_amount: commissionAmount,
+          total_amount: itemTotal, 
+          commission_amount: totalCommission,
           vendor_earning: vendorEarning,
           status: 'pending',
           delivery_method: deliveryMethod || 'platform',
           shipping_address: shippingAddress,
-          paystack_reference: batchReference, // Linked by batch reference
+          paystack_reference: batchReference,
         })
         .select()
         .single();
@@ -54,10 +62,14 @@ export async function POST(req: Request) {
       .eq('id', userId)
       .single();
 
+    const origin = req.headers.get('origin') || 'https://abuadfashionhub.com';
+    const callbackUrl = `${origin}/checkout/success`;
+
     const paystackParams = {
       email: userProfile?.email || 'customer@abuadfashionhub.com',
       amount: totalAmount, // This is the final calculated total from the frontend
       reference: batchReference,
+      callback_url: callbackUrl,
       metadata: {
         order_type: 'multi_product_purchase',
         item_count: items.length,

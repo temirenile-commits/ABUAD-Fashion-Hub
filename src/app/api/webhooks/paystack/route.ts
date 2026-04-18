@@ -23,33 +23,46 @@ export async function POST(req: Request) {
     const event = JSON.parse(rawBody);
 
     if (event.event === 'charge.success') {
-      const orderId = event.data.reference;
+      const reference = event.data.reference;
 
-      // Update the order status to paid
-      const { data: order, error } = await supabaseAdmin
+      // 1. Fetch all orders with this Paystack reference
+      const { data: orders, error: fetchError } = await supabaseAdmin
         .from('orders')
-        .update({ status: 'paid' })
-        .eq('id', orderId)
-        .select()
-        .single();
+        .select('*')
+        .eq('paystack_reference', reference);
 
-      if (error) {
-        console.error('Error updating order:', error);
-        return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
+      if (fetchError || !orders || orders.length === 0) {
+        console.error('No orders found for reference:', reference, fetchError);
+        return NextResponse.json({ error: 'Orders not found' }, { status: 404 });
       }
 
-      // Create an inward transaction ledger record
-      await supabaseAdmin.from('transactions').insert({
-        order_id: orderId,
-        brand_id: order.brand_id,
-        user_id: order.customer_id,
-        type: 'payment_in',
-        amount: order.total_amount,
-        status: 'success',
-        description: 'Escrow payment secured via Paystack',
+      // 2. Update all these orders to 'paid' (Securing Escrow)
+      const { error: updateError } = await supabaseAdmin
+        .from('orders')
+        .update({ status: 'paid' })
+        .eq('paystack_reference', reference);
+
+      if (updateError) {
+        console.error('Error updating orders batch:', updateError);
+        return NextResponse.json({ error: 'Batch update failed' }, { status: 500 });
+      }
+
+      // 3. Create transaction records for each order
+      const transactionPromises = orders.map((order) => {
+        return supabaseAdmin.from('transactions').insert({
+          order_id: order.id,
+          brand_id: order.brand_id,
+          user_id: order.customer_id,
+          type: 'payment_in',
+          amount: order.total_amount,
+          status: 'success',
+          description: `Escrow payment secured for ${order.id.slice(0, 8)}`,
+        });
       });
 
-      console.log(`[WEBHOOK] Order ${orderId} marked as PAiD. Escrow secured.`);
+      await Promise.all(transactionPromises);
+
+      console.log(`[WEBHOOK] ${orders.length} orders updated to 'paid' for reference ${reference}`);
     }
 
     return NextResponse.json({ status: 'success' }, { status: 200 });

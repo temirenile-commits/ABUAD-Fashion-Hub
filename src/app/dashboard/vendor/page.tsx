@@ -85,7 +85,35 @@ export default function VendorDashboard() {
     fetchVendorData();
   }, [router]);
 
-  if (loading) {
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch('/api/orders/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, status: newStatus, vendorId: session.user.id })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        // Refresh orders locally
+        const refreshed = orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
+        setOrders(refreshed);
+      } else {
+        alert(data.error || 'Failed to update order');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error updating order');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading && !brand) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
         <Loader2 className="anim-spin" size={32} />
@@ -109,17 +137,20 @@ export default function VendorDashboard() {
         </div>
 
         <nav className={styles.nav}>
+          <button className={`${styles.navItem} ${activeTab === 'overview' ? styles.navActive : ''}`} onClick={() => setActiveTab('overview')}>
+             <TrendingUp size={18} /> Overview
+          </button>
           <button className={`${styles.navItem} ${activeTab === 'orders' ? styles.navActive : ''}`} onClick={() => setActiveTab('orders')}>
             <Package size={18} /> Orders & Fulfillment
+          </button>
+          <button className={`${styles.navItem} ${activeTab === 'inventory' ? styles.navActive : ''}`} onClick={() => setActiveTab('inventory')}>
+            <ShoppingCart size={18} /> Listings & Inventory
           </button>
           <button className={`${styles.navItem} ${activeTab === 'wallet' ? styles.navActive : ''}`} onClick={() => setActiveTab('wallet')}>
             <Wallet size={18} /> Wallet & Payouts
           </button>
-          <button className={`${styles.navItem} ${activeTab === 'listings' ? styles.navActive : ''}`} onClick={() => setActiveTab('listings')}>
-            <TrendingUp size={18} /> Listings & Boosts
-          </button>
           <button className={`${styles.navItem} ${activeTab === 'enquiries' ? styles.navActive : ''}`} onClick={() => setActiveTab('enquiries')}>
-            <MessageCircle size={18} /> Product Enquiries
+            <MessageCircle size={18} /> Enquiries
           </button>
           <button className={`${styles.navItem} ${activeTab === 'services' ? styles.navActive : ''}`} onClick={() => setActiveTab('services')}>
             <Scissors size={18} /> Services
@@ -127,18 +158,11 @@ export default function VendorDashboard() {
           <button className={`${styles.navItem} ${activeTab === 'reels' ? styles.navActive : ''}`} onClick={() => setActiveTab('reels')}>
             <Video size={18} /> Collection Reels
           </button>
-          <button className={`${styles.navItem} ${activeTab === 'analytics' ? styles.navActive : ''}`} onClick={() => setActiveTab('analytics')}>
-            <BarChart3 size={18} /> Analytics
-          </button>
-          <button className={`${styles.navItem} ${activeTab === 'payments' ? styles.navActive : ''}`} onClick={() => setActiveTab('payments')}>
-            <CreditCard size={18} /> Payouts & Wallet
-          </button>
           <button className={`${styles.navItem} ${activeTab === 'promotion' ? styles.navActive : ''}`} onClick={() => setActiveTab('promotion')}>
-            <TrendingUp size={18} /> Promotion & Boost
+            <Zap size={18} /> Boost Store
           </button>
-          <button className={styles.navItem}>
+          <button className={`${styles.navItem} ${activeTab === 'settings' ? styles.navActive : ''}`} onClick={() => setActiveTab('settings')}>
             <Settings size={18} /> Store Settings
-            <Settings size={18} /> Settings
           </button>
         </nav>
       </aside>
@@ -315,23 +339,28 @@ export default function VendorDashboard() {
                         {order.status === 'paid' && (
                           <div className={styles.statusBox}>
                             <div className={styles.actionRow}>
-                              <button className="btn btn-primary btn-sm">Accept Order</button>
-                              <button className="btn btn-ghost btn-sm" style={{color: 'var(--primary)'}}>Reject</button>
+                              <button className="btn btn-primary btn-sm" onClick={() => updateOrderStatus(order.id, 'accepted')}>Accept Order</button>
+                              <button className="btn btn-ghost btn-sm" style={{color: 'var(--primary)'}} onClick={() => updateOrderStatus(order.id, 'cancelled')}>Reject</button>
                             </div>
                           </div>
                         )}
                         {order.status === 'accepted' && (
                           <div className={styles.statusBox}>
-                            <button className="btn btn-secondary btn-sm">Start Processing</button>
+                            <button className="btn btn-secondary btn-sm" onClick={() => updateOrderStatus(order.id, 'processing')}>Start Processing</button>
                           </div>
                         )}
                         {order.status === 'processing' && (
                           <div className={styles.statusBox}>
                             <div className={styles.deliverySelector}>
                               <p>Select Delivery Method:</p>
-                              <button className="btn btn-primary btn-sm" style={{width: '100%', marginBottom: '0.5rem'}}>Use Platform Delivery</button>
-                              <button className="btn btn-ghost btn-sm" style={{width: '100%'}}>I will Deliver Personally</button>
+                              <button className="btn btn-primary btn-sm" style={{width: '100%', marginBottom: '0.5rem'}} onClick={() => updateOrderStatus(order.id, 'ready')}>Use Platform Delivery</button>
+                              <button className="btn btn-ghost btn-sm" style={{width: '100%'}} onClick={() => updateOrderStatus(order.id, 'in_transit')}>I will Deliver Personally</button>
                             </div>
+                          </div>
+                        )}
+                        {order.status === 'in_transit' && (
+                          <div className={styles.statusBox}>
+                             <button className="btn btn-secondary btn-sm" onClick={() => updateOrderStatus(order.id, 'delivered')}>Mark as Delivered</button>
                           </div>
                         )}
                         {order.status === 'ready' && (

@@ -49,7 +49,39 @@ export default function CustomerDashboard() {
     fetchOrders();
   }, [router]);
 
-  if (loading) {
+  const handleConfirmDelivery = async (orderId: string) => {
+    if (!window.confirm('Confirm that you have received this item? This will release payment to the vendor.')) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch('/api/orders/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, userId: user.id })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        // Refresh orders
+        const { data: updatedOrders } = await supabase
+          .from('orders')
+          .select('*, products(title, media_urls), brands(name)')
+          .eq('customer_id', user.id)
+          .order('created_at', { ascending: false });
+        setOrders(updatedOrders || []);
+        alert('Payment released! Thank you for shopping with ABUAD Fashion Hub.');
+      } else {
+        alert(data.error || 'Failed to confirm delivery.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading && orders.length === 0) {
     return (
       <div className={styles.loading}>
         <Loader2 className="anim-spin" size={32} />
@@ -113,7 +145,12 @@ export default function CustomerDashboard() {
                         Track Delivery
                       </Link>
                       {order.status === 'delivered' && (
-                        <button className="btn btn-secondary btn-sm">Confirm Delivery</button>
+                        <button 
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => handleConfirmDelivery(order.id)}
+                        >
+                          Confirm Delivery
+                        </button>
                       )}
                     </div>
                   </div>
