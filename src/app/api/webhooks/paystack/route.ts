@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { verifyTransaction } from '@/lib/paystack';
 
 const secret = process.env.PAYSTACK_SECRET_KEY || '';
 
@@ -13,7 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
     }
 
-    // Verify signature
+    // 1. Verify Signature (First Layer)
     const hash = crypto.createHmac('sha512', secret).update(rawBody).digest('hex');
     if (hash !== signature) {
       console.error('Invalid signatures matching');
@@ -24,6 +25,16 @@ export async function POST(req: Request) {
 
     if (event.event === 'charge.success') {
       const reference = event.data.reference;
+
+      // 2. Double Verification (Second Layer - Cross check with Paystack API)
+      const verification = await verifyTransaction(reference);
+      
+      if (!verification.status || verification.data.status !== 'success') {
+        console.error('Paystack verification failed for ref:', reference);
+        return NextResponse.json({ error: 'Transaction verification failed' }, { status: 400 });
+      }
+
+      console.log(`[PAYSTACK WEBHOOK] Verified ${reference} successfully via API`);
 
       // 1. Fetch all orders with this Paystack reference
       const { data: orders, error: fetchError } = await supabaseAdmin

@@ -644,8 +644,8 @@ export default function VendorDashboard() {
 
               <div className={styles.walletEscrow}>
                 <span>Escrow (Pending)</span>
-                <h3>{formatPrice(orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled').reduce((acc, curr) => acc + curr.vendor_earning, 0))}</h3>
-                <p>Released automatically after delivery confirmation.</p>
+                <h3>{formatPrice(orders.filter(o => ['paid', 'shipped', 'out_for_delivery'].includes(o.status)).reduce((acc, curr) => acc + curr.vendor_earning, 0))}</h3>
+                <p>Funds released to wallet after customer confirms delivery.</p>
               </div>
             </div>
 

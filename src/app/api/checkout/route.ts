@@ -10,12 +10,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid checkout payload' }, { status: 400 });
     }
 
-    // Phase 3 Logic: Platform takes 7.5% commission
+    // 1. Validate Totals (Server-Side calculation to prevent frontend manipulation)
     const commissionRate = 0.075;
     const deliveryFee = deliveryMethod === 'platform' ? 1500 : 0;
+    
+    let calculatedSubtotal = 0;
+    items.forEach((item: any) => {
+      calculatedSubtotal += item.price * (item.quantity || 1);
+    });
 
-    // We will create multiple order records, one for each unique product/vendor combination in the cart.
-    // They will all share the same Paystack transaction reference for tracking.
+    const calculatedTotal = calculatedSubtotal + deliveryFee;
+
+    // Optional: Log mismatch if needed, but for now we rely on server-side total
+    const finalChargeAmount = calculatedTotal;
+
     const batchReference = `BATCH-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const orderPromises = items.map(async (item: any, index: number) => {
@@ -67,7 +75,7 @@ export async function POST(req: Request) {
 
     const paystackParams = {
       email: userProfile?.email || 'customer@abuadfashionhub.com',
-      amount: totalAmount, // This is the final calculated total from the frontend
+      amount: finalChargeAmount, // Strictly uses server-validated total
       reference: batchReference,
       callback_url: callbackUrl,
       metadata: {

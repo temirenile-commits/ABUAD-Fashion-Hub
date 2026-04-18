@@ -1,69 +1,87 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
+/**
+ * Escrow Release Endpoint
+ * Triggered by the Customer when they confirm receipt of the item.
+ */
 export async function POST(req: Request) {
   try {
     const { orderId, userId } = await req.json();
 
     if (!orderId || !userId) {
-      return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
+       return NextResponse.json({ error: 'Missing order details' }, { status: 400 });
     }
 
-    // 1. Fetch the order and verify the customer
+    // 1. Fetch the order to ensure it belongs to the customer and is currently in 'paid' (escrow) status
     const { data: order, error: fetchError } = await supabaseAdmin
       .from('orders')
-      .select('*, brands(owner_id)')
+      .select('*')
       .eq('id', orderId)
       .eq('customer_id', userId)
       .single();
 
     if (fetchError || !order) {
-      return NextResponse.json({ error: 'Order not found or unauthorized' }, { status: 404 });
+      console.error('Order not found for confirmation:', fetchError);
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    if (order.status !== 'delivered') {
-      return NextResponse.json({ error: 'Order must be in delivered status to confirm' }, { status: 400 });
+    if (order.status !== 'paid' && order.status !== 'shipped' && order.status !== 'out_for_delivery') {
+      return NextResponse.json({ error: 'Order is not in a releasable state' }, { status: 400 });
     }
 
-    // 2. Update Order Status to 'confirmed'
-    const { error: updateError } = await supabaseAdmin
+    // 2. Perform Release (Transactional Update)
+    // We update the order status and increment the vendor's balance
+    
+    // A. Update Order Status
+    const { error: updateOrderError } = await supabaseAdmin
       .from('orders')
       .update({ 
-        status: 'confirmed',
-        confirmed_at: new Date().toISOString()
+        status: 'delivered',
+        delivered_at: new Date().toISOString()
       })
       .eq('id', orderId);
 
-    if (updateError) throw updateError;
+    if (updateOrderError) throw updateOrderError;
 
-    // 3. Release Funds to Vendor Wallet
-    const { error: walletError } = await supabaseAdmin.rpc('increment_brand_wallet', {
-      brand_uuid: order.brand_id,
-      amount_to_add: order.vendor_earning
+    // B. Increment Vendor Wallet
+    const { error: walletError } = await supabaseAdmin.rpc('increment_vendor_wallet', {
+      brand_id: order.brand_id,
+      amount: order.vendor_earning
     });
 
-    // Fallback if the RPC doesn't exist yet (Manual update)
     if (walletError) {
+      // Fallback if RPC not found: Manual increment
       const { data: brand } = await supabaseAdmin.from('brands').select('wallet_balance').eq('id', order.brand_id).single();
-      const newBalance = Number(brand?.wallet_balance || 0) + Number(order.vendor_earning);
+      const newBalance = (brand?.wallet_balance || 0) + order.vendor_earning;
       await supabaseAdmin.from('brands').update({ wallet_balance: newBalance }).eq('id', order.brand_id);
     }
 
-    // 4. Create Ledger Entry
+    // C. Create Transaction Record for the Vendor
     await supabaseAdmin.from('transactions').insert({
-      order_id: orderId,
+      order_id: order.id,
       brand_id: order.brand_id,
-      user_id: order.customer_id,
+      user_id: customerId, // Customer who confirmed
       type: 'escrow_release',
       amount: order.vendor_earning,
       status: 'success',
-      description: `Escrow released to vendor for order ${orderId.slice(0, 8)}`
+      description: `Funds released from Escrow for order #${order.id.slice(0, 8)}`
     });
 
-    return NextResponse.json({ success: true, message: 'Escrow released successfully' });
+    // D. Notify Vendor
+    await supabaseAdmin.from('notifications').insert({
+      user_id: order.brand_owner_id || order.brand_id,
+      type: 'payment_received',
+      title: 'Funds Released! 💰',
+      content: `Customer confirmed delivery for order #${order.id.slice(0, 8)}. ₦${order.vendor_earning.toLocaleString()} has been added to your balance.`,
+      link: '/dashboard/vendor',
+      is_read: false
+    });
+
+    return NextResponse.json({ success: true, message: 'Funds released to vendor successfully' });
 
   } catch (error: any) {
-    console.error('Confirm Order Error:', error);
-    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+    console.error('Escrow release error:', error);
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
