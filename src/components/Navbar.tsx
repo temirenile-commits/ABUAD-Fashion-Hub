@@ -89,12 +89,20 @@ export default function Navbar() {
         {/* Actions (Right) */}
         <div className={styles.actions}>
           {user ? (
-            <div className={styles.actionItem}>
-              <Link href={dashboardLink} className={styles.actionLink}>
-                <User size={20} />
-                <span>Account</span>
-              </Link>
-            </div>
+            <>
+              <div className={styles.actionItem}>
+                <Link href={dashboardLink} className={styles.actionLink}>
+                  <User size={20} />
+                  <span>Account</span>
+                </Link>
+              </div>
+              <div className={styles.actionItem}>
+                <button onClick={handleLogout} className={styles.actionLink} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                  <LogOut size={20} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            </>
           ) : (
             <div className={styles.actionItem}>
               <Link href="/auth/login" className={styles.actionLink}>

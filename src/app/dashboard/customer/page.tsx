@@ -189,6 +189,20 @@ export default function CustomerDashboard() {
             <ArrowRight size={20} />
           </Link>
 
+          <button 
+            className={`card ${styles.logoutCard}`}
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.push('/');
+            }}
+          >
+            <div className={styles.logoutInfo}>
+              <h3>Sign Out</h3>
+              <p>Protect your account security</p>
+            </div>
+            <ArrowRight size={20} />
+          </button>
+
           <div className={`card ${styles.enquiryCardSmall}`}>
             <div className={styles.sectionHeaderIcon}>
               <Bell size={18} className={styles.goldIcon} />

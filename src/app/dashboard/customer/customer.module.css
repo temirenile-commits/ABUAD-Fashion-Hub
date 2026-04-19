@@ -206,6 +206,26 @@
   color: var(--text-400);
 }
 
+.logoutCard {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-decoration: none;
+  background: var(--bg-100);
+  transition: all 0.2s;
+  text-align: left;
+  border-left: 4px solid #ef4444;
+}
+
+.logoutCard:hover {
+  background: rgba(239, 68, 68, 0.05);
+  transform: translateY(-4px);
+}
+
+.logoutCard h3 { color: #ef4444; font-size: 1.1rem; }
+.logoutCard p { font-size: 0.85rem; color: var(--text-400); }
+
 @media (max-width: 968px) {
   .dashboardGrid {
     grid-template-columns: 1fr;

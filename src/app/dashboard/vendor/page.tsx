@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
 import { uploadFile } from '@/lib/storage';
@@ -297,6 +297,17 @@ export default function VendorDashboard() {
           </button>
           <button className={`${styles.navItem} ${activeTab === 'settings' ? styles.navActive : ''}`} onClick={() => setActiveTab('settings')}>
             <Settings size={18} /> Store Settings
+          </button>
+          <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0' }} />
+          <button 
+            className={styles.navItem} 
+            style={{ color: '#ef4444' }}
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.push('/');
+            }}
+          >
+            <LogOut size={18} /> Sign Out
           </button>
         </nav>
       </aside>
