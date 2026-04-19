@@ -19,10 +19,15 @@ export default async function VendorsPage() {
       products ( id )
     `);
 
-  const LIVE_VENDORS = (brands || []).map((brand) => ({
-    ...brand,
-    followers: Math.floor(Math.random() * 5000), // Mock stat until follower DB logic
-  })) as any as LiveVendor[];
+  const LIVE_VENDORS = (brands || []).map((brand) => {
+    const nameStr = brand.name || 'ABUAD';
+    const num = nameStr.charCodeAt(0) * nameStr.charCodeAt(nameStr.length - 1) * 123;
+    
+    return {
+      ...brand,
+      followers: num % 5000, 
+    };
+  }) as any as LiveVendor[];
 
   const verified = LIVE_VENDORS.filter((v) => v.verified);
   const unverified = LIVE_VENDORS.filter((v) => !v.verified);
