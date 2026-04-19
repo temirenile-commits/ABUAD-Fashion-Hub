@@ -7,19 +7,75 @@ import { supabase } from './supabase';
 
 type BucketName = 'brand-assets' | 'product-media' | 'verification-docs';
 
+/**
+ * Compresses an image file before upload.
+ */
+async function compressImage(file: File): Promise<File> {
+  // Only compress images
+  if (!file.type.startsWith('image/')) return file;
+  
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Calculate new dimensions (max 1200px width/height)
+        const MAX_SIZE = 1200;
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > height && width > MAX_SIZE) {
+          height *= MAX_SIZE / width;
+          width = MAX_SIZE;
+        } else if (height > MAX_SIZE) {
+          width *= MAX_SIZE / height;
+          height = MAX_SIZE;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Convert to WebP format for fast uploads/downloads (80% quality)
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), {
+              type: 'image/webp',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          } else {
+            resolve(file); // Fallback to original if conversion fails
+          }
+        }, 'image/webp', 0.8);
+      };
+      img.onerror = () => resolve(file); // Fallback to original if load fails
+    };
+    reader.onerror = () => resolve(file); // Fallback to original if read fails
+  });
+}
+
 export async function uploadFile(
   file: File, 
   bucket: BucketName, 
   path: string
 ): Promise<{ url: string | null; error: string | null }> {
   try {
-    const fileExt = file.name.split('.').pop();
+    // 💡 COMPRESS THE FILE BEFORE UPLOAD!
+    const compressedFile = await compressImage(file);
+    
+    const fileExt = compressedFile.name.split('.').pop();
     const fileName = `${path}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${fileName}`;
 
     const { error: uploadError, data } = await supabase.storage
       .from(bucket)
-      .upload(filePath, file, {
+      .upload(filePath, compressedFile, {
         cacheControl: '3600',
         upsert: false
       });
