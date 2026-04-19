@@ -49,41 +49,39 @@ export async function POST(req: Request) {
 
     const batchReference = `BATCH-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-    const orderPromises = items.map(async (item: any, index: number) => {
+    const ordersToInsert = items.map((item: any, index: number) => {
       const isFirst = index === 0;
       const baseItemTotal = item.price * (item.quantity || 1);
       
-      // If platform delivery, we add the whole fee to the first order's total for accounting.
       const itemDeliveryFee = isFirst ? deliveryFee : 0;
       const itemTotal = baseItemTotal + itemDeliveryFee;
       
       const baseCommission = baseItemTotal * commissionRate;
-      const totalCommission = baseCommission + itemDeliveryFee; // Hub takes 7.5% + delivery fee
+      const totalCommission = baseCommission + itemDeliveryFee; 
       const vendorEarning = baseItemTotal - baseCommission;
 
-      return supabaseAdmin
-        .from('orders')
-        .insert({
-          customer_id: userId,
-          brand_id: item.brandId,
-          product_id: item.productId,
-          total_amount: itemTotal, 
-          commission_amount: totalCommission,
-          vendor_earning: vendorEarning,
-          status: 'pending',
-          delivery_method: deliveryMethod || 'platform',
-          shipping_address: shippingAddress,
-          paystack_reference: batchReference,
-        })
-        .select()
-        .single();
+      return {
+        customer_id: userId,
+        brand_id: item.brandId,
+        product_id: item.productId,
+        total_amount: itemTotal, 
+        commission_amount: totalCommission,
+        vendor_earning: vendorEarning,
+        status: 'pending',
+        delivery_method: deliveryMethod || 'platform',
+        shipping_address: shippingAddress,
+        paystack_reference: batchReference,
+      };
     });
 
-    const results = await Promise.all(orderPromises);
-    const orderErrors = results.filter(r => r.error);
-    if (orderErrors.length > 0) {
-      console.error('Order creation errors:', orderErrors);
-      throw new Error('Failed to create some orders in the batch');
+    const { data: createdOrders, error: orderError } = await supabaseAdmin
+      .from('orders')
+      .insert(ordersToInsert)
+      .select();
+
+    if (orderError) {
+      console.error('Order creation error:', orderError);
+      throw new Error('Failed to create orders for this checkout session');
     }
 
     // 2. Initialize Paystack Transaction for the TOTAL amount (including delivery)

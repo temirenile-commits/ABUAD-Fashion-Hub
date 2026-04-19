@@ -62,7 +62,7 @@ function CheckoutContent() {
     }
 
     try {
-      setDataLoading(true);
+      setLoading(true); // Show button spinner
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -101,7 +101,7 @@ function CheckoutContent() {
       alert('A connection error occurred.');
       setLoading(false);
     } finally {
-      setDataLoading(false);
+      setLoading(false);
     }
   };
 
