@@ -10,8 +10,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid checkout payload' }, { status: 400 });
     }
 
-    // 1. Validate Totals (Server-Side calculation to prevent frontend manipulation)
-    const commissionRate = 0.075;
+    // 0. Verify Item existence and status
+    const productIds = items.map((i: any) => i.productId);
+    const { data: liveProducts, error: fetchError } = await supabaseAdmin
+      .from('products')
+      .select('id, brand_id, brands(verified, fee_paid)')
+      .in('id', productIds);
+
+    if (fetchError || !liveProducts || liveProducts.length !== items.length) {
+      return NextResponse.json({ 
+        error: 'STALE_CART_ITEMS', 
+        message: 'Some items in your cart are no longer available. Please refresh your cart.' 
+      }, { status: 400 });
+    }
+
+    // Verify Brands are active (Verified + Fee Paid)
+    const inactiveBrands = liveProducts.filter((p: any) => !p.brands?.verified || !p.brands?.fee_paid);
+    if (inactiveBrands.length > 0) {
+       return NextResponse.json({ 
+        error: 'INACTIVE_VENDORS', 
+        message: 'One or more vendors in your cart are temporarily unavailable.' 
+      }, { status: 400 });
+    }
+
+    // 1. Validate Totals...
     const deliveryFee = deliveryMethod === 'platform' ? 1500 : 0;
     
     let calculatedSubtotal = 0;

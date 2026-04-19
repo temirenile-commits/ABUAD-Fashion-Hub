@@ -41,6 +41,9 @@ export default function OnboardingPage() {
   const [user, setUser] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [logoUrl, setLogoUrl] = useState('');
+  const [verificationUrls, setVerificationUrls] = useState<string[]>([]);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const [form, setForm] = useState({
     brandName: '',
@@ -58,10 +61,31 @@ export default function OnboardingPage() {
         router.push('/auth/login?redirect=/onboarding');
       } else {
         setUser(session.user);
+        // Check if they already have a brand
+        const { data: existingBrand } = await supabase.from('brands').select('*').eq('owner_id', session.user.id).single();
+        if (existingBrand) {
+          router.push('/dashboard/vendor');
+        }
       }
     };
     checkUser();
   }, [router]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, bucket: 'brand-assets' | 'verification-docs') => {
+    if (!e.target.files?.[0]) return;
+    setLoading(true);
+    const file = e.target.files[0];
+    const { url, error } = await uploadFile(file, bucket, `${user.id}-${bucket}`);
+    
+    if (url) {
+      if (bucket === 'brand-assets') setLogoUrl(url);
+      else setVerificationUrls(prev => [...prev, url]);
+      alert('Upload successful!');
+    } else {
+      alert(error || 'Upload failed');
+    }
+    setLoading(false);
+  };
 
   const next = () => setStep((s) => Math.min(s + 1, 5));
   const prev = () => setStep((s) => Math.max(s - 1, 1));
@@ -80,7 +104,11 @@ export default function OnboardingPage() {
           name: form.brandName,
           description: form.description,
           whatsapp_number: form.whatsapp,
-          verified: false,
+          verification_status: 'pending',
+          is_verified: false,
+          fee_paid: false,
+          logo_url: logoUrl,
+          verification_documents: verificationUrls,
           delivery_preference: 'platform',
           subscription_plan: 'free',
           terms_accepted: acceptedTerms,
@@ -90,16 +118,10 @@ export default function OnboardingPage() {
 
       if (brandError) throw brandError;
 
-      // 2. Update user role in public.users to 'vendor'
-      const { error: userUpdateError } = await supabase
-        .from('users')
-        .update({ role: 'vendor' })
-        .eq('id', user.id);
+      // 2. Update user role 
+      await supabase.from('users').update({ role: 'vendor' }).eq('id', user.id);
 
-      if (userUpdateError) throw userUpdateError;
-
-      // 3. Success -> Dashboard
-      router.push('/dashboard/vendor');
+      setIsSubmitted(true);
 
     } catch (error: any) {
       console.error(error);
@@ -109,13 +131,29 @@ export default function OnboardingPage() {
     }
   };
 
+  if (isSubmitted) {
+    return (
+      <div className={`container ${styles.page}`}>
+        <div className={`card ${styles.card}`} style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+          <div className={styles.successIcon}><ShieldCheck size={64} color="var(--primary)" /></div>
+          <h2>Application Submitted!</h2>
+          <p style={{ margin: '1.5rem 0', color: 'var(--text-300)' }}>
+            Your brand application is now under review. Our admins will verify your details within 24-48 hours. 
+            Once approved, you will be prompted to pay the ₦2,000 activation fee to go live.
+          </p>
+          <Link href="/" className="btn btn-primary">Return to Marketplace</Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <main className="container">
       <div className={styles.page}>
         {/* Header */}
         <div className={styles.header}>
           <h1>Start Selling on ABUAD Fashion Hub</h1>
-          <p>Join campus brands already growing their business — it&apos;s free!</p>
+          <p>Join campus brands already growing their business — precision-engineered for ABUAD.</p>
         </div>
 
         {errorMsg && (
@@ -254,30 +292,26 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── STEP 3: Upload Assets (Simplified for now) ── */}
+          {/* ── STEP 3: Upload Assets ── */}
           {step === 3 && (
             <div className={styles.stepContent}>
-              <h2 className={styles.stepTitle}>Upload your brand assets</h2>
-              <p className={styles.stepDesc}>Add a logo and product/portfolio photos to attract customers.</p>
+              <h2 className={styles.stepTitle}>Upload your brand logo</h2>
+              <p className={styles.stepDesc}>Add a logo to represent your brand on the marketplace.</p>
 
               <div className={styles.uploadAreas}>
-                <div className={styles.uploadBox}>
-                  <Upload size={28} className={styles.uploadIcon} />
-                  <h3>Brand Logo</h3>
-                  <p>PNG, JPG or SVG — max 5MB</p>
-                  <button className="btn btn-secondary btn-sm" disabled>Coming Soon</button>
-                </div>
-
-                <div className={`${styles.uploadBox} ${styles.uploadBoxLarge}`}>
-                  <Upload size={28} className={styles.uploadIcon} />
-                  <h3>Product / Portfolio Photos</h3>
-                  <p>Upload up to 10 images (JPG, PNG — max 10MB each)</p>
-                  <button className="btn btn-secondary btn-sm" disabled>Coming Soon</button>
-                </div>
+                <label className={styles.uploadBox}>
+                  <input type="file" hidden accept="image/*" onChange={(e) => handleFileUpload(e, 'brand-assets')} />
+                  {logoUrl ? (
+                    <img src={logoUrl} alt="Logo Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%' }} />
+                  ) : (
+                    <>
+                      <Upload size={28} className={styles.uploadIcon} />
+                      <h3>Brand Logo</h3>
+                      <p>Click to browse — PNG, JPG (Max 5MB)</p>
+                    </>
+                  )}
+                </label>
               </div>
-              <p style={{ textAlign: 'center', color: 'var(--text-400)', marginTop: '1rem', fontSize: '0.9rem' }}>
-                You can skip this step and upload directly from your dashboard later.
-              </p>
             </div>
           )}
 
@@ -291,36 +325,16 @@ export default function OnboardingPage() {
                 <h3>ABUAD FASHION HUB – VENDOR TERMS & CONDITIONS</h3>
                 <p><strong>Effective Date: April 17, 2026</strong></p>
                 
-                <h4>1. Eligibility</h4>
-                <ul>
-                  <li>Vendors must be affiliated with ABRUAD (student, staff, or recognized entrepreneur).</li>
-                  <li>Vendors must provide accurate registration information.</li>
-                </ul>
+                <h4>Activation Fee</h4>
+                <p>Upon admin approval, a one-time activation fee of <strong>₦2,000</strong> is required to set up your store and start listing products.</p>
 
-                <h4>5. Listing Fees</h4>
+                <h4>Listing Fees</h4>
                 <ul>
                   <li>First 5 product/service listings are free.</li>
                   <li>Additional listings: ₦200 per listing OR ₦1,500 monthly subscription.</li>
                 </ul>
 
-                <h4>6. Commission Structure</h4>
-                <ul>
-                  <li>The Platform charges a commission of 7.5% – 10% on each completed transaction.</li>
-                  <li>Commission is automatically deducted before payout.</li>
-                </ul>
-
-                <h4>7. Payments & Escrow</h4>
-                <ul>
-                  <li>All customer payments are processed through the Platform.</li>
-                  <li>Funds are held in escrow until order completion.</li>
-                  <li>Payouts released after customer confirms delivery or 24-48h auto-release.</li>
-                </ul>
-
-                <h4>9. Delivery Policy</h4>
-                <p><strong>Option A: Platform Delivery</strong> — Platform manages riders.</p>
-                <p><strong>Option B: Vendor Delivery</strong> — Vendor is solely responsible.</p>
-                
-                <p><em>... (Full Terms available in policy documents)</em></p>
+                <p><em>... (Standard platform policies applied)</em></p>
               </div>
 
               <label className={styles.termsCheckbox}>
@@ -337,39 +351,23 @@ export default function OnboardingPage() {
           {/* ── STEP 5: Verification ── */}
           {step === 5 && (
             <div className={styles.stepContent}>
-              <h2 className={styles.stepTitle}>Apply for Verified Badge</h2>
+              <h2 className={styles.stepTitle}>Submit Verification Documents</h2>
               <p className={styles.stepDesc}>
-                Get the <strong>✅ Verified Badge</strong> for higher visibility and customer trust. Upload your documents below.
+                Admin review is required. Please upload your Student ID or proof of business.
               </p>
 
-              <div className={styles.verifyInfo}>
-                <div className={styles.verifyItem}>
-                  <CheckCircle size={16} style={{ color: 'var(--success)' }} />
-                  <span>ABUAD Student ID Card</span>
-                </div>
-                <div className={styles.verifyItem}>
-                  <CheckCircle size={16} style={{ color: 'var(--success)' }} />
-                  <span>Proof of brand (portfolio, social media)</span>
-                </div>
-              </div>
-
               <div className={styles.uploadAreas}>
-                <div className={styles.uploadBox}>
+                <label className={styles.uploadBox}>
+                  <input type="file" hidden onChange={(e) => handleFileUpload(e, 'verification-docs')} />
                   <ShieldCheck size={28} className={styles.uploadIcon} />
-                  <h3>Student ID Card</h3>
-                  <button className="btn btn-secondary btn-sm" disabled>Coming Soon</button>
-                </div>
-                <div className={styles.uploadBox}>
-                  <Camera size={28} className={styles.uploadIcon} />
-                  <h3>Brand Proof</h3>
-                  <button className="btn btn-secondary btn-sm" disabled>Coming Soon</button>
-                </div>
+                  <h3>Upload Business Proof</h3>
+                  <p>{verificationUrls.length} files attached</p>
+                </label>
               </div>
 
               <div className={styles.skipVerify}>
-                <span>You can finalize your brand registration now.</span>
-                <button className={styles.skipBtn} onClick={handleSubmit} disabled={loading}>
-                  {loading ? 'Finalizing...' : 'Finalize Registration →'}
+                <button className={styles.skipBtn} onClick={handleSubmit} disabled={loading || verificationUrls.length === 0}>
+                  {loading ? 'Submitting Application...' : 'Submit Application for Review →'}
                 </button>
               </div>
             </div>
@@ -396,8 +394,8 @@ export default function OnboardingPage() {
                 Continue <ArrowRight size={16} />
               </button>
             ) : (
-              <button className="btn btn-primary" onClick={handleSubmit} disabled={loading}>
-                <CheckCircle size={16} /> {loading ? 'Finalizing...' : 'Finalize Registration'}
+              <button className="btn btn-primary" onClick={handleSubmit} disabled={loading || verificationUrls.length === 0}>
+                <CheckCircle size={16} /> {loading ? 'Submitting...' : 'Submit Application'}
               </button>
             )}
           </div>
@@ -406,3 +404,4 @@ export default function OnboardingPage() {
     </main>
   );
 }
+

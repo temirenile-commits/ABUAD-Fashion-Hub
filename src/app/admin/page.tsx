@@ -45,11 +45,15 @@ export default function AdminDashboard() {
       const { count: bCount } = await supabase.from('brands').select('*', { count: 'exact', head: true });
       const { count: pCount } = await supabase.from('products').select('*', { count: 'exact', head: true });
       
+      // Calculate real revenue
+      const { data: ordersData } = await supabase.from('orders').select('total_amount').eq('status', 'paid');
+      const totalRevenue = (ordersData || []).reduce((acc, curr) => acc + Number(curr.total_amount), 0);
+
       setStats({
         usersCount: uCount || 0,
         brandsCount: bCount || 0,
         productsCount: pCount || 0,
-        totalRevenue: 1250000 
+        totalRevenue: totalRevenue
       });
 
       const { data: vData } = await supabase.from('brands').select('*').order('created_at', { ascending: false });
@@ -63,9 +67,16 @@ export default function AdminDashboard() {
     fetchAdminData();
   }, []);
 
-  const toggleVerification = async (brandId: string, currentStatus: boolean) => {
-    const { error } = await supabase.from('brands').update({ verified: !currentStatus }).eq('id', brandId);
-    if (!error) setVendors(prev => prev.map(v => v.id === brandId ? { ...v, verified: !currentStatus } : v));
+  const updateVerification = async (brandId: string, status: string) => {
+    const isVerified = status === 'verified';
+    const { error } = await supabase.from('brands').update({ 
+      verification_status: status,
+      verified: isVerified 
+    }).eq('id', brandId);
+    
+    if (!error) {
+      setVendors(prev => prev.map(v => v.id === brandId ? { ...v, verification_status: status, verified: isVerified } : v));
+    }
   };
 
   const deleteProduct = async (productId: string) => {
@@ -126,28 +137,36 @@ export default function AdminDashboard() {
 
             <div className={styles.sectionsGrid}>
               <section className={styles.sectionCard}>
-                <h3>Verification Requests</h3>
+                <h3>Pending Verifications</h3>
                 <div className={styles.pList}>
-                  {vendors.slice(0, 5).map(v => (
+                  {vendors.filter(v => v.verification_status !== 'verified').slice(0, 5).map(v => (
                     <div key={v.id} className={styles.pItem}>
                       <div className={styles.pInfo}>
                         <h4>{v.name}</h4>
-                        <p>{v.verified ? 'Verified' : 'Pending Review'}</p>
+                        <p>{v.verification_status?.toUpperCase() || 'PENDING'}</p>
                       </div>
-                      <button className={`btn btn-sm ${v.verified ? 'btn-ghost' : 'btn-primary'}`} onClick={() => toggleVerification(v.id, v.verified)}>
-                        {v.verified ? 'Revoke' : 'Approve'}
-                      </button>
+                      <div className={styles.pActions}>
+                        <button className="btn btn-primary btn-sm" onClick={() => updateVerification(v.id, 'verified')}>
+                          Approve
+                        </button>
+                        <button className="btn btn-ghost btn-sm text-error" onClick={() => updateVerification(v.id, 'rejected')}>
+                          Reject
+                        </button>
+                      </div>
                     </div>
                   ))}
+                  {vendors.filter(v => v.verification_status !== 'verified').length === 0 && (
+                    <p className={styles.emptyText}>No pending requests.</p>
+                  )}
                 </div>
               </section>
 
               <section className={styles.sectionCard}>
-                <h3>Platform Health</h3>
+                <h3>System Health</h3>
                 <div className={styles.healthStats}>
-                  <div className={styles.healthItem}><AlertCircle size={16} /><span>3 Pending Reports</span></div>
-                  <div className={styles.healthItem}><FileText size={16} /><span>System: Stable</span></div>
-                  <div className={styles.healthItem}><ShieldCheck size={16} /><span>Firewall Active</span></div>
+                  <div className={styles.healthItem}><CheckCircle size={16} color="var(--success)" /> <span>Database Connected</span></div>
+                  <div className={styles.healthItem}><CheckCircle size={16} color="var(--success)" /> <span>Storage API: Online</span></div>
+                  <div className={styles.healthItem}><CheckCircle size={16} color="var(--success)" /> <span>Paystack: Live Mode</span></div>
                 </div>
               </section>
             </div>

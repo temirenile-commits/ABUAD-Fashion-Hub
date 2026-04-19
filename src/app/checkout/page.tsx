@@ -61,9 +61,8 @@ function CheckoutContent() {
       return;
     }
 
-    setLoading(true);
     try {
-      // 1. Call Backend to Create Pending Escrow Order (Will create multiple if multi-vendor)
+      setDataLoading(true);
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,19 +81,27 @@ function CheckoutContent() {
       });
       const data = await res.json();
       
-      // 2. Redirect to Paystack
       if (data.authorization_url) {
-        clearCart(); // Clear cart after successful initialization
+        clearCart(); 
         window.location.href = data.authorization_url;
       } else {
-        alert(data.error || 'Failed to initialize payment gateway.');
+        if (data.error === 'STALE_CART_ITEMS') {
+          alert('Some items in your cart are no longer available. We have reset your cart for safety.');
+          clearCart();
+          router.push('/explore');
+        } else if (data.error === 'INACTIVE_VENDORS') {
+          alert('One or more vendors in your cart are currently undergoing verification. Please check back soon!');
+        } else {
+          alert(data.error || 'Failed to initialize payment gateway.');
+        }
         setLoading(false);
       }
-
     } catch (err) {
       console.error(err);
       alert('A connection error occurred.');
       setLoading(false);
+    } finally {
+      setDataLoading(false);
     }
   };
 

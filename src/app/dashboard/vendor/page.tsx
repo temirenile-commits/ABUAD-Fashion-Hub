@@ -44,10 +44,30 @@ export default function VendorDashboard() {
         .single();
 
       if (brandError || !brandData) {
-        // If they don't have a brand yet, maybe redirect to onboarding?
         router.push('/onboarding');
         return;
       }
+
+      // VENDOR ACTIVATION GATE
+      if (brandData.verification_status === 'pending') {
+        setActiveTab('activation_pending');
+        setBrand(brandData);
+        setLoading(false);
+        return;
+      }
+      
+      if (brandData.verification_status === 'approved' && !brandData.fee_paid) {
+        router.push('/dashboard/vendor/pay-fee');
+        return;
+      }
+
+      if (brandData.verification_status === 'rejected') {
+        setActiveTab('activation_rejected');
+        setBrand(brandData);
+        setLoading(false);
+        return;
+      }
+
       setBrand(brandData);
 
       // Fetch Orders
@@ -227,6 +247,24 @@ export default function VendorDashboard() {
       </aside>
 
       <main className={styles.main}>
+        {activeTab === 'activation_pending' && (
+          <div className={styles.activationNotice}>
+            <Clock size={48} color="var(--primary)" />
+            <h2>Application Under Review</h2>
+            <p>Your brand registration is being reviewed by our admin team. This usually takes 24-48 hours. You will be notified once you are approved to pay the ₦2,000 activation fee.</p>
+            <Link href="/" className="btn btn-primary">Back to Hub</Link>
+          </div>
+        )}
+
+        {activeTab === 'activation_rejected' && (
+          <div className={styles.activationNotice}>
+            <AlertTriangle size={48} color="#ef4444" />
+            <h2>Application Declined</h2>
+            <p>Unfortunately, your brand application has been rejected at this time. Please contact support via WhatsApp if you believe this is a mistake.</p>
+            <Link href="/" className="btn btn-ghost">Contact Support</Link>
+          </div>
+        )}
+
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className={styles.tabContent}>
