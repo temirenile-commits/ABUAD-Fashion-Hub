@@ -41,9 +41,16 @@ export default function RegisterPage() {
       if (authError) throw authError;
 
       if (authData.user) {
-        // SUCCESS: The database trigger (handle_new_user) will automatically
-        // create the profile row in public.users. 
-        
+        // Reliably create/update profile in public.users regardless of DB trigger
+        // Using upsert so it's safe to re-run if a trigger already handled it
+        await supabase.from('users').upsert({
+          id: authData.user.id,
+          email: email,
+          name: name,
+          role: role,
+          phone: null,
+        }, { onConflict: 'id' });
+
         // Give a small hint if email confirmation is likely on
         if (authData.session === null) {
           setErrorMsg('Success! Please check your email to confirm your account before logging in.');

@@ -257,3 +257,30 @@
 @media (max-width: 768px) {
   .sidebar { display: none; }
 }
+
+.statIcon {
+  padding: 0.75rem;
+  background: var(--bg-300);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.emptyText {
+  color: var(--text-400);
+  font-size: 0.85rem;
+  padding: 1rem 0;
+}
+
+.pActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}

@@ -45,6 +45,9 @@ export default function OnboardingPage() {
   const [logoUrl, setLogoUrl] = useState('');
   const [verificationUrls, setVerificationUrls] = useState<string[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<{logo?: string; docs?: string}>({});
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
 
   const [form, setForm] = useState({
     brandName: '',
@@ -74,18 +77,24 @@ export default function OnboardingPage() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, bucket: 'brand-assets' | 'verification-docs') => {
     if (!e.target.files?.[0]) return;
-    setLoading(true);
     const file = e.target.files[0];
-    const { url, error } = await uploadFile(file, bucket, `${user.id}-${bucket}`);
-    
+    const isLogo = bucket === 'brand-assets';
+    if (isLogo) setUploadingLogo(true); else setUploadingDoc(true);
+    const { url, error } = await uploadFile(file, bucket, `${user.id}-${Date.now()}`);
     if (url) {
-      if (bucket === 'brand-assets') setLogoUrl(url);
-      else setVerificationUrls(prev => [...prev, url]);
-      alert('Upload successful!');
+      if (isLogo) {
+        setLogoUrl(url);
+        setUploadStatus(prev => ({ ...prev, logo: `✅ ${file.name} uploaded!` }));
+      } else {
+        setVerificationUrls(prev => [...prev, url]);
+        setUploadStatus(prev => ({ ...prev, docs: `✅ ${file.name} attached (${verificationUrls.length + 1} total)` }));
+      }
     } else {
-      alert(error || 'Upload failed');
+      const msg = `❌ Upload failed: ${error || 'Unknown error'}`;
+      if (isLogo) setUploadStatus(prev => ({ ...prev, logo: msg }));
+      else setUploadStatus(prev => ({ ...prev, docs: msg }));
     }
-    setLoading(false);
+    if (isLogo) setUploadingLogo(false); else setUploadingDoc(false);
   };
 
   const next = () => setStep((s) => Math.min(s + 1, 5));
@@ -300,10 +309,15 @@ export default function OnboardingPage() {
               <p className={styles.stepDesc}>Add a logo to represent your brand on the marketplace.</p>
 
               <div className={styles.uploadAreas}>
-                <label className={styles.uploadBox}>
-                  <input type="file" hidden accept="image/*" onChange={(e) => handleFileUpload(e, 'brand-assets')} />
-                  {logoUrl ? (
-                    <img src={logoUrl} alt="Logo Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%' }} />
+                <label className={styles.uploadBox} style={{ opacity: uploadingLogo ? 0.7 : 1 }}>
+                  <input type="file" hidden accept="image/*" disabled={uploadingLogo} onChange={(e) => handleFileUpload(e, 'brand-assets')} />
+                  {uploadingLogo ? (
+                    <><div className="spinner" style={{ width: 40, height: 40 }} /><p>Uploading...</p></>
+                  ) : logoUrl ? (
+                    <>
+                      <img src={logoUrl} alt="Logo Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%', border: '3px solid var(--primary)' }} />
+                      <p style={{ color: 'var(--primary)', marginTop: '0.5rem', fontSize: '0.85rem' }}>✅ Logo uploaded! Click to change.</p>
+                    </>
                   ) : (
                     <>
                       <Upload size={28} className={styles.uploadIcon} />
@@ -312,6 +326,9 @@ export default function OnboardingPage() {
                     </>
                   )}
                 </label>
+                {uploadStatus.logo && !logoUrl && (
+                  <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{uploadStatus.logo}</p>
+                )}
               </div>
             </div>
           )}
@@ -358,12 +375,21 @@ export default function OnboardingPage() {
               </p>
 
               <div className={styles.uploadAreas}>
-                <label className={styles.uploadBox}>
-                  <input type="file" hidden onChange={(e) => handleFileUpload(e, 'verification-docs')} />
-                  <ShieldCheck size={28} className={styles.uploadIcon} />
-                  <h3>Upload Business Proof</h3>
-                  <p>{verificationUrls.length} files attached</p>
+                <label className={styles.uploadBox} style={{ opacity: uploadingDoc ? 0.7 : 1 }}>
+                  <input type="file" hidden disabled={uploadingDoc} onChange={(e) => handleFileUpload(e, 'verification-docs')} />
+                  {uploadingDoc ? (
+                    <><div className="spinner" style={{ width: 40, height: 40 }} /><p>Uploading document...</p></>
+                  ) : (
+                    <>
+                      <ShieldCheck size={28} className={styles.uploadIcon} style={{ color: verificationUrls.length > 0 ? 'var(--primary)' : undefined }} />
+                      <h3>{verificationUrls.length > 0 ? '✅ Documents Attached' : 'Upload Business Proof'}</h3>
+                      <p>{verificationUrls.length > 0 ? `${verificationUrls.length} file(s) uploaded. Click to add more.` : 'Student ID, ABUAD ID card, or business registration'}</p>
+                    </>
+                  )}
                 </label>
+                {uploadStatus.docs && (
+                  <p style={{ color: verificationUrls.length > 0 ? 'var(--primary)' : '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{uploadStatus.docs}</p>
+                )}
               </div>
 
               <div className={styles.skipVerify}>

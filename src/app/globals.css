@@ -252,6 +252,8 @@ input, textarea, select, button { font-family: inherit; }
 .badge-gold { background: var(--secondary-soft); color: var(--secondary); border: 1px solid rgba(255,170,0,0.2); }
 .badge-teal { background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(0,201,167,0.2); }
 .badge-success { background: rgba(34,197,94,0.1); color: var(--success); border: 1px solid rgba(34,197,94,0.2); }
+.badge-error { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+.badge-neutral { background: var(--bg-300); color: var(--text-300); border: 1px solid var(--border); }
 .badge-flash { background: var(--grad-brand); color: #fff; }
 
 /* ============================================
@@ -367,3 +369,18 @@ input, textarea, select, button { font-family: inherit; }
 .stars { display: flex; gap: 2px; }
 .star-filled { color: var(--secondary); }
 .star-empty { color: var(--text-400); }
+
+/* ============================================
+   SPINNER / LOADING
+   ============================================ */
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.spin { animation: spin 0.8s linear infinite; }
+.spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
