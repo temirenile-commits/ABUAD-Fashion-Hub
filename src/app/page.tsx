@@ -41,15 +41,29 @@ export default async function Home() {
 
   const featuredVendors = (brandsData || []) as any[] as LiveVendor[];
 
-  // Mock Flash Sales (using first 5 products)
-  const flashSaleItems = trendingProducts.slice(0, 5).map(p => ({
-    id: p.id,
-    title: p.title,
-    price: Math.floor(p.price * 0.8), // 20% off for dummy
-    oldPrice: p.price,
-    image: p.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500',
-    discount: 20
-  }));
+  // Genuine Flash Sales (Only items explicitly discounted by vendors)
+  // `original_price` greater than `price` signifies a live discount
+  const { data: flashData } = await supabaseAdmin
+    .from('products')
+    .select('id, title, price, original_price, media_urls')
+    .not('original_price', 'is', null)
+    .gt('original_price', 0)
+    .limit(15);
+  
+  const rawFlashSales = (flashData || []) as any[];
+  const genuineFlashSales = rawFlashSales.filter(p => p.original_price > p.price).slice(0, 5);
+
+  const flashSaleItems = genuineFlashSales.map(p => {
+    const discount = Math.round(((p.original_price - p.price) / p.original_price) * 100);
+    return {
+      id: p.id,
+      title: p.title,
+      price: p.price,
+      oldPrice: p.original_price,
+      image: p.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500',
+      discount: discount
+    };
+  });
 
   return (
     <main className={styles.main}>

@@ -12,7 +12,8 @@ import {
   Settings,
   ShieldCheck,
   AlertCircle,
-  FileText
+  FileText,
+  CreditCard
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
@@ -32,9 +33,11 @@ export default function AdminDashboard() {
     totalRevenue: 0
   });
   
-  const [activeTab, setActiveTab] = useState<'overview' | 'vendors' | 'products' | 'users'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'vendors' | 'products' | 'users' | 'financials'>('overview');
   const [vendors, setVendors] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,6 +64,12 @@ export default function AdminDashboard() {
 
       const { data: pData } = await supabase.from('products').select('*, brands(name)').order('created_at', { ascending: false });
       setProducts(pData || []);
+
+      const { data: userData } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+      setUsers(userData || []);
+
+      const { data: txData } = await supabase.from('transactions').select('*, brands(name), users:user_id(name, email)').order('created_at', { ascending: false });
+      setTransactions(txData || []);
 
       setLoading(false);
     }
@@ -102,6 +111,7 @@ export default function AdminDashboard() {
           <button className={`${styles.navItem} ${activeTab === 'vendors' ? styles.navActive : ''}`} onClick={() => setActiveTab('vendors')}><Store size={18} /> Vendors</button>
           <button className={`${styles.navItem} ${activeTab === 'products' ? styles.navActive : ''}`} onClick={() => setActiveTab('products')}><ShoppingBag size={18} /> Catalog</button>
           <button className={`${styles.navItem} ${activeTab === 'users' ? styles.navActive : ''}`} onClick={() => setActiveTab('users')}><Users size={18} /> Users</button>
+          <button className={`${styles.navItem} ${activeTab === 'financials' ? styles.navActive : ''}`} onClick={() => setActiveTab('financials')}><CreditCard size={18} /> Financials</button>
         </nav>
 
         <div className={styles.sidebarFooter}>
@@ -220,6 +230,63 @@ export default function AdminDashboard() {
               </div>
           </div>
         )}
+
+        {activeTab === 'users' && (
+          <div className={styles.content}>
+             <div className={styles.sectionCard}>
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+                    <tbody>
+                      {users.map(u => (
+                        <tr key={u.id}>
+                          <td><span style={{ fontSize: '0.8rem', color: '#888' }}>{u.id.substring(0, 8)}...</span></td>
+                          <td>{u.name || '-'}</td>
+                          <td>{u.email}</td>
+                          <td><span className={`badge ${u.role === 'admin' ? 'badge-gold' : u.role === 'vendor' ? 'badge-success' : 'badge-neutral'}`}>{u.role}</span></td>
+                          <td>{new Date(u.created_at).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+          </div>
+        )}
+
+        {activeTab === 'financials' && (
+          <div className={styles.content}>
+             <div className={styles.sectionCard}>
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead><tr><th>Type</th><th>Amount</th><th>Status</th><th>User/Brand</th><th>Date</th></tr></thead>
+                    <tbody>
+                      {transactions.map(t => (
+                        <tr key={t.id}>
+                          <td><span style={{ textTransform: 'capitalize' }}>{t.type.replace('_', ' ')}</span></td>
+                          <td style={{ fontWeight: 700, color: t.type === 'payment_in' ? '#10b981' : t.type === 'payout' ? '#ef4444' : '#c9a14a' }}>
+                            {t.type === 'payout' ? '-' : '+'}₦{Number(t.amount || 0).toLocaleString()}
+                          </td>
+                          <td><span className={`badge ${t.status === 'success' ? 'badge-success' : 'badge-neutral'}`}>{t.status}</span></td>
+                          <td>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              {t.brands?.name && <span style={{ fontSize: '0.85rem' }}>B: {t.brands.name}</span>}
+                              {t.users?.name && <span style={{ fontSize: '0.85rem' }}>U: {t.users.name}</span>}
+                            </div>
+                          </td>
+                          <td>{new Date(t.created_at).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                      {transactions.length === 0 && (
+                        <tr><td colSpan={5} style={{textAlign: 'center', padding: '2rem'}}>No transactions found.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+          </div>
+        )}
+
       </main>
     </div>
   );
