@@ -79,6 +79,10 @@ export default function AdminDashboard() {
     }
   };
 
+  const toggleVerification = async (brandId: string, currentVerified: boolean) => {
+    await updateVerification(brandId, currentVerified ? 'unverified' : 'verified');
+  };
+
   const deleteProduct = async (productId: string) => {
     if (!confirm('Remove this product from the platform?')) return;
     const { error } = await supabase.from('products').delete().eq('id', productId);

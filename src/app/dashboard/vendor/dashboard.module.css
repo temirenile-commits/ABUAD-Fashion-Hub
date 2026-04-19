@@ -349,3 +349,223 @@
   display: flex;
   justify-content: flex-end;
 }
+
+/* Vivid Media System */
+.vividMediaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.vividMediaItem {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg-300);
+}
+
+.vividMediaItem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.removeMedia {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.removeMedia:hover {
+  background: var(--primary);
+  transform: scale(1.1);
+}
+
+.vividUploadTrigger {
+  aspect-ratio: 1;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-400);
+  background: var(--bg-100);
+}
+
+.vividUploadTrigger:hover {
+  border-color: var(--primary);
+  background: var(--bg-200);
+  color: var(--primary);
+}
+
+.vividUploadTrigger span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Inventory Grid Refinement */
+.inventoryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.inventoryCard {
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.inventoryCard:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary);
+}
+
+.invImg {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--bg-300);
+}
+
+.invImg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.invInfo {
+  padding: 1.25rem;
+}
+
+.invInfo h4 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.invPrice {
+  font-weight: 700;
+  color: var(--primary);
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.invStats {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: var(--text-400);
+}
+
+.invStats span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.invActions {
+  display: flex;
+  border-top: 1px solid var(--border);
+}
+
+.invActions button {
+  flex: 1;
+  padding: 0.75rem;
+  font-size: 0.85rem;
+  border-radius: 0;
+}
+
+/* Reels Display */
+.reelsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.reelCard {
+  position: relative;
+  aspect-ratio: 9/16;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #000;
+  border: 1px solid var(--border);
+}
+
+.reelCard video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reelOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 1rem;
+}
+
+.reelCard:hover .reelOverlay {
+  opacity: 1;
+}
+
+.reelDelete {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: rgba(239, 68, 68, 0.2);
+  backdrop-filter: blur(8px);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.emptyNotice {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 2rem;
+  background: var(--bg-100);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-xl);
+  color: var(--text-400);
+  gap: 1.5rem;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}

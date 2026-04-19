@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { initializeTransaction } from '@/lib/paystack';
 
 export async function POST(req: Request) {
+  const commissionRate = 0.075; // 7.5% platform fee
   try {
     const { userId, items, totalAmount, shippingAddress, deliveryMethod } = await req.json();
 

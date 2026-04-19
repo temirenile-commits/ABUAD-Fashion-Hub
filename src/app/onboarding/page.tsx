@@ -14,6 +14,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { uploadFile } from '@/lib/storage';
 import styles from './onboarding.module.css';
 
 const STEPS = [

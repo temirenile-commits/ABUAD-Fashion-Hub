@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell } from 'lucide-react';
+import Link from 'next/link';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
+import { uploadFile } from '@/lib/storage';
 import styles from './dashboard.module.css';
 
 export default function VendorDashboard() {
@@ -55,7 +57,7 @@ export default function VendorDashboard() {
         setLoading(false);
         return;
       }
-      
+
       if (brandData.verification_status === 'approved' && !brandData.fee_paid) {
         router.push('/dashboard/vendor/pay-fee');
         return;
@@ -121,6 +123,59 @@ export default function VendorDashboard() {
       .eq('brand_id', brandId)
       .order('created_at', { ascending: false });
     setProducts(data || []);
+  };
+
+  const handleProductMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    setLoading(true);
+
+    const files = Array.from(e.target.files);
+    const uploadedUrls: string[] = [];
+
+    for (const file of files) {
+      const { url, error } = await uploadFile(file, 'product-media', `prod-${brand.id}`);
+      if (url) uploadedUrls.push(url);
+      else alert(`Upload failed: ${error}`);
+    }
+
+    setNewProduct(prev => ({
+      ...prev,
+      mediaUrls: [...prev.mediaUrls, ...uploadedUrls]
+    }));
+    setLoading(false);
+  };
+
+  const handleReelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0] || !brand) return;
+    setLoading(true);
+
+    const file = e.target.files[0];
+    const { url, error } = await uploadFile(file, 'product-media', `reel-${brand.id}`);
+
+    if (url) {
+      const { error: dbError } = await supabase
+        .from('brand_reels')
+        .insert({
+          brand_id: brand.id,
+          video_url: url,
+        });
+
+      if (!dbError) {
+        alert('Reel uploaded successfully!');
+        // Refresh reels
+        const { data: reelData } = await supabase
+          .from('brand_reels')
+          .select('*')
+          .eq('brand_id', brand.id)
+          .order('created_at', { ascending: false });
+        setReels(reelData || []);
+      } else {
+        alert('Database error: ' + dbError.message);
+      }
+    } else {
+      alert('Upload failed: ' + error);
+    }
+    setLoading(false);
   };
 
   const handleProductSubmit = async (e: React.FormEvent) => {
@@ -606,14 +661,35 @@ export default function VendorDashboard() {
                   </div>
 
                   <div className={styles.inputGroup}>
-                    <label>Product Image URL</label>
-                    <input
-                      type="text"
-                      placeholder="https://..."
-                      required
-                      value={newProduct.mediaUrls[0] || ''}
-                      onChange={(e) => setNewProduct({ ...newProduct, mediaUrls: [e.target.value] })}
-                    />
+                    <label>Product Gallery (Vivid Photos)</label>
+                    <div className={styles.vividMediaGrid}>
+                      {newProduct.mediaUrls.map((url, idx) => (
+                        <div key={idx} className={styles.vividMediaItem}>
+                          <img src={url} alt={`Preview ${idx}`} />
+                          <button
+                            type="button"
+                            className={styles.removeMedia}
+                            onClick={() => setNewProduct(prev => ({ ...prev, mediaUrls: prev.mediaUrls.filter((_, i) => i !== idx) }))}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      {newProduct.mediaUrls.length < 5 && (
+                        <label className={styles.vividUploadTrigger}>
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            hidden
+                            onChange={(e) => handleProductMediaUpload(e)}
+                          />
+                          <Upload size={20} />
+                          <span>Add Photo</span>
+                        </label>
+                      )}
+                    </div>
+                    <p className={styles.formHint}>Upload up to 5 high-quality photos to make your product stand out.</p>
                   </div>
 
                   <div className={styles.formFooter}>
@@ -654,6 +730,73 @@ export default function VendorDashboard() {
                 </div>
               ))}
               {products.length === 0 && <p className={styles.emptyText}>No products yet.</p>}
+            </div>
+          </div>
+        )}
+
+        {/* Services Tab */}
+        {activeTab === 'services' && (
+          <div className={styles.tabContent}>
+            <div className={styles.tabHeader}>
+              <div>
+                <h1 className={styles.title}>Service Listings</h1>
+                <p className={styles.subtitle}>Manage your fashion services like tailoring, styling, or hair.</p>
+              </div>
+              <button className="btn btn-primary" onClick={() => alert('Service creation coming in next refinement!')}>
+                <Scissors size={18} /> Add Service
+              </button>
+            </div>
+            
+            <div className={styles.inventoryGrid}>
+              {brand.brand_type === 'product' && (
+                <div className={styles.emptyNotice}>
+                  <Info size={32} />
+                  <p>You currently have a 'Product-only' account. Update your settings to offer services.</p>
+                </div>
+              )}
+              {brand.brand_type !== 'product' && (
+                <p className={styles.emptyText}>No services listed yet.</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Reels Tab */}
+        {activeTab === 'reels' && (
+          <div className={styles.tabContent}>
+            <div className={styles.tabHeader}>
+              <div>
+                <h1 className={styles.title}>Collection Reels</h1>
+                <p className={styles.subtitle}>Upload short videos of your latest designs to engage customers vividly.</p>
+              </div>
+              <label className="btn btn-primary">
+                <input type="file" accept="video/*" hidden onChange={handleReelUpload} />
+                <Video size={18} /> Upload Reel
+              </label>
+            </div>
+
+            <div className={styles.reelsGrid}>
+              {reels.map(reel => (
+                <div key={reel.id} className={styles.reelCard}>
+                  <video src={reel.video_url} loop muted onMouseOver={e => e.currentTarget.play()} onMouseOut={e => e.currentTarget.pause()} />
+                  <div className={styles.reelOverlay}>
+                    <button className={styles.reelDelete} onClick={async () => {
+                      if (confirm('Delete this reel?')) {
+                        const { error } = await supabase.from('brand_reels').delete().eq('id', reel.id);
+                        if (!error) setReels(prev => prev.filter(r => r.id !== reel.id));
+                      }
+                    }}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {reels.length === 0 && (
+                <div className={styles.emptyNotice}>
+                  <Video size={48} style={{ opacity: 0.2 }} />
+                  <p>No collection reels yet. Videos boost engagement by 300%!</p>
+                </div>
+              )}
             </div>
           </div>
         )}

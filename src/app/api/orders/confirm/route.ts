@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     await supabaseAdmin.from('transactions').insert({
       order_id: order.id,
       brand_id: order.brand_id,
-      user_id: customerId, // Customer who confirmed
+      user_id: userId, // Customer who confirmed
       type: 'escrow_release',
       amount: order.vendor_earning,
       status: 'success',

@@ -77,7 +77,7 @@ export default function ProductCard({ product }: Props) {
         {discount && discount > 0 && product.stock_count > 0 && (
           <span className={styles.discountBadge}>-{discount}%</span>
         )}
-        
+
         {product.brands?.verified && (
           <div className={styles.verifiedBadge}>
             <ShieldCheck size={10} /> Official
@@ -93,14 +93,14 @@ export default function ProductCard({ product }: Props) {
             <span className={styles.oldPrice}>{formatPrice(product.original_price)}</span>
           )}
         </div>
-        
+
         <div className={styles.footer}>
           <div className={styles.rating}>
             <Star size={10} fill="currentColor" />
             <span>{product.rating || 4.5}</span>
           </div>
           {product.stock_count > 0 ? (
-            <button 
+            <button
               className={styles.quickAdd}
               onClick={handleAddToCart}
               aria-label="Add to cart"
