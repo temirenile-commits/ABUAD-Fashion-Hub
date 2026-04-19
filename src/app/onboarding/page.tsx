@@ -115,7 +115,7 @@ export default function OnboardingPage() {
           description: form.description,
           whatsapp_number: form.whatsapp,
           verification_status: 'pending',
-          is_verified: false,
+          verified: false,
           fee_paid: false,
           logo_url: logoUrl,
           verification_documents: verificationUrls,

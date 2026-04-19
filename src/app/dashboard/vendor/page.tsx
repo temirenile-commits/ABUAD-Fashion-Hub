@@ -108,6 +108,14 @@ export default function VendorDashboard() {
         .eq('brand_id', brandData.id)
         .order('created_at', { ascending: false });
 
+      // Fetch Products
+      const { data: productData } = await supabase
+        .from('products')
+        .select('*')
+        .eq('brand_id', brandData.id)
+        .order('created_at', { ascending: false });
+      setProducts(productData || []);
+
       setReels(reelData || []);
 
       setLoading(false);
