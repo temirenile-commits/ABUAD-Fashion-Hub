@@ -11,8 +11,10 @@ type BucketName = 'brand-assets' | 'product-media' | 'verification-docs';
  * Compresses an image file before upload.
  */
 async function compressImage(file: File): Promise<File> {
-  // Only compress images
-  if (!file.type.startsWith('image/')) return file;
+  // 🚀 Optimization: Skip compression if the file is already small (< 500KB)
+  if (!file.type.startsWith('image/') || file.size < 500 * 1024) {
+    return file;
+  }
   
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -41,7 +43,8 @@ async function compressImage(file: File): Promise<File> {
         canvas.height = height;
         ctx?.drawImage(img, 0, 0, width, height);
         
-        // Convert to WebP format for fast uploads/downloads (80% quality)
+        // Try WebP first, fallback to JPEG for older browsers
+        const format = 'image/webp';
         canvas.toBlob((blob) => {
           if (blob) {
             const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), {
@@ -50,13 +53,24 @@ async function compressImage(file: File): Promise<File> {
             });
             resolve(compressedFile);
           } else {
-            resolve(file); // Fallback to original if conversion fails
+            // Fallback to JPEG if WebP isn't supported or fails
+            canvas.toBlob((bgBlob) => {
+              if (bgBlob) {
+                const jpegFile = new File([bgBlob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(jpegFile);
+              } else {
+                resolve(file);
+              }
+            }, 'image/jpeg', 0.8);
           }
-        }, 'image/webp', 0.8);
+        }, format, 0.8);
       };
-      img.onerror = () => resolve(file); // Fallback to original if load fails
+      img.onerror = () => resolve(file);
     };
-    reader.onerror = () => resolve(file); // Fallback to original if read fails
+    reader.onerror = () => resolve(file);
   });
 }
 
