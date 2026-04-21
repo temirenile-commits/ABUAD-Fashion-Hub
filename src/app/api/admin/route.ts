@@ -206,5 +206,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  if (action === 'update_user_role') {
+    const { userId, newRole } = body;
+    const currentAdmin = await verifyAdmin(req); // Double check for safety
+    
+    // Safety check: Don't allow an admin to demote themselves
+    if (currentAdmin?.id === userId && newRole !== 'admin') {
+      return NextResponse.json({ error: 'You cannot demote yourself.' }, { status: 400 });
+    }
+
+    // 1. Update public.users
+    const { error: profileError } = await supabaseAdmin
+      .from('users')
+      .update({ role: newRole })
+      .eq('id', userId);
+    
+    if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 });
+
+    // 2. Update Auth metadata (to ensure consistent session role)
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      user_metadata: { role: newRole }
+    });
+
+    if (authError) return NextResponse.json({ error: authError.message }, { status: 500 });
+
+    return NextResponse.json({ success: true });
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }

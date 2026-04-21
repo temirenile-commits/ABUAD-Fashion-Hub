@@ -396,11 +396,23 @@ export default function AdminDashboard() {
                           <tr key={u.id}>
                             <td style={{ fontWeight: 600 }}>{u.name || '—'}</td>
                             <td>{u.email}</td>
-                            <td>
-                              <span className={`badge ${u.role === 'admin' ? 'badge-gold' : u.role === 'vendor' ? 'badge-success' : 'badge-neutral'}`}>
-                                {u.role}
-                              </span>
-                            </td>
+                             <td>
+                               <select 
+                                 className={`badge ${u.role === 'admin' ? 'badge-gold' : u.role === 'vendor' ? 'badge-success' : 'badge-neutral'}`}
+                                 style={{ border: 'none', appearance: 'none', cursor: 'pointer', padding: '0.2rem 1.5rem 0.2rem 0.5rem', backgroundPosition: 'right 0.5rem center' }}
+                                 value={u.role}
+                                 onChange={(e) => {
+                                   const newRole = e.target.value;
+                                   if (confirm(`Change role for ${u.email} to ${newRole}?`)) {
+                                     adminAction('update_user_role', { userId: u.id, newRole });
+                                   }
+                                 }}
+                               >
+                                 <option value="customer">CUSTOMER</option>
+                                 <option value="vendor">VENDOR</option>
+                                 <option value="admin">ADMIN</option>
+                               </select>
+                             </td>
                             <td>
                               {u.confirmed ? <CheckCircle size={16} color="#10b981" /> : <AlertTriangle size={16} color="#f59e0b" />}
                             </td>
