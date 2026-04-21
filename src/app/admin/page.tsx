@@ -4,7 +4,8 @@ import Link from 'next/link';
 import {
   Users, Store, ShoppingBag, TrendingUp, CheckCircle, XCircle,
   Search, Settings, CreditCard, Loader2, RefreshCw, Trash2, Star,
-  AlertTriangle, Eye, ShieldCheck, ShieldX, LogOut
+  AlertTriangle, Eye, ShieldCheck, ShieldX, LogOut, X, FileText,
+  MapPin, Phone, Mail, ExternalLink
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
@@ -29,6 +30,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState('');
   const [search, setSearch] = useState('');
+  const [selectedVendor, setSelectedVendor] = useState<any>(null);
 
   const [stats, setStats] = useState({ userCount: 0, brandCount: 0, productCount: 0, totalRevenue: 0 });
   const [vendors, setVendors] = useState<any[]>([]);
@@ -301,24 +303,23 @@ export default function AdminDashboard() {
                             </td>
                             <td>
                               <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                <button 
+                                  className="btn btn-ghost btn-sm" 
+                                  onClick={() => setSelectedVendor(v)}
+                                  title="Review Details"
+                                >
+                                  <Eye size={14} /> Review
+                                </button>
                                 {v.verification_status === 'pending' && (
                                   <>
                                     <button className="btn btn-primary btn-sm" disabled={!!actionLoading} onClick={() => adminAction('approve_vendor', { brandId: v.id })}>
                                       <ShieldCheck size={14} /> Approve
-                                    </button>
-                                    <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} disabled={!!actionLoading} onClick={() => adminAction('reject_vendor', { brandId: v.id })}>
-                                      <ShieldX size={14} /> Reject
                                     </button>
                                   </>
                                 )}
                                 {v.verification_status === 'approved' && (
                                   <button className="btn btn-primary btn-sm" disabled={!!actionLoading} onClick={() => adminAction('mark_verified', { brandId: v.id })}>
                                     <CheckCircle size={14} /> Mark Verified
-                                  </button>
-                                )}
-                                {(v.verification_status === 'verified' || v.verification_status === 'rejected') && (
-                                  <button className="btn btn-ghost btn-sm" disabled={!!actionLoading} onClick={() => adminAction('reject_vendor', { brandId: v.id, reason: 'Revoked by admin' })}>
-                                    Revoke
                                   </button>
                                 )}
                               </div>
@@ -513,6 +514,150 @@ export default function AdminDashboard() {
           </>
         )}
       </main>
+
+      {/* ── Vendor Details Modal ── */}
+      {selectedVendor && (
+        <div 
+          className={styles.modalOverlay}
+          onClick={(e) => e.target === e.currentTarget && setSelectedVendor(null)}
+        >
+          <div className={styles.modalContent}>
+            <header className={styles.modalHeader}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                {selectedVendor.logo_url ? (
+                  <img src={selectedVendor.logo_url} alt="" className={styles.modalLogo} />
+                ) : (
+                  <div className={styles.modalLogoPlaceholder}>
+                    {selectedVendor.name?.substring(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <h2>{selectedVendor.name}</h2>
+                  <p className={styles.categoryBadge}>{selectedVendor.category}</p>
+                </div>
+              </div>
+              <button 
+                className={styles.closeBtn}
+                onClick={() => setSelectedVendor(null)}
+              >
+                <X size={20} />
+              </button>
+            </header>
+
+            <div className={styles.modalBody}>
+              <section className={styles.modalSection}>
+                <h3><FileText size={16} /> Brand Story</h3>
+                <p className={styles.descriptionText}>
+                  {selectedVendor.description || 'No description provided.'}
+                </p>
+              </section>
+
+              <div className={styles.detailsGrid}>
+                <section className={styles.modalSection}>
+                  <h3><Mail size={16} /> Contact Details</h3>
+                  <div className={styles.contactList}>
+                    <div className={styles.contactItem}>
+                      <Mail size={14} /> <span>{selectedVendor.users?.email || 'N/A'}</span>
+                    </div>
+                    <div className={styles.contactItem}>
+                      <Phone size={14} /> <span>{selectedVendor.whatsapp_number || 'N/A'}</span>
+                    </div>
+                  </div>
+                </section>
+
+                <section className={styles.modalSection}>
+                  <h3><ShieldCheck size={16} /> Status</h3>
+                  <span className={`badge ${
+                    selectedVendor.verification_status === 'verified' ? 'badge-success' :
+                    selectedVendor.verification_status === 'approved' ? 'badge-gold' :
+                    selectedVendor.verification_status === 'pending' ? 'badge-neutral' :
+                    'badge-error'
+                  }`}>
+                    {selectedVendor.verification_status?.toUpperCase() || 'PENDING'}
+                  </span>
+                </section>
+              </div>
+
+              <section className={styles.modalSection}>
+                <h3><ShieldCheck size={16} /> Verification Documents</h3>
+                <div className={styles.docGrid}>
+                  <div className={styles.docCard}>
+                    <div className={styles.docInfo}>
+                      <FileText size={20} strokeWidth={1.5} />
+                      <div>
+                        <strong>Student ID</strong>
+                        <p>{selectedVendor.student_id_url ? 'Uploaded' : 'Missing'}</p>
+                      </div>
+                    </div>
+                    {selectedVendor.student_id_url && (
+                      <a href={selectedVendor.student_id_url} target="_blank" rel="noreferrer" className={styles.viewDocBtn}>
+                        <Eye size={14} /> View Document
+                      </a>
+                    )}
+                  </div>
+
+                  <div className={styles.docCard}>
+                    <div className={styles.docInfo}>
+                      <ShieldCheck size={20} strokeWidth={1.5} />
+                      <div>
+                        <strong>Business Proof</strong>
+                        <p>{selectedVendor.business_proof_url ? 'Uploaded' : 'Missing'}</p>
+                      </div>
+                    </div>
+                    {selectedVendor.business_proof_url && (
+                      <a href={selectedVendor.business_proof_url} target="_blank" rel="noreferrer" className={styles.viewDocBtn}>
+                        <Eye size={14} /> View Document
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <footer className={styles.modalFooter}>
+              {selectedVendor.verification_status === 'pending' && (
+                <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ flex: 1 }}
+                    onClick={() => {
+                      adminAction('approve_vendor', { brandId: selectedVendor.id });
+                      setSelectedVendor(null);
+                    }}
+                  >
+                    <ShieldCheck size={18} /> Approve Application
+                  </button>
+                  <button 
+                    className="btn btn-ghost" 
+                    style={{ flex: 1, color: '#ef4444', border: '1px solid #ef4444' }}
+                    onClick={() => {
+                      const reason = prompt('Reason for rejection?');
+                      if (reason !== null) {
+                        adminAction('reject_vendor', { brandId: selectedVendor.id, reason });
+                        setSelectedVendor(null);
+                      }
+                    }}
+                  >
+                    <ShieldX size={18} /> Reject
+                  </button>
+                </div>
+              )}
+              {selectedVendor.verification_status === 'approved' && (
+                <button 
+                  className="btn btn-primary" 
+                  style={{ width: '100%' }}
+                  onClick={() => {
+                    adminAction('mark_verified', { brandId: selectedVendor.id });
+                    setSelectedVendor(null);
+                  }}
+                >
+                  <CheckCircle size={18} /> Mark as Verified (Fee Paid)
+                </button>
+              )}
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

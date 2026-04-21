@@ -7,61 +7,75 @@ import { supabase } from './supabase';
 
 type BucketName = 'brand-assets' | 'product-media' | 'verification-docs' | 'brand-logos' | 'product-images' | 'product-videos';
 
+const SKIP_THRESHOLD = 5 * 1024 * 1024; // 5MB fast-track
+const TARGET_SIZE = 1280; // Standard HD
+const OPTIMIZATION_TIMEOUT = 8000; // 8 seconds safety limit
+
 /**
- * Compresses an image file before upload.
+ * Robust image optimization with fallback
  */
-async function compressImage(file: File, maxWidth: number = 1600): Promise<File> {
-  // 🚀 FAST-TRACK: Skip compression if the file is NOT an image or is already "fast enough" (< 1.5MB)
-  if (!file.type.startsWith('image/') || file.size < 1.5 * 1024 * 1024) {
+async function optimizeImage(file: File): Promise<File> {
+  const isBasicImage = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+  
+  // 1. Instant Bypass for non-images, heavy formats (HEIC), or small files
+  if (!isBasicImage || file.size < SKIP_THRESHOLD) {
     return file;
   }
-  
+
   return new Promise((resolve) => {
-    // 💡 Performance: Use URL.createObjectURL instead of FileReader
     const imgUrl = URL.createObjectURL(file);
     const img = new Image();
-    img.src = imgUrl;
+    
+    // Safety timeout: If resizing hangs, return original file instead of failing
+    const timeout = setTimeout(() => {
+      URL.revokeObjectURL(imgUrl);
+      console.warn('Image optimization timed out, using original.');
+      resolve(file);
+    }, OPTIMIZATION_TIMEOUT);
 
     img.onload = () => {
+      clearTimeout(timeout);
       const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
       let width = img.width;
       let height = img.height;
-      
-      // HD Scaling (1280px is often faster and sharper for documents)
-      if (width > height && width > maxWidth) {
-        height *= maxWidth / width;
-        width = maxWidth;
-      } else if (height > maxWidth) {
-        width *= maxWidth / height;
-        height = maxWidth;
+
+      if (width > TARGET_SIZE || height > TARGET_SIZE) {
+        if (width > height) {
+          height *= TARGET_SIZE / width;
+          width = TARGET_SIZE;
+        } else {
+          width *= TARGET_SIZE / height;
+          height = TARGET_SIZE;
+        }
       }
-      
+
       canvas.width = width;
       canvas.height = height;
-      ctx?.drawImage(img, 0, 0, width, height);
-      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        URL.revokeObjectURL(imgUrl);
+        resolve(file); // Fallback
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, width, height);
       canvas.toBlob((blob) => {
         URL.revokeObjectURL(imgUrl);
-        
-        if (blob) {
-          // 💡 Network Optimization: 0.70 quality provides a massive speed boost on 4G/Slow connections
-          const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
-            type: 'image/jpeg',
-            lastModified: Date.now(),
-          });
-          resolve(compressedFile);
-        } else {
+        if (!blob) {
           resolve(file);
+          return;
         }
+        resolve(new File([blob], file.name, { type: 'image/jpeg' }));
       }, 'image/jpeg', 0.70);
     };
 
     img.onerror = () => {
+      clearTimeout(timeout);
       URL.revokeObjectURL(imgUrl);
-      resolve(file);
+      resolve(file); // Final fallback: if it can't be rendered, just upload raw
     };
+
+    img.src = imgUrl;
   });
 }
 
@@ -72,19 +86,16 @@ export async function uploadFile(
   onProgress?: (progress: number) => void
 ): Promise<{ url: string | null; error: string | null }> {
   try {
-    const isImage = file.type.startsWith('image/');
-    const isLogo = bucket === 'brand-logos' || bucket === 'product-images';
+    if (onProgress) onProgress(2); // Start bar immediately
     
-    let fileToUpload = file;
-    if (isImage) {
-      if (onProgress) onProgress(2); // Start bar immediately
-      // Documents Optimized at 1280px (HD), Logos at 2000px
-      fileToUpload = await compressImage(file, isLogo ? 2000 : 1280);
-    }
+    // Heavy lifting: Optimize if needed, otherwise instant fast-track
+    const fileToUpload = await optimizeImage(file);
 
     const fileExt = fileToUpload.name.split('.').pop();
     const fileName = `${path}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${fileName}`;
+
+    const isImage = file.type.startsWith('image/');
 
     const { error: uploadError } = await supabase.storage
       .from(bucket)
@@ -95,8 +106,9 @@ export async function uploadFile(
         onUploadProgress: (progress: any) => {
           if (onProgress) {
             const percent = Math.round((progress.loaded / progress.total) * 100);
-            const truePercent = isImage ? 5 + (percent * 0.95) : percent;
-            onProgress(Math.min(99, Math.round(truePercent)));
+            // Optimization takes a tiny fraction, so we start at 2% and go to 99%
+            const scaledPercent = 2 + (percent * 0.97);
+            onProgress(Math.min(99, Math.round(scaledPercent)));
           }
         }
       } as any);
