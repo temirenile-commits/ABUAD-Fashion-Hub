@@ -11,13 +11,13 @@ type BucketName = 'brand-assets' | 'product-media' | 'verification-docs' | 'bran
  * Compresses an image file before upload.
  */
 async function compressImage(file: File, maxWidth: number = 1600): Promise<File> {
-  // 🚀 Optimization: Skip compression if the file is NOT an image or is already small
-  if (!file.type.startsWith('image/') || file.size < 800 * 1024) {
+  // 🚀 FAST-TRACK: Skip compression if the file is NOT an image or is already "fast enough" (< 1.5MB)
+  if (!file.type.startsWith('image/') || file.size < 1.5 * 1024 * 1024) {
     return file;
   }
   
   return new Promise((resolve) => {
-    // 💡 Performance Fix: Use URL.createObjectURL instead of FileReader for speed
+    // 💡 Performance: Use URL.createObjectURL instead of FileReader
     const imgUrl = URL.createObjectURL(file);
     const img = new Image();
     img.src = imgUrl;
@@ -29,7 +29,7 @@ async function compressImage(file: File, maxWidth: number = 1600): Promise<File>
       let width = img.width;
       let height = img.height;
       
-      // Use provided maxWidth (e.g. 800 for docs, 2000 for logos)
+      // HD Scaling (1280px is often faster and sharper for documents)
       if (width > height && width > maxWidth) {
         height *= maxWidth / width;
         width = maxWidth;
@@ -43,10 +43,10 @@ async function compressImage(file: File, maxWidth: number = 1600): Promise<File>
       ctx?.drawImage(img, 0, 0, width, height);
       
       canvas.toBlob((blob) => {
-        // Clean up memory
         URL.revokeObjectURL(imgUrl);
         
         if (blob) {
+          // 💡 Network Optimization: 0.70 quality provides a massive speed boost on 4G/Slow connections
           const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
             type: 'image/jpeg',
             lastModified: Date.now(),
@@ -55,7 +55,7 @@ async function compressImage(file: File, maxWidth: number = 1600): Promise<File>
         } else {
           resolve(file);
         }
-      }, 'image/jpeg', 0.82);
+      }, 'image/jpeg', 0.70);
     };
 
     img.onerror = () => {
@@ -72,15 +72,14 @@ export async function uploadFile(
   onProgress?: (progress: number) => void
 ): Promise<{ url: string | null; error: string | null }> {
   try {
-    // 💡 CONDITIONAL COMPRESSION:
-    // 1. Detect if it's an image. If not (PDF, Doc), skip optimization entirely for 0ms delay.
     const isImage = file.type.startsWith('image/');
     const isLogo = bucket === 'brand-logos' || bucket === 'product-images';
     
     let fileToUpload = file;
     if (isImage) {
-      if (onProgress) onProgress(5); // Show tiny progress for optimization phase
-      fileToUpload = await compressImage(file, isLogo ? 2000 : 800);
+      if (onProgress) onProgress(2); // Start bar immediately
+      // Documents Optimized at 1280px (HD), Logos at 2000px
+      fileToUpload = await compressImage(file, isLogo ? 2000 : 1280);
     }
 
     const fileExt = fileToUpload.name.split('.').pop();
@@ -92,12 +91,11 @@ export async function uploadFile(
       .upload(filePath, fileToUpload, {
         cacheControl: '3600',
         upsert: false,
-        // 💡 PROGRESS FIX: Cast to 'any' to bypass missing type in some SDK versions
+        contentType: fileToUpload.type, // 💡 Speed tip: Always set content type explicitly
         onUploadProgress: (progress: any) => {
           if (onProgress) {
             const percent = Math.round((progress.loaded / progress.total) * 100);
-            // Ensure optimization phase is accounted for
-            const truePercent = isImage ? 10 + (percent * 0.9) : percent;
+            const truePercent = isImage ? 5 + (percent * 0.95) : percent;
             onProgress(Math.min(99, Math.round(truePercent)));
           }
         }
@@ -109,7 +107,6 @@ export async function uploadFile(
 
     if (onProgress) onProgress(100);
 
-    // Get Public URL
     const { data: { publicUrl } } = supabase.storage
       .from(bucket)
       .getPublicUrl(filePath);
