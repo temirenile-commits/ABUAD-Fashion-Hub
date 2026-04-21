@@ -66,11 +66,17 @@ export async function GET(req: NextRequest) {
   if (action === 'vendors') {
     const { data, error } = await supabaseAdmin
       .from('brands')
-      .select('*, users:owner_id(name, email)')
+      .select('*, owner:users(name, email)')
       .order('created_at', { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ vendors: data });
+    // Transform owner for easier frontend access
+    const transformed = (data || []).map(v => ({
+      ...v,
+      users: v.owner || { name: 'Unknown', email: 'N/A' },
+      verification_documents: [v.student_id_url, v.business_proof_url].filter(Boolean)
+    }));
+    return NextResponse.json({ vendors: transformed });
   }
 
   if (action === 'products') {
