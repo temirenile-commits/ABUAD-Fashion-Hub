@@ -410,7 +410,9 @@ export default function OnboardingPage() {
                   {uploadingDoc ? (
                     <div style={{ padding: '1rem', width: '100%', textAlign: 'center' }}>
                       <div className="spinner" style={{ width: 30, height: 30, margin: '0 auto 0.5rem' }} />
-                      <p style={{ fontSize: '0.8rem' }}>Uploading Proof {docProgress}%</p>
+                      <p style={{ fontSize: '0.8rem' }}>
+                        {docProgress < 10 ? 'Optimizing local file...' : `Uploading Document ${docProgress}%`}
+                      </p>
                       <div style={{ width: '100%', height: '4px', background: 'var(--bg-100)', marginTop: '0.5rem', borderRadius: '10px', overflow: 'hidden' }}>
                         <div style={{ width: `${docProgress}%`, height: '100%', background: 'var(--primary)', transition: 'width 0.3s ease' }} />
                       </div>

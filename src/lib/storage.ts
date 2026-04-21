@@ -11,52 +11,57 @@ type BucketName = 'brand-assets' | 'product-media' | 'verification-docs' | 'bran
  * Compresses an image file before upload.
  */
 async function compressImage(file: File, maxWidth: number = 1600): Promise<File> {
-  // 🚀 Optimization: Skip compression if the file is already small (< 500KB)
-  if (!file.type.startsWith('image/') || file.size < 500 * 1024) {
+  // 🚀 Optimization: Skip compression if the file is NOT an image or is already small
+  if (!file.type.startsWith('image/') || file.size < 800 * 1024) {
     return file;
   }
   
   return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+    // 💡 Performance Fix: Use URL.createObjectURL instead of FileReader for speed
+    const imgUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.src = imgUrl;
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      let width = img.width;
+      let height = img.height;
+      
+      // Use provided maxWidth (e.g. 800 for docs, 2000 for logos)
+      if (width > height && width > maxWidth) {
+        height *= maxWidth / width;
+        width = maxWidth;
+      } else if (height > maxWidth) {
+        width *= maxWidth / height;
+        height = maxWidth;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      canvas.toBlob((blob) => {
+        // Clean up memory
+        URL.revokeObjectURL(imgUrl);
         
-        let width = img.width;
-        let height = img.height;
-        
-        // Use provided maxWidth (e.g. 800 for docs, 2000 for logos)
-        if (width > height && width > maxWidth) {
-          height *= maxWidth / width;
-          width = maxWidth;
-        } else if (height > maxWidth) {
-          width *= maxWidth / height;
-          height = maxWidth;
+        if (blob) {
+          const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+          });
+          resolve(compressedFile);
+        } else {
+          resolve(file);
         }
-        
-        canvas.width = width;
-        canvas.height = height;
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
-              type: 'image/jpeg',
-              lastModified: Date.now(),
-            });
-            resolve(compressedFile);
-          } else {
-            resolve(file);
-          }
-        }, 'image/jpeg', 0.85);
-      };
-      img.onerror = () => resolve(file);
+      }, 'image/jpeg', 0.82);
     };
-    reader.onerror = () => resolve(file);
+
+    img.onerror = () => {
+      URL.revokeObjectURL(imgUrl);
+      resolve(file);
+    };
   });
 }
 
@@ -68,28 +73,41 @@ export async function uploadFile(
 ): Promise<{ url: string | null; error: string | null }> {
   try {
     // 💡 CONDITIONAL COMPRESSION:
-    // Logos get high res (2000px), docs get optimized res (800px)
+    // 1. Detect if it's an image. If not (PDF, Doc), skip optimization entirely for 0ms delay.
+    const isImage = file.type.startsWith('image/');
     const isLogo = bucket === 'brand-logos' || bucket === 'product-images';
-    const compressedFile = await compressImage(file, isLogo ? 2000 : 800);
     
-    if (onProgress) onProgress(30); // Starting upload...
+    let fileToUpload = file;
+    if (isImage) {
+      if (onProgress) onProgress(5); // Show tiny progress for optimization phase
+      fileToUpload = await compressImage(file, isLogo ? 2000 : 800);
+    }
 
-    const fileExt = compressedFile.name.split('.').pop();
+    const fileExt = fileToUpload.name.split('.').pop();
     const fileName = `${path}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from(bucket)
-      .upload(filePath, compressedFile, {
+      .upload(filePath, fileToUpload, {
         cacheControl: '3600',
-        upsert: false
-      });
+        upsert: false,
+        // 💡 PROGRESS FIX: Cast to 'any' to bypass missing type in some SDK versions
+        onUploadProgress: (progress: any) => {
+          if (onProgress) {
+            const percent = Math.round((progress.loaded / progress.total) * 100);
+            // Ensure optimization phase is accounted for
+            const truePercent = isImage ? 10 + (percent * 0.9) : percent;
+            onProgress(Math.min(99, Math.round(truePercent)));
+          }
+        }
+      } as any);
 
     if (uploadError) {
       throw uploadError;
     }
 
-    if (onProgress) onProgress(100); // Complete!
+    if (onProgress) onProgress(100);
 
     // Get Public URL
     const { data: { publicUrl } } = supabase.storage
