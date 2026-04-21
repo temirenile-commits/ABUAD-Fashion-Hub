@@ -229,7 +229,9 @@ export default function VendorDashboard() {
           originalPrice: '',
           category: 'Clothing',
           stockCount: '10',
-          mediaUrls: []
+          mediaUrls: [],
+          imageUrl: '',
+          videoUrl: ''
         });
         await fetchProducts(brand.id);
         alert('Product listed successfully!');

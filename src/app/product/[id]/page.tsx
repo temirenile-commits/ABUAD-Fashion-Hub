@@ -79,7 +79,6 @@ export default async function ProductPage({ params }: Props) {
   const relatedProducts = (relatedData || []) as unknown as LiveProduct[];
 
   const waMessage = `Hi! I'm interested in: *${product.title}* priced at *${formatPrice(product.price)}* from ABUAD Fashion Hub. Is it available?`;
-  const waMessage = `Hi! I'm interested in: *${product.title}* priced at *${formatPrice(product.price)}* from ABUAD Fashion Hub. Is it available?`;
   const whatsappNumber = vendor.whatsapp_number.replace('+', '');
 
   const mainImage = product.image_url || product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60';

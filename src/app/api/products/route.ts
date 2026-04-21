@@ -11,6 +11,8 @@ export async function POST(req: Request) {
       category, 
       stockCount, 
       mediaUrls, 
+      imageUrl,
+      videoUrl,
       brandId,
       ownerId 
     } = await req.json();

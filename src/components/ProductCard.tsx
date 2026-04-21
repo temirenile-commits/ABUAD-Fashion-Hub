@@ -38,7 +38,9 @@ export interface LiveProduct {
   reviews?: number;
   sold?: number;
 }
-// ...
+interface Props {
+  product: LiveProduct;
+}
 export default function ProductCard({ product }: Props) {
   const { addToCart } = useCart();
   const discount = product.original_price
