@@ -135,9 +135,9 @@ export default function OnboardingPage() {
 
       setIsSubmitted(true);
 
-    } catch (error: any) {
-      console.error(error);
-      setErrorMsg(error.message || 'An error occurred during brand registration.');
+    } catch (err: any) {
+      console.error('Registration failed:', err);
+      setErrorMsg(err.message || 'An error occurred during brand registration. Please try again.');
     } finally {
       setLoading(false);
     }

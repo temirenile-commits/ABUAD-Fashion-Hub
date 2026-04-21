@@ -90,6 +90,14 @@ export default function Navbar() {
         <div className={styles.actions}>
           {user ? (
             <>
+              {role === 'admin' && (
+                <div className={styles.actionItem}>
+                  <Link href="/admin" className={styles.actionLink} style={{ color: 'var(--accent-gold)' }}>
+                    <LayoutDashboard size={20} />
+                    <span>Admin Panel</span>
+                  </Link>
+                </div>
+              )}
               <div className={styles.actionItem}>
                 <Link href={dashboardLink} className={styles.actionLink}>
                   <User size={20} />
@@ -167,6 +175,11 @@ export default function Navbar() {
           <div className={styles.mobileDivider} />
           {user ? (
             <>
+              {role === 'admin' && (
+                <Link href="/admin" className={styles.mobileLink} onClick={() => setMenuOpen(false)} style={{ color: 'var(--accent-gold)' }}>
+                  <ShieldCheck size={16} /> Admin Panel
+                </Link>
+              )}
               <Link href={dashboardLink} className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
                 <LayoutDashboard size={16} /> Dashboard
               </Link>
