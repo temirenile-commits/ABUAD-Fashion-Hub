@@ -75,10 +75,10 @@ export default function OnboardingPage() {
     checkUser();
   }, [router]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, bucket: 'brand-assets' | 'verification-docs') => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, bucket: 'brand-logos' | 'brand-assets' | 'verification-docs') => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
-    const isLogo = bucket === 'brand-assets';
+    const isLogo = bucket === 'brand-logos' || bucket === 'brand-assets';
     if (isLogo) setUploadingLogo(true); else setUploadingDoc(true);
     const { url, error } = await uploadFile(file, bucket, `${user.id}-${Date.now()}`);
     if (url) {
@@ -312,7 +312,7 @@ export default function OnboardingPage() {
 
               <div className={styles.uploadAreas}>
                 <label className={styles.uploadBox} style={{ opacity: uploadingLogo ? 0.7 : 1 }}>
-                  <input type="file" hidden accept="image/*" disabled={uploadingLogo} onChange={(e) => handleFileUpload(e, 'brand-assets')} />
+                  <input type="file" hidden accept="image/*" disabled={uploadingLogo} onChange={(e) => handleFileUpload(e, 'brand-logos')} />
                   {uploadingLogo ? (
                     <><div className="spinner" style={{ width: 40, height: 40 }} /><p>Uploading...</p></>
                   ) : logoUrl ? (

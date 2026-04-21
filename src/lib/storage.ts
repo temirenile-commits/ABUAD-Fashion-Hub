@@ -5,7 +5,7 @@ import { supabase } from './supabase';
  * Handles file uploads to predefined buckets.
  */
 
-type BucketName = 'brand-assets' | 'product-media' | 'verification-docs';
+type BucketName = 'brand-assets' | 'product-media' | 'verification-docs' | 'brand-logos' | 'product-images' | 'product-videos';
 
 /**
  * Compresses an image file before upload.

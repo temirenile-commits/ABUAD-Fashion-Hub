@@ -17,9 +17,10 @@ export interface LiveProduct {
   original_price: number | null;
   category: string;
   media_urls: string[];
+  image_url?: string;
+  video_url?: string;
   is_featured: boolean;
   locked: boolean;
-  video_url?: string;
   created_at?: string;
   stock_count: number;
   views_count: number;
@@ -37,18 +38,14 @@ export interface LiveProduct {
   reviews?: number;
   sold?: number;
 }
-
-interface Props {
-  product: LiveProduct;
-}
-
+// ...
 export default function ProductCard({ product }: Props) {
   const { addToCart } = useCart();
   const discount = product.original_price
     ? getDiscount(product.price, product.original_price)
     : null;
 
-  const imageUrl = product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60';
+  const imageUrl = product.image_url || product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60';
   const brandName = product.brands?.name || 'Unknown Brand';
   const whatsapp = product.brands?.whatsapp_number || '';
 

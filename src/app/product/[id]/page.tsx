@@ -79,9 +79,11 @@ export default async function ProductPage({ params }: Props) {
   const relatedProducts = (relatedData || []) as unknown as LiveProduct[];
 
   const waMessage = `Hi! I'm interested in: *${product.title}* priced at *${formatPrice(product.price)}* from ABUAD Fashion Hub. Is it available?`;
+  const waMessage = `Hi! I'm interested in: *${product.title}* priced at *${formatPrice(product.price)}* from ABUAD Fashion Hub. Is it available?`;
   const whatsappNumber = vendor.whatsapp_number.replace('+', '');
 
-  const mainImage = product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60';
+  const mainImage = product.image_url || product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60';
+  const allImages = [...(product.image_url ? [product.image_url] : []), ...(product.media_urls || [])].filter((val, i, arr) => arr.indexOf(val) === i);
 
   return (
     <main className="container">
@@ -97,27 +99,40 @@ export default async function ProductPage({ params }: Props) {
 
         {/* Product Main */}
         <div className={styles.productMain}>
-          {/* Image Gallery */}
+          {/* Image/Video Gallery */}
           <div className={styles.gallery}>
             <div className={styles.mainImg}>
-              <Image
-                src={mainImage}
-                alt={product.title}
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                priority
-                className={styles.mainImgEl}
-              />
+              {product.video_url ? (
+                <video 
+                  controls 
+                  className={styles.videoPlayer} 
+                  poster={mainImage}
+                  autoPlay
+                  muted
+                >
+                  <source src={product.video_url} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <Image
+                  src={mainImage}
+                  alt={product.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority
+                  className={styles.mainImgEl}
+                />
+              )}
               {discount && discount > 0 ? (
                 <span className={`badge badge-flash ${styles.imgDiscount}`}>
                   -{discount}% OFF
                 </span>
               ) : null}
             </div>
-            {product.media_urls && product.media_urls.length > 1 && (
+            {allImages.length > 1 && (
               <div className={styles.thumbs}>
-                {product.media_urls.map((img, i) => (
-                  <div key={i} className={`${styles.thumb} ${i === 0 ? styles.thumbActive : ''}`}>
+                {allImages.map((img, i) => (
+                  <div key={i} className={`${styles.thumb} ${img === mainImage ? styles.thumbActive : ''}`}>
                     <Image src={img} alt={`${product.title} ${i + 1}`} fill sizes="80px" className={styles.thumbImg} />
                   </div>
                 ))}

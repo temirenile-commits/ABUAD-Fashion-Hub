@@ -27,7 +27,9 @@ export default function VendorDashboard() {
     originalPrice: '',
     category: 'Clothing',
     stockCount: '10',
-    mediaUrls: [] as string[]
+    mediaUrls: [] as string[],
+    imageUrl: '',
+    videoUrl: ''
   });
 
   useEffect(() => {
@@ -134,16 +136,31 @@ export default function VendorDashboard() {
   };
 
   const handleProductMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.length) return;
+    if (!e.target.files?.length || !brand) return;
     setLoading(true);
-
+    
     const files = Array.from(e.target.files);
     const uploadedUrls: string[] = [];
 
     for (const file of files) {
-      const { url, error } = await uploadFile(file, 'product-media', `prod-${brand.id}`);
-      if (url) uploadedUrls.push(url);
-      else alert(`Upload failed: ${error}`);
+      const isVideo = file.type.startsWith('video/');
+      const bucket = isVideo ? 'product-videos' : 'product-images';
+      console.log(`Uploading ${file.name} to ${bucket}...`);
+      
+      const { url, error } = await uploadFile(file, bucket, `prod-${brand.id}`);
+      if (url) {
+        uploadedUrls.push(url);
+        // If it's the first image, set it as the main imageUrl
+        if (!isVideo && !newProduct.imageUrl) {
+          setNewProduct(prev => ({ ...prev, imageUrl: url }));
+        }
+        // If it's a video, set it as the videoUrl
+        if (isVideo) {
+          setNewProduct(prev => ({ ...prev, videoUrl: url }));
+        }
+      } else {
+        alert(`Upload failed for ${file.name}: ${error}`);
+      }
     }
 
     setNewProduct(prev => ({
