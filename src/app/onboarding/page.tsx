@@ -48,6 +48,8 @@ export default function OnboardingPage() {
   const [uploadStatus, setUploadStatus] = useState<{logo?: string; docs?: string}>({});
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [logoProgress, setLogoProgress] = useState(0);
+  const [docProgress, setDocProgress] = useState(0);
 
   const [form, setForm] = useState({
     brandName: '',
@@ -79,8 +81,22 @@ export default function OnboardingPage() {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
     const isLogo = bucket === 'brand-logos' || bucket === 'brand-assets';
-    if (isLogo) setUploadingLogo(true); else setUploadingDoc(true);
-    const { url, error } = await uploadFile(file, bucket, `${user.id}-${Date.now()}`);
+    if (isLogo) {
+      setUploadingLogo(true);
+      setLogoProgress(0);
+    } else {
+      setUploadingDoc(true);
+      setDocProgress(0);
+    }
+    const { url, error } = await uploadFile(
+      file, 
+      bucket, 
+      `${user.id}-${Date.now()}`,
+      (progress) => {
+        if (isLogo) setLogoProgress(progress);
+        else setDocProgress(progress);
+      }
+    );
     if (url) {
       if (isLogo) {
         setLogoUrl(url);
@@ -94,7 +110,13 @@ export default function OnboardingPage() {
       if (isLogo) setUploadStatus(prev => ({ ...prev, logo: msg }));
       else setUploadStatus(prev => ({ ...prev, docs: msg }));
     }
-    if (isLogo) setUploadingLogo(false); else setUploadingDoc(false);
+    if (isLogo) {
+      setUploadingLogo(false);
+      setLogoProgress(0);
+    } else {
+      setUploadingDoc(false);
+      setDocProgress(0);
+    }
   };
 
   const next = () => setStep((s) => Math.min(s + 1, 5));
@@ -314,7 +336,13 @@ export default function OnboardingPage() {
                 <label className={styles.uploadBox} style={{ opacity: uploadingLogo ? 0.7 : 1 }}>
                   <input type="file" hidden accept="image/*" disabled={uploadingLogo} onChange={(e) => handleFileUpload(e, 'brand-logos')} />
                   {uploadingLogo ? (
-                    <><div className="spinner" style={{ width: 40, height: 40 }} /><p>Uploading...</p></>
+                    <div style={{ padding: '1rem', width: '100%', textAlign: 'center' }}>
+                      <div className="spinner" style={{ width: 30, height: 30, margin: '0 auto 0.5rem' }} />
+                      <p style={{ fontSize: '0.8rem' }}>Optimizing & Uploading {logoProgress}%</p>
+                      <div style={{ width: '100%', height: '4px', background: 'var(--bg-100)', marginTop: '0.5rem', borderRadius: '10px', overflow: 'hidden' }}>
+                        <div style={{ width: `${logoProgress}%`, height: '100%', background: 'var(--primary)', transition: 'width 0.3s ease' }} />
+                      </div>
+                    </div>
                   ) : logoUrl ? (
                     <>
                       <img src={logoUrl} alt="Logo Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%', border: '3px solid var(--primary)' }} />
@@ -380,7 +408,13 @@ export default function OnboardingPage() {
                 <label className={styles.uploadBox} style={{ opacity: uploadingDoc ? 0.7 : 1 }}>
                   <input type="file" hidden disabled={uploadingDoc} onChange={(e) => handleFileUpload(e, 'verification-docs')} />
                   {uploadingDoc ? (
-                    <><div className="spinner" style={{ width: 40, height: 40 }} /><p>Uploading document...</p></>
+                    <div style={{ padding: '1rem', width: '100%', textAlign: 'center' }}>
+                      <div className="spinner" style={{ width: 30, height: 30, margin: '0 auto 0.5rem' }} />
+                      <p style={{ fontSize: '0.8rem' }}>Uploading Proof {docProgress}%</p>
+                      <div style={{ width: '100%', height: '4px', background: 'var(--bg-100)', marginTop: '0.5rem', borderRadius: '10px', overflow: 'hidden' }}>
+                        <div style={{ width: `${docProgress}%`, height: '100%', background: 'var(--primary)', transition: 'width 0.3s ease' }} />
+                      </div>
+                    </div>
                   ) : (
                     <>
                       <ShieldCheck size={28} className={styles.uploadIcon} style={{ color: verificationUrls.length > 0 ? 'var(--primary)' : undefined }} />
