@@ -2,14 +2,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
 import { uploadFile } from '@/lib/storage';
+import { useNotifications } from '@/context/NotificationContext';
 import styles from './dashboard.module.css';
 
 export default function VendorDashboard() {
   const router = useRouter();
+  const { unreadCount, permission, requestPermission } = useNotifications();
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [brand, setBrand] = useState<any>(null);
@@ -17,9 +19,16 @@ export default function VendorDashboard() {
   const [products, setProducts] = useState<any[]>([]);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [withdrawalRequests, setWithdrawalRequests] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [enquiries, setEnquiries] = useState<any[]>([]);
   const [reels, setReels] = useState<any[]>([]);
+  
+  // New States for Advanced Features
+  const [isSettingsLoading, setIsSettingsLoading] = useState(false);
+  const [promoCodes, setPromoCodes] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  
   const [newProduct, setNewProduct] = useState({
     title: '',
     description: '',
@@ -29,7 +38,9 @@ export default function VendorDashboard() {
     stockCount: '10',
     mediaUrls: [] as string[],
     imageUrl: '',
-    videoUrl: ''
+    videoUrl: '',
+    variants: [] as any[],
+    isDraft: false
   });
 
   useEffect(() => {
@@ -120,11 +131,69 @@ export default function VendorDashboard() {
 
       setReels(reelData || []);
 
+      // Fetch Withdrawal Requests
+      const { data: withdrawData } = await supabase
+        .from('withdrawal_requests')
+        .select('*')
+        .eq('brand_id', brandData.id)
+        .order('created_at', { ascending: false });
+      setWithdrawalRequests(withdrawData || []);
+
+      // Fetch Promo Codes
+      const { data: promoData } = await supabase
+        .from('promo_codes')
+        .select('*')
+        .eq('brand_id', brandData.id);
+      setPromoCodes(promoData || []);
+
+      // Fetch Reviews
+      const { data: reviewData } = await supabase
+        .from('product_reviews')
+        .select('*, customer:customer_id(name), product:product_id(title)')
+        .in('product_id', productData ? productData.map(p => p.id) : []); // Only reviews for vendor's products
+      setReviews(reviewData || []);
+
       setLoading(false);
     }
 
     fetchVendorData();
   }, [router]);
+
+  // Calculate 7-day sales trend
+  const getSalesTrend = () => {
+    const dailyData = new Array(7).fill(0);
+    const now = new Date();
+
+    orders.forEach(order => {
+      const orderDate = new Date(order.created_at);
+      const diffDays = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 3600 * 24));
+      if (diffDays < 7 && diffDays >= 0) {
+        dailyData[6 - diffDays] += Number(order.total_amount);
+      }
+    });
+
+    const max = Math.max(...dailyData, 1);
+    return dailyData.map(val => (val / max) * 100);
+  };
+
+  const calculateGrowth = () => {
+    const week1 = orders.filter(o => {
+      const diff = (new Date().getTime() - new Date(o.created_at).getTime()) / (1000 * 3600 * 24);
+      return diff < 7;
+    }).reduce((acc, c) => acc + Number(c.total_amount), 0);
+
+    const week2 = orders.filter(o => {
+      const diff = (new Date().getTime() - new Date(o.created_at).getTime()) / (1000 * 3600 * 24);
+      return diff >= 7 && diff < 14;
+    }).reduce((acc, c) => acc + Number(c.total_amount), 0);
+
+    if (week2 === 0) return week1 > 0 ? '+100%' : '0%';
+    const growth = ((week1 - week2) / week2) * 100;
+    return `${growth > 0 ? '+' : ''}${Math.round(growth)}%`;
+  };
+
+  const salesTrendData = getSalesTrend();
+  const growthPercent = calculateGrowth();
 
   const fetchProducts = async (brandId: string) => {
     const { data } = await supabase
@@ -138,7 +207,7 @@ export default function VendorDashboard() {
   const handleProductMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length || !brand) return;
     setLoading(true);
-    
+
     const files = Array.from(e.target.files);
     const uploadedUrls: string[] = [];
 
@@ -146,7 +215,7 @@ export default function VendorDashboard() {
       const isVideo = file.type.startsWith('video/');
       const bucket = isVideo ? 'product-videos' : 'product-images';
       console.log(`Uploading ${file.name} to ${bucket}...`);
-      
+
       const { url, error } = await uploadFile(file, bucket, `prod-${brand.id}`);
       if (url) {
         uploadedUrls.push(url);
@@ -231,7 +300,9 @@ export default function VendorDashboard() {
           stockCount: '10',
           mediaUrls: [],
           imageUrl: '',
-          videoUrl: ''
+          videoUrl: '',
+          variants: [],
+          isDraft: false
         });
         await fetchProducts(brand.id);
         alert('Product listed successfully!');
@@ -246,7 +317,7 @@ export default function VendorDashboard() {
     }
   };
 
-  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+  const updateOrderStatus = async (orderId: string, newStatus: string, extraData: any = {}) => {
     try {
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
@@ -255,13 +326,18 @@ export default function VendorDashboard() {
       const res = await fetch('/api/orders/status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, status: newStatus, vendorId: session.user.id })
+        body: JSON.stringify({ 
+          orderId, 
+          status: newStatus, 
+          vendorId: session.user.id,
+          ...extraData 
+        })
       });
       const data = await res.json();
 
       if (data.success) {
         // Refresh orders locally
-        const refreshed = orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
+        const refreshed = orders.map(o => o.id === orderId ? { ...o, status: newStatus, ...extraData } : o);
         setOrders(refreshed);
       } else {
         alert(data.error || 'Failed to update order');
@@ -271,6 +347,129 @@ export default function VendorDashboard() {
       alert('Network error updating order');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleWithdrawalRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!brand) return;
+    const amount = (e.target as any).amount.value;
+    
+    setLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/vendor/withdrawals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brandId: brand.id,
+          ownerId: session?.user.id,
+          amount,
+          bankDetails: {
+            account: brand.bank_account_number,
+            name: brand.bank_name
+          }
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Withdrawal request submitted successfully!');
+        setIsWithdrawing(false);
+        // Refresh data
+        window.location.reload();
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      alert('Error submitting withdrawal');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateSettings = async (updates: any) => {
+    if (!brand) return;
+    setIsSettingsLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/vendor/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brandId: brand.id,
+          ownerId: session?.user.id,
+          updates
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBrand(data.brand);
+        alert('Settings updated successfully!');
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      alert('Error updating settings');
+    } finally {
+      setIsSettingsLoading(false);
+    }
+  };
+
+  const addVariant = () => {
+    setNewProduct(prev => ({
+      ...prev,
+      variants: [...prev.variants, { type: 'Size', value: '' }]
+    }));
+  };
+
+  const removeVariant = (index: number) => {
+    setNewProduct(prev => ({
+      ...prev,
+      variants: prev.variants.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateVariant = (index: number, val: string) => {
+    setNewProduct(prev => {
+      const updated = [...prev.variants];
+      updated[index].value = val;
+      return { ...prev, variants: updated };
+    });
+  };
+
+  const handleReviewReply = async (reviewId: string, reply: string) => {
+    try {
+      const { error } = await supabase
+        .from('product_reviews')
+        .update({ vendor_reply: reply })
+        .eq('id', reviewId);
+      if (error) throw error;
+      setReviews(reviews.map(r => r.id === reviewId ? { ...r, vendor_reply: reply } : r));
+      alert('Reply posted!');
+    } catch (err) {
+      alert('Error posting reply');
+    }
+  };
+
+  const handleCreatePromo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.target as any;
+    const body = {
+      brand_id: brand.id,
+      code: form.code.value,
+      type: form.type.value,
+      value: Number(form.value.value),
+      is_active: true
+    };
+
+    try {
+      const { data, error } = await supabase.from('promo_codes').insert(body).select().single();
+      if (error) throw error;
+      setPromoCodes([...promoCodes, data]);
+      form.reset();
+      alert('Promo code created!');
+    } catch (err) {
+      alert('Error creating promo');
     }
   };
 
@@ -312,6 +511,13 @@ export default function VendorDashboard() {
           </button>
           <button className={`${styles.navItem} ${activeTab === 'enquiries' ? styles.navActive : ''}`} onClick={() => setActiveTab('enquiries')}>
             <Bell size={18} /> Notifications & Enquiries
+            {unreadCount > 0 && <span className={styles.navBadge}>{unreadCount}</span>}
+          </button>
+          <button className={`${styles.navItem} ${activeTab === 'reviews' ? styles.navActive : ''}`} onClick={() => setActiveTab('reviews')}>
+            <Star size={18} /> Customer Reviews
+          </button>
+          <button className={`${styles.navItem} ${activeTab === 'marketing' ? styles.navActive : ''}`} onClick={() => setActiveTab('marketing')}>
+            <Tag size={18} /> Marketing & Promos
           </button>
           <button className={`${styles.navItem} ${activeTab === 'services' ? styles.navActive : ''}`} onClick={() => setActiveTab('services')}>
             <Scissors size={18} /> Services
@@ -326,8 +532,8 @@ export default function VendorDashboard() {
             <Settings size={18} /> Store Settings
           </button>
           <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0' }} />
-          <button 
-            className={styles.navItem} 
+          <button
+            className={styles.navItem}
             style={{ color: '#ef4444' }}
             onClick={async () => {
               await supabase.auth.signOut();
@@ -374,38 +580,61 @@ export default function VendorDashboard() {
               )}
             </div>
 
+            {permission === 'default' && (
+              <div className={styles.escrowBanner} style={{ cursor: 'pointer', marginBottom: '2rem', borderStyle: 'solid', borderColor: 'var(--primary)', background: 'var(--primary-soft)' }} onClick={requestPermission}>
+                <Bell className={styles.escrowIcon} style={{ color: 'var(--primary)' }} />
+                <div className={styles.escrowText}>
+                  <h4 style={{ color: 'var(--primary)' }}>Enable Real-time Alerts</h4>
+                  <p>Get instant notification sounds on your phone/laptop when customers enquire about your products.</p>
+                </div>
+                <ArrowUpRight size={16} style={{ marginLeft: 'auto', color: 'var(--primary)' }} />
+              </div>
+            )}
             <div className={styles.statsGrid}>
-              <div className={styles.statCard}>
+              <div className={`${styles.statCard} ${styles.statCardVibrant}`}>
                 <div className={styles.statHead}>
                   <Wallet size={20} color="var(--primary)" />
-                  <span>Wallet Balance</span>
+                  <span>Available Balance</span>
                 </div>
                 <div className={styles.statValue}>{formatPrice(brand?.wallet_balance || 0)}</div>
-                <div className={styles.statTrend}>Available for withdrawal</div>
-              </div>
-              <div className={styles.statCard}>
-                <div className={styles.statHead}>
-                  <CreditCard size={20} color="var(--secondary)" />
-                  <span>Total Sales</span>
-                </div>
-                <div className={styles.statValue}>{formatPrice(transactions.filter(t => t.type === 'escrow_release').reduce((acc, curr) => acc + curr.amount, 0))}</div>
-                <div className={styles.statTrend}>+12.5% vs last month</div>
-              </div>
-              <div className={styles.statCard}>
-                <div className={styles.statHead}>
-                  <ShoppingCart size={20} color="#3b82f6" />
-                  <span>Active Orders</span>
-                </div>
-                <div className={styles.statValue}>{orders.length}</div>
-                <div className={styles.statTrend}>{orders.filter(o => o.status === 'paid').length} pending processing</div>
+                <div className={styles.statTrend}>Withdrawable immediately</div>
+                <div className={styles.growthBadge}><ArrowUpRight size={12} /> Live</div>
               </div>
               <div className={styles.statCard}>
                 <div className={styles.statHead}>
                   <TrendingUp size={20} color="#10b981" />
-                  <span>Reach</span>
+                  <span>Est. Revenue (30d)</span>
                 </div>
-                <div className={styles.statValue}>{products.reduce((acc, curr) => acc + (curr.views_count || 0), 0)}</div>
-                <div className={styles.statTrend}>Total product views</div>
+                <div className={styles.statValue}>
+                  {formatPrice(orders.filter(o => {
+                    const diff = (new Date().getTime() - new Date(o.created_at).getTime()) / (1000 * 3600 * 24);
+                    return diff < 30 && ['paid', 'ready', 'picked_up', 'in_transit', 'delivered', 'confirmed', 'completed'].includes(o.status);
+                  }).reduce((acc, curr) => acc + Number(curr.vendor_earning), 0))}
+                </div>
+                <div className={styles.statTrend}>Growth: {growthPercent}</div>
+                <div className={styles.growthChart}>
+                  {salesTrendData.map((h, i) => (
+                    <div key={i} className={`${styles.growthBar} ${i === 6 ? styles.growthBarActive : ''}`} style={{ height: `${h}%` }} />
+                  ))}
+                </div>
+              </div>
+              <div className={styles.statCard}>
+                <div className={styles.statHead}>
+                  <ShoppingCart size={20} color="#3b82f6" />
+                  <span>Success Rate</span>
+                </div>
+                <div className={styles.statValue}>
+                  {orders.length > 0 ? Math.round((orders.filter(o => o.status === 'completed' || o.status === 'confirmed').length / orders.length) * 100) : 0}%
+                </div>
+                <div className={styles.statTrend}>{orders.filter(o => o.status === 'cancelled').length} orders cancelled</div>
+              </div>
+              <div className={styles.statCard}>
+                <div className={styles.statHead}>
+                  <Star size={20} color="var(--secondary)" />
+                  <span>Avg. Rating</span>
+                </div>
+                <div className={styles.statValue}>{reviews.length > 0 ? (reviews.reduce((a, b) => a + b.rating, 0) / reviews.length).toFixed(1) : '5.0'}</div>
+                <div className={styles.statTrend}>From {reviews.length} customer reviews</div>
               </div>
             </div>
 
@@ -457,54 +686,216 @@ export default function VendorDashboard() {
             <h1 className={styles.title}>Wallet & Escrow Balance</h1>
 
             <div className={styles.statsGrid}>
-              <div className={styles.statCard}>
+              <div className={`${styles.statCard} ${styles.statCardVibrant}`}>
                 <span className={styles.statLabel}>Available Balance</span>
                 <span className={styles.statValue}>{formatPrice(Number(brand.wallet_balance || 0))}</span>
-                <button className={`btn btn-primary btn-sm ${styles.withdrawBtn}`} disabled={Number(brand.wallet_balance) <= 0}>Withdraw to Bank</button>
+                <button 
+                  className={`btn btn-primary btn-sm ${styles.withdrawBtn}`} 
+                  disabled={Number(brand.wallet_balance) < 1000}
+                  onClick={() => setIsWithdrawing(true)}
+                >
+                  Withdraw to Bank
+                </button>
+                <p className={styles.fieldNote}>Min. withdrawal: ₦1,000</p>
               </div>
               <div className={styles.statCard}>
                 <span className={styles.statLabel}>Funds in Escrow</span>
                 <span className={styles.statValue} style={{ color: 'var(--text-300)' }}>
-                  {formatPrice(orders.filter(o => o.status === 'paid' || o.status === 'ready' || o.status === 'picked_up' || o.status === 'in_transit' || o.status === 'delivered').reduce((acc, curr) => acc + Number(curr.vendor_earning), 0))}
+                  {formatPrice(orders.filter(o => ['paid', 'ready', 'picked_up', 'in_transit', 'delivered'].includes(o.status)).reduce((acc, curr) => acc + Number(curr.vendor_earning), 0))}
                 </span>
                 <p className={styles.statSub}>Releases when customer confirms delivery</p>
               </div>
               <div className={styles.statCard}>
-                <span className={styles.statLabel}>Total Sales</span>
+                <span className={styles.statLabel}>Total Sales (All Time)</span>
                 <span className={styles.statValue}>
-                  {formatPrice(transactions.filter(tx => tx.type === 'payment_in').reduce((acc, curr) => acc + Number(curr.amount), 0))}
+                  {formatPrice(transactions.filter(tx => tx.type === 'payment_in' || tx.type === 'escrow_release').reduce((acc, curr) => acc + Number(curr.amount), 0))}
                 </span>
-                <p className={styles.statSub}>Before platform commissions</p>
               </div>
             </div>
 
-            <div className={styles.activityFeed}>
-              <h3>Recent Transactions</h3>
-              <div className={styles.transactionList}>
-                {transactions.length > 0 ? (
-                  transactions.map(tx => (
-                    <div key={tx.id} className={styles.txRow}>
-                      <div className={styles.txIcon}>
-                        {tx.type === 'payment_in' ? <TrendingUp size={16} /> : <Wallet size={16} />}
-                      </div>
-                      <div className={styles.txInfo}>
-                        <h4>{tx.description || tx.type.replace('_', ' ').toUpperCase()}</h4>
-                        <span>{new Date(tx.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <span className={tx.type === 'payment_in' || tx.type === 'escrow_release' ? styles.txAmountPos : styles.txAmountNeg}>
-                        {tx.type === 'payout' || tx.type === 'refund' ? '-' : '+'}{formatPrice(Number(tx.amount))}
-                      </span>
+            {isWithdrawing && (
+              <div className={styles.modalOverlay}>
+                <div className={styles.modalContent}>
+                  <h3>Request Payout</h3>
+                  <p>Funds will be sent to your registered bank account: <strong>{brand.bank_name} ({brand.bank_account_number})</strong></p>
+                  <form onSubmit={handleWithdrawalRequest}>
+                    <div className={styles.inputGroup}>
+                      <label>Amount to Withdraw (₦)</label>
+                      <input type="number" name="amount" min="1000" max={brand.wallet_balance} required />
                     </div>
-                  ))
-                ) : (
-                  <p style={{ color: 'var(--text-400)', textAlign: 'center', padding: '1rem' }}>No transactions yet.</p>
-                )}
+                    <div className={styles.modalActions}>
+                      <button type="button" className="btn btn-ghost" onClick={() => setIsWithdrawing(false)}>Cancel</button>
+                      <button type="submit" className="btn btn-primary" disabled={loading}>
+                        {loading ? 'Processing...' : 'Confirm Withdrawal'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            <div className={styles.dashboardSplit}>
+              <div className={styles.splitMain}>
+                <div className={styles.sectionCard}>
+                  <h3>Pending Withdrawals</h3>
+                  <div className={styles.withdrawalList}>
+                    {withdrawalRequests.filter(r => r.status === 'pending' || r.status === 'processing').map(req => (
+                      <div key={req.id} className={styles.withdrawalItem}>
+                        <div className={styles.withdrawalIcon}><Clock size={16} /></div>
+                        <div className={styles.withdrawalInfo}>
+                          <h4>{formatPrice(req.amount)} Payout</h4>
+                          <span>Requested on {new Date(req.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div className={`${styles.statusBadgeSmall} ${styles[req.status]}`}>
+                          {req.status.toUpperCase()}
+                        </div>
+                      </div>
+                    ))}
+                    {withdrawalRequests.filter(r => r.status === 'pending' || r.status === 'processing').length === 0 && (
+                      <p className={styles.emptyText}>No pending requests.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.activityFeed} style={{ marginTop: '2rem' }}>
+                  <h3>Transaction History</h3>
+                  <div className={styles.transactionList}>
+                    {transactions.length > 0 ? (
+                      transactions.map(tx => (
+                        <div key={tx.id} className={styles.txRow}>
+                          <div className={styles.txIcon}>
+                            {tx.type === 'payment_in' || tx.type === 'escrow_release' ? <TrendingUp size={16} /> : <Wallet size={16} />}
+                          </div>
+                          <div className={styles.txInfo}>
+                            <h4>{tx.description || tx.type.replace('_', ' ').toUpperCase()}</h4>
+                            <span>{new Date(tx.created_at).toLocaleDateString()}</span>
+                          </div>
+                          <span className={['payment_in', 'escrow_release'].includes(tx.type) ? styles.txAmountPos : styles.txAmountNeg}>
+                            {['payout', 'refund'].includes(tx.type) ? '-' : '+'}{formatPrice(Number(tx.amount))}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p style={{ color: 'var(--text-400)', textAlign: 'center', padding: '1rem' }}>No transactions yet.</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )}
+        {/* Store Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className={styles.tabContent}>
+            <h1 className={styles.title}>Store Settings</h1>
+            <p className={styles.subtitle}>Manage your brand identity, contact details, and store policies.</p>
 
-        {/* Orders Tab */}
+            <div className={styles.settingsGrid}>
+              <div className={styles.settingsSection}>
+                <h3>Brand Identity</h3>
+                <div className={styles.bannerUpload}>
+                  <div 
+                    className={styles.bannerPreview} 
+                    style={{ backgroundImage: `url(${brand.banner_url || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070'})` }}
+                  >
+                    <label className={styles.bannerOverlay}>
+                      <input 
+                        type="file" 
+                        hidden 
+                        onChange={async (e) => {
+                          if (e.target.files?.[0]) {
+                            const { url } = await uploadFile(e.target.files[0], 'brand-assets', `banner-${brand.id}`);
+                            if (url) handleUpdateSettings({ banner_url: url });
+                          }
+                        }}
+                      />
+                      <ImageIcon size={24} />
+                      <span>Change Store Banner</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className={styles.formRow}>
+                  <div className={styles.inputGroup}>
+                    <label>Store Name</label>
+                    <input 
+                      type="text" 
+                      defaultValue={brand.name} 
+                      onBlur={(e) => handleUpdateSettings({ name: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label>WhatsApp Contact</label>
+                    <input 
+                      type="text" 
+                      defaultValue={brand.whatsapp_number} 
+                      onBlur={(e) => handleUpdateSettings({ whatsapp_number: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.inputGroup}>
+                  <label>Store Description</label>
+                  <textarea 
+                    rows={4} 
+                    defaultValue={brand.description}
+                    onBlur={(e) => handleUpdateSettings({ description: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.settingsSection}>
+                <h3>Banking & Payouts</h3>
+                <div className={styles.formRow}>
+                  <div className={styles.inputGroup}>
+                    <label>Bank Name</label>
+                    <input 
+                      type="text" 
+                      defaultValue={brand.bank_name}
+                      onBlur={(e) => handleUpdateSettings({ bank_name: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label>Account Number</label>
+                    <input 
+                      type="text" 
+                      defaultValue={brand.bank_account_number}
+                      onBlur={(e) => handleUpdateSettings({ bank_account_number: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <p className={styles.fieldNote}>* Ensure these details are correct to avoid payout delays.</p>
+              </div>
+
+              <div className={styles.settingsSection}>
+                <h3>Store Policies</h3>
+                <div className={styles.inputGroup}>
+                  <label>Shipping Policy</label>
+                  <textarea 
+                    rows={3} 
+                    placeholder="e.g. Orders are shipped within 24 hours of payment..."
+                    defaultValue={brand.shipping_policy}
+                    onBlur={(e) => handleUpdateSettings({ shipping_policy: e.target.value })}
+                  />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label>Return & Refund Policy</label>
+                  <textarea 
+                    rows={3} 
+                    placeholder="e.g. Items can be returned within 48 hours if tags are intact..."
+                    defaultValue={brand.return_policy}
+                    onBlur={(e) => handleUpdateSettings({ return_policy: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+            {isSettingsLoading && (
+              <div className={styles.settingsSaving}>
+                <Loader2 className="anim-spin" size={16} /> Saving changes...
+              </div>
+            )}
+          </div>
+        )}
         {activeTab === 'orders' && (
           <div className={styles.tabContent}>
             <h1 className={styles.title}>Order Management</h1>
@@ -530,7 +921,10 @@ export default function VendorDashboard() {
                           <div className={styles.statusBox}>
                             <div className={styles.actionRow}>
                               <button className="btn btn-primary btn-sm" onClick={() => updateOrderStatus(order.id, 'accepted')}>Accept Order</button>
-                              <button className="btn btn-ghost btn-sm" style={{ color: 'var(--primary)' }} onClick={() => updateOrderStatus(order.id, 'cancelled')}>Reject</button>
+                              <button className="btn btn-ghost btn-sm" style={{ color: 'var(--primary)' }} onClick={() => {
+                                const reason = prompt('Please provide a reason for rejection:');
+                                if (reason) updateOrderStatus(order.id, 'cancelled', { rejectionReason: reason });
+                              }}>Reject</button>
                             </div>
                           </div>
                         )}
@@ -544,7 +938,10 @@ export default function VendorDashboard() {
                             <div className={styles.deliverySelector}>
                               <p>Select Delivery Method:</p>
                               <button className="btn btn-primary btn-sm" style={{ width: '100%', marginBottom: '0.5rem' }} onClick={() => updateOrderStatus(order.id, 'ready')}>Use Platform Delivery</button>
-                              <button className="btn btn-ghost btn-sm" style={{ width: '100%' }} onClick={() => updateOrderStatus(order.id, 'in_transit')}>I will Deliver Personally</button>
+                              <button className="btn btn-ghost btn-sm" style={{ width: '100%' }} onClick={() => {
+                                const track = prompt('Enter Tracking/Reference Number:');
+                                updateOrderStatus(order.id, 'in_transit', { trackingNumber: track || 'Self-delivery' });
+                              }}>I will Deliver Personally</button>
                             </div>
                           </div>
                         )}
@@ -592,7 +989,99 @@ export default function VendorDashboard() {
           </div>
         )}
 
-        {/* Enquiries Tab */}
+        {/* Marketing Tab */}
+        {activeTab === 'marketing' && (
+          <div className={styles.tabContent}>
+            <h1 className={styles.title}>Marketing & Promotions</h1>
+            <p className={styles.subtitle}>Create promo codes to boost your store's attraction.</p>
+            
+            <div className={styles.promoForm}>
+              <h3>Create New Promo Code</h3>
+              <form onSubmit={handleCreatePromo} className={styles.formRow}>
+                <div className={styles.inputGroup}>
+                  <input name="code" type="text" placeholder="CODE (e.g. SAVE10)" required />
+                </div>
+                <div className={styles.inputGroup}>
+                  <select name="type">
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed">Fixed Amount (₦)</option>
+                  </select>
+                </div>
+                <div className={styles.inputGroup}>
+                  <input name="value" type="number" placeholder="Value" required />
+                </div>
+                <button type="submit" className="btn btn-primary">Create Code</button>
+              </form>
+            </div>
+
+            <div className={styles.promoList} style={{ marginTop: '2rem' }}>
+              <h3>Active Promo Codes</h3>
+              {promoCodes.length > 0 ? (
+                promoCodes.map(promo => (
+                  <div key={promo.id} className={styles.promoCard}>
+                    <div className={styles.promoInfo}>
+                      <span className={styles.promoCodeText}>{promo.code}</span>
+                      <span>{promo.type === 'percentage' ? `${promo.value}% Off` : `${formatPrice(promo.value)} Off`}</span>
+                    </div>
+                    <button className={styles.removeBtn}><Trash2 size={16} /></button>
+                  </div>
+                ))
+              ) : (
+                <p className={styles.emptyText}>No promo codes created yet.</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Reviews Tab */}
+        {activeTab === 'reviews' && (
+          <div className={styles.tabContent}>
+            <h1 className={styles.title}>Customer Reviews</h1>
+            <p className={styles.subtitle}>Manage your ratings and respond to customer feedback.</p>
+
+            <div className={styles.reviewList}>
+              {reviews.length > 0 ? (
+                reviews.map(review => (
+                  <div key={review.id} className={styles.reviewCard}>
+                    <div className={styles.reviewHeader}>
+                      <div className={styles.reviewMain}>
+                        <strong>{review.customer?.name}</strong> on <span>{review.product?.title}</span>
+                        <div className={styles.stars}>
+                          {new Array(5).fill(0).map((_, i) => (
+                            <Star key={i} size={14} fill={i < review.rating ? "var(--secondary)" : "none"} stroke={i < review.rating ? "var(--secondary)" : "#ccc"} />
+                          ))}
+                        </div>
+                      </div>
+                      <span className={styles.reviewDate}>{new Date(review.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <p className={styles.reviewText}>{review.comment}</p>
+                    {review.vendor_reply ? (
+                      <div className={styles.vendorReply}>
+                        <strong>You replied:</strong>
+                        <p>{review.vendor_reply}</p>
+                      </div>
+                    ) : (
+                      <div className={styles.replyForm}>
+                        <textarea id={`reply-${review.id}`} placeholder="Reply to this review..." rows={2}></textarea>
+                        <button 
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => {
+                            const reply = (document.getElementById(`reply-${review.id}`) as HTMLTextAreaElement).value;
+                            if (reply) handleReviewReply(review.id, reply);
+                          }}
+                        >
+                          Submit Reply
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className={styles.emptyText}>No reviews yet.</p>
+              )}
+            </div>
+          </div>
+        )}
         {activeTab === 'enquiries' && (
           <div className={styles.tabContent}>
             <h1 className={styles.title}>Notifications & Enquiries</h1>
@@ -651,6 +1140,30 @@ export default function VendorDashboard() {
                         onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
                       />
                     </div>
+                  </div>
+                  <div className={styles.formRow}>
+                    <div className={styles.inputGroup}>
+                      <label>Sale Price (₦) - What customers pay</label>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        required
+                        value={newProduct.price}
+                        onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                      />
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label>Original Price (₦) - Optional "Discount" tag</label>
+                      <input
+                        type="number"
+                        placeholder="e.g. 15000"
+                        value={newProduct.originalPrice}
+                        onChange={(e) => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formRow}>
                     <div className={styles.inputGroup}>
                       <label>Category</label>
                       <select
@@ -664,21 +1177,8 @@ export default function VendorDashboard() {
                         <option>Handmade</option>
                       </select>
                     </div>
-                  </div>
-
-                  <div className={styles.formRow}>
                     <div className={styles.inputGroup}>
-                      <label>Price (₦)</label>
-                      <input
-                        type="number"
-                        placeholder="0.00"
-                        required
-                        value={newProduct.price}
-                        onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-                      />
-                    </div>
-                    <div className={styles.inputGroup}>
-                      <label>Stock Count</label>
+                      <label>Total Global Stock</label>
                       <input
                         type="number"
                         placeholder="10"
@@ -686,6 +1186,63 @@ export default function VendorDashboard() {
                         onChange={(e) => setNewProduct({ ...newProduct, stockCount: e.target.value })}
                       />
                     </div>
+                  </div>
+
+                  {/* Variants Section */}
+                  <div className={styles.variantsSection}>
+                    <div className={styles.sectionHead}>
+                      <label>Product Variants (Sizes, Colors, etc.)</label>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={addVariant}>
+                        <Plus size={14} /> Add Variant
+                      </button>
+                    </div>
+                    <div className={styles.variantsGrid}>
+                      {newProduct.variants.map((v, i) => (
+                        <div key={i} className={styles.variantRow}>
+                          <select 
+                            value={v.type} 
+                            onChange={(e) => {
+                              const updated = [...newProduct.variants];
+                              updated[i].type = e.target.value;
+                              setNewProduct({ ...newProduct, variants: updated });
+                            }}
+                          >
+                            <option>Size</option>
+                            <option>Color</option>
+                            <option>Material</option>
+                          </select>
+                          <input 
+                            type="text" 
+                            placeholder="e.g. XL or Maroon" 
+                            value={v.value} 
+                            onChange={(e) => updateVariant(i, e.target.value)}
+                          />
+                          <button type="button" onClick={() => removeVariant(i)} className={styles.removeBtn}><X size={14}/></button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={styles.formRow} style={{ marginTop: '2rem' }}>
+                    <button 
+                      type="button" 
+                      className="btn btn-ghost" 
+                      style={{ flex: 1 }}
+                      onClick={() => {
+                        setNewProduct({ ...newProduct, isDraft: true });
+                        handleProductSubmit(new window.Event('submit') as any);
+                      }}
+                    >
+                      Save as Draft
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="btn btn-primary" 
+                      style={{ flex: 2 }}
+                      onClick={() => setNewProduct({ ...newProduct, isDraft: false })}
+                    >
+                      List for Sale
+                    </button>
                   </div>
 
                   <div className={styles.inputGroup}>
@@ -784,7 +1341,7 @@ export default function VendorDashboard() {
                 <Scissors size={18} /> Add Service
               </button>
             </div>
-            
+
             <div className={styles.inventoryGrid}>
               {brand.brand_type === 'product' && (
                 <div className={styles.emptyNotice}>

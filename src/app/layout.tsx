@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { CartProvider } from '@/context/CartContext';
+import { NotificationProvider } from '@/context/NotificationContext';
 import LayoutWrapper from '@/components/LayoutWrapper';
 import './globals.css';
 
@@ -33,9 +34,11 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <CartProvider>
-          <LayoutWrapper>
-            {children}
-          </LayoutWrapper>
+          <NotificationProvider>
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
+          </NotificationProvider>
         </CartProvider>
       </body>
     </html>

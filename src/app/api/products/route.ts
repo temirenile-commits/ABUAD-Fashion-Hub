@@ -14,7 +14,9 @@ export async function POST(req: Request) {
       imageUrl,
       videoUrl,
       brandId,
-      ownerId 
+      ownerId,
+      variants,
+      isDraft
     } = await req.json();
 
     if (!title || !price || !brandId) {
@@ -30,15 +32,17 @@ export async function POST(req: Request) {
         price: Number(price),
         original_price: originalPrice ? Number(originalPrice) : null,
         category,
-        stock_count: stockCount ? Number(stockCount) : 10, // Default to 10 if not provided
+        stock_count: stockCount ? Number(stockCount) : 10,
         media_urls: mediaUrls || [],
         image_url: imageUrl || (mediaUrls && mediaUrls[0]) || null,
         video_url: videoUrl || null,
         brand_id: brandId,
         owner_id: ownerId,
+        variants: variants || [],
+        is_draft: isDraft || false,
         is_featured: false,
         is_flash_sale: false,
-        rating: 5, // Default new items to 5 stars
+        rating: 5,
         sold: 0,
         views_count: 0
       })

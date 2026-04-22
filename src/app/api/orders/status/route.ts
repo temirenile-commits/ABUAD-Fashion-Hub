@@ -25,9 +25,15 @@ export async function POST(req: Request) {
     }
 
     // 2. Update Status
+    const updateData: any = { status: status };
+    const { trackingNumber, rejectionReason } = await req.json().catch(() => ({}));
+    
+    if (trackingNumber) updateData.tracking_number = trackingNumber;
+    if (rejectionReason) updateData.rejection_reason = rejectionReason;
+
     const { error: updateError } = await supabaseAdmin
       .from('orders')
-      .update({ status: status })
+      .update(updateData)
       .eq('id', orderId);
 
     if (updateError) throw updateError;
