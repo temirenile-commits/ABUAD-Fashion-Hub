@@ -44,18 +44,22 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
       'postgres_changes',
       { event: '*', schema: 'public', table: 'products' },
       async (payload) => {
-        const { vendors } = useMarketplaceStore.getState();
-        const brand = vendors.find(v => v.id === payload.new.brand_id);
-        const enriched = { ...payload.new, brands: brand };
-
         if (payload.eventType === 'INSERT') {
+          const { vendors } = useMarketplaceStore.getState();
+          const brand = vendors.find(v => v.id === (payload.new as any).brand_id);
+          const enriched = { ...payload.new, brands: brand };
+          
           addProduct(enriched as any);
-          if (!payload.new.is_draft) {
-             toast.success(`New Product: ${payload.new.title}!`);
+          if (!(payload.new as any).is_draft) {
+             toast.success(`New Product: ${(payload.new as any).title}!`);
           }
         }
         if (payload.eventType === 'UPDATE') {
-          updateProduct(payload.new.id, enriched as any);
+          const { vendors } = useMarketplaceStore.getState();
+          const brand = vendors.find(v => v.id === (payload.new as any).brand_id);
+          const enriched = { ...payload.new, brands: brand };
+          
+          updateProduct((payload.new as any).id, enriched as any);
         }
         if (payload.eventType === 'DELETE') {
           removeProduct(payload.old.id);
