@@ -13,6 +13,7 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
 import ProductInteraction from '@/components/ProductInteraction';
+import ViewTracker from '@/components/ViewTracker';
 import { formatPrice, getDiscount } from '@/lib/utils';
 import ProductEnquiry from '@/components/ProductEnquiry';
 import styles from './product.module.css';
@@ -86,6 +87,7 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <main className="container">
+      <ViewTracker category={product.category || 'Clothing'} />
       <div className={styles.page}>
         {/* Breadcrumb */}
         <nav className={styles.breadcrumb}>

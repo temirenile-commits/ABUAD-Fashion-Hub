@@ -1,3 +1,5 @@
+'use client';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   TrendingUp,
@@ -11,7 +13,7 @@ import {
 } from 'lucide-react';
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
 import VendorCard, { LiveVendor } from '@/components/VendorCard';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { useMarketplaceStore } from '@/store/marketplaceStore';
 import styles from './page.module.css';
 
 // New Jumia-style Components
@@ -21,49 +23,58 @@ import HeroExtras from '@/components/HeroExtras';
 import TopCategories from '@/components/TopCategories';
 import FlashSales from '@/components/FlashSales';
 
-export const revalidate = 60;
+export default function Home() {
+  const allProducts = useMarketplaceStore(s => s.products);
+  const allBrands = useMarketplaceStore(s => s.vendors);
+  const isInitialized = useMarketplaceStore(s => s.isInitialized);
 
-export default async function Home() {
-  // Fetch trending products
-  const { data: trendingData } = await supabaseAdmin
-    .from('products')
-    .select('*, brands(id, owner_id, name, whatsapp_number, logo_url)')
-    .limit(8);
-
-  const trendingProducts = (trendingData || []) as any[] as LiveProduct[];
-
-  // Fetch verified brands
-  const { data: brandsData } = await supabaseAdmin
-    .from('brands')
-    .select('*')
-    .eq('verified', true)
-    .limit(4);
-
-  const featuredVendors = (brandsData || []) as any[] as LiveVendor[];
-
-  // Genuine Flash Sales (Only items explicitly discounted by vendors)
-  // `original_price` greater than `price` signifies a live discount
-  const { data: flashData } = await supabaseAdmin
-    .from('products')
-    .select('id, title, price, original_price, media_urls')
-    .not('original_price', 'is', null)
-    .gt('original_price', 0)
-    .limit(15);
+  const [preferredCategories, setPreferredCategories] = useState<string[]>([]);
   
-  const rawFlashSales = (flashData || []) as any[];
-  const genuineFlashSales = rawFlashSales.filter(p => p.original_price > p.price).slice(0, 5);
+  useEffect(() => {
+    try {
+      const prefs = JSON.parse(localStorage.getItem('user_prefs') || '[]');
+      if (Array.isArray(prefs)) setPreferredCategories(prefs);
+    } catch {}
+  }, []);
+
+  const featuredVendors = useMemo(() => {
+     return [...allBrands].slice(0, 4) as any as LiveVendor[];
+  }, [allBrands]);
+
+  const genuineFlashSales = useMemo(() => {
+     return allProducts.filter(p => !p.is_draft && (p.original_price || 0) > (p.price || 0)).slice(0, 10);
+  }, [allProducts]);
 
   const flashSaleItems = genuineFlashSales.map(p => {
-    const discount = Math.round(((p.original_price - p.price) / p.original_price) * 100);
+    const originalPrice = p.original_price || 0;
+    const price = p.price || 0;
+    const discount = originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
     return {
       id: p.id,
       title: p.title,
-      price: p.price,
-      oldPrice: p.original_price,
+      price: price,
+      oldPrice: originalPrice,
       image: p.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500',
       discount: discount
     };
   });
+
+  // Personalization Algorithm
+  const trendingProducts = useMemo(() => {
+     if (!allProducts.length) return [];
+     
+     // Separate into preferred and others
+     let preferred = allProducts.filter(p => !p.is_draft && p.category && preferredCategories.includes(p.category));
+     let others = allProducts.filter(p => !p.is_draft && (!p.category || !preferredCategories.includes(p.category)));
+
+     // Sort by newest
+     preferred.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+     others.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+     // Combine: Prefered items first, then latest items
+     const combined = [...preferred, ...others].slice(0, 8);
+     return combined as any as LiveProduct[];
+  }, [allProducts, preferredCategories]);
 
   return (
     <main className={styles.main}>
@@ -111,14 +122,14 @@ export default async function Home() {
         </div>
 
         {/* ───── FLASH SALES ───── */}
-        <FlashSales items={flashSaleItems} />
+        {flashSaleItems.length > 0 && <FlashSales items={flashSaleItems} />}
 
-        {/* ───── TRENDING PRODUCTS ───── */}
+        {/* ───── TRENDING PRODUCTS (Personalized) ───── */}
         <section className={styles.section}>
           <div className={styles.sectionHead}>
             <div className={styles.sectionTitleGroup}>
               <TrendingUp size={20} className={styles.sectionIcon} />
-              <h2>Trending on Campus</h2>
+              <h2>Recommended For You</h2>
             </div>
             <Link href="/explore" className={styles.seeAll}>
               View all <ArrowRight size={14} />
@@ -132,9 +143,13 @@ export default async function Home() {
                   <ProductCard product={product} />
                 </div>
               ))
-            ) : (
+            ) : isInitialized ? (
               <p style={{ color: 'var(--text-400)', gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>
-                Catalog update in progress. Check back soon!
+                No active products currently on the marketplace.
+              </p>
+            ) : (
+               <p style={{ color: 'var(--text-400)', gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>
+                Loading live personalized feed...
               </p>
             )}
           </div>
@@ -160,7 +175,7 @@ export default async function Home() {
               ))
             ) : (
               <p style={{ color: 'var(--text-400)', gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>
-                Becoming a verified vendor...
+                {isInitialized ? 'No verified vendors found.' : 'Loading campus partners...'}
               </p>
             )}
           </div>

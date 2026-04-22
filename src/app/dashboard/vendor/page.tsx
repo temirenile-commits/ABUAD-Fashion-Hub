@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
 import { uploadFile } from '@/lib/storage';
 import { useNotifications } from '@/context/NotificationContext';
+import { useMarketplaceStore } from '@/store/marketplaceStore';
 import styles from './dashboard.module.css';
 
 export default function VendorDashboard() {
@@ -15,8 +16,13 @@ export default function VendorDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [brand, setBrand] = useState<any>(null);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  
+  // Real-time states
+  const { products: allProducts, orders: allOrders, setOrders: setGlobalOrders, addProduct, updateOrder, updateProduct: updateGlobalProduct } = useMarketplaceStore();
+  
+  const products = brand ? allProducts.filter(p => p.brand_id === brand.id) : [];
+  const orders = brand ? allOrders.filter(o => o.brand_id === brand.id).sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
+
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [withdrawalRequests, setWithdrawalRequests] = useState<any[]>([]);
@@ -85,7 +91,7 @@ export default function VendorDashboard() {
 
       setBrand(brandData);
 
-      // Fetch Orders
+      // Fetch Orders initially, then pass to store
       const { data: ordersData } = await supabase
         .from('orders')
         .select(`
@@ -95,7 +101,7 @@ export default function VendorDashboard() {
         .eq('brand_id', brandData.id)
         .order('created_at', { ascending: false });
 
-      setOrders(ordersData || []);
+      if (ordersData) setGlobalOrders(ordersData);
 
       // Fetch Transactions
       const { data: txData } = await supabase
@@ -121,14 +127,13 @@ export default function VendorDashboard() {
         .eq('brand_id', brandData.id)
         .order('created_at', { ascending: false });
 
-      // Fetch Products
+      // Products are heavily fetched by RealtimeProvider so no need to refetch here
+      // But we still fetch them to ensure we catch any missed products in edge cases
       const { data: productData } = await supabase
         .from('products')
         .select('*')
-        .eq('brand_id', brandData.id)
-        .order('created_at', { ascending: false });
-      setProducts(productData || []);
-
+        .eq('brand_id', brandData.id);
+      
       setReels(reelData || []);
 
       // Fetch Withdrawal Requests
@@ -196,12 +201,7 @@ export default function VendorDashboard() {
   const growthPercent = calculateGrowth();
 
   const fetchProducts = async (brandId: string) => {
-    const { data } = await supabase
-      .from('products')
-      .select('*')
-      .eq('brand_id', brandId)
-      .order('created_at', { ascending: false });
-    setProducts(data || []);
+    // Relying on real-time sync, no-op for now.
   };
 
   const handleProductMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -291,6 +291,12 @@ export default function VendorDashboard() {
       const data = await res.json();
       if (data.success) {
         setIsAddingProduct(false);
+        // Optimistic UI Update directly into global store
+        addProduct({
+           ...data.product,
+           brands: brand
+        });
+        
         setNewProduct({
           title: '',
           description: '',
@@ -304,7 +310,6 @@ export default function VendorDashboard() {
           variants: [],
           isDraft: false
         });
-        await fetchProducts(brand.id);
         alert('Product listed successfully!');
       } else {
         alert(data.error || 'Failed to list product');
@@ -336,9 +341,9 @@ export default function VendorDashboard() {
       const data = await res.json();
 
       if (data.success) {
-        // Refresh orders locally
-        const refreshed = orders.map(o => o.id === orderId ? { ...o, status: newStatus, ...extraData } : o);
-        setOrders(refreshed);
+        // We do not need a local state setOrders here, as RealtimeProvider will catch the DB Postgres update automatically!
+        // The store handles it or we can manually mutate it just in case:
+        updateOrder(orderId, { status: newStatus, ...extraData });
       } else {
         alert(data.error || 'Failed to update order');
       }

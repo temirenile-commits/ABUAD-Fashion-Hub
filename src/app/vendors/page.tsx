@@ -1,37 +1,32 @@
-import type { Metadata } from 'next';
+'use client';
+
 import VendorCard, { LiveVendor } from '@/components/VendorCard';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { useMarketplaceStore } from '@/store/marketplaceStore';
 import { CheckCircle, Crown, TrendingUp } from 'lucide-react';
 import styles from './vendors.module.css';
 
-export const metadata: Metadata = {
-  title: 'Campus Brands Directory',
-  description: 'Discover and shop from verified fashion brands and vendors at ABUAD.',
-};
+export default function VendorsPage() {
+  const allBrands = useMarketplaceStore(s => s.vendors);
+  const isInitialized = useMarketplaceStore(s => s.isInitialized);
 
-export const revalidate = 60; // Revalidate every 60s
-
-export default async function VendorsPage() {
-  const { data: brands, error } = await supabaseAdmin
-    .from('brands')
-    .select(`
-      *,
-      products ( id )
-    `);
-
-  const LIVE_VENDORS = (brands || []).map((brand) => {
+  const LIVE_VENDORS = allBrands.map((brand) => {
     const nameStr = brand.name || 'ABUAD';
     const num = nameStr.charCodeAt(0) * nameStr.charCodeAt(nameStr.length - 1) * 123;
     
     return {
       ...brand,
       followers: num % 5000, 
+      verified: brand.verification_status === 'verified'
     };
   }) as any as LiveVendor[];
 
   const verified = LIVE_VENDORS.filter((v) => v.verified);
   const unverified = LIVE_VENDORS.filter((v) => !v.verified);
   const topVendors = [...LIVE_VENDORS].sort((a, b) => Number(b.followers) - Number(a.followers)).slice(0, 3);
+
+  if (!isInitialized) {
+    return <main className="container"><div style={{padding:'3rem',textAlign:'center'}}>Loading Live Vendors...</div></main>
+  }
 
   return (
     <main className="container">
@@ -97,6 +92,7 @@ export default async function VendorsPage() {
         )}
 
         {/* Verified Vendors */}
+        {verified.length > 0 && (
         <section className={styles.section}>
           <div className={styles.sectionHead}>
             <div className={styles.sectionTitle}>
@@ -111,6 +107,7 @@ export default async function VendorsPage() {
             ))}
           </div>
         </section>
+        )}
 
         {/* Unverified Vendors */}
         {unverified.length > 0 && (

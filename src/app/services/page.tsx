@@ -1,9 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MessageCircle, Star, CheckCircle, Layers } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { useMarketplaceStore } from '@/store/marketplaceStore';
 import { formatPrice } from '@/lib/utils';
 import styles from './services.module.css';
 
@@ -16,33 +16,11 @@ const SERVICE_TYPES = [
 ];
 
 export default function ServicesPage() {
-  const [services, setServices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const allServices = useMarketplaceStore(s => s.services);
+  const loading = !useMarketplaceStore(s => s.isInitialized);
   const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    async function fetchServices() {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('services')
-        .select(`
-          *,
-          brands (
-            name,
-            verified,
-            whatsapp_number
-          )
-        `);
-
-      if (!error && data) {
-        setServices(data);
-      }
-      setLoading(false);
-    }
-    fetchServices();
-  }, []);
-
-  const filtered = services.filter((s) => filter === 'all' || s.service_type === filter);
+  const filtered = allServices.filter((s) => !s.is_draft && (filter === 'all' || s.service_type === filter));
 
   return (
     <main className="container">
