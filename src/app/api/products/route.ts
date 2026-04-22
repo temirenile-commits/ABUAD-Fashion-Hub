@@ -35,7 +35,7 @@ export async function POST(req: Request) {
         price: Number(price),
         original_price: originalPrice ? Number(originalPrice) : null,
         category,
-        stock_count: stockCount ? Number(stockCount) : 10,
+        stock_count: typeof stockCount === 'number' ? stockCount : 10,
         media_urls: mediaUrls || [],
         image_url: imageUrl || (mediaUrls && mediaUrls[0]) || null,
         video_url: videoUrl || null,

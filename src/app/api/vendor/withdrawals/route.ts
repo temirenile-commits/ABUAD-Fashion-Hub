@@ -40,12 +40,11 @@ export async function POST(req: Request) {
 
     if (requestError) throw requestError;
 
-    // 3. Deduct from wallet immediately (or mark as "locked")
-    // For simplicity, we deduct now. If the request is rejected, we refund it.
-    const { error: deductError } = await supabaseAdmin
-      .from('brands')
-      .update({ wallet_balance: Number(brand.wallet_balance) - Number(amount) })
-      .eq('id', brandId);
+    // 3. Deduct from wallet atomically
+    const { error: deductError } = await supabaseAdmin.rpc('adjust_brand_wallet', {
+      p_brand_id: brandId,
+      p_amount: -Number(amount)
+    });
 
     if (deductError) throw deductError;
 

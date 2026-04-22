@@ -40,8 +40,11 @@ export default function ExplorePage() {
 
     // Category Filter
     if (selectedCategory !== 'all') {
-      const dbCategory = selectedCategory.replace(/-/g, ' '); 
-      result = result.filter(p => p.category?.toLowerCase().includes(dbCategory.toLowerCase()));
+      const dbSearch = selectedCategory.toLowerCase().replace(/-/g, ' '); 
+      result = result.filter(p => {
+        const cat = p.category?.toLowerCase() || '';
+        return cat.includes(dbSearch) || dbSearch.includes(cat);
+      });
     }
 
     // Search Filter

@@ -15,6 +15,8 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
   } = useMarketplaceStore();
 
   useEffect(() => {
+    let active = true;
+
     // --- INITIAL DATA FETCH ---
     const fetchInitialData = async () => {
       // Products
@@ -22,16 +24,18 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
         .from('products')
         .select(`*, brands(*)`)
         .order('created_at', { ascending: false });
-      if (prodData) setProducts(prodData as any);
+      
+      if (active && prodData) setProducts(prodData as any);
 
       // Brands (Vendors)
       const { data: brandData } = await supabase
         .from('brands')
         .select('*')
         .eq('verification_status', 'verified');
-      if (brandData) setVendors(brandData as any);
+      
+      if (active && brandData) setVendors(brandData as any);
 
-      setInitialized(true);
+      if (active) setInitialized(true);
     };
 
     if (!isInitialized) fetchInitialData();
@@ -43,23 +47,23 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
     publicChannel.on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'products' },
-      async (payload) => {
+      async (payload: any) => {
         if (payload.eventType === 'INSERT') {
           const { vendors } = useMarketplaceStore.getState();
-          const brand = vendors.find(v => v.id === (payload.new as any).brand_id);
+          const brand = vendors.find((v: any) => v.id === payload.new.brand_id);
           const enriched = { ...payload.new, brands: brand };
           
           addProduct(enriched as any);
-          if (!(payload.new as any).is_draft) {
-             toast.success(`New Product: ${(payload.new as any).title}!`);
+          if (!payload.new.is_draft) {
+             toast.success(`New Product: ${payload.new.title}!`);
           }
         }
         if (payload.eventType === 'UPDATE') {
           const { vendors } = useMarketplaceStore.getState();
-          const brand = vendors.find(v => v.id === (payload.new as any).brand_id);
+          const brand = vendors.find((v: any) => v.id === payload.new.brand_id);
           const enriched = { ...payload.new, brands: brand };
           
-          updateProduct((payload.new as any).id, enriched as any);
+          updateProduct(payload.new.id, enriched as any);
         }
         if (payload.eventType === 'DELETE') {
           removeProduct(payload.old.id);
@@ -71,7 +75,7 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
     publicChannel.on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'services' },
-      (payload) => {
+      (payload: any) => {
         if (payload.eventType === 'INSERT') {
           addService(payload.new as any);
           toast.success(`New Service available: ${payload.new.title}`);
@@ -89,7 +93,7 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
     publicChannel.on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'brands' },
-      (payload) => {
+      (payload: any) => {
         if (payload.eventType === 'INSERT') {
           addVendor(payload.new as any);
         }
@@ -105,7 +109,7 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
     let privateChannel: any;
     
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
+      if (session?.user && active) {
         // Orders (We listen to ALL orders but realistically RLS blocks ones not belonging to user)
         privateChannel = supabase.channel(`private:orders:${session.user.id}`);
         privateChannel.on(
@@ -127,9 +131,11 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
     });
 
     return () => {
+      active = false;
       supabase.removeChannel(publicChannel);
       if (privateChannel) supabase.removeChannel(privateChannel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
