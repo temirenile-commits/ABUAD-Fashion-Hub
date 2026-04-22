@@ -43,13 +43,16 @@ export default function OnboardingPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [logoUrl, setLogoUrl] = useState('');
-  const [verificationUrls, setVerificationUrls] = useState<string[]>([]);
+  const [studentIdUrl, setStudentIdUrl] = useState('');
+  const [businessProofUrl, setBusinessProofUrl] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<{logo?: string; docs?: string}>({});
+  const [uploadStatus, setUploadStatus] = useState<{logo?: string; studentId?: string; businessProof?: string}>({});
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [uploadingStudentId, setUploadingStudentId] = useState(false);
+  const [uploadingBusinessProof, setUploadingBusinessProof] = useState(false);
   const [logoProgress, setLogoProgress] = useState(0);
-  const [docProgress, setDocProgress] = useState(0);
+  const [studentIdProgress, setStudentIdProgress] = useState(0);
+  const [businessProofProgress, setBusinessProofProgress] = useState(0);
 
   const [form, setForm] = useState({
     brandName: '',
@@ -77,12 +80,15 @@ export default function OnboardingPage() {
     checkUser();
   }, [router]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, bucket: 'brand-logos' | 'brand-assets' | 'verification-docs') => {
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    bucket: 'brand-logos' | 'brand-assets' | 'verification-docs',
+    field: 'logo' | 'studentId' | 'businessProof'
+  ) => {
     if (!e.target.files?.length) return;
-    const isLogo = bucket === 'brand-logos' || bucket === 'brand-assets';
-    
-    if (isLogo) {
-      const file = e.target.files[0];
+    const file = e.target.files[0];
+
+    if (field === 'logo') {
       setUploadingLogo(true);
       setLogoProgress(0);
       const { url, error } = await uploadFile(file, bucket, `${user.id}-${Date.now()}`, (p) => setLogoProgress(p));
@@ -94,30 +100,30 @@ export default function OnboardingPage() {
       }
       setUploadingLogo(false);
       setLogoProgress(0);
-    } else {
-      setUploadingDoc(true);
-      setDocProgress(0);
-      const newUrls: string[] = [];
-      const files = Array.from(e.target.files);
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        setUploadStatus(prev => ({ ...prev, docs: `Uploading ${i + 1} of ${files.length}...` }));
-        const { url, error } = await uploadFile(file, bucket, `${user.id}-${Date.now()}-${i}`, (p) => setDocProgress(p));
-        if (url) newUrls.push(url);
-      }
-      
-      if (newUrls.length > 0) {
-        setVerificationUrls(prev => {
-           const finalUrls = [...prev, ...newUrls];
-           setUploadStatus(s => ({ ...s, docs: `✅ ${finalUrls.length} file(s) attached` }));
-           return finalUrls;
-        });
+    } else if (field === 'studentId') {
+      setUploadingStudentId(true);
+      setStudentIdProgress(0);
+      const { url, error } = await uploadFile(file, 'verification-docs', `${user.id}-id-${Date.now()}`, (p) => setStudentIdProgress(p));
+      if (url) {
+        setStudentIdUrl(url);
+        setUploadStatus(prev => ({ ...prev, studentId: `✅ ${file.name} uploaded!` }));
       } else {
-        setUploadStatus(prev => ({ ...prev, docs: `❌ Upload failed` }));
+        setUploadStatus(prev => ({ ...prev, studentId: `❌ Upload failed: ${error || 'Unknown'}` }));
       }
-      setUploadingDoc(false);
-      setDocProgress(0);
+      setUploadingStudentId(false);
+      setStudentIdProgress(0);
+    } else if (field === 'businessProof') {
+      setUploadingBusinessProof(true);
+      setBusinessProofProgress(0);
+      const { url, error } = await uploadFile(file, 'verification-docs', `${user.id}-proof-${Date.now()}`, (p) => setBusinessProofProgress(p));
+      if (url) {
+        setBusinessProofUrl(url);
+        setUploadStatus(prev => ({ ...prev, businessProof: `✅ ${file.name} uploaded!` }));
+      } else {
+        setUploadStatus(prev => ({ ...prev, businessProof: `❌ Upload failed: ${error || 'Unknown'}` }));
+      }
+      setUploadingBusinessProof(false);
+      setBusinessProofProgress(0);
     }
   };
 
@@ -145,9 +151,9 @@ export default function OnboardingPage() {
           verification_status: isAlreadyVendor ? 'verified' : 'pending',
           verified: isAlreadyVendor,
           fee_paid: isAlreadyVendor,
-          logo_url: logoUrl,
-          student_id_url: verificationUrls[0] || null,
-          business_proof_url: verificationUrls[1] || null,
+          logo_url: logoUrl || null,
+          student_id_url: studentIdUrl || null,
+          business_proof_url: businessProofUrl || null,
           delivery_preference: 'platform',
           subscription_plan: 'free',
           terms_accepted: acceptedTerms,
@@ -339,7 +345,7 @@ export default function OnboardingPage() {
 
               <div className={styles.uploadAreas}>
                 <label className={styles.uploadBox} style={{ opacity: uploadingLogo ? 0.7 : 1 }}>
-                  <input type="file" hidden accept="image/*" disabled={uploadingLogo} onChange={(e) => handleFileUpload(e, 'brand-logos')} />
+                  <input type="file" hidden accept="image/*" disabled={uploadingLogo} onChange={(e) => handleFileUpload(e, 'brand-logos', 'logo')} />
                   {uploadingLogo ? (
                     <div style={{ padding: '1rem', width: '100%', textAlign: 'center' }}>
                       <div className="spinner" style={{ width: 30, height: 30, margin: '0 auto 0.5rem' }} />
@@ -406,39 +412,68 @@ export default function OnboardingPage() {
             <div className={styles.stepContent}>
               <h2 className={styles.stepTitle}>Submit Verification Documents</h2>
               <p className={styles.stepDesc}>
-                Admin review is required. Please upload your Student ID or proof of business.
+                Admin review is required. Upload your Student/Faculty ID and a Business Proof document.
               </p>
 
               <div className={styles.uploadAreas}>
-                <label className={styles.uploadBox} style={{ opacity: uploadingDoc ? 0.7 : 1 }}>
-                  <input type="file" hidden multiple disabled={uploadingDoc} onChange={(e) => handleFileUpload(e, 'verification-docs')} />
-                  {uploadingDoc ? (
+                {/* Student ID Upload */}
+                <label className={styles.uploadBox} style={{ opacity: uploadingStudentId ? 0.7 : 1 }}>
+                  <input type="file" hidden accept="image/*,.pdf" disabled={uploadingStudentId} onChange={(e) => handleFileUpload(e, 'verification-docs', 'studentId')} />
+                  {uploadingStudentId ? (
                     <div style={{ padding: '1rem', width: '100%', textAlign: 'center' }}>
                       <div className="spinner" style={{ width: 30, height: 30, margin: '0 auto 0.5rem' }} />
                       <p style={{ fontSize: '0.8rem' }}>
-                        {docProgress < 10 ? 'Optimizing local file...' : `Uploading Document ${docProgress}%`}
+                        {studentIdProgress < 10 ? 'Optimizing file...' : `Uploading ${studentIdProgress}%`}
                       </p>
                       <div style={{ width: '100%', height: '4px', background: 'var(--bg-100)', marginTop: '0.5rem', borderRadius: '10px', overflow: 'hidden' }}>
-                        <div style={{ width: `${docProgress}%`, height: '100%', background: 'var(--primary)', transition: 'width 0.3s ease' }} />
+                        <div style={{ width: `${studentIdProgress}%`, height: '100%', background: 'var(--primary)', transition: 'width 0.3s ease' }} />
                       </div>
                     </div>
                   ) : (
                     <>
-                      <ShieldCheck size={28} className={styles.uploadIcon} style={{ color: verificationUrls.length > 0 ? 'var(--primary)' : undefined }} />
-                      <h3>{verificationUrls.length > 0 ? '✅ Documents Attached' : 'Upload Business Proof'}</h3>
-                      <p>{verificationUrls.length > 0 ? `${verificationUrls.length} file(s) uploaded. Click to add more.` : 'Student ID, ABUAD ID card, or business registration'}</p>
+                      <ShieldCheck size={28} className={styles.uploadIcon} style={{ color: studentIdUrl ? 'var(--primary)' : undefined }} />
+                      <h3>{studentIdUrl ? '✅ Student ID Uploaded' : 'Student / Faculty ID Card'}</h3>
+                      <p>{studentIdUrl ? 'Click to replace.' : 'Upload your ABUAD ID card or any valid student ID (JPG, PNG, PDF)'}</p>
                     </>
                   )}
                 </label>
-                {uploadStatus.docs && (
-                  <p style={{ color: verificationUrls.length > 0 ? 'var(--primary)' : '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{uploadStatus.docs}</p>
+                {uploadStatus.studentId && (
+                  <p style={{ color: studentIdUrl ? 'var(--primary)' : '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{uploadStatus.studentId}</p>
+                )}
+
+                {/* Business Proof Upload */}
+                <label className={styles.uploadBox} style={{ opacity: uploadingBusinessProof ? 0.7 : 1, marginTop: '1.5rem' }}>
+                  <input type="file" hidden accept="image/*,.pdf" disabled={uploadingBusinessProof} onChange={(e) => handleFileUpload(e, 'verification-docs', 'businessProof')} />
+                  {uploadingBusinessProof ? (
+                    <div style={{ padding: '1rem', width: '100%', textAlign: 'center' }}>
+                      <div className="spinner" style={{ width: 30, height: 30, margin: '0 auto 0.5rem' }} />
+                      <p style={{ fontSize: '0.8rem' }}>
+                        {businessProofProgress < 10 ? 'Optimizing file...' : `Uploading ${businessProofProgress}%`}
+                      </p>
+                      <div style={{ width: '100%', height: '4px', background: 'var(--bg-100)', marginTop: '0.5rem', borderRadius: '10px', overflow: 'hidden' }}>
+                        <div style={{ width: `${businessProofProgress}%`, height: '100%', background: 'var(--primary)', transition: 'width 0.3s ease' }} />
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload size={28} className={styles.uploadIcon} style={{ color: businessProofUrl ? 'var(--primary)' : undefined }} />
+                      <h3>{businessProofUrl ? '✅ Business Proof Uploaded' : 'Business Proof / Address'}</h3>
+                      <p>{businessProofUrl ? 'Click to replace.' : 'Upload a business registration document or proof of address'}</p>
+                    </>
+                  )}
+                </label>
+                {uploadStatus.businessProof && (
+                  <p style={{ color: businessProofUrl ? 'var(--primary)' : '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{uploadStatus.businessProof}</p>
                 )}
               </div>
 
               <div className={styles.skipVerify}>
-                <button className={styles.skipBtn} onClick={handleSubmit} disabled={loading || verificationUrls.length === 0}>
+                <button className={styles.skipBtn} onClick={handleSubmit} disabled={loading || (!studentIdUrl && !businessProofUrl)}>
                   {loading ? 'Submitting Application...' : 'Submit Application for Review →'}
                 </button>
+                {!studentIdUrl && !businessProofUrl && (
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginTop: '0.5rem', textAlign: 'center' }}>Upload at least one document to proceed.</p>
+                )}
               </div>
             </div>
           )}
@@ -464,7 +499,7 @@ export default function OnboardingPage() {
                 Continue <ArrowRight size={16} />
               </button>
             ) : (
-              <button className="btn btn-primary" onClick={handleSubmit} disabled={loading || verificationUrls.length === 0}>
+              <button className="btn btn-primary" onClick={handleSubmit} disabled={loading || (!studentIdUrl && !businessProofUrl)}>
                 <CheckCircle size={16} /> {loading ? 'Submitting...' : 'Submit Application'}
               </button>
             )}

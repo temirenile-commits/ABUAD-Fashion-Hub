@@ -98,12 +98,22 @@ export default function Navbar() {
                   </Link>
                 </div>
               )}
-              <div className={styles.actionItem}>
-                <Link href={dashboardLink} className={styles.actionLink}>
-                  <User size={20} />
-                  <span>Account</span>
-                </Link>
-              </div>
+              {role === 'vendor' && (
+                <div className={styles.actionItem}>
+                  <Link href="/dashboard/vendor" className={styles.actionLink} style={{ color: 'var(--primary)' }}>
+                    <Store size={20} />
+                    <span>My Store</span>
+                  </Link>
+                </div>
+              )}
+              {role !== 'vendor' && (
+                <div className={styles.actionItem}>
+                  <Link href={dashboardLink} className={styles.actionLink}>
+                    <User size={20} />
+                    <span>Account</span>
+                  </Link>
+                </div>
+              )}
               <div className={styles.actionItem}>
                 <button onClick={handleLogout} className={styles.actionLink} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                   <LogOut size={20} />
@@ -180,9 +190,15 @@ export default function Navbar() {
                   <ShieldCheck size={16} /> Admin Panel
                 </Link>
               )}
-              <Link href={dashboardLink} className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
-                <LayoutDashboard size={16} /> Dashboard
-              </Link>
+              {role === 'vendor' ? (
+                <Link href="/dashboard/vendor" className={styles.mobileLink} onClick={() => setMenuOpen(false)} style={{ color: 'var(--primary)' }}>
+                  <Store size={16} /> Manage My Store
+                </Link>
+              ) : (
+                <Link href={dashboardLink} className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
+                  <LayoutDashboard size={16} /> Dashboard
+                </Link>
+              )}
               <button 
                 onClick={() => { handleLogout(); setMenuOpen(false); }} 
                 className={`${styles.mobileLink} ${styles.logoutBtn}`}

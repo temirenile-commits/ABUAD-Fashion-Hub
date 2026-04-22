@@ -32,6 +32,8 @@ export default function VendorDashboard() {
   
   // New States for Advanced Features
   const [isSettingsLoading, setIsSettingsLoading] = useState(false);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [uploadingReel, setUploadingReel] = useState(false);
   const [promoCodes, setPromoCodes] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   
@@ -206,7 +208,7 @@ export default function VendorDashboard() {
 
   const handleProductMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length || !brand) return;
-    setLoading(true);
+    setUploadingMedia(true);
 
     const files = Array.from(e.target.files);
     const uploadedUrls: string[] = [];
@@ -214,16 +216,13 @@ export default function VendorDashboard() {
     for (const file of files) {
       const isVideo = file.type.startsWith('video/');
       const bucket = isVideo ? 'product-videos' : 'product-images';
-      console.log(`Uploading ${file.name} to ${bucket}...`);
 
       const { url, error } = await uploadFile(file, bucket, `prod-${brand.id}`);
       if (url) {
         uploadedUrls.push(url);
-        // If it's the first image, set it as the main imageUrl
         if (!isVideo && !newProduct.imageUrl) {
           setNewProduct(prev => ({ ...prev, imageUrl: url }));
         }
-        // If it's a video, set it as the videoUrl
         if (isVideo) {
           setNewProduct(prev => ({ ...prev, videoUrl: url }));
         }
@@ -236,12 +235,12 @@ export default function VendorDashboard() {
       ...prev,
       mediaUrls: [...prev.mediaUrls, ...uploadedUrls]
     }));
-    setLoading(false);
+    setUploadingMedia(false);
   };
 
   const handleReelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0] || !brand) return;
-    setLoading(true);
+    setUploadingReel(true);
 
     const file = e.target.files[0];
     const { url, error } = await uploadFile(file, 'product-media', `reel-${brand.id}`);
@@ -255,8 +254,6 @@ export default function VendorDashboard() {
         });
 
       if (!dbError) {
-        alert('Reel uploaded successfully!');
-        // Refresh reels
         const { data: reelData } = await supabase
           .from('brand_reels')
           .select('*')
@@ -269,7 +266,7 @@ export default function VendorDashboard() {
     } else {
       alert('Upload failed: ' + error);
     }
-    setLoading(false);
+    setUploadingReel(false);
   };
 
   const handleProductSubmit = async (e: React.FormEvent) => {
@@ -1276,16 +1273,20 @@ export default function VendorDashboard() {
                         </div>
                       ))}
                       {newProduct.mediaUrls.length < 5 && (
-                        <label className={styles.vividUploadTrigger}>
+                        <label className={styles.vividUploadTrigger} style={{ opacity: uploadingMedia ? 0.7 : 1, pointerEvents: uploadingMedia ? 'none' : 'auto' }}>
                           <input
                             type="file"
                             multiple
                             accept="image/*"
                             hidden
+                            disabled={uploadingMedia}
                             onChange={(e) => handleProductMediaUpload(e)}
                           />
-                          <Upload size={20} />
-                          <span>Add Photo</span>
+                          {uploadingMedia ? (
+                            <><span className="spinner" style={{ width: 18, height: 18, display: 'inline-block' }} /></>
+                          ) : (
+                            <><Upload size={20} /><span>Add Photo</span></>
+                          )}
                         </label>
                       )}
                     </div>
@@ -1324,8 +1325,17 @@ export default function VendorDashboard() {
                     </div>
                   </div>
                   <div className={styles.invActions}>
-                    <button className="btn btn-ghost btn-sm">Edit</button>
-                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--primary)' }}>Delete</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => alert('Edit coming soon!')}>Edit</button>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      style={{ color: '#ef4444' }}
+                      onClick={async () => {
+                        if (!confirm(`Delete "${p.title}"? This cannot be undone.`)) return;
+                        const { error } = await supabase.from('products').delete().eq('id', p.id);
+                        if (error) alert('Delete failed: ' + error.message);
+                        // Realtime will auto-remove it from the store
+                      }}
+                    >Delete</button>
                   </div>
                 </div>
               ))}
@@ -1369,9 +1379,9 @@ export default function VendorDashboard() {
                 <h1 className={styles.title}>Collection Reels</h1>
                 <p className={styles.subtitle}>Upload short videos of your latest designs to engage customers vividly.</p>
               </div>
-              <label className="btn btn-primary">
-                <input type="file" accept="video/*" hidden onChange={handleReelUpload} />
-                <Video size={18} /> Upload Reel
+              <label className="btn btn-primary" style={{ opacity: uploadingReel ? 0.7 : 1, pointerEvents: uploadingReel ? 'none' : 'auto' }}>
+                <input type="file" accept="video/*" hidden onChange={handleReelUpload} disabled={uploadingReel} />
+                {uploadingReel ? <><span className="spinner" style={{ width: 16, height: 16, display: 'inline-block', marginRight: '0.5rem' }} />Uploading...</> : <><Video size={18} /> Upload Reel</>}
               </label>
             </div>
 

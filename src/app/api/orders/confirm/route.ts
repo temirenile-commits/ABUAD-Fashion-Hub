@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    if (order.status !== 'paid' && order.status !== 'shipped' && order.status !== 'out_for_delivery') {
+    if (order.status !== 'paid' && order.status !== 'in_transit' && order.status !== 'delivered') {
       return NextResponse.json({ error: 'Order is not in a releasable state' }, { status: 400 });
     }
 

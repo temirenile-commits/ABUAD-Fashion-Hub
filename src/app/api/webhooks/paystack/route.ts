@@ -60,7 +60,15 @@ export async function POST(req: Request) {
 
       // 3. Process each order: Decrement stock, create notifications, and record transactions
       for (const order of orders) {
-        // A. Decrement Stock
+        // A. Get the brand owner's user ID for notifications
+        const { data: brandData } = await supabaseAdmin
+          .from('brands')
+          .select('owner_id')
+          .eq('id', order.brand_id)
+          .single();
+        const vendorUserId = brandData?.owner_id;
+
+        // B. Decrement Stock
         await supabaseAdmin.rpc('decrement_product_stock', { 
           prod_id: order.product_id, 
           qty: 1 // Assuming 1 for now, or fetch from order if quantity is added
@@ -88,14 +96,16 @@ export async function POST(req: Request) {
         });
 
         // D. Notify Vendor
-        await supabaseAdmin.from('notifications').insert({
-          user_id: order.brand_owner_id || order.brand_id, // Fallback to brand_id if owner not joined
-          type: 'new_order',
-          title: 'You have a new order! 💸',
-          content: `A customer just purchased an item. Start processing order #${order.id.slice(0, 8)} to release your funds.`,
-          link: '/dashboard/vendor',
-          is_read: false
-        });
+        if (vendorUserId) {
+          await supabaseAdmin.from('notifications').insert({
+            user_id: vendorUserId,
+            type: 'new_order',
+            title: 'You have a new order! 💸',
+            content: `A customer just purchased an item. Start processing order #${order.id.slice(0, 8)} to release your funds.`,
+            link: '/dashboard/vendor',
+            is_read: false
+          });
+        }
       }
 
       console.log(`[WEBHOOK] ${orders.length} orders processed successfully for reference ${reference}`);

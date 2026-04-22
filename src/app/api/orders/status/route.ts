@@ -6,7 +6,8 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
-    const { orderId, status, vendorId } = await req.json();
+    const body = await req.json();
+    const { orderId, status, vendorId, trackingNumber, rejectionReason } = body;
 
     if (!orderId || !status || !vendorId) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
@@ -29,7 +30,6 @@ export async function POST(req: Request) {
 
     // 2. Update Status
     const updateData: any = { status: status };
-    const { trackingNumber, rejectionReason } = await req.json().catch(() => ({}));
     
     if (trackingNumber) updateData.tracking_number = trackingNumber;
     if (rejectionReason) updateData.rejection_reason = rejectionReason;
