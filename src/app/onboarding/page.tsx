@@ -78,42 +78,44 @@ export default function OnboardingPage() {
   }, [router]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, bucket: 'brand-logos' | 'brand-assets' | 'verification-docs') => {
-    if (!e.target.files?.[0]) return;
-    const file = e.target.files[0];
+    if (!e.target.files?.length) return;
     const isLogo = bucket === 'brand-logos' || bucket === 'brand-assets';
+    
     if (isLogo) {
+      const file = e.target.files[0];
       setUploadingLogo(true);
+      setLogoProgress(0);
+      const { url, error } = await uploadFile(file, bucket, `${user.id}-${Date.now()}`, (p) => setLogoProgress(p));
+      if (url) {
+        setLogoUrl(url);
+        setUploadStatus(prev => ({ ...prev, logo: `✅ ${file.name} uploaded!` }));
+      } else {
+        setUploadStatus(prev => ({ ...prev, logo: `❌ Upload failed: ${error || 'Unknown error'}` }));
+      }
+      setUploadingLogo(false);
       setLogoProgress(0);
     } else {
       setUploadingDoc(true);
       setDocProgress(0);
-    }
-    const { url, error } = await uploadFile(
-      file, 
-      bucket, 
-      `${user.id}-${Date.now()}`,
-      (progress) => {
-        if (isLogo) setLogoProgress(progress);
-        else setDocProgress(progress);
+      const newUrls: string[] = [];
+      const files = Array.from(e.target.files);
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setUploadStatus(prev => ({ ...prev, docs: `Uploading ${i + 1} of ${files.length}...` }));
+        const { url, error } = await uploadFile(file, bucket, `${user.id}-${Date.now()}-${i}`, (p) => setDocProgress(p));
+        if (url) newUrls.push(url);
       }
-    );
-    if (url) {
-      if (isLogo) {
-        setLogoUrl(url);
-        setUploadStatus(prev => ({ ...prev, logo: `✅ ${file.name} uploaded!` }));
+      
+      if (newUrls.length > 0) {
+        setVerificationUrls(prev => {
+           const finalUrls = [...prev, ...newUrls];
+           setUploadStatus(s => ({ ...s, docs: `✅ ${finalUrls.length} file(s) attached` }));
+           return finalUrls;
+        });
       } else {
-        setVerificationUrls(prev => [...prev, url]);
-        setUploadStatus(prev => ({ ...prev, docs: `✅ ${file.name} attached (${verificationUrls.length + 1} total)` }));
+        setUploadStatus(prev => ({ ...prev, docs: `❌ Upload failed` }));
       }
-    } else {
-      const msg = `❌ Upload failed: ${error || 'Unknown error'}`;
-      if (isLogo) setUploadStatus(prev => ({ ...prev, logo: msg }));
-      else setUploadStatus(prev => ({ ...prev, docs: msg }));
-    }
-    if (isLogo) {
-      setUploadingLogo(false);
-      setLogoProgress(0);
-    } else {
       setUploadingDoc(false);
       setDocProgress(0);
     }
@@ -128,6 +130,9 @@ export default function OnboardingPage() {
     setErrorMsg('');
 
     try {
+      const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
+      const isAlreadyVendor = profile?.role === 'vendor' || profile?.role === 'admin';
+
       // 1. Create the Brand
       const { data: brand, error: brandError } = await supabase
         .from('brands')
@@ -137,9 +142,9 @@ export default function OnboardingPage() {
           category: form.category,
           description: form.description,
           whatsapp_number: form.whatsapp,
-          verification_status: 'pending',
-          verified: false,
-          fee_paid: false,
+          verification_status: isAlreadyVendor ? 'verified' : 'pending',
+          verified: isAlreadyVendor,
+          fee_paid: isAlreadyVendor,
           logo_url: logoUrl,
           student_id_url: verificationUrls[0] || null,
           business_proof_url: verificationUrls[1] || null,
@@ -406,7 +411,7 @@ export default function OnboardingPage() {
 
               <div className={styles.uploadAreas}>
                 <label className={styles.uploadBox} style={{ opacity: uploadingDoc ? 0.7 : 1 }}>
-                  <input type="file" hidden disabled={uploadingDoc} onChange={(e) => handleFileUpload(e, 'verification-docs')} />
+                  <input type="file" hidden multiple disabled={uploadingDoc} onChange={(e) => handleFileUpload(e, 'verification-docs')} />
                   {uploadingDoc ? (
                     <div style={{ padding: '1rem', width: '100%', textAlign: 'center' }}>
                       <div className="spinner" style={{ width: 30, height: 30, margin: '0 auto 0.5rem' }} />

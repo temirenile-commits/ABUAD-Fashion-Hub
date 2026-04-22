@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
+export const dynamic = 'force-dynamic';
+
+
 // ─── Middleware: Verify request is from an admin ───────────────────────────
 async function verifyAdmin(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -229,6 +232,26 @@ export async function POST(req: NextRequest) {
     });
 
     if (authError) return NextResponse.json({ error: authError.message }, { status: 500 });
+    
+    // Auto-create brand profile if none exists so they can bypass onboarding
+    if (newRole === 'vendor' || newRole === 'admin') {
+      const { data: existingBrand } = await supabaseAdmin.from('brands').select('id').eq('owner_id', userId).single();
+      if (!existingBrand) {
+        // Fetch user basic info
+        const { data: p } = await supabaseAdmin.from('users').select('name').eq('id', userId).single();
+        await supabaseAdmin.from('brands').insert({
+          owner_id: userId,
+          name: p?.name ? `${p.name}'s Store` : 'New Vendor Store',
+          category: 'Clothing',
+          verification_status: 'verified',
+          verified: true,
+          fee_paid: true,
+          terms_accepted: true,
+          description: 'A pre-approved vendor store.',
+          student_id_url: 'https://placeholder.com' // bypass null constraint if any
+        });
+      }
+    }
 
     return NextResponse.json({ success: true });
   }

@@ -17,6 +17,7 @@ async function adminFetch(path: string, options: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
   return fetch(path, {
     ...options,
+    cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${session?.access_token || ''}`,
