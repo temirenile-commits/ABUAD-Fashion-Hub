@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home } from 'lucide-react';
 import Papa from 'papaparse';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
@@ -72,13 +72,13 @@ export default function VendorDashboard() {
     ? new Date(brand.subscription_expires_at).getTime() > new Date().getTime()
     : false;
 
-  const currentTier = isTrialActive ? 'full' : (isSubActive ? (brand?.subscription_tier || 'free') : 'free');
+  const currentTier = userRole === 'admin' ? 'full' : (isTrialActive ? 'full' : (isSubActive ? (brand?.subscription_tier || 'free') : 'free'));
   
-  const productLimit = isTrialActive ? 999999 : (isSubActive ? (brand?.max_products || 10) : 0);
-  const reelLimit = isTrialActive ? 999999 : (isSubActive ? (brand?.max_reels || 1) : 0);
+  const productLimit = (userRole === 'admin' || isTrialActive) ? 999999 : (isSubActive ? (brand?.max_products || 10) : 0);
+  const reelLimit = (userRole === 'admin' || isTrialActive) ? 999999 : (isSubActive ? (brand?.max_reels || 1) : 0);
   
-  const canAccessAnalytics = currentTier !== 'free';
-  const canAccessPromoCodes = ['half', 'full'].includes(currentTier);
+  const canAccessAnalytics = userRole === 'admin' || currentTier !== 'free';
+  const canAccessPromoCodes = userRole === 'admin' || ['half', 'full'].includes(currentTier);
   
   // Real-time states
   const { products: allProducts, orders: allOrders, setOrders: setGlobalOrders, addProduct, updateOrder, updateProduct: updateGlobalProduct } = useMarketplaceStore();
@@ -681,6 +681,11 @@ export default function VendorDashboard() {
         </div>
 
         <nav className={styles.nav}>
+          <Link href="/" className={styles.navItem} style={{ marginBottom: '0.5rem', color: 'var(--secondary)' }}>
+            <Home size={18} /> Marketplace Hub
+          </Link>
+          <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '1rem' }} />
+          
           <button className={`${styles.navItem} ${activeTab === 'overview' ? styles.navActive : ''}`} onClick={() => setActiveTab('overview')}>
             <TrendingUp size={18} /> Overview
           </button>
@@ -908,113 +913,19 @@ export default function VendorDashboard() {
                 </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Wallet Tab */}
-        {activeTab === 'wallet' && (
-          <div className={styles.tabContent}>
-            <h1 className={styles.title}>Wallet & Escrow Balance</h1>
-
-            <div className={styles.statsGrid}>
-              <div className={`${styles.statCard} ${styles.statCardVibrant}`}>
-                <span className={styles.statLabel}>Available Balance</span>
-                <span className={styles.statValue}>{formatPrice(Number(brand.wallet_balance || 0))}</span>
-                <button 
-                  className={`btn btn-primary btn-sm ${styles.withdrawBtn}`} 
-                  disabled={Number(brand.wallet_balance) < 1000}
-                  onClick={() => setIsWithdrawing(true)}
-                >
-                  Withdraw to Bank
-                </button>
-                <p className={styles.fieldNote}>Min. withdrawal: ₦1,000</p>
-              </div>
-              <div className={styles.statCard}>
-                <span className={styles.statLabel}>Funds in Escrow</span>
-                <span className={styles.statValue} style={{ color: 'var(--text-300)' }}>
-                  {formatPrice(orders.filter(o => ['paid', 'ready', 'picked_up', 'in_transit', 'delivered'].includes(o.status)).reduce((acc, curr) => acc + Number(curr.vendor_earning), 0))}
-                </span>
-                <p className={styles.statSub}>Releases when customer confirms delivery</p>
-              </div>
-              <div className={styles.statCard}>
-                <span className={styles.statLabel}>Total Sales (All Time)</span>
-                <span className={styles.statValue}>
-                  {formatPrice(transactions.filter(tx => tx.type === 'payment_in' || tx.type === 'escrow_release').reduce((acc, curr) => acc + Number(curr.amount), 0))}
-                </span>
-              </div>
-            </div>
-
-            {isWithdrawing && (
-              <div className={styles.modalOverlay}>
-                <div className={styles.modalContent}>
-                  <h3>Request Payout</h3>
-                  <p>Funds will be sent to your registered bank account: <strong>{brand.bank_name} ({brand.bank_account_number})</strong></p>
-                  <form onSubmit={handleWithdrawalRequest}>
-                    <div className={styles.inputGroup}>
-                      <label>Amount to Withdraw (₦)</label>
-                      <input type="number" name="amount" min="1000" max={brand.wallet_balance} required />
-                    </div>
-                    <div className={styles.modalActions}>
-                      <button type="button" className="btn btn-ghost" onClick={() => setIsWithdrawing(false)}>Cancel</button>
-                      <button type="submit" className="btn btn-primary" disabled={loading}>
-                        {loading ? 'Processing...' : 'Confirm Withdrawal'}
-                      </button>
-                    </div>
-                  </form>
+            
+            {userRole === 'admin' && (
+              <div className={styles.adminQuickLink} style={{ marginTop: '2rem', background: 'var(--grad-brand-soft)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <h4 style={{ color: 'var(--primary)', marginBottom: '0.25rem' }}>👑 Admin Access Active</h4>
+                  <p style={{ fontSize: '0.85rem' }}>You have full unlimited access to all platform features.</p>
                 </div>
+                <Link href="/admin" className="btn btn-primary btn-sm">Enter Admin Panel</Link>
               </div>
             )}
-
-            <div className={styles.dashboardSplit}>
-              <div className={styles.splitMain}>
-                <div className={styles.sectionCard}>
-                  <h3>Pending Withdrawals</h3>
-                  <div className={styles.withdrawalList}>
-                    {withdrawalRequests.filter(r => r.status === 'pending' || r.status === 'processing').map(req => (
-                      <div key={req.id} className={styles.withdrawalItem}>
-                        <div className={styles.withdrawalIcon}><Clock size={16} /></div>
-                        <div className={styles.withdrawalInfo}>
-                          <h4>{formatPrice(req.amount)} Payout</h4>
-                          <span>Requested on {new Date(req.created_at).toLocaleDateString()}</span>
-                        </div>
-                        <div className={`${styles.statusBadgeSmall} ${styles[req.status]}`}>
-                          {req.status.toUpperCase()}
-                        </div>
-                      </div>
-                    ))}
-                    {withdrawalRequests.filter(r => r.status === 'pending' || r.status === 'processing').length === 0 && (
-                      <p className={styles.emptyText}>No pending requests.</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className={styles.activityFeed} style={{ marginTop: '2rem' }}>
-                  <h3>Transaction History</h3>
-                  <div className={styles.transactionList}>
-                    {transactions.length > 0 ? (
-                      transactions.map(tx => (
-                        <div key={tx.id} className={styles.txRow}>
-                          <div className={styles.txIcon}>
-                            {tx.type === 'payment_in' || tx.type === 'escrow_release' ? <TrendingUp size={16} /> : <Wallet size={16} />}
-                          </div>
-                          <div className={styles.txInfo}>
-                            <h4>{tx.description || tx.type.replace('_', ' ').toUpperCase()}</h4>
-                            <span>{new Date(tx.created_at).toLocaleDateString()}</span>
-                          </div>
-                          <span className={['payment_in', 'escrow_release'].includes(tx.type) ? styles.txAmountPos : styles.txAmountNeg}>
-                            {['payout', 'refund'].includes(tx.type) ? '-' : '+'}{formatPrice(Number(tx.amount))}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <p style={{ color: 'var(--text-400)', textAlign: 'center', padding: '1rem' }}>No transactions yet.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         )}
+
         {/* Store Settings Tab */}
         {activeTab === 'settings' && brand && (
           <div className={styles.tabContent}>

@@ -102,9 +102,9 @@ export default function Navbar() {
             <>
               {role === 'admin' && (
                 <div className={styles.actionItem}>
-                  <Link href="/admin" className={styles.actionLink} style={{ color: 'var(--accent-gold)' }}>
-                    <LayoutDashboard size={20} />
-                    <span>Admin Panel</span>
+                  <Link href="/admin" className={`${styles.actionLink} ${styles.adminBadge}`} style={{ color: 'var(--accent-gold)', border: '1px solid var(--accent-gold)', padding: '0.4rem 0.8rem', borderRadius: 'var(--radius-md)', background: 'rgba(212, 175, 55, 0.1)' }}>
+                    <ShieldCheck size={18} />
+                    <strong>ADMIN PANEL</strong>
                   </Link>
                 </div>
               )}
