@@ -720,6 +720,9 @@ export default function VendorDashboard() {
           <button className={`${styles.navItem} ${activeTab === 'settings' ? styles.navActive : ''}`} onClick={() => setActiveTab('settings')}>
             <Settings size={18} /> Store Settings
           </button>
+          <button className={`${styles.navItem} ${activeTab === 'plans' ? styles.navActive : ''}`} onClick={() => setActiveTab('plans')} style={{ color: 'var(--primary)', background: activeTab === 'plans' ? 'var(--primary-soft)' : 'transparent' }}>
+            <Crown size={18} /> Plans & Upgrade
+          </button>
           
           {userRole === 'admin' && (
             <Link href="/admin" className={styles.navItem} style={{ color: 'var(--accent-gold)', marginTop: '0.5rem', background: 'rgba(212, 175, 55, 0.05)' }}>
@@ -1791,7 +1794,215 @@ export default function VendorDashboard() {
                   <p>Get featured on the homepage for ₦1,000/week.</p>
                   <button className="btn btn-primary btn-sm" onClick={() => alert('Boost system coming soon!')}>Boost Now</button>
                </div>
+             </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            PLANS & UPGRADE TAB — Credit Rate Checkout
+        ══════════════════════════════════════════════════ */}
+        {activeTab === 'plans' && brand && (
+          <div className={styles.tabContent}>
+            <h1 className={styles.title}>Plans & Upgrade</h1>
+            <p style={{ color: 'var(--text-300)', marginBottom: '2rem' }}>
+              Choose a credit rate plan that fits your hustle. All plans unlock vendor superpowers instantly upon successful payment via Paystack.
+            </p>
+
+            {/* ── Current Status Banner ── */}
+            <div style={{ background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ fontSize: '1.5rem' }}>
+                {currentTier === 'full' ? '👑' : currentTier === 'half' ? '🚀' : currentTier === 'quarter' ? '🎯' : '🌱'}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, color: 'var(--primary)', marginBottom: '0.25rem' }}>
+                  {userRole === 'admin' ? 'Admin — Unlimited Access (No Fees)' :
+                   isTrialActive ? `Free Trial Active — ${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining` :
+                   isSubActive ? `Current Plan: ${currentTier.charAt(0).toUpperCase() + currentTier.slice(1)} Power` :
+                   'No Active Plan — Free mode (limited access)'}
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-400)' }}>
+                  {isSubActive && brand?.subscription_expires_at
+                    ? `Renews on ${new Date(brand.subscription_expires_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                    : userRole !== 'admin' ? 'Subscribe below to unlock full vendor capabilities' : 'You have root access to all platform features'}
+                </div>
+              </div>
             </div>
+
+            {/* ── Credit Rate Plans ── */}
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-100)' }}>
+              💳 Credit Rate Plans
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem', marginBottom: '3rem' }}>
+              {[
+                {
+                  id: 'quarter',
+                  name: 'Quarter Power',
+                  emoji: '🎯',
+                  price: 5000,
+                  period: '/month',
+                  tagline: '25% of full vendor powers',
+                  color: '#3b82f6',
+                  features: [
+                    '✅ Upload up to 10 Products',
+                    '✅ 1 Collection Reel',
+                    '✅ Basic Sales Analytics',
+                    '✅ Standard WhatsApp Support',
+                    '❌ Promo Codes',
+                    '❌ Featured Placement',
+                  ],
+                },
+                {
+                  id: 'half',
+                  name: 'Half Power',
+                  emoji: '🚀',
+                  price: 10000,
+                  period: '/month',
+                  tagline: '50% of full vendor powers',
+                  color: 'var(--primary)',
+                  popular: true,
+                  features: [
+                    '✅ Upload up to 50 Products',
+                    '✅ Up to 5 Reels',
+                    '✅ Advanced Analytics',
+                    '✅ Promo Code Generator',
+                    '✅ Priority Support',
+                    '❌ Featured Placement',
+                  ],
+                },
+                {
+                  id: 'full',
+                  name: 'Full Power',
+                  emoji: '👑',
+                  price: 20000,
+                  period: '/month',
+                  tagline: '100% of full vendor powers',
+                  color: '#f59e0b',
+                  features: [
+                    '✅ Unlimited Products',
+                    '✅ Unlimited Reels',
+                    '✅ Premium Analytics Dashboard',
+                    '✅ Unlimited Promo Codes',
+                    '✅ Featured Shop Placement',
+                    '✅ Top Priority Support',
+                  ],
+                },
+              ].map(tier => {
+                const isActive = isSubActive && brand?.subscription_tier === tier.id;
+                return (
+                  <div
+                    key={tier.id}
+                    style={{
+                      background: isActive ? 'var(--primary-soft)' : 'var(--bg-300)',
+                      border: `2px solid ${isActive ? 'var(--primary)' : tier.popular ? tier.color : 'var(--border)'}`,
+                      borderRadius: '16px',
+                      padding: '1.75rem',
+                      position: 'relative',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '1rem',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                    }}
+                  >
+                    {tier.popular && !isActive && (
+                      <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: tier.color, color: '#000', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 1rem', borderRadius: '999px', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+                        MOST POPULAR
+                      </div>
+                    )}
+                    {isActive && (
+                      <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#000', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 1rem', borderRadius: '999px', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+                        ✓ ACTIVE
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span style={{ fontSize: '1.75rem' }}>{tier.emoji}</span>
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: '1.05rem', color: tier.color }}>{tier.name}</div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-400)' }}>{tier.tagline}</div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
+                      <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--text-100)' }}>
+                        ₦{tier.price.toLocaleString()}
+                      </span>
+                      <span style={{ color: 'var(--text-400)', fontSize: '0.9rem' }}>{tier.period}</span>
+                    </div>
+
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {tier.features.map((f, i) => (
+                        <li key={i} style={{ fontSize: '0.85rem', color: f.startsWith('✅') ? 'var(--text-200)' : 'var(--text-500)' }}>{f}</li>
+                      ))}
+                    </ul>
+
+                    <button
+                      className="btn btn-primary"
+                      disabled={paying === tier.id || isActive || userRole === 'admin'}
+                      onClick={() => handleSubscribe({ id: tier.id, price: tier.price })}
+                      style={{
+                        marginTop: 'auto',
+                        background: isActive ? 'transparent' : `linear-gradient(135deg, ${tier.color}, ${tier.color}cc)`,
+                        border: isActive ? `1px solid ${tier.color}` : 'none',
+                        color: isActive ? tier.color : '#000',
+                        fontWeight: 700,
+                        opacity: userRole === 'admin' ? 0.5 : 1,
+                      }}
+                    >
+                      {paying === tier.id ? <><Loader2 size={16} className="spin" /> Processing…</> :
+                       userRole === 'admin' ? 'Admin — Free Access' :
+                       isActive ? '✓ Current Plan' : `Subscribe — ₦${tier.price.toLocaleString()}/mo`}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── Boost Store Section ── */}
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-100)' }}>
+              ⚡ Boost Store
+            </h2>
+            <p style={{ color: 'var(--text-400)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+              One-time boosts to increase your store's visibility on the marketplace homepage. No subscription required.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+              {[
+                { id: 'boost_week', name: '1-Week Homepage Boost', emoji: '📣', price: 1000, desc: 'Featured on homepage for 7 days', duration: '7 days' },
+                { id: 'boost_month', name: '1-Month Homepage Boost', emoji: '🔥', price: 3000, desc: 'Top featured placement for 30 days', duration: '30 days', popular: true },
+                { id: 'boost_top', name: 'Priority Top Slot', emoji: '🏆', price: 5000, desc: 'Pin your store at #1 position for 7 days', duration: '7 days (prime)' },
+              ].map(boost => (
+                <div key={boost.id} style={{ background: 'var(--bg-300)', border: `1px solid ${boost.popular ? 'var(--primary)' : 'var(--border)'}`, borderRadius: '14px', padding: '1.5rem', position: 'relative' }}>
+                  {boost.popular && (
+                    <div style={{ position: 'absolute', top: '-12px', right: '1rem', background: 'var(--primary)', color: '#000', fontSize: '0.68rem', fontWeight: 800, padding: '0.25rem 0.75rem', borderRadius: '999px' }}>BEST VALUE</div>
+                  )}
+                  <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{boost.emoji}</div>
+                  <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{boost.name}</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.5rem' }}>{boost.desc}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-500)', marginBottom: '1.25rem' }}>Duration: {boost.duration}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <span style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--primary)' }}>₦{boost.price.toLocaleString()}</span>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      disabled={paying === boost.id || userRole === 'admin'}
+                      onClick={() => handleSubscribe({ id: boost.id, price: boost.price })}
+                      style={{ fontWeight: 700 }}
+                    >
+                      {paying === boost.id ? <><Loader2 size={14} className="spin" /> Paying…</> : 'Boost Now →'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Trial & Admin Notes ── */}
+            {isTrialActive && (
+              <div style={{ marginTop: '2rem', padding: '1.25rem', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '12px' }}>
+                <p style={{ color: '#60a5fa', fontWeight: 600, marginBottom: '0.5rem' }}>🎁 Free Trial Still Active</p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-400)' }}>
+                  You have <strong style={{ color: '#fff' }}>{trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''}</strong> left on your free Full Power trial. 
+                  Subscribe before it expires to keep your powers uninterrupted.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </main>
