@@ -82,11 +82,7 @@ export default function Navbar() {
       <nav className={`container-wide ${styles.nav}`}>
         {/* Logo */}
         <Link href="/" className={styles.logo}>
-          <div className={styles.logoIcon}>AFH</div>
-          <div className={styles.logoText}>
-            <span className="text-gradient">ABUAD</span>
-            <span className={styles.logoSub}>Fashion Hub</span>
-          </div>
+          <img src="/logo.png" alt="Logo" className={styles.logoImg} />
         </Link>
 
         {/* Search Bar (Jumia Style - Center) */}
