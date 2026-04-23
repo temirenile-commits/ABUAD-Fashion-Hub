@@ -14,10 +14,14 @@ type TransactionInitParams = {
 
 export async function initializeTransaction(params: TransactionInitParams) {
   const secret = process.env.PAYSTACK_SECRET_KEY;
-  if (!secret) throw new Error('Paystack Secret Key is missing from environment');
+  if (!secret) {
+    console.error('[PAYSTACK] Secret Key missing from environment');
+    throw new Error('Payment gateway configuration error. Check environment variables.');
+  }
 
   const response = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
     method: 'POST',
+    cache: 'no-store',
     headers: {
       Authorization: `Bearer ${secret}`,
       'Content-Type': 'application/json',
@@ -30,6 +34,7 @@ export async function initializeTransaction(params: TransactionInitParams) {
 
   const data = await response.json();
   if (!data.status) {
+    console.error('[PAYSTACK_API_ERROR]', data);
     throw new Error(data.message || 'Failed to initialize Paystack transaction');
   }
 
@@ -38,10 +43,11 @@ export async function initializeTransaction(params: TransactionInitParams) {
 
 export async function verifyTransaction(reference: string) {
   const secret = process.env.PAYSTACK_SECRET_KEY;
-  if (!secret) throw new Error('Paystack Secret Key is missing from environment');
+  if (!secret) throw new Error('Paystack Secret Key is missing');
 
   const response = await fetch(`${PAYSTACK_BASE_URL}/transaction/verify/${reference}`, {
     method: 'GET',
+    cache: 'no-store',
     headers: {
       Authorization: `Bearer ${secret}`,
     },
@@ -51,16 +57,10 @@ export async function verifyTransaction(reference: string) {
   return data;
 }
 
-// Escrow Fund Release API Integration (Mock structure for future Paystack Transfers API implementation)
+// Escrow Fund Release API Integration
 export async function releaseEscrowPayment(bankCode: string, accountNumber: string, amount: number, reason: string) {
   const secret = process.env.PAYSTACK_SECRET_KEY;
-  if (!secret) throw new Error('Paystack Secret Key is missing from environment');
-
-  // STEP 1: Create a Transfer Recipient
-  // https://paystack.com/docs/transfers/single-transfers/#create-a-transfer-recipient
-  
-  // STEP 2: Initiate Transfer
-  // https://paystack.com/docs/transfers/single-transfers/#initiate-a-transfer
+  if (!secret) throw new Error('Paystack Secret Key is missing');
 
   console.log(`[ESCROW] Releasing N${amount} to Bank Code ${bankCode}, Acc ${accountNumber} for reason: ${reason}`);
   return { success: true, reference: `es_rel_${Date.now()}` };

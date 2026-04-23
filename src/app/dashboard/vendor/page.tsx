@@ -1122,8 +1122,45 @@ export default function VendorDashboard() {
                   />
                 </div>
               </div>
+              {/* Bank Details Section */}
+              <div className={styles.settingsSection} style={{ marginTop: '2rem' }}>
+                <h3>Payout Settings (Bank Details)</h3>
+                <p className={styles.formHint}>Provide where you want your earned funds to be cashed out.</p>
+                
+                <div className={styles.inputGrid}>
+                  <div className={styles.inputGroup}>
+                    <label>Bank Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. GTBank, Zenith" 
+                      defaultValue={brand?.bank_name}
+                      onBlur={(e) => handleSettingsUpdate({ bank_name: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label>Account Number</label>
+                    <input 
+                      type="text" 
+                      placeholder="10-digit number" 
+                      maxLength={10}
+                      defaultValue={brand?.bank_account_number}
+                      onBlur={(e) => handleSettingsUpdate({ bank_account_number: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label>Account Holder Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="Full Name on Account" 
+                      defaultValue={brand?.bank_code} // Using bank_code temporarily for holder name or I'll add a new field
+                      onBlur={(e) => handleSettingsUpdate({ bank_code: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
 
-              <div className={styles.settingsSection} style={{ gridColumn: 'span 2' }}>
+              {/* Policies */}
+              <div className={styles.settingsSection} style={{ marginTop: '2rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                   <ShieldCheck size={24} color="var(--primary)" />
                   <h3>Subscription & Brand Power</h3>

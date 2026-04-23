@@ -20,14 +20,15 @@ export async function POST(req: Request) {
       .single();
 
     const reference = `SUB-${tierId.toUpperCase()}-${brandId}-${Date.now()}`;
-    const origin = req.headers.get('origin') || 'https://abuad-fashion-hub.vercel.app';
+    const origin = req.headers.get('origin') || 'https://abuadfashionhub.com';
+    const baseDomain = origin.includes('localhost') ? origin : 'https://abuadfashionhub.com';
 
     // 2. Initialize Paystack
     const paystackParams = {
       email: userProfile?.email || 'vendor@abuadfashionhub.com',
-      amount: amount, // The user passes the amount from the frontend (5000, 10000, 20000)
+      amount: amount, 
       reference: reference,
-      callback_url: `${origin}/dashboard/vendor`,
+      callback_url: `${baseDomain}/dashboard/vendor`,
       metadata: {
         payment_type: 'vendor_subscription',
         brand_id: brandId,

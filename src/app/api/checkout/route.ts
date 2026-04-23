@@ -88,7 +88,9 @@ export async function POST(req: Request) {
 
     // 4. FAST REDIRECT: Initialize Paystack
     const origin = req.headers.get('origin') || 'https://abuadfashionhub.com';
-    const callbackUrl = `${origin}/checkout/success?ref=${batchReference}`;
+    // Ensure production always uses the primary domain for callbacks to avoid Vercel preview mismatch
+    const baseDomain = origin.includes('localhost') ? origin : 'https://abuadfashionhub.com';
+    const callbackUrl = `${baseDomain}/checkout/success?ref=${batchReference}`;
 
     const paystackData = await initializeTransaction({
       email: userProfile?.email || 'customer@abuadfashionhub.com',
