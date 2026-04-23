@@ -88,6 +88,14 @@ export default function VendorDashboard() {
     isDraft: false
   });
 
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState('');
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  useEffect(() => {
+    if (brand) setTempName(brand.name);
+  }, [brand]);
+
   useEffect(() => {
     async function fetchVendorData() {
       const { data: { session } } = await supabase.auth.getSession();
@@ -485,6 +493,32 @@ export default function VendorDashboard() {
     }
   };
 
+  const handleLogoUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !brand) return;
+
+    setUploadingLogo(true);
+    try {
+      const { url, error } = await uploadFile(file, 'brand-logos', `logo-${brand.id}`);
+      if (error) throw new Error(error);
+      
+      await handleUpdateSettings({ logo_url: url });
+    } catch (err: any) {
+      alert('Error updating logo: ' + err.message);
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleNameUpdate = async () => {
+    if (!tempName.trim() || tempName === brand.name) {
+      setIsEditingName(false);
+      return;
+    }
+    await handleUpdateSettings({ name: tempName });
+    setIsEditingName(false);
+  };
+
   const handleUpdateSettings = async (updates: any) => {
     if (!brand) return;
     setIsSettingsLoading(true);
@@ -654,20 +688,58 @@ export default function VendorDashboard() {
 
   return (
     <div className={`container ${styles.page} pb-mobile-nav`}>
+      {/* 💳 Payment Processing Overlay */}
+      {paying && (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingContent}>
+            <div className={styles.paymentLoader}></div>
+            <h3>Processing Payment...</h3>
+            <p>Please wait while we secure your transaction with Paystack.</p>
+            <div className={styles.redirectText}>Preparing secure redirect...</div>
+          </div>
+        </div>
+      )}
+
       <aside className={styles.sidebar}>
+        <header className={styles.header}>
         <div className={styles.brandInfo}>
-          <div className={styles.logo}>
+          <div className={`${styles.logo} ${uploadingLogo ? 'anim-pulse' : ''}`} style={{ cursor: 'pointer', overflow: 'hidden', position: 'relative' }} title="Change Logo" onClick={() => document.getElementById('logoInput')?.click()}>
             {brand?.logo_url ? (
               <img src={brand.logo_url} alt={brand?.name || 'Brand'} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
             ) : (brand?.name || 'AF').substring(0, 2).toUpperCase()}
+            {uploadingLogo && (
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Loader2 size={16} className="anim-spin" />
+              </div>
+            )}
+            <input type="file" id="logoInput" hidden accept="image/*" onChange={handleLogoUpdate} />
           </div>
           <div>
-            <h2 className={styles.brandName}>{brand?.name || 'Brand Portal'}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {isEditingName ? (
+                <div style={{ display: 'flex', gap: '0.3rem' }}>
+                  <input 
+                    className="input-sm" 
+                    value={tempName} 
+                    onChange={e => setTempName(e.target.value)}
+                    autoFocus
+                    onKeyDown={e => e.key === 'Enter' && handleNameUpdate()}
+                  />
+                  <button className="btn btn-primary btn-sm" onClick={handleNameUpdate}><CheckCircle size={14} /></button>
+                </div>
+              ) : (
+                <>
+                  <h2 className={styles.brandName} style={{ cursor: 'pointer' }} onClick={() => setIsEditingName(true)} title="Change Name">{brand?.name || 'Brand Portal'}</h2>
+                  <Edit3 size={14} className={styles.editIcon} onClick={() => setIsEditingName(true)} style={{ cursor: 'pointer', opacity: 0.5 }} />
+                </>
+              )}
+            </div>
             <div className={styles.brandType}>
               <span className="badge badge-teal">{brand?.brand_type || 'Fashion'}</span>
             </div>
+            </div>
           </div>
-        </div>
+        </header>
 
         <nav className={styles.nav}>
           <Link href="/" className={styles.navItem} style={{ marginBottom: '0.5rem', color: 'var(--secondary)' }}>

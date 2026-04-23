@@ -344,14 +344,21 @@ export async function POST(req: NextRequest) {
   if (action === 'activate_boost') {
     const { brandId, boostId } = body;
     
-    let visibilityBoost = 50; // default rodeo
-    if (boostId === 'nitro') visibilityBoost = 150;
-    if (boostId === 'apex') visibilityBoost = 500;
+    let visibilityBoost = 50; // rodeo
+    let durationDays = 7;
+
+    if (boostId === 'nitro') {
+      visibilityBoost = 150;
+      durationDays = 14;
+    }
+    if (boostId === 'apex') {
+      visibilityBoost = 500;
+      durationDays = 30;
+    }
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // Boosts usually last 7 days
+    expiresAt.setDate(expiresAt.getDate() + durationDays);
     
-    // We update score and set expiration
     const { error } = await supabaseAdmin
       .from('brands')
       .update({ 
