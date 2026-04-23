@@ -19,7 +19,6 @@ export default function SplashScreen() {
     <div className={styles.splashContainer}>
       <div className={styles.logoWrapper}>
         <img src="/logo.png" alt="ABUAD Fashion Hub" className={styles.logo} />
-        <div className={styles.shimmer}></div>
       </div>
     </div>
   );
