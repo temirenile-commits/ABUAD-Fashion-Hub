@@ -26,6 +26,8 @@ export async function generateMetadata({ params, searchParams }: Props) {
   return { title: `${vendor.name} – Campus Brand`, description: vendor.description };
 }
 
+import VendorActions from './VendorActions';
+
 export default async function VendorPage({ params, searchParams }: Props) {
   const { id } = await searchParams;
   const { slug } = await params;
@@ -53,16 +55,14 @@ export default async function VendorPage({ params, searchParams }: Props) {
   const vendorProducts = (productsData || []) as any[] as LiveProduct[];
   const vendor = vendorData;
   
-  const waMessage = `Hi ${vendor.name || 'there'}! I found you on ABUAD Fashion Hub. I'd love to know more about your products.`;
-  const whatsapp = (vendor.whatsapp_number || '').replace('+', '');
-  const fallbackCover = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&auto=format&fit=crop';
+  const fallbackCover = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070';
 
   return (
     <main>
       {/* Cover */}
       <div className={styles.cover}>
         <Image
-          src={fallbackCover}
+          src={vendor.cover_url || fallbackCover}
           alt={vendor.name}
           fill
           priority
@@ -95,29 +95,26 @@ export default async function VendorPage({ params, searchParams }: Props) {
                 </div>
               )}
             </div>
-            <span className={`badge badge-teal`}>Fashion</span>
+            <span className={`badge badge-teal`}>{vendor.brand_type || 'Fashion'}</span>
             <p className={styles.description}>{vendor.description}</p>
           </div>
 
           <div className={styles.profileActions}>
-            <a
-              href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(waMessage)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-whatsapp"
-            >
-              <MessageCircle size={16} /> Chat Vendor
-            </a>
-            <button className="btn btn-ghost">Follow</button>
+            <VendorActions 
+              vendorId={vendor.id} 
+              vendorName={vendor.name} 
+              whatsappNumber={vendor.whatsapp_number}
+              initialFollowers={vendor.followers_count || 0}
+            />
           </div>
         </div>
 
         {/* Stats Bar */}
         <div className={styles.statsBar}>
           {[
-            { icon: <Star size={16} />, value: '4.8', label: 'Rating' },
+            { icon: <Star size={16} />, value: Number(vendor.rating || 0).toFixed(1), label: 'Rating' },
             { icon: <Package size={16} />, value: vendorProducts.length, label: 'Products' },
-            { icon: <Users size={16} />, value: '1.2k', label: 'Followers' },
+            { icon: <Users size={16} />, value: (vendor.followers_count || 0) > 1000 ? `${((vendor.followers_count || 0)/1000).toFixed(1)}k` : (vendor.followers_count || 0), label: 'Followers' },
             { icon: <Calendar size={16} />, value: new Date(vendor.created_at).getFullYear(), label: 'Member Since' },
           ].map(({ icon, value, label }) => (
             <div key={label} className={styles.statItem}>

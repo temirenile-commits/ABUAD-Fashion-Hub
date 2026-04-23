@@ -30,8 +30,7 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
       // Brands (Vendors)
       const { data: brandData } = await supabase
         .from('brands')
-        .select('*')
-        .eq('verification_status', 'verified');
+        .select('*');
 
       if (active && brandData) setVendors(brandData as any);
 

@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     // 2. Update Brand Settings
     // Filter updates to allow only specific fields
     const allowedFields = [
-      'name', 'description', 'logo_url', 'banner_url', 
+      'name', 'description', 'logo_url', 'banner_url', 'cover_url',
       'whatsapp_number', 'instagram_link', 
       'return_policy', 'shipping_policy', 'social_links',
       'bank_account_number', 'bank_name', 'bank_code'
