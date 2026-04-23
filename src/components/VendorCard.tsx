@@ -8,19 +8,19 @@ export interface LiveVendor {
   name: string;
   description: string;
   logo_url: string;
+  cover_url?: string; // New: Custom store cover
   whatsapp_number: string;
   verified: boolean;
-  // Fallbacks for UI that we haven't built DB tracks for yet
-  coverImage?: string; 
   category?: string;
-  rating?: number;
+  rating?: number; // New: Real rating from DB
   reviews?: number;
-  followers?: string;
+  followers_count?: number;
   // If we joined products
   products?: any[];
   instagram_link?: string;
   verification_status?: 'pending' | 'verified' | 'rejected' | 'suspended';
   wallet_balance?: number;
+  sales_count?: number; // For Trendy ranking
 }
 
 interface Props {
@@ -43,7 +43,7 @@ export default function VendorCard({ vendor, layout = 'grid' }: Props) {
       {/* Cover */}
       <div className={styles.coverWrap}>
         <Image
-          src={vendor.coverImage || fallbackCover}
+          src={vendor.cover_url || fallbackCover}
           alt={vendorName}
           fill
           sizes="(max-width: 768px) 100vw, 400px"
@@ -81,7 +81,7 @@ export default function VendorCard({ vendor, layout = 'grid' }: Props) {
         <div className={styles.stats}>
           <div className={styles.stat}>
             <Star size={12} fill="currentColor" className="star-filled" />
-            <span>{vendor.rating || '4.8'}</span>
+            <span>{Number(vendor.rating || 0).toFixed(1)}</span>
             <span className={styles.statSub}>({vendor.reviews || 0})</span>
           </div>
           <div className={styles.stat}>
@@ -90,7 +90,7 @@ export default function VendorCard({ vendor, layout = 'grid' }: Props) {
           </div>
           <div className={styles.stat}>
             <Users size={12} />
-            <span>{vendor.followers || '1k'}</span>
+            <span>{(vendor.followers_count || 0) > 1000 ? `${((vendor.followers_count || 0)/1000).toFixed(1)}k` : (vendor.followers_count || 0)} followers</span>
           </div>
         </div>
 

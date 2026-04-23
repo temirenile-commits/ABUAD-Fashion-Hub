@@ -101,3 +101,31 @@
   .title { font-size: 2rem; }
   .card { padding: 3rem 1.5rem; }
 }
+
+.refBadge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: var(--bg-300);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: var(--text-200);
+  margin-bottom: 2rem;
+}
+
+.verifyingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.verifyingState h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.verifyingState p {
+  color: var(--text-400);
+}

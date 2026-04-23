@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   try {
     const { userId, brandId, tierId, amount } = await req.json();
 
-    if (!userId || !brandId || !tierId || !amount) {
+    if (!userId || !brandId || !tierId) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 

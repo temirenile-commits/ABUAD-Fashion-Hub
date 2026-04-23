@@ -58,10 +58,46 @@ export async function POST(req: Request) {
         return NextResponse.json({ status: 'success' }, { status: 200 });
       }
 
-      // Case C: Vendor Tiered Subscription
+      // Case C: Vendor Tiered Subscription & Boosts
       if (metadata.payment_type === 'vendor_subscription') {
         const { brand_id, tier } = metadata;
         
+        // 1. Handle Visibility Boosts
+        const boostDurations: Record<string, number> = { rodeo: 7, nitro: 14, apex: 30 };
+        const boostScores: Record<string, number> = { rodeo: 50, nitro: 150, apex: 500 };
+
+        if (boostDurations[tier]) {
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + boostDurations[tier]);
+
+          const { error: boostError } = await supabaseAdmin
+            .from('brands')
+            .update({ 
+               boost_level: tier,
+               boost_expires_at: expiresAt.toISOString(),
+               visibility_score: 100 + boostScores[tier] 
+            })
+            .eq('id', brand_id);
+          
+          if (boostError) return NextResponse.json({ error: 'Boost update failed' }, { status: 500 });
+          return NextResponse.json({ status: 'success' }, { status: 200 });
+        }
+
+        // 1.1 Handle Billboard Boost (₦500/week)
+        if (tier === 'billboard_boost') {
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 7);
+
+          const { error } = await supabaseAdmin
+            .from('brands')
+            .update({ billboard_boost_expires_at: expiresAt.toISOString() })
+            .eq('id', brand_id);
+          
+          if (error) return NextResponse.json({ error: 'Billboard boost failed' }, { status: 500 });
+          return NextResponse.json({ status: 'success' }, { status: 200 });
+        }
+
+        // 2. Handle System Plans
         let maxProducts = 10;
         let maxReels = 1;
 
@@ -118,24 +154,23 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Batch update failed' }, { status: 500 });
       }
 
-      // 3. Process each order: Decrement stock, create notifications, and record transactions
-      for (const order of orders) {
-        // A. Get the brand owner's user ID for notifications
-        const { data: brandData } = await supabaseAdmin
-          .from('brands')
-          .select('owner_id')
-          .eq('id', order.brand_id)
-          .single();
+      // 3. RAPID FULFILLMENT: Batch process each order
+      const fulfillmentPromises = orders.map(async (order) => {
+        // A. Parallel Fetch: Vendor Data & Stock Decrement
+        const [{ data: brandData }, _] = await Promise.all([
+          supabaseAdmin.from('brands').select('owner_id, sales_count').eq('id', order.brand_id).single(),
+          supabaseAdmin.rpc('decrement_product_stock', { prod_id: order.product_id, qty: order.quantity || 1 })
+        ]);
+
         const vendorUserId = brandData?.owner_id;
 
-        // B. Decrement Stock
-        await supabaseAdmin.rpc('decrement_product_stock', { 
-          prod_id: order.product_id, 
-          qty: 1 // Assuming 1 for now, or fetch from order if quantity is added
-        });
+        // B. Update Brand Metrics (for Trendy Ranking)
+        await supabaseAdmin.from('brands').update({ 
+          sales_count: (brandData?.sales_count || 0) + (order.quantity || 1) 
+        }).eq('id', order.brand_id);
 
-        // B. Create Transaction record
-        await supabaseAdmin.from('transactions').insert({
+        // C. Record Financial Transaction (Escrow)
+        const transRecord = {
           order_id: order.id,
           brand_id: order.brand_id,
           user_id: order.customer_id,
@@ -143,30 +178,37 @@ export async function POST(req: Request) {
           amount: order.total_amount,
           status: 'success',
           description: `Escrow payment secured for order #${order.id.slice(0, 8)}`,
-        });
+        };
 
-        // C. Notify Buyer
-        await supabaseAdmin.from('notifications').insert({
-          user_id: order.customer_id,
-          type: 'order_update',
-          title: 'Order Confirmed! 🎉',
-          content: `Your payment has been secured. The vendor is now preparing your order #${order.id.slice(0, 8)}.`,
-          link: '/dashboard/customer',
-          is_read: false
-        });
+        // D. Create Dual Notifications
+        const notifs = [
+          {
+            user_id: order.customer_id,
+            type: 'order_update',
+            title: 'Order Confirmed! 🎉',
+            content: `Your payment has been secured. The vendor is now preparing your order #${order.id.slice(0, 8)}.`,
+            link: '/dashboard/customer',
+          }
+        ];
 
-        // D. Notify Vendor
         if (vendorUserId) {
-          await supabaseAdmin.from('notifications').insert({
+          notifs.push({
             user_id: vendorUserId,
             type: 'new_order',
             title: 'You have a new order! 💸',
             content: `A customer just purchased an item. Start processing order #${order.id.slice(0, 8)} to release your funds.`,
             link: '/dashboard/vendor',
-            is_read: false
           });
         }
-      }
+
+        // E. FINAL BATCH EXECUTION: Notifications & Transactions
+        await Promise.all([
+          supabaseAdmin.from('transactions').insert(transRecord),
+          supabaseAdmin.from('notifications').insert(notifs)
+        ]);
+      });
+
+      await Promise.all(fulfillmentPromises);
 
       console.log(`[WEBHOOK] ${orders.length} orders processed successfully for reference ${reference}`);
     }

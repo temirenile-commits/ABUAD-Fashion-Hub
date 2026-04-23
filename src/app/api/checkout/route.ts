@@ -11,48 +11,55 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid checkout payload' }, { status: 400 });
     }
 
-    // 0. Verify Item existence and status
+    // 0. Parallel Fetching for speed (Verify items and User profile)
     const productIds = items.map((i: any) => i.productId);
-    const { data: liveProducts, error: fetchError } = await supabaseAdmin
-      .from('products')
-      .select('id, brand_id, brands(verified, fee_paid)')
-      .in('id', productIds);
+    
+    const [productsResult, profileResult] = await Promise.all([
+      supabaseAdmin
+        .from('products')
+        .select('id, brand_id, price, stock_count, brands(verified, fee_paid)')
+        .in('id', productIds),
+      supabaseAdmin
+        .from('users')
+        .select('email')
+        .eq('id', userId)
+        .single()
+    ]);
 
-    if (fetchError || !liveProducts || liveProducts.length !== items.length) {
-      return NextResponse.json({ 
-        error: 'STALE_CART_ITEMS', 
-        message: 'Some items in your cart are no longer available. Please refresh your cart.' 
-      }, { status: 400 });
+    const liveProducts = productsResult.data;
+    const userProfile = profileResult.data;
+
+    if (!liveProducts || liveProducts.length === 0) {
+      return NextResponse.json({ error: 'STALE_CART_ITEMS' }, { status: 400 });
     }
 
-    // Verify Brands are active (Verified + Fee Paid)
+    // 1. Verify Brands activation status
     const inactiveBrands = liveProducts.filter((p: any) => !p.brands?.verified || !p.brands?.fee_paid);
     if (inactiveBrands.length > 0) {
        return NextResponse.json({ 
         error: 'INACTIVE_VENDORS', 
-        message: 'One or more vendors in your cart are temporarily unavailable.' 
+        message: 'A brand in your cart is currently offline. Please remove their items to proceed.' 
       }, { status: 400 });
     }
 
-    // 1. Validate Totals...
+    // 2. Validate Totals & Calculate Fees
     const deliveryFee = deliveryMethod === 'platform' ? 1500 : 0;
     
     let calculatedSubtotal = 0;
     items.forEach((item: any) => {
-      calculatedSubtotal += item.price * (item.quantity || 1);
+      const live = liveProducts.find(p => p.id === item.productId);
+      calculatedSubtotal += (live?.price || item.price) * (item.quantity || 1);
     });
 
-    const calculatedTotal = calculatedSubtotal + deliveryFee;
-
-    // Optional: Log mismatch if needed, but for now we rely on server-side total
-    const finalChargeAmount = calculatedTotal;
-
+    const finalChargeAmount = calculatedSubtotal + deliveryFee;
     const batchReference = `BATCH-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const ordersToInsert = items.map((item: any, index: number) => {
+      const liveProduct = liveProducts.find(p => p.id === item.productId);
+      const price = liveProduct?.price || item.price;
       const isFirst = index === 0;
-      const baseItemTotal = item.price * (item.quantity || 1);
       
+      const baseItemTotal = price * (item.quantity || 1);
       const itemDeliveryFee = isFirst ? deliveryFee : 0;
       const itemTotal = baseItemTotal + itemDeliveryFee;
       
@@ -64,6 +71,7 @@ export async function POST(req: Request) {
         customer_id: userId,
         brand_id: item.brandId,
         product_id: item.productId,
+        quantity: item.quantity || 1,
         total_amount: itemTotal, 
         commission_amount: totalCommission,
         vendor_earning: vendorEarning,
@@ -74,59 +82,33 @@ export async function POST(req: Request) {
       };
     });
 
-    const { data: createdOrders, error: orderError } = await supabaseAdmin
-      .from('orders')
-      .insert(ordersToInsert)
-      .select();
+    // 3. SECURE DATA PERSISTENCE: Save state before redirect
+    const { error: orderError } = await supabaseAdmin.from('orders').insert(ordersToInsert);
+    if (orderError) throw orderError;
 
-    if (orderError) {
-      console.error('Order creation error:', orderError);
-      throw new Error('Failed to create orders for this checkout session');
-    }
-
-    // 2. Initialize Paystack Transaction for the TOTAL amount (including delivery)
-    const { data: userProfile } = await supabaseAdmin
-      .from('users')
-      .select('email')
-      .eq('id', userId)
-      .single();
-
+    // 4. FAST REDIRECT: Initialize Paystack
     const origin = req.headers.get('origin') || 'https://abuadfashionhub.com';
-    const callbackUrl = `${origin}/checkout/success`;
+    const callbackUrl = `${origin}/checkout/success?ref=${batchReference}`;
 
-    const paystackParams = {
+    const paystackData = await initializeTransaction({
       email: userProfile?.email || 'customer@abuadfashionhub.com',
-      amount: finalChargeAmount, // Strictly uses server-validated total
+      amount: finalChargeAmount,
       reference: batchReference,
       callback_url: callbackUrl,
       metadata: {
-        order_type: 'multi_product_purchase',
-        item_count: items.length,
-        customer_id: userId,
-      },
-    };
-
-    let paystackResponse;
-    try {
-      if (process.env.PAYSTACK_SECRET_KEY) {
-        paystackResponse = await initializeTransaction(paystackParams);
-      } else {
-        // Mock fallback
-        paystackResponse = { authorization_url: '/checkout/success' };
+        payment_type: 'customer_checkout',
+        user_id: userId,
+        order_count: items.length
       }
-    } catch (paystackErr) {
-      console.error('Paystack initialization failed:', paystackErr);
-      return NextResponse.json({ error: 'Gateway error' }, { status: 502 });
-    }
+    });
 
-    return NextResponse.json({
-      success: true,
-      batchReference: batchReference,
-      authorization_url: paystackResponse.authorization_url,
+    return NextResponse.json({ 
+      authorization_url: paystackData.authorization_url, 
+      reference: batchReference 
     });
 
   } catch (error: any) {
     console.error('Checkout error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
   }
 }

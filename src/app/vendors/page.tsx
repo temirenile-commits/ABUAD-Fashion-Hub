@@ -10,19 +10,15 @@ export default function VendorsPage() {
   const isInitialized = useMarketplaceStore(s => s.isInitialized);
 
   const LIVE_VENDORS = allBrands.map((brand) => {
-    const nameStr = brand.name || 'Anonymous Brand';
-    const num = nameStr.charCodeAt(0) * (nameStr.charCodeAt(nameStr.length - 1) || 1) * 123;
-    
     return {
       ...brand,
-      followers: num % 5000, 
       verified: brand.verification_status === 'verified'
     };
   }) as any as LiveVendor[];
 
   const verified = LIVE_VENDORS.filter((v) => v.verified);
   const unverified = LIVE_VENDORS.filter((v) => !v.verified);
-  const topVendors = [...LIVE_VENDORS].sort((a, b) => Number(b.followers) - Number(a.followers)).slice(0, 3);
+  const topVendors = [...LIVE_VENDORS].sort((a, b) => Number(b.followers_count || 0) - Number(a.followers_count || 0)).slice(0, 3);
 
   if (!isInitialized) {
     return <main className="container"><div style={{padding:'3rem',textAlign:'center'}}>Loading Live Vendors...</div></main>
@@ -82,7 +78,7 @@ export default function VendorsPage() {
                     <p className={styles.leaderCat}>{vendor.category || 'Fashion'}</p>
                   </div>
                   <div className={styles.leaderFollowers}>
-                    <span className={styles.followerNum}>{vendor.followers}</span>
+                    <span className={styles.followerNum}>{vendor.followers_count || 0}</span>
                     <span className={styles.followerLabel}>followers</span>
                   </div>
                 </div>

@@ -372,5 +372,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  if (action === 'delete_product') {
+    const { productId } = body;
+    const { error } = await supabaseAdmin
+      .from('products')
+      .delete()
+      .eq('id', productId);
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }

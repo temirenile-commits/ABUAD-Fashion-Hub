@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera } from 'lucide-react';
 import Papa from 'papaparse';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
@@ -39,6 +39,24 @@ export default function VendorDashboard() {
   const trialDaysLeft = brand?.trial_started_at 
     ? Math.max(0, 7 - Math.floor((new Date().getTime() - new Date(brand.trial_started_at).getTime()) / (1000 * 60 * 60 * 24)))
     : 0;
+
+  // Expiration Reminder
+  useEffect(() => {
+    if (brand?.subscription_expires_at) {
+      const expires = new Date(brand.subscription_expires_at).getTime();
+      const now = new Date().getTime();
+      const threeDays = 3 * 24 * 60 * 60 * 1000;
+
+      if (expires - now > 0 && expires - now < threeDays) {
+        // Send a temporary UI notification if not already notified
+        const hasNotified = localStorage.getItem(`expire_notif_${brand.id}`);
+        if (!hasNotified) {
+          alert(`⚠️ Your ${brand.subscription_tier} plan is expiring soon! Upgrade now to keep your store active.`);
+          localStorage.setItem(`expire_notif_${brand.id}`, 'true');
+        }
+      }
+    }
+  }, [brand]);
   const isTrialActive = trialDaysLeft > 0;
   
   const isSubActive = brand?.subscription_expires_at 
@@ -1003,7 +1021,7 @@ export default function VendorDashboard() {
                 <div className={styles.bannerUpload}>
                   <div 
                     className={styles.bannerPreview} 
-                    style={{ backgroundImage: `url(${brand.banner_url || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070'})` }}
+                    style={{ backgroundImage: `url(${brand.cover_url || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070'})` }}
                   >
                     <label className={styles.bannerOverlay}>
                       <input 
@@ -1011,13 +1029,13 @@ export default function VendorDashboard() {
                         hidden 
                         onChange={async (e) => {
                           if (e.target.files?.[0]) {
-                            const { url } = await uploadFile(e.target.files[0], 'brand-assets', `banner-${brand.id}`);
-                            if (url) handleUpdateSettings({ banner_url: url });
+                            const { url } = await uploadFile(e.target.files[0], 'brand-assets', `cover-${brand.id}`);
+                            if (url) handleUpdateSettings({ cover_url: url });
                           }
                         }}
                       />
-                      <ImageIcon size={24} />
-                      <span>Change Store Banner</span>
+                      <Camera size={24} style={{ opacity: 0.6 }} />
+                      <span>Change Store Background</span>
                     </label>
                   </div>
                 </div>
@@ -1770,10 +1788,20 @@ export default function VendorDashboard() {
                 <p className={styles.minWithdrawal}>Minimum withdrawal: ₦1,000</p>
               </div>
 
-              <div className={styles.walletEscrow}>
-                <span>Escrow (Pending)</span>
-                <h3>{formatPrice(orders.filter(o => ['paid', 'shipped', 'out_for_delivery'].includes(o.status)).reduce((acc, curr) => acc + curr.vendor_earning, 0))}</h3>
-                <p>Funds released to wallet after customer confirms delivery.</p>
+              <div className={styles.walletEscrow} style={{ width: '100%', maxWidth: 'none', flexDirection: 'row', gap: '2rem', padding: '1.5rem', justifyContent: 'space-around' }}>
+                <div>
+                  <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Incoming (Preparing)</span>
+                  <h3 style={{ fontSize: '1.2rem', margin: '0.25rem 0' }}>{formatPrice(orders.filter(o => ['paid', 'ready', 'picked_up', 'in_transit'].includes(o.status)).reduce((acc, curr) => acc + Number(curr.vendor_earning || 0), 0))}</h3>
+                  <p style={{ fontSize: '0.7rem' }}>Orders on the move</p>
+                </div>
+                <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
+                <div>
+                  <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Muring (Delivered)</span>
+                  <h3 style={{ fontSize: '1.2rem', margin: '0.25rem 0', color: 'var(--primary)' }}>
+                    {formatPrice(orders.filter(o => o.status === 'delivered' && (!o.payout_ready_at || new Date(o.payout_ready_at) > new Date())).reduce((acc, curr) => acc + Number(curr.vendor_earning || 0), 0))}
+                  </h3>
+                  <p style={{ fontSize: '0.7rem' }}>Release: 24h + working days</p>
+                </div>
               </div>
             </div>
 
@@ -1855,9 +1883,32 @@ export default function VendorDashboard() {
                </div>
                <div className={styles.promoOption}>
                   <div className={styles.promoIcon}><Zap size={24} color="#f59e0b" /></div>
-                  <h3>Store Boost</h3>
-                  <p>Get featured on the homepage for ₦1,000/week.</p>
-                  <button className="btn btn-primary btn-sm" onClick={() => alert('Boost system coming soon!')}>Boost Now</button>
+                  <h3>Billboard Boost</h3>
+                  <p>Get featured on the homepage "Gold Collection" for ₦500/week.</p>
+                  <button className="btn btn-primary btn-sm" onClick={() => setActiveTab('plans')}>Boost Now</button>
+               </div>
+               <div className={styles.promoOption} style={{ border: '1px solid var(--secondary)' }}>
+                  <div className={styles.promoIcon}><Bell size={24} color="var(--secondary)" /></div>
+                  <h3>Campus Nudge</h3>
+                  <p>Send a real-time smart notification to all your followers.</p>
+                  <button 
+                    className="btn btn-secondary btn-sm" 
+                    onClick={async () => {
+                      if (brand.subscription_tier === 'quarter') return alert('Upgrade to Half Power to use Nudges!');
+                      const msg = prompt('Enter the message for your followers:');
+                      if (msg) {
+                        const res = await fetch('/api/vendor/nudge', {
+                          method: 'POST',
+                          body: JSON.stringify({ brandId: brand.id, ownerId: brand.owner_id, message: msg })
+                        });
+                        const data = await res.json();
+                        if (data.success) alert(`Nudge sent to ${data.count} followers!`);
+                        else alert(data.error);
+                      }
+                    }}
+                  >
+                    Send Nudge 🚀
+                  </button>
                </div>
              </div>
           </div>
@@ -1981,12 +2032,24 @@ export default function VendorDashboard() {
 
             {/* ── Boost Store Section ── */}
             <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-100)' }}>
-              ⚡ Boost Store
+              ⚡ Viral Boosters
             </h2>
             <p style={{ color: 'var(--text-400)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              One-time boosts to increase your store's visibility on the marketplace homepage. No subscription required.
+              One-time boosts to increase your store's visibility on the marketplace.
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+              {/* Billboard Boost */}
+              <div style={{ background: 'var(--bg-300)', border: '2px solid var(--accent-gold)', borderRadius: '16px', padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+                 <div style={{ position: 'absolute', top: 0, right: 0, padding: '0.5rem', background: 'var(--accent-gold)', color: '#000', fontSize: '0.6rem', fontWeight: 900 }}>TRENDY BOARD</div>
+                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📢</div>
+                 <h3 style={{ fontSize: '1rem', color: 'var(--accent-gold)' }}>Campus Billboard</h3>
+                 <p style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Get featured on the main homepage "The Gold Collection" billboard for 7 days.</p>
+                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: 900, color: '#fff' }}>₦500 <small>/week</small></span>
+                    <button className="btn btn-primary btn-sm" onClick={() => handleSubscribe({ id: 'billboard_boost', price: 500 })}>Activate ⚡</button>
+                 </div>
+              </div>
+
               {boostRates.map(boost => (
                 <div key={boost.id} style={{ background: 'var(--bg-300)', border: `1px solid ${boost.popular ? 'var(--primary)' : 'var(--border)'}`, borderRadius: '14px', padding: '1.5rem', position: 'relative' }}>
                   {boost.popular && (

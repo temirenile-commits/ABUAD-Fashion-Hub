@@ -34,6 +34,16 @@ export async function POST(req: Request) {
     if (trackingNumber) updateData.tracking_number = trackingNumber;
     if (rejectionReason) updateData.rejection_reason = rejectionReason;
 
+    if (status === 'delivered') {
+      const deliveredAt = new Date().toISOString();
+      updateData.delivered_at = deliveredAt;
+      
+      const { data: maturityDate } = await supabaseAdmin.rpc('calculate_order_maturity', { 
+        delivered_time: deliveredAt 
+      });
+      updateData.payout_ready_at = maturityDate;
+    }
+
     const { error: updateError } = await supabaseAdmin
       .from('orders')
       .update(updateData)

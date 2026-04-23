@@ -271,6 +271,85 @@ export default function AdminDashboard() {
                 </table>
               </div>
             )}
+            {activeTab === 'products' && (
+              <div className={styles.sectionCard}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr><th>Product</th><th>Brand</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody>
+                    {filterBy(products, ['title']).map(p => (
+                      <tr key={p.id}>
+                        <td>
+                          <div className={styles.brandCell}>
+                            {p.image_url || (p.media_urls?.[0]) ? <img src={p.image_url || p.media_urls[0]} alt="" className={styles.tableLogo} /> : <div className={styles.logoPlaceholder}><ShoppingBag size={14}/></div>}
+                            <div>{p.title}</div>
+                          </div>
+                        </td>
+                        <td>{p.brands?.name || 'Unknown'}</td>
+                        <td>₦{Number(p.price).toLocaleString()}</td>
+                        <td>{p.stock_count === -1 ? '∞' : p.stock_count}</td>
+                        <td>
+                          <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => confirm('Delete this product?') && adminAction('delete_product', { productId: p.id })}>
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {activeTab === 'orders' && (
+              <div className={styles.sectionCard}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr><th>Order ID</th><th>Customer</th><th>Brand</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+                  </thead>
+                  <tbody>
+                    {filterBy(orders, ['id', 'status']).map(o => (
+                      <tr key={o.id}>
+                        <td className={styles.subText}>#{o.id.slice(0, 8)}</td>
+                        <td>
+                          <div>{o.users?.name || 'Customer'}</div>
+                          <div className={styles.subText}>{o.users?.email}</div>
+                        </td>
+                        <td>{o.brands?.name}</td>
+                        <td>₦{Number(o.total_amount).toLocaleString()}</td>
+                        <td><span className={`badge badge-${o.status}`}>{o.status}</span></td>
+                        <td className={styles.subText}>{new Date(o.created_at).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {activeTab === 'financials' && (
+              <div className={styles.sectionCard}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr><th>Type</th><th>Reference</th><th>Brand</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+                  </thead>
+                  <tbody>
+                    {filterBy(transactions, ['type', 'description']).map(tx => (
+                      <tr key={tx.id}>
+                        <td><span className={`badge badge-${tx.type}`}>{tx.type.replace('_', ' ')}</span></td>
+                        <td className={styles.subText}>{tx.description}</td>
+                        <td>{tx.brands?.name || 'System'}</td>
+                        <td style={{ color: tx.type === 'payment_in' ? '#10b981' : '#f59e0b' }}>
+                          {tx.type === 'payment_in' ? '+' : '-'}₦{Number(tx.amount).toLocaleString()}
+                        </td>
+                        <td>{tx.status}</td>
+                        <td className={styles.subText}>{new Date(tx.created_at).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
             {activeTab === 'settings' && (
               <div className={styles.sectionCard}>
                 <h2>Platform Payment Rates</h2>

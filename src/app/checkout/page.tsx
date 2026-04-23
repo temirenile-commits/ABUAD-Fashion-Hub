@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CreditCard, ShoppingBag, Truck, Lock, Loader2, CheckCircle, MapPin, Phone, ArrowRight, User } from 'lucide-react';
+import { CreditCard, ShoppingBag, Truck, Lock, Loader2, CheckCircle, MapPin, Phone, ArrowRight, User, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/context/CartContext';
 import { LiveProduct } from '@/components/ProductCard';
@@ -116,6 +116,25 @@ function CheckoutContent() {
 
   return (
     <div className={`container ${styles.page}`}>
+      {/* AFFIRMATIVE LOADING OVERLAY */}
+      {loading && (
+        <div className={styles.secureOverlay}>
+           <div className={styles.secureBox}>
+              <div className={styles.lockPulse}>
+                 <Lock size={40} className={styles.goldLock} />
+              </div>
+              <h2>Secure Payment Hub</h2>
+              <p>Connecting to Paystack Gateway...</p>
+              <div className={styles.progressBar}>
+                 <div className={styles.progressFill} />
+              </div>
+              <span className={styles.encryptionNote}>
+                 <ShieldCheck size={14} /> End-to-End Encrypted
+              </span>
+           </div>
+        </div>
+      )}
+
       <div className={styles.header}>
         <Link href="/explore" className={styles.backLink}>
           <ArrowRight style={{ transform: 'rotate(180deg)' }} size={16} /> Continue Shopping
