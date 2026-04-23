@@ -276,7 +276,11 @@ export default function VendorDashboard() {
   };
 
   const handleProductMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.length || !brand) return;
+    if (!e.target.files?.length) return;
+    if (!brand) {
+       alert('⚠️ Error: Your Brand profile is not initialized. Please go to "Overview" and complete your store setup first!');
+       return;
+    }
     setUploadingMedia(true);
 
     const files = Array.from(e.target.files);
@@ -1809,7 +1813,17 @@ export default function VendorDashboard() {
         {/* ══════════════════════════════════════════════════
             PLANS & UPGRADE TAB — Credit Rate Checkout
         ══════════════════════════════════════════════════ */}
-        {activeTab === 'plans' && brand && (
+        {activeTab === 'plans' && (
+          !brand ? (
+            <div className={styles.activationNotice}>
+              <Store size={48} color="var(--primary)" />
+              <h2>No Brand Profile Found</h2>
+              <p>You need to set up your official store profile before you can choose a power plan or boost your listings.</p>
+              <button className="btn btn-primary" onClick={() => setActiveTab('overview')}>
+                Go to Overview & Setup
+              </button>
+            </div>
+          ) : (
           <div className={styles.tabContent}>
             <h1 className={styles.title}>Plans & Upgrade</h1>
             <p style={{ color: 'var(--text-300)', marginBottom: '2rem' }}>
@@ -1988,7 +2002,7 @@ export default function VendorDashboard() {
                     <span style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--primary)' }}>₦{boost.price.toLocaleString()}</span>
                     <button
                       className="btn btn-primary btn-sm"
-                      disabled={paying === boost.id || userRole === 'admin'}
+                      disabled={paying === boost.id}
                       onClick={() => handleSubscribe({ id: boost.id, price: boost.price })}
                       style={{ fontWeight: 700 }}
                     >
@@ -2010,7 +2024,8 @@ export default function VendorDashboard() {
               </div>
             )}
           </div>
-        )}
+        )
+      )}
       </main>
 
       {/* Mobile Bottom Navigation */}
