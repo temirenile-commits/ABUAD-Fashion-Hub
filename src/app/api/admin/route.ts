@@ -312,7 +312,18 @@ export async function POST(req: NextRequest) {
 
   if (action === 'activate_plan') {
     const { brandId, tierId } = body;
-    // Set 30 days expiration
+    
+    let maxProducts = 10;
+    let maxReels = 1;
+
+    if (tierId === 'half') {
+      maxProducts = 50;
+      maxReels = 5;
+    } else if (tierId === 'full') {
+      maxProducts = 100000;
+      maxReels = 100000;
+    }
+
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
     
@@ -320,7 +331,33 @@ export async function POST(req: NextRequest) {
       .from('brands')
       .update({ 
         subscription_tier: tierId, 
-        subscription_expires_at: expiresAt.toISOString() 
+        subscription_expires_at: expiresAt.toISOString(),
+        max_products: maxProducts,
+        max_reels: maxReels
+      })
+      .eq('id', brandId);
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'activate_boost') {
+    const { brandId, boostId } = body;
+    
+    let visibilityBoost = 50; // default rodeo
+    if (boostId === 'nitro') visibilityBoost = 150;
+    if (boostId === 'apex') visibilityBoost = 500;
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // Boosts usually last 7 days
+    
+    // We update score and set expiration
+    const { error } = await supabaseAdmin
+      .from('brands')
+      .update({ 
+        boost_level: boostId,
+        boost_expires_at: expiresAt.toISOString(),
+        visibility_score: 100 + visibilityBoost 
       })
       .eq('id', brandId);
 

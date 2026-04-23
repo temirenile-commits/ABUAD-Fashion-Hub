@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS public.brands (
   
   -- Verification Module
   verification_status TEXT DEFAULT 'pending' CHECK (verification_status IN ('pending', 'verified', 'rejected', 'suspended')),
+  verified BOOLEAN DEFAULT FALSE,
+  fee_paid BOOLEAN DEFAULT FALSE,
   student_id_url TEXT,
   business_proof_url TEXT,
   

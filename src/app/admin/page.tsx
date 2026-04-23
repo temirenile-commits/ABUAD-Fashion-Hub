@@ -189,11 +189,36 @@ export default function AdminDashboard() {
                         <td><span className={`badge badge-${v.subscription_tier || 'free'}`} style={{ textTransform: 'uppercase', fontVariant: 'small-caps' }}>{v.subscription_tier || 'free'}</span></td>
                         <td><span className={`badge badge-${v.verification_status}`}>{v.verification_status}</span></td>
                         <td>
-                          <div className={styles.actionRow}>
-                            <button className="btn btn-ghost btn-sm" onClick={() => setSelectedVendor(v)}><Eye size={14} /> Review</button>
-                            {v.verification_status === 'pending' && (
-                              <button className="btn btn-primary btn-sm" onClick={() => adminAction('approve_vendor', { brandId: v.id })}>Approve</button>
+                          <div className={styles.actionRow} style={{ flexWrap: 'wrap', gap: '0.4rem' }}>
+                            <button className="btn btn-ghost btn-sm" onClick={() => setSelectedVendor(v)} title="Review Details"><Eye size={14} /></button>
+                            
+                            {v.verification_status !== 'verified' && (
+                              <button className="btn btn-primary btn-sm" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }} onClick={() => adminAction('approve_vendor', { brandId: v.id })}>Verify</button>
                             )}
+
+                            <select 
+                              className="btn btn-ghost btn-sm" 
+                              style={{ padding: '0.2rem', background: 'var(--bg-200)', border: '1px solid var(--border)', fontSize: '0.7rem' }}
+                              onChange={(e) => adminAction('activate_plan', { brandId: v.id, tierId: e.target.value })}
+                              value={v.subscription_tier || ''}
+                            >
+                              <option value="" disabled>Plan</option>
+                              <option value="quarter">Quarter</option>
+                              <option value="half">Half</option>
+                              <option value="full">Full Power</option>
+                            </select>
+
+                            <select 
+                              className="btn btn-ghost btn-sm" 
+                              style={{ padding: '0.2rem', background: 'var(--bg-200)', border: '1px solid var(--border)', fontSize: '0.7rem', color: 'var(--primary)' }}
+                              onChange={(e) => adminAction('activate_boost', { brandId: v.id, boostId: e.target.value })}
+                              value={v.boost_level || ''}
+                            >
+                              <option value="" disabled>🚀 Boost</option>
+                              <option value="rodeo">Rodeo</option>
+                              <option value="nitro">Nitro</option>
+                              <option value="apex">Apex</option>
+                            </select>
                           </div>
                         </td>
                       </tr>
