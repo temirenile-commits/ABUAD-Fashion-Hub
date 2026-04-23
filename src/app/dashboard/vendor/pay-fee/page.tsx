@@ -17,10 +17,12 @@ export default function PayFeePage() {
     async function checkStatus() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        router.push('/auth/login?redirect=/dashboard/vendor/pay-fee');
+        router.push('/auth/login?redirect=/dashboard/vendor');
         return;
       }
-      setUser(session.user);
+      
+      // The fee system is removed. Redirecting everyone to dashboard.
+      router.replace('/dashboard/vendor');
 
       const { data: brandData } = await supabase
         .from('brands')

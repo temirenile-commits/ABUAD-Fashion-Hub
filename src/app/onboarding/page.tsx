@@ -5,34 +5,24 @@ import { useRouter } from 'next/navigation';
 import {
   Store,
   User,
-  Camera,
+  GraduationCap,
   CheckCircle,
   ArrowRight,
   ArrowLeft,
-  Upload,
-  Layers,
   ShieldCheck,
+  MessageCircle,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { uploadFile } from '@/lib/storage';
 import styles from './onboarding.module.css';
 
 const STEPS = [
   { id: 1, label: 'Account Type', icon: <User size={20} /> },
   { id: 2, label: 'Brand Details', icon: <Store size={20} /> },
-  { id: 3, label: 'Upload Assets', icon: <Camera size={20} /> },
-  { id: 4, label: 'Terms', icon: <Layers size={20} /> },
-  { id: 5, label: 'Verification', icon: <ShieldCheck size={20} /> },
+  { id: 3, label: 'Verification', icon: <GraduationCap size={20} /> },
+  { id: 4, label: 'Terms', icon: <ShieldCheck size={20} /> },
 ];
 
-const VENDOR_TYPES = [
-  { value: 'product', label: 'Product Seller', desc: 'Sell clothing, footwear, bags, jewelry & accessories', icon: '🛍️' },
-  { value: 'service', label: 'Service Provider', desc: 'Offer makeup, photography, tailoring, styling', icon: '✨' },
-  { value: 'both', label: 'Both', desc: 'Sell products AND offer fashion services', icon: '🌟' },
-];
-
-const PRODUCT_CATEGORIES = ['Clothing', 'Footwear', 'Bags', 'Accessories', 'Jewelry', 'Others'];
-const SERVICE_TYPES = ['Makeup Artist', 'Fashion Designer', 'Stylist', 'Photographer', 'Hair Stylist'];
+const ADMIN_WHATSAPP = "2348012345678"; // Replace with your actual number
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -41,26 +31,18 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState('');
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [logoUrl, setLogoUrl] = useState('');
-  const [studentIdUrl, setStudentIdUrl] = useState('');
-  const [businessProofUrl, setBusinessProofUrl] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(true);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<{logo?: string; studentId?: string; businessProof?: string}>({});
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadingStudentId, setUploadingStudentId] = useState(false);
-  const [uploadingBusinessProof, setUploadingBusinessProof] = useState(false);
-  const [logoProgress, setLogoProgress] = useState(0);
-  const [studentIdProgress, setStudentIdProgress] = useState(0);
-  const [businessProofProgress, setBusinessProofProgress] = useState(0);
 
   const [form, setForm] = useState({
     brandName: '',
     description: '',
-    category: '',
-    serviceType: '',
+    category: 'Clothing',
     whatsapp: '',
-    instagram: '',
+    roomNo: '',
+    matricNo: '',
+    college: '',
+    department: '',
   });
 
   useEffect(() => {
@@ -80,54 +62,7 @@ export default function OnboardingPage() {
     checkUser();
   }, [router]);
 
-  const handleFileUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    bucket: 'brand-logos' | 'brand-assets' | 'verification-docs',
-    field: 'logo' | 'studentId' | 'businessProof'
-  ) => {
-    if (!e.target.files?.length) return;
-    const file = e.target.files[0];
-
-    if (field === 'logo') {
-      setUploadingLogo(true);
-      setLogoProgress(0);
-      const { url, error } = await uploadFile(file, bucket, `${user.id}-${Date.now()}`, (p) => setLogoProgress(p));
-      if (url) {
-        setLogoUrl(url);
-        setUploadStatus(prev => ({ ...prev, logo: `✅ ${file.name} uploaded!` }));
-      } else {
-        setUploadStatus(prev => ({ ...prev, logo: `❌ Upload failed: ${error || 'Unknown error'}` }));
-      }
-      setUploadingLogo(false);
-      setLogoProgress(0);
-    } else if (field === 'studentId') {
-      setUploadingStudentId(true);
-      setStudentIdProgress(0);
-      const { url, error } = await uploadFile(file, 'verification-docs', `${user.id}-id-${Date.now()}`, (p) => setStudentIdProgress(p));
-      if (url) {
-        setStudentIdUrl(url);
-        setUploadStatus(prev => ({ ...prev, studentId: `✅ ${file.name} uploaded!` }));
-      } else {
-        setUploadStatus(prev => ({ ...prev, studentId: `❌ Upload failed: ${error || 'Unknown'}` }));
-      }
-      setUploadingStudentId(false);
-      setStudentIdProgress(0);
-    } else if (field === 'businessProof') {
-      setUploadingBusinessProof(true);
-      setBusinessProofProgress(0);
-      const { url, error } = await uploadFile(file, 'verification-docs', `${user.id}-proof-${Date.now()}`, (p) => setBusinessProofProgress(p));
-      if (url) {
-        setBusinessProofUrl(url);
-        setUploadStatus(prev => ({ ...prev, businessProof: `✅ ${file.name} uploaded!` }));
-      } else {
-        setUploadStatus(prev => ({ ...prev, businessProof: `❌ Upload failed: ${error || 'Unknown'}` }));
-      }
-      setUploadingBusinessProof(false);
-      setBusinessProofProgress(0);
-    }
-  };
-
-  const next = () => setStep((s) => Math.min(s + 1, 5));
+  const next = () => setStep((s) => Math.min(s + 1, 4));
   const prev = () => setStep((s) => Math.max(s - 1, 1));
 
   const handleSubmit = async () => {
@@ -136,10 +71,7 @@ export default function OnboardingPage() {
     setErrorMsg('');
 
     try {
-      const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
-      const isAlreadyVendor = profile?.role === 'vendor' || profile?.role === 'admin';
-
-      // 1. Create the Brand
+      // 1. Create the Brand with academic details
       const { data: brand, error: brandError } = await supabase
         .from('brands')
         .insert({
@@ -148,15 +80,19 @@ export default function OnboardingPage() {
           category: form.category,
           description: form.description,
           whatsapp_number: form.whatsapp,
-          verification_status: isAlreadyVendor ? 'verified' : 'pending',
-          verified: isAlreadyVendor,
-          fee_paid: isAlreadyVendor,
-          logo_url: logoUrl || null,
-          student_id_url: studentIdUrl || null,
-          business_proof_url: businessProofUrl || null,
+          room_number: form.roomNo,
+          matric_number: form.matricNo,
+          college: form.college,
+          department: form.department,
+          verification_status: 'pending',
+          verified: false,
+          fee_paid: true, // We auto-mark fee as paid because we removed the naira fee
           delivery_preference: 'platform',
-          subscription_plan: 'free',
-          terms_accepted: acceptedTerms,
+          subscription_tier: 'free',
+          max_products: 0,
+          max_reels: 0,
+          terms_accepted: true,
+          trial_started_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -167,10 +103,9 @@ export default function OnboardingPage() {
       await supabase.from('users').update({ role: 'vendor' }).eq('id', user.id);
 
       setIsSubmitted(true);
-
     } catch (err: any) {
       console.error('Registration failed:', err);
-      setErrorMsg(err.message || 'An error occurred during brand registration. Please try again.');
+      setErrorMsg(err.message || 'An error occurred during brand registration.');
     } finally {
       setLoading(false);
     }
@@ -181,12 +116,23 @@ export default function OnboardingPage() {
       <div className={`container ${styles.page}`}>
         <div className={`card ${styles.card}`} style={{ textAlign: 'center', padding: '4rem 2rem' }}>
           <div className={styles.successIcon}><ShieldCheck size={64} color="var(--primary)" /></div>
-          <h2>Application Submitted!</h2>
+          <h2>Verification Pending!</h2>
           <p style={{ margin: '1.5rem 0', color: 'var(--text-300)' }}>
-            Your brand application is now under review. Our admins will verify your details within 24-48 hours. 
-            Once approved, you will be prompted to pay the ₦2,000 activation fee to go live.
+            Your details (Room, Matric, College) have been submitted to our admin team. 
+            Verification is manual to maintain campus integrity.
           </p>
-          <Link href="/" className="btn btn-primary">Return to Marketplace</Link>
+          <div style={{ background: 'var(--bg-200)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem' }}>
+            <p style={{ marginBottom: '1rem', fontWeight: 600 }}>Need faster approval or have enquiries?</p>
+            <a 
+              href={`https://wa.me/${ADMIN_WHATSAPP}?text=Hi Admin, I just submitted my vendor application for ${form.brandName}. My Matric No is ${form.matricNo}.`} 
+              target="_blank" 
+              className="btn btn-whatsapp"
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              <MessageCircle size={20} /> Contact Admin on WhatsApp
+            </a>
+          </div>
+          <Link href="/" className="btn btn-primary">Back to Hub</Link>
         </div>
       </div>
     );
@@ -195,10 +141,9 @@ export default function OnboardingPage() {
   return (
     <main className="container">
       <div className={styles.page}>
-        {/* Header */}
         <div className={styles.header}>
-          <h1>Start Selling on ABUAD Fashion Hub</h1>
-          <p>Join campus brands already growing their business — precision-engineered for ABUAD.</p>
+          <h1>Become an ABUAD Brand Owner</h1>
+          <p>Launch your store vividly. No upfront fees — get 5 free credits to start.</p>
         </div>
 
         {errorMsg && (
@@ -207,7 +152,6 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Progress Stepper */}
         <div className={styles.stepper}>
           {STEPS.map((s, i) => (
             <div key={s.id} className={styles.stepperItem}>
@@ -224,289 +168,91 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        {/* Card */}
         <div className={`card ${styles.card}`}>
-
-          {/* ── STEP 1: Account Type ── */}
           {step === 1 && (
             <div className={styles.stepContent}>
-              <h2 className={styles.stepTitle}>What do you want to offer?</h2>
-              <p className={styles.stepDesc}>Choose what best describes your business on campus.</p>
-
+              <h2 className={styles.stepTitle}>Choose your account type</h2>
               <div className={styles.typeGrid}>
-                {VENDOR_TYPES.map((type) => (
+                {['Product Seller', 'Service Provider', 'Both'].map((label, i) => (
                   <button
-                    key={type.value}
-                    className={`${styles.typeCard} ${vendorType === type.value ? styles.typeSelected : ''}`}
-                    onClick={() => setVendorType(type.value)}
+                    key={label}
+                    className={`${styles.typeCard} ${vendorType === label ? styles.typeSelected : ''}`}
+                    onClick={() => setVendorType(label)}
                   >
-                    <span className={styles.typeEmoji}>{type.icon}</span>
-                    <h3>{type.label}</h3>
-                    <p>{type.desc}</p>
-                    {vendorType === type.value && (
-                      <div className={styles.typeCheck}><CheckCircle size={18} /></div>
-                    )}
+                    <span className={styles.typeEmoji}>{i === 0 ? '🛍️' : i === 1 ? '✨' : '🌟'}</span>
+                    <h3>{label}</h3>
+                    {vendorType === label && <div className={styles.typeCheck}><CheckCircle size={18} /></div>}
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* ── STEP 2: Brand Details ── */}
           {step === 2 && (
             <div className={styles.stepContent}>
-              <h2 className={styles.stepTitle}>Tell us about your brand</h2>
-              <p className={styles.stepDesc}>This is how customers will find and recognize you.</p>
-
+              <h2 className={styles.stepTitle}>Brand Details</h2>
               <div className={styles.formGrid}>
                 <div className="form-group">
-                  <label className="form-label">Brand / Shop Name *</label>
-                  <input
-                    className="form-input"
-                    placeholder="e.g. RetroFits ABUAD"
-                    value={form.brandName}
-                    onChange={(e) => setForm({ ...form, brandName: e.target.value })}
-                  />
+                  <label className="form-label">Store / Brand Name *</label>
+                  <input className="form-input" placeholder="e.g. Trendy Collections" value={form.brandName} onChange={e => setForm({...form, brandName: e.target.value})} />
                 </div>
-
                 <div className="form-group">
-                  <label className="form-label">Brief Description *</label>
-                  <textarea
-                    className={`form-input ${styles.textarea}`}
-                    placeholder="What do you sell or offer? What makes your brand unique?"
-                    value={form.description}
-                    onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  />
+                  <label className="form-label">Brand Description *</label>
+                  <textarea className="form-input" placeholder="What do you sell?" value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
                 </div>
-
-                {(vendorType === 'product' || vendorType === 'both') && (
-                  <div className="form-group">
-                    <label className="form-label">Primary Product Category *</label>
-                    <div className={styles.optionPills}>
-                      {PRODUCT_CATEGORIES.map((cat) => (
-                        <button
-                          key={cat}
-                          className={`${styles.optPill} ${form.category === cat ? styles.optActive : ''}`}
-                          onClick={() => setForm({ ...form, category: cat })}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {(vendorType === 'service' || vendorType === 'both') && (
-                  <div className="form-group">
-                    <label className="form-label">Service Type *</label>
-                    <div className={styles.optionPills}>
-                      {SERVICE_TYPES.map((svc) => (
-                        <button
-                          key={svc}
-                          className={`${styles.optPill} ${form.serviceType === svc ? styles.optActive : ''}`}
-                          onClick={() => setForm({ ...form, serviceType: svc })}
-                        >
-                          {svc}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 <div className="form-group">
-                  <label className="form-label">WhatsApp Contact Number *</label>
-                  <input
-                    className="form-input"
-                    type="tel"
-                    placeholder="+234 801 234 5678"
-                    value={form.whatsapp}
-                    onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Instagram Handle (optional)</label>
-                  <input
-                    className="form-input"
-                    placeholder="@yourhandle"
-                    value={form.instagram}
-                    onChange={(e) => setForm({ ...form, instagram: e.target.value })}
-                  />
+                  <label className="form-label">WhatsApp Contact *</label>
+                  <input className="form-input" placeholder="+234..." value={form.whatsapp} onChange={e => setForm({...form, whatsapp: e.target.value})} />
                 </div>
               </div>
             </div>
           )}
 
-          {/* ── STEP 3: Upload Assets ── */}
           {step === 3 && (
             <div className={styles.stepContent}>
-              <h2 className={styles.stepTitle}>Upload your brand logo</h2>
-              <p className={styles.stepDesc}>Add a logo to represent your brand on the marketplace.</p>
-
-              <div className={styles.uploadAreas}>
-                <label className={styles.uploadBox} style={{ opacity: uploadingLogo ? 0.7 : 1 }}>
-                  <input type="file" hidden accept="image/*" disabled={uploadingLogo} onChange={(e) => handleFileUpload(e, 'brand-logos', 'logo')} />
-                  {uploadingLogo ? (
-                    <div style={{ padding: '1rem', width: '100%', textAlign: 'center' }}>
-                      <div className="spinner" style={{ width: 30, height: 30, margin: '0 auto 0.5rem' }} />
-                      <p style={{ fontSize: '0.8rem' }}>Optimizing & Uploading {logoProgress}%</p>
-                      <div style={{ width: '100%', height: '4px', background: 'var(--bg-100)', marginTop: '0.5rem', borderRadius: '10px', overflow: 'hidden' }}>
-                        <div style={{ width: `${logoProgress}%`, height: '100%', background: 'var(--primary)', transition: 'width 0.3s ease' }} />
-                      </div>
-                    </div>
-                  ) : logoUrl ? (
-                    <>
-                      <img src={logoUrl} alt="Logo Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%', border: '3px solid var(--primary)' }} />
-                      <p style={{ color: 'var(--primary)', marginTop: '0.5rem', fontSize: '0.85rem' }}>✅ Logo uploaded! Click to change.</p>
-                    </>
-                  ) : (
-                    <>
-                      <Upload size={28} className={styles.uploadIcon} />
-                      <h3>Brand Logo</h3>
-                      <p>Click to browse — PNG, JPG (Max 5MB)</p>
-                    </>
-                  )}
-                </label>
-                {uploadStatus.logo && !logoUrl && (
-                  <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{uploadStatus.logo}</p>
-                )}
+              <h2 className={styles.stepTitle}>Academic Verification</h2>
+              <p className={styles.stepDesc}>Details will be verified manually by the admin team.</p>
+              <div className={styles.formGrid}>
+                <div className="form-group">
+                  <label className="form-label">Matric Number *</label>
+                  <input className="form-input" placeholder="e.g. 21/ENG02/001" value={form.matricNo} onChange={e => setForm({...form, matricNo: e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Room Number *</label>
+                  <input className="form-input" placeholder="e.g. PG4, Room 102" value={form.roomNo} onChange={e => setForm({...form, roomNo: e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">College *</label>
+                  <input className="form-input" placeholder="e.g. Engineering" value={form.college} onChange={e => setForm({...form, college: e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Department *</label>
+                  <input className="form-input" placeholder="e.g. Electrical Engineering" value={form.department} onChange={e => setForm({...form, department: e.target.value})} />
+                </div>
               </div>
             </div>
           )}
 
-          {/* ── STEP 4: Terms & Conditions ── */}
           {step === 4 && (
             <div className={styles.stepContent}>
-              <h2 className={styles.stepTitle}>Vendor Terms & Conditions</h2>
-              <p className={styles.stepDesc}>Please review and accept our platform rules to continue.</p>
-              
+              <h2 className={styles.stepTitle}>Ready to begin?</h2>
               <div className={styles.termsBox}>
-                <h3>ABUAD FASHION HUB – VENDOR TERMS & CONDITIONS</h3>
-                <p><strong>Effective Date: April 17, 2026</strong></p>
-                
-                <h4>Activation Fee</h4>
-                <p>Upon admin approval, a one-time activation fee of <strong>₦2,000</strong> is required to set up your store and start listing products.</p>
-
-                <h4>Listing Fees</h4>
-                <ul>
-                  <li>First 5 product/service listings are free.</li>
-                  <li>Additional listings: ₦200 per listing OR ₦1,500 monthly subscription.</li>
-                </ul>
-
-                <p><em>... (Standard platform policies applied)</em></p>
+                <p><strong>Matric Verification:</strong> Admin will verify your identity. False info leads to permanent ban.</p>
+                <p><strong>Credit System:</strong> You get 5 free listing credits today.</p>
+                <p><strong>Power Week:</strong> One week free of full vendor abilities. After that, credit rates apply.</p>
               </div>
-
-              <label className={styles.termsCheckbox}>
-                <input 
-                  type="checkbox" 
-                  checked={acceptedTerms} 
-                  onChange={(e) => setAcceptedTerms(e.target.checked)} 
-                />
-                <span>I have read and agree to the ABUAD Fashion Hub Vendor Terms & Conditions.</span>
-              </label>
+              <button className="btn btn-primary btn-lg" style={{ width: '100%' }} onClick={handleSubmit} disabled={loading}>
+                {loading ? 'Submitting...' : 'Complete Registration & Contact Admin'}
+              </button>
             </div>
           )}
 
-          {/* ── STEP 5: Verification ── */}
-          {step === 5 && (
-            <div className={styles.stepContent}>
-              <h2 className={styles.stepTitle}>Submit Verification Documents</h2>
-              <p className={styles.stepDesc}>
-                Admin review is required. Upload your Student/Faculty ID and a Business Proof document.
-              </p>
-
-              <div className={styles.uploadAreas}>
-                {/* Student ID Upload */}
-                <label className={styles.uploadBox} style={{ opacity: uploadingStudentId ? 0.7 : 1 }}>
-                  <input type="file" hidden accept="image/*,.pdf" disabled={uploadingStudentId} onChange={(e) => handleFileUpload(e, 'verification-docs', 'studentId')} />
-                  {uploadingStudentId ? (
-                    <div style={{ padding: '1rem', width: '100%', textAlign: 'center' }}>
-                      <div className="spinner" style={{ width: 30, height: 30, margin: '0 auto 0.5rem' }} />
-                      <p style={{ fontSize: '0.8rem' }}>
-                        {studentIdProgress < 10 ? 'Optimizing file...' : `Uploading ${studentIdProgress}%`}
-                      </p>
-                      <div style={{ width: '100%', height: '4px', background: 'var(--bg-100)', marginTop: '0.5rem', borderRadius: '10px', overflow: 'hidden' }}>
-                        <div style={{ width: `${studentIdProgress}%`, height: '100%', background: 'var(--primary)', transition: 'width 0.3s ease' }} />
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <ShieldCheck size={28} className={styles.uploadIcon} style={{ color: studentIdUrl ? 'var(--primary)' : undefined }} />
-                      <h3>{studentIdUrl ? '✅ Student ID Uploaded' : 'Student / Faculty ID Card'}</h3>
-                      <p>{studentIdUrl ? 'Click to replace.' : 'Upload your ABUAD ID card or any valid student ID (JPG, PNG, PDF)'}</p>
-                    </>
-                  )}
-                </label>
-                {uploadStatus.studentId && (
-                  <p style={{ color: studentIdUrl ? 'var(--primary)' : '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{uploadStatus.studentId}</p>
-                )}
-
-                {/* Business Proof Upload */}
-                <label className={styles.uploadBox} style={{ opacity: uploadingBusinessProof ? 0.7 : 1, marginTop: '1.5rem' }}>
-                  <input type="file" hidden accept="image/*,.pdf" disabled={uploadingBusinessProof} onChange={(e) => handleFileUpload(e, 'verification-docs', 'businessProof')} />
-                  {uploadingBusinessProof ? (
-                    <div style={{ padding: '1rem', width: '100%', textAlign: 'center' }}>
-                      <div className="spinner" style={{ width: 30, height: 30, margin: '0 auto 0.5rem' }} />
-                      <p style={{ fontSize: '0.8rem' }}>
-                        {businessProofProgress < 10 ? 'Optimizing file...' : `Uploading ${businessProofProgress}%`}
-                      </p>
-                      <div style={{ width: '100%', height: '4px', background: 'var(--bg-100)', marginTop: '0.5rem', borderRadius: '10px', overflow: 'hidden' }}>
-                        <div style={{ width: `${businessProofProgress}%`, height: '100%', background: 'var(--primary)', transition: 'width 0.3s ease' }} />
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload size={28} className={styles.uploadIcon} style={{ color: businessProofUrl ? 'var(--primary)' : undefined }} />
-                      <h3>{businessProofUrl ? '✅ Business Proof Uploaded' : 'Business Proof / Address'}</h3>
-                      <p>{businessProofUrl ? 'Click to replace.' : 'Upload a business registration document or proof of address'}</p>
-                    </>
-                  )}
-                </label>
-                {uploadStatus.businessProof && (
-                  <p style={{ color: businessProofUrl ? 'var(--primary)' : '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{uploadStatus.businessProof}</p>
-                )}
-              </div>
-
-              <div className={styles.skipVerify}>
-                <button className={styles.skipBtn} onClick={handleSubmit} disabled={loading || (!studentIdUrl && !businessProofUrl)}>
-                  {loading ? 'Submitting Application...' : 'Submit Application for Review →'}
-                </button>
-                {!studentIdUrl && !businessProofUrl && (
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginTop: '0.5rem', textAlign: 'center' }}>Upload at least one document to proceed.</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Navigation */}
           <div className={styles.navButtons}>
-            {step > 1 ? (
-              <button className="btn btn-ghost" onClick={prev} disabled={loading}>
-                <ArrowLeft size={16} /> Back
-              </button>
-            ) : (
-              <Link href="/" className="btn btn-ghost">
-                Cancel
-              </Link>
-            )}
-
-            {step < 5 ? (
-              <button 
-                className="btn btn-primary" 
-                onClick={next} 
-                disabled={(step === 1 && !vendorType) || (step === 4 && !acceptedTerms)}
-              >
-                Continue <ArrowRight size={16} />
-              </button>
-            ) : (
-              <button className="btn btn-primary" onClick={handleSubmit} disabled={loading || (!studentIdUrl && !businessProofUrl)}>
-                <CheckCircle size={16} /> {loading ? 'Submitting...' : 'Submit Application'}
-              </button>
-            )}
+            {step > 1 && <button className="btn btn-ghost" onClick={prev}><ArrowLeft size={16} /> Back</button>}
+            {step < 4 && <button className="btn btn-primary" onClick={next} disabled={!vendorType && step === 1}>Continue <ArrowRight size={16} /></button>}
           </div>
         </div>
       </div>
     </main>
   );
 }
-

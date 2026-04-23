@@ -79,15 +79,10 @@ export async function GET(req: NextRequest) {
 
     // Transform joined user data for easier frontend access
     const transformed = (data || []).map(v => {
-      // PostgREST returns the joined object under the table name or alias
       const owner = (v as any).users || { name: 'Unknown Owner', email: 'N/A' };
       return {
         ...v,
         users: owner,
-        verification_documents: [
-          (v as any).student_id_url, 
-          (v as any).business_proof_url
-        ].filter(Boolean)
       };
     });
     return NextResponse.json({ vendors: transformed });
@@ -163,10 +158,14 @@ export async function POST(req: NextRequest) {
     const { brandId } = body;
     const { error } = await supabaseAdmin
       .from('brands')
-      .update({ verification_status: 'approved', verified: false })
+      .update({ 
+        verification_status: 'verified', 
+        verified: true,
+        fee_paid: true 
+      })
       .eq('id', brandId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true, message: 'Vendor approved. They will be prompted to pay activation fee.' });
+    return NextResponse.json({ success: true, message: 'Vendor approved and verified manually.' });
   }
 
   if (action === 'reject_vendor') {

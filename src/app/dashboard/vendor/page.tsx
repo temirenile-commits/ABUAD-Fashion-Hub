@@ -18,6 +18,24 @@ export default function VendorDashboard() {
   const [loading, setLoading] = useState(true);
   const [brand, setBrand] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Subscription & Trial Logic
+  const trialDaysLeft = brand?.trial_started_at 
+    ? Math.max(0, 7 - Math.floor((new Date().getTime() - new Date(brand.trial_started_at).getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
+  const isTrialActive = trialDaysLeft > 0;
+  
+  const isSubActive = brand?.subscription_expires_at 
+    ? new Date(brand.subscription_expires_at).getTime() > new Date().getTime()
+    : false;
+
+  const currentTier = isTrialActive ? 'full' : (isSubActive ? brand?.subscription_tier : 'free');
+  
+  const productLimit = isTrialActive ? 999999 : (isSubActive ? (brand?.max_products || 10) : 0);
+  const reelLimit = isTrialActive ? 999999 : (isSubActive ? (brand?.max_reels || 1) : 0);
+  
+  const canAccessAnalytics = currentTier !== 'free';
+  const canAccessPromoCodes = ['half', 'full'].includes(currentTier);
   
   // Real-time states
   const { products: allProducts, orders: allOrders, setOrders: setGlobalOrders, addProduct, updateOrder, updateProduct: updateGlobalProduct } = useMarketplaceStore();
@@ -247,6 +265,13 @@ export default function VendorDashboard() {
 
   const handleReelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0] || !brand) return;
+    
+    if (reels.length >= reelLimit) {
+      alert(`You have reached your limit of ${reelLimit} reels. Upgrade your power level to upload more!`);
+      router.push('/dashboard/vendor/subscription');
+      return;
+    }
+
     setUploadingReel(true);
 
     const file = e.target.files[0];
@@ -669,10 +694,39 @@ export default function VendorDashboard() {
           </div>
         )}
 
-        {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className={styles.tabContent}>
             <h1 className={styles.title}>Business Overview</h1>
+            
+            {isTrialActive && (
+              <div className={`${styles.escrowBanner} mb-4`} style={{ background: 'var(--grad-brand-soft)', borderColor: 'var(--primary)', marginBottom: '1.5rem', animation: 'fadeIn 0.5s ease' }}>
+                <Zap className={styles.escrowIcon} style={{ color: 'var(--primary)' }} />
+                <div className={styles.escrowText}>
+                  <h4 style={{ color: 'var(--primary)' }}>"Power Week" Active ⚡</h4>
+                  <p>You have UNLIMITED powers for the next <strong>{trialDaysLeft} days</strong>. Enjoy the full ABUAD experience!</p>
+                </div>
+              </div>
+            )}
+
+            {!isTrialActive && isSubActive && (
+              <div className={`${styles.escrowBanner} mb-4`} style={{ background: 'var(--bg-200)', borderColor: 'var(--secondary)', marginBottom: '1.5rem' }}>
+                <ShieldCheck className={styles.escrowIcon} style={{ color: 'var(--secondary)' }} />
+                <div className={styles.escrowText}>
+                  <h4 style={{ color: 'var(--secondary)' }}>{currentTier.toUpperCase()} Power Active</h4>
+                  <p>Your subscription is active until {new Date(brand.subscription_expires_at).toLocaleDateString()}. <Link href="/dashboard/vendor/subscription" style={{ color: 'var(--primary)', fontWeight: 600 }}>Upgrade powers →</Link></p>
+                </div>
+              </div>
+            )}
+
+            {!isTrialActive && !isSubActive && (
+              <div className={`${styles.escrowBanner} mb-4`} style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: '#ef4444', marginBottom: '1.5rem' }}>
+                <AlertTriangle className={styles.escrowIcon} style={{ color: '#ef4444' }} />
+                <div className={styles.escrowText}>
+                  <h4 style={{ color: '#ef4444' }}>Low Brand Power</h4>
+                  <p>Your trial/subscription has expired. <Link href="/dashboard/vendor/subscription" style={{ color: '#ef4444', fontWeight: 700, textDecoration: 'underline' }}>Activate your powers now</Link> to continue selling.</p>
+                </div>
+              </div>
+            )}
             <div className={`${styles.verificationBanner} ${styles[brand?.verification_status || 'pending']}`}>
               {brand?.verification_status === 'verified' ? (
                 <CheckCircle size={16} />
@@ -1224,7 +1278,7 @@ export default function VendorDashboard() {
               <div>
                 <h1 className={styles.title}>Inventory Management</h1>
                 <p className={styles.subtitle}>
-                  Manage your listings. {products.length >= 5 ? '⚠️ Free limit reached. Next post costs ₦200.' : `You have ${5 - products.length} free listings remaining.`}
+                  Manage your listings. {isTrialActive ? '⚡ Trial (Unlimited)' : `${products.length} / ${productLimit} products used.`}
                 </p>
               </div>
               <div className={styles.tabActions}>
@@ -1232,7 +1286,17 @@ export default function VendorDashboard() {
                   <input type="file" accept=".csv" hidden onChange={handleBulkUpload} />
                   <FileText size={18} /> Bulk Upload (CSV)
                 </label>
-                <button className="btn btn-primary" onClick={() => setIsAddingProduct(true)}>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => {
+                    if (products.length >= productLimit) {
+                      alert(`You have reached your limit of ${productLimit} products. Upgrade your power level to list more!`);
+                      router.push('/dashboard/vendor/subscription');
+                    } else {
+                      setIsAddingProduct(true);
+                    }
+                  }}
+                >
                   <Plus size={18} /> Add New Product
                 </button>
               </div>

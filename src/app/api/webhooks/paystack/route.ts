@@ -58,6 +58,43 @@ export async function POST(req: Request) {
         return NextResponse.json({ status: 'success' }, { status: 200 });
       }
 
+      // Case C: Vendor Tiered Subscription
+      if (metadata.payment_type === 'vendor_subscription') {
+        const { brand_id, tier } = metadata;
+        
+        let maxProducts = 10;
+        let maxReels = 1;
+
+        if (tier === 'half') {
+          maxProducts = 50;
+          maxReels = 5;
+        } else if (tier === 'full') {
+          maxProducts = 999999;
+          maxReels = 999999;
+        }
+
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
+
+        const { error: subError } = await supabaseAdmin
+          .from('brands')
+          .update({ 
+            subscription_tier: tier, 
+            subscription_expires_at: expiresAt.toISOString(),
+            max_products: maxProducts,
+            max_reels: maxReels
+          })
+          .eq('id', brand_id);
+
+        if (subError) {
+          console.error('Error updating subscription:', subError);
+          return NextResponse.json({ error: 'Subscription update failed' }, { status: 500 });
+        }
+
+        console.log(`[WEBHOOK] Subscription for ${brand_id} updated to ${tier}!`);
+        return NextResponse.json({ status: 'success' }, { status: 200 });
+      }
+
       // Case B: Customer Orders (Default)
       // 1. Fetch all orders with this Paystack reference
       const { data: orders, error: fetchError } = await supabaseAdmin
