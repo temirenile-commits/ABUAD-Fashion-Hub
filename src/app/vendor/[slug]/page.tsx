@@ -53,8 +53,8 @@ export default async function VendorPage({ params, searchParams }: Props) {
   const vendorProducts = (productsData || []) as any[] as LiveProduct[];
   const vendor = vendorData;
   
-  const waMessage = `Hi ${vendor.name}! I found you on ABUAD Fashion Hub. I'd love to know more about your products.`;
-  const whatsapp = vendor.whatsapp_number.replace('+', '');
+  const waMessage = `Hi ${vendor.name || 'there'}! I found you on ABUAD Fashion Hub. I'd love to know more about your products.`;
+  const whatsapp = (vendor.whatsapp_number || '').replace('+', '');
   const fallbackCover = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&auto=format&fit=crop';
 
   return (
@@ -78,16 +78,16 @@ export default async function VendorPage({ params, searchParams }: Props) {
           <div className={styles.logoWrap}>
             <span className={styles.logoText}>
               {vendor.logo_url && vendor.logo_url.startsWith('http') ? (
-                <Image src={vendor.logo_url} alt={vendor.name} fill style={{objectFit: 'cover', borderRadius: '12px'}} />
+                <Image src={vendor.logo_url} alt={vendor.name || 'Brand'} fill style={{objectFit: 'cover', borderRadius: '12px'}} />
               ) : (
-                vendor.name.substring(0, 2).toUpperCase()
+                (vendor.name || 'AF').substring(0, 2).toUpperCase()
               )}
             </span>
           </div>
 
           <div className={styles.profileInfo}>
             <div className={styles.nameRow}>
-              <h1 className={styles.name}>{vendor.name}</h1>
+              <h1 className={styles.name}>{vendor.name || 'Anonymous Brand'}</h1>
               {vendor.verified && (
                 <div className={styles.verifiedPill}>
                   <CheckCircle size={14} />

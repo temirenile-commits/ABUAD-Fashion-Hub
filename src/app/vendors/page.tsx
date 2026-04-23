@@ -10,8 +10,8 @@ export default function VendorsPage() {
   const isInitialized = useMarketplaceStore(s => s.isInitialized);
 
   const LIVE_VENDORS = allBrands.map((brand) => {
-    const nameStr = brand.name || 'ABUAD';
-    const num = nameStr.charCodeAt(0) * nameStr.charCodeAt(nameStr.length - 1) * 123;
+    const nameStr = brand.name || 'Anonymous Brand';
+    const num = nameStr.charCodeAt(0) * (nameStr.charCodeAt(nameStr.length - 1) || 1) * 123;
     
     return {
       ...brand,
@@ -71,12 +71,12 @@ export default function VendorsPage() {
                     {vendor.logo_url && vendor.logo_url.startsWith('http') ? (
                        <img src={vendor.logo_url} alt="Logo" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%'}} />
                     ) : (
-                      vendor.name.substring(0, 2).toUpperCase()
+                      (vendor.name || 'AF').substring(0, 2).toUpperCase()
                     )}
                   </div>
                   <div className={styles.leaderInfo}>
                     <div className={styles.leaderName}>
-                      {vendor.name}
+                      {vendor.name || 'Anonymous Brand'}
                       {vendor.verified && <CheckCircle size={14} className="verified-icon" />}
                     </div>
                     <p className={styles.leaderCat}>{vendor.category || 'Fashion'}</p>
