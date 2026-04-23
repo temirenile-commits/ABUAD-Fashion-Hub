@@ -279,7 +279,10 @@ export default function AdminDashboard() {
                                 </div>
                               </div>
                             </td>
-                            <td style={{ fontSize: '0.85rem' }}>{v.users?.email || '—'}</td>
+                             <td style={{ fontSize: '0.85rem' }}>
+                               <div style={{ fontWeight: 500 }}>{v.users?.name || 'Unknown'}</div>
+                               <div style={{ fontSize: '0.75rem', color: 'var(--text-400)' }}>{v.users?.email || '—'}</div>
+                             </td>
                             <td style={{ fontSize: '0.85rem' }}>{v.whatsapp_number || '—'}</td>
                             <td>
                               <span className={`badge ${
@@ -558,6 +561,9 @@ export default function AdminDashboard() {
                   <h3><Mail size={16} /> Contact Details</h3>
                   <div className={styles.contactList}>
                     <div className={styles.contactItem}>
+                      <strong>Owner:</strong> <span>{selectedVendor.users?.name || 'Unknown'}</span>
+                    </div>
+                    <div className={styles.contactItem}>
                       <Mail size={14} /> <span>{selectedVendor.users?.email || 'N/A'}</span>
                     </div>
                     <div className={styles.contactItem}>
@@ -567,33 +573,41 @@ export default function AdminDashboard() {
                 </section>
 
                 <section className={styles.modalSection}>
-                  <h3><ShieldCheck size={16} /> Status</h3>
+                  <h3><ShieldCheck size={16} /> Application Status</h3>
                   <span className={`badge ${
                     selectedVendor.verification_status === 'verified' ? 'badge-success' :
                     selectedVendor.verification_status === 'approved' ? 'badge-gold' :
                     selectedVendor.verification_status === 'pending' ? 'badge-neutral' :
                     'badge-error'
-                  }`}>
+                  }`} style={{ fontSize: '1rem', padding: '0.5rem 1rem' }}>
                     {selectedVendor.verification_status?.toUpperCase() || 'PENDING'}
                   </span>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginTop: '0.5rem' }}>
+                    Joined: {new Date(selectedVendor.created_at).toLocaleDateString()}
+                  </p>
                 </section>
               </div>
 
               <section className={styles.modalSection}>
                 <h3><ShieldCheck size={16} /> Verification Documents</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-300)', marginBottom: '1rem' }}>
+                  Please carefully review the identity and business documents below.
+                </p>
                 <div className={styles.docGrid}>
                   <div className={styles.docCard}>
                     <div className={styles.docInfo}>
                       <FileText size={20} strokeWidth={1.5} />
                       <div>
-                        <strong>Student ID</strong>
-                        <p>{selectedVendor.student_id_url ? 'Uploaded' : 'Missing'}</p>
+                        <strong>Student / Faculty ID</strong>
+                        <p>{selectedVendor.student_id_url ? 'Document Provided' : 'Not Uploaded'}</p>
                       </div>
                     </div>
                     {selectedVendor.student_id_url && (
-                      <a href={selectedVendor.student_id_url} target="_blank" rel="noreferrer" className={styles.viewDocBtn}>
-                        <Eye size={14} /> View Document
-                      </a>
+                      <div className={styles.docActions}>
+                        <a href={selectedVendor.student_id_url} target="_blank" rel="noreferrer" className={styles.viewDocBtn}>
+                          <Eye size={14} /> Open Document
+                        </a>
+                      </div>
                     )}
                   </div>
 
@@ -601,14 +615,16 @@ export default function AdminDashboard() {
                     <div className={styles.docInfo}>
                       <ShieldCheck size={20} strokeWidth={1.5} />
                       <div>
-                        <strong>Business Proof</strong>
-                        <p>{selectedVendor.business_proof_url ? 'Uploaded' : 'Missing'}</p>
+                        <strong>Business Proof / Address</strong>
+                        <p>{selectedVendor.business_proof_url ? 'Document Provided' : 'Not Uploaded'}</p>
                       </div>
                     </div>
                     {selectedVendor.business_proof_url && (
-                      <a href={selectedVendor.business_proof_url} target="_blank" rel="noreferrer" className={styles.viewDocBtn}>
-                        <Eye size={14} /> View Document
-                      </a>
+                      <div className={styles.docActions}>
+                         <a href={selectedVendor.business_proof_url} target="_blank" rel="noreferrer" className={styles.viewDocBtn}>
+                          <Eye size={14} /> Open Document
+                        </a>
+                      </div>
                     )}
                   </div>
                 </div>

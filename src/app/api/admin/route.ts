@@ -69,16 +69,27 @@ export async function GET(req: NextRequest) {
   if (action === 'vendors') {
     const { data, error } = await supabaseAdmin
       .from('brands')
-      .select('*, owner:owner_id(name, email)')
+      .select('*, users!owner_id(name, email)')
       .order('created_at', { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    // Transform owner for easier frontend access
-    const transformed = (data || []).map(v => ({
-      ...v,
-      users: (v as any).owner || { name: 'Unknown', email: 'N/A' },
-      verification_documents: [(v as any).student_id_url, (v as any).business_proof_url].filter(Boolean)
-    }));
+    if (error) {
+      console.error('Fetch vendors error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Transform joined user data for easier frontend access
+    const transformed = (data || []).map(v => {
+      // PostgREST returns the joined object under the table name or alias
+      const owner = (v as any).users || { name: 'Unknown Owner', email: 'N/A' };
+      return {
+        ...v,
+        users: owner,
+        verification_documents: [
+          (v as any).student_id_url, 
+          (v as any).business_proof_url
+        ].filter(Boolean)
+      };
+    });
     return NextResponse.json({ vendors: transformed });
   }
 

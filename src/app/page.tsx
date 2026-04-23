@@ -14,6 +14,7 @@ import {
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
 import VendorCard, { LiveVendor } from '@/components/VendorCard';
 import { useMarketplaceStore } from '@/store/marketplaceStore';
+import { supabase } from '@/lib/supabase';
 import styles from './page.module.css';
 
 // New Jumia-style Components
@@ -29,8 +30,27 @@ export default function Home() {
   const isInitialized = useMarketplaceStore(s => s.isInitialized);
 
   const [preferredCategories, setPreferredCategories] = useState<string[]>([]);
+  const [targetedProducts, setTargetedProducts] = useState<LiveProduct[]>([]);
+  const [fetchingTargeted, setFetchingTargeted] = useState(false);
   
   useEffect(() => {
+    const fetchDiscovery = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setFetchingTargeted(true);
+        try {
+          const res = await fetch(`/api/discovery?userId=${session.user.id}`);
+          const data = await res.json();
+          if (data.products) setTargetedProducts(data.products);
+        } catch (e) {
+          console.error('Discovery error:', e);
+        } finally {
+          setFetchingTargeted(false);
+        }
+      }
+    };
+    fetchDiscovery();
+
     try {
       const prefs = JSON.parse(localStorage.getItem('user_prefs') || '[]');
       if (Array.isArray(prefs)) setPreferredCategories(prefs);
@@ -137,8 +157,8 @@ export default function Home() {
           </div>
 
           <div className={`${styles.productGrid} stagger`}>
-            {trendingProducts.length > 0 ? (
-              trendingProducts.map((product) => (
+            {(targetedProducts.length > 0 ? targetedProducts : trendingProducts).length > 0 ? (
+              (targetedProducts.length > 0 ? targetedProducts : trendingProducts).map((product) => (
                 <div key={product.id} className="anim-fade-up">
                   <ProductCard product={product} />
                 </div>

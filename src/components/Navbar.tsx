@@ -23,13 +23,18 @@ export default function Navbar() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setUser(session.user);
-        // Fetch role
+        // Fetch role and avatar
         const { data: userData } = await supabase
           .from('users')
-          .select('role')
+          .select('role, avatar_url')
           .eq('id', session.user.id)
           .single();
-        if (userData) setRole(userData.role);
+        if (userData) {
+          setRole(userData.role);
+          if (userData.avatar_url) {
+            setUser((prev: any) => ({ ...prev, avatar_url: userData.avatar_url }));
+          }
+        }
       }
     };
     checkSession();
@@ -40,10 +45,15 @@ export default function Navbar() {
         setUser(session.user);
         const { data: userData } = await supabase
           .from('users')
-          .select('role')
+          .select('role, avatar_url')
           .eq('id', session.user.id)
           .single();
-        if (userData) setRole(userData.role);
+        if (userData) {
+          setRole(userData.role);
+          if (userData.avatar_url) {
+             setUser((prev: any) => ({ ...prev, avatar_url: userData.avatar_url }));
+          }
+        }
       } else {
         setUser(null);
         setRole(null);
@@ -109,7 +119,11 @@ export default function Navbar() {
               {role !== 'vendor' && (
                 <div className={styles.actionItem}>
                   <Link href={dashboardLink} className={styles.actionLink}>
-                    <User size={20} />
+                    {user.avatar_url ? (
+                      <img src={user.avatar_url} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }} />
+                    ) : (
+                      <User size={20} />
+                    )}
                     <span>Account</span>
                   </Link>
                 </div>

@@ -34,8 +34,31 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Transaction verification failed' }, { status: 400 });
       }
 
-      console.log(`[PAYSTACK WEBHOOK] Verified ${reference} successfully via API`);
+      const metadata = verification.data.metadata || {};
+      console.log(`[PAYSTACK WEBHOOK] Verified ${reference} successfully via API. Payment Type: ${metadata.payment_type}`);
 
+      // Case A: Vendor Activation Fee
+      if (metadata.payment_type === 'vendor_activation_fee') {
+        const { brand_id } = metadata;
+        const { error: brandUpdateError } = await supabaseAdmin
+          .from('brands')
+          .update({ 
+            fee_paid: true, 
+            verification_status: 'verified',
+            verified: true 
+          })
+          .eq('id', brand_id);
+        
+        if (brandUpdateError) {
+          console.error('Error activating brand:', brandUpdateError);
+          return NextResponse.json({ error: 'Brand activation failed' }, { status: 500 });
+        }
+        
+        console.log(`[WEBHOOK] Brand ${brand_id} activated successfully!`);
+        return NextResponse.json({ status: 'success' }, { status: 200 });
+      }
+
+      // Case B: Customer Orders (Default)
       // 1. Fetch all orders with this Paystack reference
       const { data: orders, error: fetchError } = await supabaseAdmin
         .from('orders')

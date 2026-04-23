@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingBag, Truck, CheckCircle, Clock, Package, Loader2, ArrowRight, MessageCircle, Bell } from 'lucide-react';
+import { ShoppingBag, Truck, CheckCircle, Clock, Package, Loader2, ArrowRight, MessageCircle, Bell, User, Camera } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
 import styles from './customer.module.css';
@@ -170,6 +170,45 @@ export default function CustomerDashboard() {
         {/* Sidebar: Profile/Summary */}
         <div className={styles.sideCol}>
           <div className={`card ${styles.statsCard}`}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+               <div style={{ position: 'relative' }}>
+                 {user?.avatar_url ? (
+                   <img src={user.avatar_url} alt="" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
+                 ) : (
+                   <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--bg-300)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                     <User size={32} color="var(--text-400)" />
+                   </div>
+                 )}
+                 <label style={{ position: 'absolute', bottom: -5, right: -5, background: 'var(--primary)', color: '#fff', borderRadius: '50%', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
+                   <input 
+                     type="file" 
+                     hidden 
+                     accept="image/*" 
+                     onChange={async (e) => {
+                       if (!e.target.files?.[0]) return;
+                       const file = e.target.files[0];
+                       const { uploadFile } = await import('@/lib/storage');
+                       setLoading(true);
+                       const { url, error } = await uploadFile(file, 'brand-assets', `avatar-${user.id}`);
+                       if (url) {
+                         await supabase.from('users').update({ avatar_url: url }).eq('id', user.id);
+                         setUser((prev: any) => ({ ...prev, avatar_url: url }));
+                         alert('Profile photo updated!');
+                       } else {
+                         alert(error || 'Upload failed');
+                       }
+                       setLoading(false);
+                     }} 
+                   />
+                   <Camera size={14} />
+                 </label>
+               </div>
+               <div>
+                 <h3 style={{ margin: 0 }}>{user?.email?.split('@')[0]}</h3>
+                 <p style={{ fontSize: '0.8rem', color: 'var(--text-400)', margin: 0 }}>Customer Account</p>
+               </div>
+            </div>
+            
             <h3>Account Summary</h3>
             <div className={styles.statLine}>
               <span>Purchases</span>

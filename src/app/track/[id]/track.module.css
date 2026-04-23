@@ -1,0 +1,172 @@
+.page {
+  padding: 2rem 1rem;
+  max-width: 1000px;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.backLink {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-400);
+  text-decoration: none;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.orderId {
+  color: var(--text-400);
+  margin-top: 0.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 2rem;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  gap: 1rem;
+  color: var(--text-400);
+}
+
+.statusBanner {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.statusIcon {
+  width: 56px;
+  height: 56px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: relative;
+}
+
+.step {
+  display: flex;
+  gap: 1.5rem;
+  position: relative;
+  opacity: 0.4;
+  transition: opacity 0.3s;
+}
+
+.stepDone {
+  opacity: 1;
+}
+
+.stepActive {
+  opacity: 1;
+}
+
+.stepMarker {
+  z-index: 1;
+  background: var(--bg-100);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  background: var(--bg-300);
+  border-radius: 50%;
+}
+
+.stepLine {
+  position: absolute;
+  left: 7px;
+  top: 24px;
+  bottom: -16px;
+  width: 2px;
+  background: var(--bg-300);
+}
+
+.stepDone .stepLine {
+  background: var(--primary);
+}
+
+.stepInfo h4 {
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.stepInfo p {
+  font-size: 0.8rem;
+  color: var(--text-400);
+}
+
+.detailRow {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.detailRow strong {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.detailRow p {
+  font-size: 0.85rem;
+  color: var(--text-300);
+}
+
+.itemCard {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.itemImage img {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.escrowNotice {
+  margin-top: 1.5rem;
+  background: var(--bg-200);
+  padding: 1rem;
+  border-radius: 12px;
+  display: flex;
+  gap: 1rem;
+  border: 1px solid var(--border);
+}
+
+.escrowNotice p {
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
