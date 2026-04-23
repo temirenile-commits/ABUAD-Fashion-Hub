@@ -284,7 +284,7 @@ export default function VendorDashboard() {
 
     for (const file of files) {
       const isVideo = file.type.startsWith('video/');
-      const bucket = isVideo ? 'product-videos' : 'product-images';
+      const bucket = 'product-media';
 
       const { url, error } = await uploadFile(file, bucket, `prod-${brand.id}`);
       if (url) {

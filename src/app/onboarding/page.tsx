@@ -103,13 +103,9 @@ export default function OnboardingPage() {
 
       setIsSubmitted(true);
       
-      // Auto-redirect to WhatsApp
-      const whatsappUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=Hi Admin, I just submitted my vendor application for "${form.brandName}". My Matric No is ${form.matricNo}. I'm ready to finalize my registration.`;
+      // Auto-redirect removed because browsers block it silently as a popup.
+      // We explicitly rely on the visible button in the UI for the user to tap.
       
-      setTimeout(() => {
-        window.location.href = whatsappUrl;
-      }, 1500); // 1.5s delay to show success icon
-
     } catch (err: any) {
       console.error('Registration failed:', err);
       setErrorMsg(err.message || 'An error occurred during brand registration.');
