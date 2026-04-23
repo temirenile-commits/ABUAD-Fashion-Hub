@@ -10,7 +10,7 @@
   /* Core Palette - Pure Black */
   --bg-000: #000000;
   --bg-100: #080808;
-  --bg-200: #121212;
+  --bg-200: #0e0e0e;
   --bg-300: #1a1a1a;
   --bg-400: #252525;
 
@@ -21,24 +21,29 @@
   --text-400: #808080;
   --text-500: #505050;
 
-  /* Primary Brand: Metallic Gold */
-  --primary: #d4af37;
-  --primary-light: #f1d592;
-  --primary-dark: #b8860b;
-  --primary-hover: #e5c158;
-  --primary-soft: rgba(212, 175, 55, 0.12);
-  --primary-glow: 0 0 24px rgba(212, 175, 55, 0.4);
+  /* ─── LOGO GOLD — Exact colour from the ABUAD Fashion Hub logo ─── */
+  /* Sampled from logo: warm antique gold #C9A14A */
+  --logo-gold: #C9A14A;
 
-  /* Secondary: Classic Gold */
-  --secondary: #c9a14a;
-  --secondary-hover: #b8903a;
-  --secondary-soft: rgba(201, 161, 74, 0.12);
-  --secondary-glow: 0 0 20px rgba(201, 161, 74, 0.35);
+  /* Primary Brand: Warm Antique Gold (matches logo exactly) */
+  --primary: #C9A14A;
+  --primary-light: #E8C97A;
+  --primary-dark: #A07830;
+  --primary-hover: #D8B060;
+  --primary-soft: rgba(201, 161, 74, 0.12);
+  --primary-glow: 0 0 24px rgba(201, 161, 74, 0.45);
 
-  /* Accent: Platinum/White (for contrast) */
-  --accent: #f8f8f8;
-  --accent-rgb: 248, 248, 248;
-  --accent-soft: rgba(248, 248, 248, 0.15);
+  /* Secondary: Slightly deeper logo gold for variation */
+  --secondary: #B8903A;
+  --secondary-hover: #A07830;
+  --secondary-soft: rgba(184, 144, 58, 0.12);
+  --secondary-glow: 0 0 20px rgba(184, 144, 58, 0.35);
+
+  /* Accent Gold: Lighter highlight, top of the logo letters */
+  --accent-gold: #E8C97A;
+  --accent: #E8C97A;
+  --accent-rgb: 232, 201, 122;
+  --accent-soft: rgba(232, 201, 122, 0.15);
 
   /* Functional */
   --success: #00c853;
@@ -46,24 +51,24 @@
   --warning: #ffab00;
   --info: #2979ff;
 
-  /* Borders — Minimalist Gold/Grey */
-  --border: rgba(212, 175, 55, 0.15);
-  --border-hover: rgba(212, 175, 55, 0.3);
-  --border-active: rgba(212, 175, 55, 0.6);
+  /* Borders — Warm Antique Gold */
+  --border: rgba(201, 161, 74, 0.18);
+  --border-hover: rgba(201, 161, 74, 0.35);
+  --border-active: rgba(201, 161, 74, 0.65);
 
-  /* Gradients - Premium Gold Metallic */
-  --grad-brand: linear-gradient(135deg, #d4af37 0%, #f1d592 50%, #b8860b 100%);
-  --grad-brand-soft: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.05) 100%);
-  --grad-dark: linear-gradient(180deg, #121212 0%, #000000 100%);
-  --grad-card: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.9) 100%);
-  --grad-gold-shimmer: linear-gradient(90deg, #d4af37 0%, #f1d592 50%, #d4af37 100%);
+  /* Gradients - Warm Antique Gold Metallic (matches logo light-to-dark sweep) */
+  --grad-brand: linear-gradient(135deg, #A07830 0%, #C9A14A 35%, #E8C97A 65%, #B8903A 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(201, 161, 74, 0.12) 0%, rgba(201, 161, 74, 0.04) 100%);
+  --grad-dark: linear-gradient(180deg, #0e0e0e 0%, #000000 100%);
+  --grad-card: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.92) 100%);
+  --grad-gold-shimmer: linear-gradient(90deg, #A07830 0%, #E8C97A 40%, #C9A14A 60%, #A07830 100%);
 
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.6);
   --shadow-md: 0 4px 20px rgba(0,0,0,0.7);
   --shadow-lg: 0 8px 40px rgba(0,0,0,0.8);
   --shadow-card: 0 2px 12px rgba(0,0,0,0.5);
-  --shadow-gold: 0 4px 20px rgba(201, 161, 74, 0.25);
+  --shadow-gold: 0 4px 24px rgba(201, 161, 74, 0.3);
 
   /* Radii */
   --radius-sm: 6px;
