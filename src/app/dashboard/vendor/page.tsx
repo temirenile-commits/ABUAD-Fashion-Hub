@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, CheckCircle2 } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket } from 'lucide-react';
 import Papa from 'papaparse';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
@@ -72,7 +72,7 @@ export default function VendorDashboard() {
     ? new Date(brand.subscription_expires_at).getTime() > new Date().getTime()
     : false;
 
-  const currentTier = isTrialActive ? 'full' : (isSubActive ? brand?.subscription_tier : 'free');
+  const currentTier = isTrialActive ? 'full' : (isSubActive ? (brand?.subscription_tier || 'free') : 'free');
   
   const productLimit = isTrialActive ? 999999 : (isSubActive ? (brand?.max_products || 10) : 0);
   const reelLimit = isTrialActive ? 999999 : (isSubActive ? (brand?.max_reels || 1) : 0);
@@ -690,7 +690,7 @@ export default function VendorDashboard() {
           <button className={`${styles.navItem} ${activeTab === 'inventory' ? styles.navActive : ''}`} onClick={() => setActiveTab('inventory')}>
             <ShoppingCart size={18} /> Listings & Inventory
           </button>
-          <button className={`${styles.navItem} ${activeTab === 'wallet' ? styles.navActive : ''}`} onClick={() => setActiveTab('wallet')}>
+          <button className={`${styles.navItem} ${activeTab === 'payments' ? styles.navActive : ''}`} onClick={() => setActiveTab('payments')}>
             <Wallet size={18} /> Wallet & Payouts
           </button>
           <button className={`${styles.navItem} ${activeTab === 'enquiries' ? styles.navActive : ''}`} onClick={() => setActiveTab('enquiries')}>
@@ -708,9 +708,6 @@ export default function VendorDashboard() {
           </button>
           <button className={`${styles.navItem} ${activeTab === 'reels' ? styles.navActive : ''}`} onClick={() => setActiveTab('reels')}>
             <Video size={18} /> Collection Reels
-          </button>
-          <button className={`${styles.navItem} ${activeTab === 'promotion' ? styles.navActive : ''}`} onClick={() => setActiveTab('promotion')}>
-            <Zap size={18} /> Boost Store
           </button>
           <button className={`${styles.navItem} ${activeTab === 'analytics' ? styles.navActive : ''}`} onClick={() => setActiveTab('analytics')}>
             <BarChart3 size={18} /> Smart Analytics
@@ -1019,7 +1016,7 @@ export default function VendorDashboard() {
           </div>
         )}
         {/* Store Settings Tab */}
-        {activeTab === 'settings' && (
+        {activeTab === 'settings' && brand && (
           <div className={styles.tabContent}>
             <h1 className={styles.title}>Store Settings</h1>
             <p className={styles.subtitle}>Manage your brand identity, contact details, and store policies.</p>
@@ -1064,6 +1061,15 @@ export default function VendorDashboard() {
                       type="text" 
                       defaultValue={brand.whatsapp_number} 
                       onBlur={(e) => handleUpdateSettings({ whatsapp_number: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label>Instagram Link / Portfolio</label>
+                    <input 
+                      type="text" 
+                      defaultValue={brand.instagram_handle} 
+                      placeholder="@yourbrand"
+                      onBlur={(e) => handleUpdateSettings({ instagram_handle: e.target.value })}
                     />
                   </div>
                 </div>
@@ -1140,7 +1146,7 @@ export default function VendorDashboard() {
                         </div>
                       </div>
                       <ul className={styles.tierFeaturesMini}>
-                        {tier.features.map((f, i) => <li key={i}><CheckCircle2 size={12} /> {f}</li>)}
+                        {tier.features.map((f, i) => <li key={i}><CheckCircle size={12} /> {f}</li>)}
                       </ul>
                       <button 
                         className={`btn ${tier.popular ? 'btn-primary' : 'btn-ghost'} btn-sm`}
@@ -1641,7 +1647,7 @@ export default function VendorDashboard() {
         )}
 
         {/* Services Tab */}
-        {activeTab === 'services' && (
+        {activeTab === 'services' && brand && (
           <div className={styles.tabContent}>
             <div className={styles.tabHeader}>
               <div>
@@ -1708,7 +1714,7 @@ export default function VendorDashboard() {
         )}
 
         {/* Analytics Tab */}
-        {activeTab === 'analytics' && (
+        {activeTab === 'analytics' && brand && (
           <div className={styles.tabContent}>
             <h1 className={styles.title}>Smart Analytics</h1>
             <p className={styles.subtitle}>Data-driven insights to grow your fashion brand.</p>
@@ -1763,7 +1769,7 @@ export default function VendorDashboard() {
         )}
 
         {/* Payments Tab */}
-        {activeTab === 'payments' && (
+        {activeTab === 'payments' && brand && (
           <div className={styles.tabContent}>
             <h1 className={styles.title}>Payments & Wallet</h1>
             <p className={styles.subtitle}>Manage your earnings and request withdrawals.</p>
@@ -1854,80 +1860,25 @@ export default function VendorDashboard() {
             </div>
           </div>
         )}
-        {/* Promotion Tab */}
-        {activeTab === 'promotion' && (
+        {/* Marketing Tab */}
+        {activeTab === 'marketing' && brand && (
           <div className={styles.tabContent}>
-            <h1 className={styles.title}>Boost Your Brand</h1>
-            <p className={styles.subtitle}>Get more visibility and sales by featuring your best items.</p>
+            <h1 className={styles.title}>Marketing & Promos</h1>
+            <p className={styles.subtitle}>Create excitement and drive sales with promo codes and spotlights.</p>
 
             <div className={styles.promoGrid}>
-              <div className={styles.promoOption}>
-                <div className={styles.promoIcon}><Zap size={24} color="var(--secondary)" /></div>
-                <h3>Product Boost</h3>
-                <p>Push your product to the top of the explorer page for 24 hours.</p>
-                <div className={styles.promoPrice}>₦500</div>
-                <button className="btn btn-primary btn-sm">Select Product</button>
-              </div>
-              <div className={styles.promoOption}>
-                <div className={styles.promoIcon}><TrendingUp size={24} color="#3b82f6" /></div>
-                <h3>Featured Listing</h3>
-                <p>Get a spotlight slot on the homepage featured mosaic.</p>
-                <div className={styles.promoPrice}>₦2,000</div>
-                <button className="btn btn-primary btn-sm">Boost Store</button>
-              </div>
-            </div>
-
-            <div className={styles.boostActive}>
-              <h3>Active Promotions</h3>
-              <p className={styles.emptyText}>No active promotions at the moment.</p>
-            </div>
-          </div>
-        )}
-
-        {/* Settings Tab */}
-        {activeTab === 'settings' && (
-          <div className={styles.tabContent}>
-            <h1 className={styles.title}>Store Settings</h1>
-            <p className={styles.subtitle}>Update your brand identity and payout details.</p>
-
-            <div className={styles.settingsForm}>
-              <section className={styles.formSection}>
-                <h3>Brand Identity</h3>
-                <div className={styles.formGrid}>
-                  <div className={styles.inputGroup}>
-                    <label>Brand Name</label>
-                    <input type="text" placeholder={brand?.name} />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label>WhatsApp Number</label>
-                    <input type="text" placeholder={brand?.whatsapp_number} />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label>Instagram Link</label>
-                    <input type="text" placeholder="@yourbrand" />
-                  </div>
-                </div>
-                <div className={styles.inputGroup}>
-                  <label>Description</label>
-                  <textarea placeholder={brand?.description}></textarea>
-                </div>
-              </section>
-
-              <section className={styles.formSection}>
-                <h3>Payout Details</h3>
-                <div className={styles.formGrid}>
-                  <div className={styles.inputGroup}>
-                    <label>Bank Name</label>
-                    <input type="text" placeholder={brand?.bank_name || 'Select Bank'} />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label>Account Number</label>
-                    <input type="text" placeholder={brand?.bank_account_number || '0000000000'} />
-                  </div>
-                </div>
-              </section>
-
-              <button className="btn btn-primary">Save Changes</button>
+               <div className={styles.promoOption}>
+                  <div className={styles.promoIcon}><Tag size={24} color="var(--primary)" /></div>
+                  <h3>Promo Codes</h3>
+                  <p>Offer discounts to your loyal campus customers.</p>
+                  <button className="btn btn-ghost btn-sm" onClick={() => alert('Integrated into Half Power tier!')}>Manage Codes</button>
+               </div>
+               <div className={styles.promoOption}>
+                  <div className={styles.promoIcon}><Zap size={24} color="#f59e0b" /></div>
+                  <h3>Store Boost</h3>
+                  <p>Get featured on the homepage for ₦1,000/week.</p>
+                  <button className="btn btn-primary btn-sm" onClick={() => alert('Boost system coming soon!')}>Boost Now</button>
+               </div>
             </div>
           </div>
         )}
