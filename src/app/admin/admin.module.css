@@ -497,3 +497,75 @@
     border-radius: 0;
   }
 }
+
+.settingsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.settingsBox {
+  background: var(--bg-100);
+  border: 1px solid var(--border);
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.settingsBox label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-300);
+}
+
+.settingsBox input {
+  flex: 1;
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-100);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+
+.subText {
+  color: var(--text-400);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.actionRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.brandCell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.tableLogo {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.logoPlaceholder {
+  width: 32px;
+  height: 32px;
+  background: var(--bg-300);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+}

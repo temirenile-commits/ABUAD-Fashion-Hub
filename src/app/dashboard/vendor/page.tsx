@@ -11,53 +11,26 @@ import { useNotifications } from '@/context/NotificationContext';
 import { useMarketplaceStore } from '@/store/marketplaceStore';
 import styles from './dashboard.module.css';
 
-const TIERS = [
-  {
-    id: 'quarter',
-    name: 'Quarter Power',
-    price: 5000,
-    icon: <Target size={24} color="#3b82f6" />,
-    features: [
-      '10 Products',
-      '1 Reel',
-      'Basic Analytics',
-      'Standard Support'
-    ],
-    color: '#3b82f6'
-  },
-  {
-    id: 'half',
-    name: 'Half Power',
-    price: 10000,
-    icon: <Rocket size={24} color="var(--primary)" />,
-    features: [
-      '50 Products',
-      '5 Reels',
-      'Advanced Analytics',
-      'Promo Codes'
-    ],
-    color: 'var(--primary)',
-    popular: true
-  },
-  {
-    id: 'full',
-    name: 'Full Power',
-    price: 20000,
-    icon: <Crown size={24} color="#f59e0b" />,
-    features: [
-      'Unlimited Everything',
-      'Featured Shop Placement',
-      'Priority Support',
-      'Premium Analytics'
-    ],
-    color: '#f59e0b'
+// Icons mapper for dynamic rates
+const getIcon = (id: string) => {
+  switch(id) {
+    case 'quarter': return <Target size={24} color="#3b82f6" />;
+    case 'half': return <Rocket size={24} color="var(--primary)" />;
+    case 'full': return <Crown size={24} color="#f59e0b" />;
+    case 'boost_week': return '📣';
+    case 'boost_month': return '🔥';
+    case 'boost_top': return '🏆';
+    default: return <Zap size={24} />;
   }
-];
+};
 
 export default function VendorDashboard() {
   const router = useRouter();
   const { unreadCount, permission, requestPermission } = useNotifications();
   const [activeTab, setActiveTab] = useState('overview');
+  const [subscriptionRates, setSubscriptionRates] = useState<any[]>([]);
+  const [boostRates, setBoostRates] = useState<any[]>([]);
+  const [activationFee, setActivationFee] = useState(2000);
   const [loading, setLoading] = useState(true);
   const [brand, setBrand] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -228,6 +201,14 @@ export default function VendorDashboard() {
         .select('*, customer:customer_id(name), product:product_id(title)')
         .in('product_id', productData ? productData.map(p => p.id) : []); // Only reviews for vendor's products
       setReviews(reviewData || []);
+
+      // Fetch Platform Settings
+      const { data: settingsData } = await supabase.from('platform_settings').select('*');
+      if (settingsData) {
+        setSubscriptionRates(settingsData.find(s => s.key === 'subscription_rates')?.value || []);
+        setBoostRates(settingsData.find(s => s.key === 'boost_rates')?.value || []);
+        setActivationFee(settingsData.find(s => s.key === 'activation_fee')?.value?.amount || 2000);
+      }
 
       setLoading(false);
     }
@@ -1059,17 +1040,17 @@ export default function VendorDashboard() {
                 </div>
                 
                 <div className={styles.compactPricingGrid}>
-                  {TIERS.map((tier) => (
+                  {subscriptionRates.map((tier) => (
                     <div key={tier.id} className={`${styles.compactPricingCard} ${currentTier === tier.id ? styles.activeTierCard : ''}`}>
                       <div className={styles.tierHeader}>
-                        {tier.icon}
+                        {getIcon(tier.id)}
                         <div>
                           <h4>{tier.name}</h4>
                           <span className={styles.tierPrice}>₦{tier.price.toLocaleString()}/mo</span>
                         </div>
                       </div>
                       <ul className={styles.tierFeaturesMini}>
-                        {tier.features.map((f, i) => <li key={i}><CheckCircle size={12} /> {f}</li>)}
+                        {(tier.features || []).map((f: string, i: number) => <li key={i}><CheckCircle size={12} /> {f}</li>)}
                       </ul>
                       <button 
                         className={`btn ${tier.popular ? 'btn-primary' : 'btn-ghost'} btn-sm`}
@@ -1854,68 +1835,15 @@ export default function VendorDashboard() {
             <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-100)' }}>
               💳 Credit Rate Plans
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem', marginBottom: '3rem' }}>
-              {[
-                {
-                  id: 'quarter',
-                  name: 'Quarter Power',
-                  emoji: '🎯',
-                  price: 5000,
-                  period: '/month',
-                  tagline: '25% of full vendor powers',
-                  color: '#3b82f6',
-                  features: [
-                    '✅ Upload up to 10 Products',
-                    '✅ 1 Collection Reel',
-                    '✅ Basic Sales Analytics',
-                    '✅ Standard WhatsApp Support',
-                    '❌ Promo Codes',
-                    '❌ Featured Placement',
-                  ],
-                },
-                {
-                  id: 'half',
-                  name: 'Half Power',
-                  emoji: '🚀',
-                  price: 10000,
-                  period: '/month',
-                  tagline: '50% of full vendor powers',
-                  color: 'var(--primary)',
-                  popular: true,
-                  features: [
-                    '✅ Upload up to 50 Products',
-                    '✅ Up to 5 Reels',
-                    '✅ Advanced Analytics',
-                    '✅ Promo Code Generator',
-                    '✅ Priority Support',
-                    '❌ Featured Placement',
-                  ],
-                },
-                {
-                  id: 'full',
-                  name: 'Full Power',
-                  emoji: '👑',
-                  price: 20000,
-                  period: '/month',
-                  tagline: '100% of full vendor powers',
-                  color: '#f59e0b',
-                  features: [
-                    '✅ Unlimited Products',
-                    '✅ Unlimited Reels',
-                    '✅ Premium Analytics Dashboard',
-                    '✅ Unlimited Promo Codes',
-                    '✅ Featured Shop Placement',
-                    '✅ Top Priority Support',
-                  ],
-                },
-              ].map(tier => {
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '3rem' }}>
+              {subscriptionRates.map((tier: any) => {
                 const isActive = isSubActive && brand?.subscription_tier === tier.id;
                 return (
                   <div
                     key={tier.id}
                     style={{
                       background: isActive ? 'var(--primary-soft)' : 'var(--bg-300)',
-                      border: `2px solid ${isActive ? 'var(--primary)' : tier.popular ? tier.color : 'var(--border)'}`,
+                      border: `2px solid ${isActive ? 'var(--primary)' : tier.popular ? 'var(--primary)' : 'var(--border)'}`,
                       borderRadius: '16px',
                       padding: '1.75rem',
                       position: 'relative',
@@ -1926,7 +1854,7 @@ export default function VendorDashboard() {
                     }}
                   >
                     {tier.popular && !isActive && (
-                      <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: tier.color, color: '#000', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 1rem', borderRadius: '999px', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+                      <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#000', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 1rem', borderRadius: '999px', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
                         MOST POPULAR
                       </div>
                     )}
@@ -1937,9 +1865,9 @@ export default function VendorDashboard() {
                     )}
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span style={{ fontSize: '1.75rem' }}>{tier.emoji}</span>
+                      <span style={{ fontSize: '1.75rem' }}>{getIcon(tier.id)}</span>
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: '1.05rem', color: tier.color }}>{tier.name}</div>
+                        <div style={{ fontWeight: 800, fontSize: '1.05rem', color: tier.color || 'var(--primary)' }}>{tier.name}</div>
                         <div style={{ fontSize: '0.78rem', color: 'var(--text-400)' }}>{tier.tagline}</div>
                       </div>
                     </div>
@@ -1952,8 +1880,10 @@ export default function VendorDashboard() {
                     </div>
 
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {tier.features.map((f, i) => (
-                        <li key={i} style={{ fontSize: '0.85rem', color: f.startsWith('✅') ? 'var(--text-200)' : 'var(--text-500)' }}>{f}</li>
+                      {(tier.features || ['Listing powers', 'Basic Analytics', 'Support']).map((f: string, i: number) => (
+                        <li key={i} style={{ fontSize: '0.85rem', color: f.startsWith('✅') ? 'var(--text-200)' : 'var(--text-500)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <CheckCircle size={14} color="var(--primary)" /> {f}
+                        </li>
                       ))}
                     </ul>
 
@@ -1963,9 +1893,9 @@ export default function VendorDashboard() {
                       onClick={() => handleSubscribe({ id: tier.id, price: tier.price })}
                       style={{
                         marginTop: 'auto',
-                        background: isActive ? 'transparent' : `linear-gradient(135deg, ${tier.color}, ${tier.color}cc)`,
-                        border: isActive ? `1px solid ${tier.color}` : 'none',
-                        color: isActive ? tier.color : '#000',
+                        background: isActive ? 'transparent' : `linear-gradient(135deg, ${tier.color || 'var(--primary)'}, ${tier.color || 'var(--primary)'}cc)`,
+                        border: isActive ? `1px solid ${tier.color || 'var(--primary)'}` : 'none',
+                        color: isActive ? (tier.color || 'var(--primary)') : '#000',
                         fontWeight: 700,
                       }}
                     >
@@ -1985,16 +1915,12 @@ export default function VendorDashboard() {
               One-time boosts to increase your store's visibility on the marketplace homepage. No subscription required.
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-              {[
-                { id: 'boost_week', name: '1-Week Homepage Boost', emoji: '📣', price: 1000, desc: 'Featured on homepage for 7 days', duration: '7 days' },
-                { id: 'boost_month', name: '1-Month Homepage Boost', emoji: '🔥', price: 3000, desc: 'Top featured placement for 30 days', duration: '30 days', popular: true },
-                { id: 'boost_top', name: 'Priority Top Slot', emoji: '🏆', price: 5000, desc: 'Pin your store at #1 position for 7 days', duration: '7 days (prime)' },
-              ].map(boost => (
+              {boostRates.map(boost => (
                 <div key={boost.id} style={{ background: 'var(--bg-300)', border: `1px solid ${boost.popular ? 'var(--primary)' : 'var(--border)'}`, borderRadius: '14px', padding: '1.5rem', position: 'relative' }}>
                   {boost.popular && (
                     <div style={{ position: 'absolute', top: '-12px', right: '1rem', background: 'var(--primary)', color: '#000', fontSize: '0.68rem', fontWeight: 800, padding: '0.25rem 0.75rem', borderRadius: '999px' }}>BEST VALUE</div>
                   )}
-                  <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{boost.emoji}</div>
+                  <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{getIcon(boost.id)}</div>
                   <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{boost.name}</div>
                   <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.5rem' }}>{boost.desc}</div>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-500)', marginBottom: '1.25rem' }}>Duration: {boost.duration}</div>

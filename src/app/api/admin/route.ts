@@ -138,6 +138,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ orders: data });
   }
 
+  if (action === 'settings') {
+    const { data: settings, error } = await supabaseAdmin.from('platform_settings').select('*');
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    
+    // Transform array to key-value object
+    const settingsMap = (settings || []).reduce((acc: any, s: any) => {
+      acc[s.key] = s.value;
+      return acc;
+    }, {});
+
+    return NextResponse.json({ settings: settingsMap });
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }
 
@@ -263,6 +276,55 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'update_settings') {
+    const { key, value } = body;
+    const { error } = await supabaseAdmin
+      .from('platform_settings')
+      .upsert({ key, value, updated_at: new Date().toISOString() });
+    
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'initialize_brand') {
+    const { userId } = body;
+    const { data: existingBrand } = await supabaseAdmin.from('brands').select('id').eq('owner_id', userId).single();
+    if (existingBrand) return NextResponse.json({ error: 'Brand already exists.' }, { status: 400 });
+
+    const { data: p } = await supabaseAdmin.from('users').select('name').eq('id', userId).single();
+    const { error } = await supabaseAdmin.from('brands').insert({
+      owner_id: userId,
+      name: p?.name ? `${p.name}'s Store` : 'New Vendor Store',
+      verification_status: 'verified',
+      verified: true,
+      fee_paid: true,
+      terms_accepted: true,
+      description: 'Manually initialized by admin.',
+      student_id_url: 'https://placeholder.com'
+    });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'activate_plan') {
+    const { brandId, tierId } = body;
+    // Set 30 days expiration
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+    
+    const { error } = await supabaseAdmin
+      .from('brands')
+      .update({ 
+        subscription_tier: tierId, 
+        subscription_expires_at: expiresAt.toISOString() 
+      })
+      .eq('id', brandId);
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }
 

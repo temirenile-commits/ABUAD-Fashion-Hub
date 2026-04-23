@@ -3,12 +3,12 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Users, Store, ShoppingBag, TrendingUp, CheckCircle, XCircle,
-  Search, RefreshCw, Trash2, Star, Eye, ShieldCheck, ShoppingCart, Loader2, CreditCard, AlertTriangle
+  Search, RefreshCw, Trash2, Star, Eye, ShieldCheck, ShoppingCart, Loader2, CreditCard, AlertTriangle, Settings
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
 
-type Tab = 'overview' | 'vendors' | 'products' | 'users' | 'financials' | 'orders';
+type Tab = 'overview' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings';
 
 async function adminFetch(path: string, options: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -36,22 +36,24 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [platformSettings, setPlatformSettings] = useState<any>({});
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, vendorsRes, productsRes, usersRes, txRes, ordersRes] = await Promise.all([
+      const [statsRes, vendorsRes, productsRes, usersRes, txRes, ordersRes, settingsRes] = await Promise.all([
         adminFetch('/api/admin?action=stats'),
         adminFetch('/api/admin?action=vendors'),
         adminFetch('/api/admin?action=products'),
         adminFetch('/api/admin?action=users'),
         adminFetch('/api/admin?action=transactions'),
         adminFetch('/api/admin?action=orders'),
+        adminFetch('/api/admin?action=settings'),
       ]);
 
-      const [statsData, vendorsData, productsData, usersData, txData, ordersData] = await Promise.all([
+      const [statsData, vendorsData, productsData, usersData, txData, ordersData, settingsData] = await Promise.all([
         statsRes.json(), vendorsRes.json(), productsRes.json(),
-        usersRes.json(), txRes.json(), ordersRes.json(),
+        usersRes.json(), txRes.json(), ordersRes.json(), settingsRes.json(),
       ]);
 
       if (statsData.stats) setStats(statsData.stats);
@@ -60,6 +62,7 @@ export default function AdminDashboard() {
       if (usersData.users) setUsers(usersData.users);
       if (txData.transactions) setTransactions(txData.transactions);
       if (ordersData.orders) setOrders(ordersData.orders);
+      if (settingsData.settings) setPlatformSettings(settingsData.settings);
     } catch (e) {
       console.error('Admin fetch error:', e);
     }
@@ -113,6 +116,7 @@ export default function AdminDashboard() {
             ['users', 'Users', Users],
             ['orders', 'Orders', ShoppingCart],
             ['financials', 'Payouts', CreditCard],
+            ['settings', 'Settings', Settings],
           ] as [Tab, string, any][]).map(([id, label, Icon]) => (
             <button
               key={id}
@@ -223,12 +227,86 @@ export default function AdminDashboard() {
                         </td>
                         <td className={styles.subText}>{new Date(u.created_at).toLocaleDateString()}</td>
                         <td>
-                          {u.role !== 'admin' && <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => adminAction('delete_user', { userId: u.id })}><Trash2 size={14} /></button>}
+                          <div className={styles.actionRow}>
+                            {u.role === 'vendor' && !vendors.find(v => v.owner_id === u.id) && (
+                              <button className="btn btn-secondary btn-sm" onClick={() => adminAction('initialize_brand', { userId: u.id })} title="Create missing brand record">
+                                Initialize Store
+                              </button>
+                            )}
+                            {u.role !== 'admin' && <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => adminAction('delete_user', { userId: u.id })}><Trash2 size={14} /></button>}
+                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+            {activeTab === 'settings' && (
+              <div className={styles.sectionCard}>
+                <h2>Platform Payment Rates</h2>
+                <p className={styles.subText}>Adjust the official subscription and boost prices across the platform.</p>
+                
+                <div style={{ marginTop: '2rem' }}>
+                  <h3>Subscription Tiers (monthly)</h3>
+                  <div className={styles.settingsGrid}>
+                    {platformSettings.subscription_rates?.map((tier: any, i: number) => (
+                      <div key={tier.id} className={styles.settingsBox}>
+                        <label>{tier.name}</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input 
+                            type="number" 
+                            value={tier.price} 
+                            onChange={(e) => {
+                              const updated = [...platformSettings.subscription_rates];
+                              updated[i].price = Number(e.target.value);
+                              setPlatformSettings({ ...platformSettings, subscription_rates: updated });
+                            }}
+                          />
+                          <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_settings', { key: 'subscription_rates', value: platformSettings.subscription_rates })}>Save</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '3rem' }}>
+                  <h3>Homepage Boost Rates</h3>
+                  <div className={styles.settingsGrid}>
+                    {platformSettings.boost_rates?.map((boost: any, i: number) => (
+                      <div key={boost.id} className={styles.settingsBox}>
+                        <label>{boost.name}</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input 
+                            type="number" 
+                            value={boost.price} 
+                            onChange={(e) => {
+                              const updated = [...platformSettings.boost_rates];
+                              updated[i].price = Number(e.target.value);
+                              setPlatformSettings({ ...platformSettings, boost_rates: updated });
+                            }}
+                          />
+                          <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_settings', { key: 'boost_rates', value: platformSettings.boost_rates })}>Save</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '3rem' }}>
+                  <h3>Brand Activation Fee</h3>
+                  <div className={styles.settingsBox} style={{ maxWidth: '300px' }}>
+                    <label>Registration Fee (₦)</label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input 
+                        type="number" 
+                        value={platformSettings.activation_fee?.amount || 0} 
+                        onChange={(e) => setPlatformSettings({ ...platformSettings, activation_fee: { amount: Number(e.target.value) } })}
+                      />
+                      <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_settings', { key: 'activation_fee', value: platformSettings.activation_fee })}>Save</button>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -254,6 +332,22 @@ export default function AdminDashboard() {
                 <h3>Contact</h3>
                 <p><strong>WhatsApp:</strong> {selectedVendor.whatsapp_number}</p>
                 <p><strong>Email:</strong> {selectedVendor.users?.email}</p>
+              </div>
+              <div className={styles.modalSection}>
+                <h3>Subscription Management</h3>
+                <p>Current Tier: <strong style={{ color: 'var(--primary)' }}>{selectedVendor.subscription_tier || 'Free'}</strong></p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginTop: '1rem' }}>
+                  {['quarter', 'half', 'full'].map(t => (
+                    <button 
+                      key={t}
+                      className={`btn btn-sm ${selectedVendor.subscription_tier === t ? 'btn-primary' : 'btn-ghost'}`}
+                      onClick={() => adminAction('activate_plan', { brandId: selectedVendor.id, tierId: t })}
+                      style={{ fontSize: '0.7rem' }}
+                    >
+                      {t === 'quarter' ? 'Quarter' : t === 'half' ? 'Half' : 'Full Power'}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className={styles.modalSection}>
                 <h3>Admin Decision</h3>
