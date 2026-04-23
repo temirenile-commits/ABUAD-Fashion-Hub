@@ -14,9 +14,9 @@ type TransactionInitParams = {
 
 export async function initializeTransaction(params: TransactionInitParams) {
   const secret = process.env.PAYSTACK_SECRET_KEY;
-  if (!secret) {
-    console.error('[PAYSTACK] Secret Key missing from environment');
-    throw new Error('Payment gateway configuration error. Check environment variables.');
+  if (!secret || !secret.startsWith('sk_')) {
+    console.error('[PAYSTACK] Secret Key missing or invalid in Vercel environment.');
+    throw new Error('Payment Gateway Configuration Error: Ensure PAYSTACK_SECRET_KEY is added to Vercel Settings -> Environment Variables.');
   }
 
   const response = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {

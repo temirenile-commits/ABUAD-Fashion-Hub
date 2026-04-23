@@ -4,7 +4,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 if (!supabaseUrl || !supabaseServiceRole) {
-  console.warn('Supabase URL or Service Role Key is missing. Ensure they are set in .env.local');
+  console.error('[SUPABASE] CRITICAL Configuration Error: Ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set in Vercel Settings.');
 }
 
 /**
