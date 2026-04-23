@@ -1018,57 +1018,74 @@ export default function VendorDashboard() {
             <div className={styles.settingsGrid}>
               <div className={styles.settingsSection}>
                 <h3>Brand Identity</h3>
-                <div className={styles.bannerUpload}>
-                  <div 
-                    className={styles.bannerPreview} 
-                    style={{ backgroundImage: `url(${brand.cover_url || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070'})` }}
+
+                {/* Store Logo */}
+                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-300)' }}>Store Pic (Logo)</label>
+                    <div style={{ width: '96px', height: '96px', borderRadius: '12px', background: 'var(--bg-300)', border: '2px solid var(--border)', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {brand.logo_url ? <img src={brand.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Store size={28} color="var(--text-400)" />}
+                      <label style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'var(--primary)', borderRadius: '50%', padding: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Change logo">
+                        {uploadingLogo ? <Loader2 size={12} className="anim-spin" /> : <Camera size={12} />}
+                        <input type="file" hidden accept="image/*" onChange={handleLogoUpdate} disabled={uploadingLogo} />
+                      </label>
+                    </div>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 220 }}>
+                    <div className={styles.inputGroup}>
+                      <label>Store Name</label>
+                      <input type="text" defaultValue={brand.name} onBlur={(e) => handleUpdateSettings({ name: e.target.value })} />
+                    </div>
+                    <div className={styles.inputGroup} style={{ marginTop: '0.75rem' }}>
+                      <label>WhatsApp Number</label>
+                      <input type="text" defaultValue={brand.whatsapp_number} onBlur={(e) => handleUpdateSettings({ whatsapp_number: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Store Background / Cover */}
+                <div className={styles.inputGroup}>
+                  <label style={{ marginBottom: '0.5rem' }}>Store Background Pic (Cover Banner)</label>
+                  <div
+                    style={{ width: '100%', height: '160px', borderRadius: '12px', border: '2px dashed var(--border)', backgroundImage: brand.cover_url ? `url(${brand.cover_url})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', background: brand.cover_url ? undefined : 'var(--bg-200)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
+                    onClick={() => document.getElementById('coverBannerInput')?.click()}
                   >
-                    <label className={styles.bannerOverlay}>
-                      <input 
-                        type="file" 
-                        hidden 
-                        onChange={async (e) => {
+                    {!brand.cover_url && (
+                      <div style={{ textAlign: 'center', color: 'var(--text-400)' }}>
+                        {uploadingMedia ? <Loader2 size={24} className="anim-spin" /> : <><Camera size={24} style={{ marginBottom: '0.5rem' }} /><p style={{ fontSize: '0.85rem' }}>Click to upload background banner</p></>}
+                      </div>
+                    )}
+                    {brand.cover_url && (
+                      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }} className={styles.coverHover}>
+                        {uploadingMedia ? <Loader2 size={24} className="anim-spin" color="#fff" /> : <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600, display: 'flex', gap: '0.5rem', alignItems: 'center' }}><Camera size={16} /> Change Background</span>}
+                      </div>
+                    )}
+                    <input
+                      id="coverBannerInput"
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={async (e) => {
                           if (e.target.files?.[0]) {
                             const { url } = await uploadFile(e.target.files[0], 'brand-assets', `cover-${brand.id}`);
                             if (url) handleUpdateSettings({ cover_url: url });
                           }
                         }}
                       />
-                      <Camera size={24} style={{ opacity: 0.6 }} />
-                      <span>Change Store Background</span>
-                    </label>
                   </div>
                 </div>
 
-                <div className={styles.formRow}>
-                  <div className={styles.inputGroup}>
-                    <label>Store Name</label>
-                    <input 
-                      type="text" 
-                      defaultValue={brand.name} 
-                      onBlur={(e) => handleUpdateSettings({ name: e.target.value })}
-                    />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label>WhatsApp Contact</label>
-                    <input 
-                      type="text" 
-                      defaultValue={brand.whatsapp_number} 
-                      onBlur={(e) => handleUpdateSettings({ whatsapp_number: e.target.value })}
-                    />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label>Instagram Link / Portfolio</label>
-                    <input 
-                      type="text" 
-                      defaultValue={brand.instagram_handle} 
-                      placeholder="@yourbrand"
-                      onBlur={(e) => handleUpdateSettings({ instagram_handle: e.target.value })}
-                    />
-                  </div>
+                <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
+                  <label>Instagram / Portfolio Link</label>
+                  <input 
+                    type="text" 
+                    defaultValue={brand.instagram_handle} 
+                    placeholder="@yourbrand or https://..."
+                    onBlur={(e) => handleUpdateSettings({ instagram_handle: e.target.value })}
+                  />
                 </div>
 
-                <div className={styles.inputGroup}>
+                <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
                   <label>Store Description</label>
                   <textarea 
                     rows={4} 
@@ -1078,13 +1095,16 @@ export default function VendorDashboard() {
                 </div>
               </div>
 
+              {/* Payout Settings */}
               <div className={styles.settingsSection}>
-                <h3>Banking & Payouts</h3>
-                <div className={styles.formRow}>
+                <h3>Payout Bank Details</h3>
+                <p className={styles.formHint}>Funds are sent here when you request a withdrawal.</p>
+                <div className={styles.formRow} style={{ marginTop: '1rem' }}>
                   <div className={styles.inputGroup}>
                     <label>Bank Name</label>
                     <input 
                       type="text" 
+                      placeholder="e.g. GTBank, Zenith Bank"
                       defaultValue={brand.bank_name}
                       onBlur={(e) => handleUpdateSettings({ bank_name: e.target.value })}
                     />
@@ -1093,57 +1113,9 @@ export default function VendorDashboard() {
                     <label>Account Number</label>
                     <input 
                       type="text" 
-                      defaultValue={brand.bank_account_number}
-                      onBlur={(e) => handleUpdateSettings({ bank_account_number: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <p className={styles.fieldNote}>* Ensure these details are correct to avoid payout delays.</p>
-              </div>
-
-              <div className={styles.settingsSection}>
-                <h3>Store Policies</h3>
-                <div className={styles.inputGroup}>
-                  <label>Shipping Policy</label>
-                  <textarea 
-                    rows={3} 
-                    placeholder="e.g. Orders are shipped within 24 hours of payment..."
-                    defaultValue={brand.shipping_policy}
-                    onBlur={(e) => handleUpdateSettings({ shipping_policy: e.target.value })}
-                  />
-                </div>
-                <div className={styles.inputGroup}>
-                  <label>Return & Refund Policy</label>
-                  <textarea 
-                    rows={3} 
-                    placeholder="e.g. Items can be returned within 48 hours if tags are intact..."
-                    defaultValue={brand.return_policy}
-                    onBlur={(e) => handleUpdateSettings({ return_policy: e.target.value })}
-                  />
-                </div>
-              </div>
-              {/* Bank Details Section */}
-              <div className={styles.settingsSection} style={{ marginTop: '2rem' }}>
-                <h3>Payout Settings (Bank Details)</h3>
-                <p className={styles.formHint}>Provide where you want your earned funds to be cashed out.</p>
-                
-                <div className={styles.inputGrid}>
-                  <div className={styles.inputGroup}>
-                    <label>Bank Name</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. GTBank, Zenith" 
-                      defaultValue={brand?.bank_name}
-                      onBlur={(e) => handleUpdateSettings({ bank_name: e.target.value })}
-                    />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label>Account Number</label>
-                    <input 
-                      type="text" 
-                      placeholder="10-digit number" 
+                      placeholder="10-digit number"
                       maxLength={10}
-                      defaultValue={brand?.bank_account_number}
+                      defaultValue={brand.bank_account_number}
                       onBlur={(e) => handleUpdateSettings({ bank_account_number: e.target.value })}
                     />
                   </div>
@@ -1151,16 +1123,17 @@ export default function VendorDashboard() {
                     <label>Account Holder Name</label>
                     <input 
                       type="text" 
-                      placeholder="Full Name on Account" 
-                      defaultValue={brand?.bank_code} // Using bank_code temporarily for holder name or I'll add a new field
+                      placeholder="Full name on bank account"
+                      defaultValue={brand.bank_code}
                       onBlur={(e) => handleUpdateSettings({ bank_code: e.target.value })}
                     />
                   </div>
                 </div>
+                <p className={styles.fieldNote}>* Ensure details are exact to avoid payout delays.</p>
               </div>
 
-              {/* Policies */}
-              <div className={styles.settingsSection} style={{ marginTop: '2rem' }}>
+              {/* Store Policies */}
+              <div className={styles.settingsSection}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                   <ShieldCheck size={24} color="var(--primary)" />
                   <h3>Subscription & Brand Power</h3>

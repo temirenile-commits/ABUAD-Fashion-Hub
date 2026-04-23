@@ -3,12 +3,12 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Users, Store, ShoppingBag, TrendingUp, CheckCircle, XCircle,
-  Search, RefreshCw, Trash2, Star, Eye, ShieldCheck, ShoppingCart, Loader2, CreditCard, AlertTriangle, Settings
+  Search, RefreshCw, Trash2, Star, Eye, ShieldCheck, ShoppingCart, Loader2, CreditCard, AlertTriangle, Settings, Bell
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
 
-type Tab = 'overview' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings';
+type Tab = 'overview' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'notices';
 
 async function adminFetch(path: string, options: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -29,6 +29,9 @@ export default function AdminDashboard() {
   const [actionLoading, setActionLoading] = useState('');
   const [search, setSearch] = useState('');
   const [selectedVendor, setSelectedVendor] = useState<any>(null);
+  const [enlargedImg, setEnlargedImg] = useState<string | null>(null);
+  const [notifForm, setNotifForm] = useState({ title: '', content: '', target: 'all', userId: '' });
+  const [notifSending, setNotifSending] = useState(false);
 
   const [stats, setStats] = useState({ userCount: 0, brandCount: 0, productCount: 0, totalRevenue: 0 });
   const [vendors, setVendors] = useState<any[]>([]);
@@ -117,6 +120,7 @@ export default function AdminDashboard() {
             ['orders', 'Orders', ShoppingCart],
             ['financials', 'Payouts', CreditCard],
             ['settings', 'Settings', Settings],
+            ['notices', 'Notices 📣', Bell],
           ] as [Tab, string, any][]).map(([id, label, Icon]) => (
             <button
               key={id}
@@ -278,11 +282,20 @@ export default function AdminDashboard() {
                     <tr><th>Product</th><th>Brand</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
-                    {filterBy(products, ['title']).map(p => (
+                     {filterBy(products, ['title']).map(p => (
                       <tr key={p.id}>
                         <td>
                           <div className={styles.brandCell}>
-                            {p.image_url || (p.media_urls?.[0]) ? <img src={p.image_url || p.media_urls[0]} alt="" className={styles.tableLogo} /> : <div className={styles.logoPlaceholder}><ShoppingBag size={14}/></div>}
+                            {(p.image_url || p.media_urls?.[0]) ? (
+                              <img
+                                src={p.image_url || p.media_urls[0]}
+                                alt=""
+                                className={styles.tableLogo}
+                                style={{ cursor: 'zoom-in' }}
+                                onClick={() => setEnlargedImg(p.image_url || p.media_urls[0])}
+                                title="Click to enlarge"
+                              />
+                            ) : <div className={styles.logoPlaceholder}><ShoppingBag size={14}/></div>}
                             <div>{p.title}</div>
                           </div>
                         </td>
@@ -417,6 +430,87 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
+
+            {activeTab === 'notices' && (
+              <div className={styles.sectionCard}>
+                <h2>Send Platform Notice</h2>
+                <p className={styles.subText}>Send a real-time push notification to all users or a specific user. It will appear on their device immediately.</p>
+
+                <div style={{ maxWidth: 560, marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 600 }}>Notification Title</label>
+                    <input
+                      value={notifForm.title}
+                      onChange={e => setNotifForm(f => ({ ...f, title: e.target.value }))}
+                      placeholder="e.g. 🔥 Flash Sale Alert!"
+                      style={{ width: '100%', background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: 8, padding: '0.75rem', color: '#fff' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 600 }}>Message</label>
+                    <textarea
+                      value={notifForm.content}
+                      onChange={e => setNotifForm(f => ({ ...f, content: e.target.value }))}
+                      rows={4}
+                      placeholder="Type your message here..."
+                      style={{ width: '100%', background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: 8, padding: '0.75rem', color: '#fff', resize: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 600 }}>Send To</label>
+                    <select
+                      value={notifForm.target}
+                      onChange={e => setNotifForm(f => ({ ...f, target: e.target.value }))}
+                      style={{ background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: 8, padding: '0.75rem', color: '#fff', width: '100%' }}
+                    >
+                      <option value="all">📢 All Users (Broadcast)</option>
+                      <option value="specific">👤 Specific User</option>
+                    </select>
+                  </div>
+                  {notifForm.target === 'specific' && (
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 600 }}>User ID</label>
+                      <input
+                        value={notifForm.userId}
+                        onChange={e => setNotifForm(f => ({ ...f, userId: e.target.value }))}
+                        placeholder="Paste the target user's UUID"
+                        style={{ width: '100%', background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: 8, padding: '0.75rem', color: '#fff', fontFamily: 'monospace', fontSize: '0.8rem' }}
+                      />
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-400)', marginTop: '0.3rem' }}>Copy user ID from the Users tab above.</p>
+                    </div>
+                  )}
+                  <button
+                    className="btn btn-primary"
+                    disabled={notifSending || !notifForm.title || !notifForm.content}
+                    onClick={async () => {
+                      setNotifSending(true);
+                      try {
+                        const res = await adminFetch('/api/admin', {
+                          method: 'POST',
+                          body: JSON.stringify({
+                            action: 'send_notification',
+                            title: notifForm.title,
+                            content: notifForm.content,
+                            target: notifForm.target,
+                            userId: notifForm.userId,
+                          }),
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          alert(`✅ Notification sent to ${data.sent} user(s)!`);
+                          setNotifForm({ title: '', content: '', target: 'all', userId: '' });
+                        } else {
+                          alert(data.error || 'Failed to send');
+                        }
+                      } catch { alert('Network error'); }
+                      setNotifSending(false);
+                    }}
+                  >
+                    {notifSending ? 'Sending...' : '📣 Send Notification'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -466,6 +560,29 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Image Lightbox */}
+      {enlargedImg && (
+        <div
+          onClick={() => setEnlargedImg(null)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out',
+          }}
+        >
+          <img
+            src={enlargedImg}
+            alt="Product"
+            style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 12, boxShadow: '0 0 60px rgba(0,0,0,0.8)' }}
+          />
+          <button
+            onClick={() => setEnlargedImg(null)}
+            style={{ position: 'absolute', top: 24, right: 24, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', padding: 10, cursor: 'pointer', color: '#fff' }}
+          >
+            <XCircle size={28} />
+          </button>
         </div>
       )}
     </div>

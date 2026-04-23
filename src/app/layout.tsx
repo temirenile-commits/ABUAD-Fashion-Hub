@@ -13,10 +13,19 @@ export const metadata: Metadata = {
   description:
     'The premier digital fashion marketplace for students and entrepreneurs at Afe Babalola University. Discover trending styles, verified vendors, and campus fashion services.',
   keywords: ['ABUAD', 'fashion', 'campus', 'marketplace', 'clothing', 'style'],
+  icons: {
+    icon: [
+      { url: '/logo.png', type: 'image/png' },
+    ],
+    apple: '/logo.png',
+    shortcut: '/logo.png',
+  },
+  manifest: '/manifest.json',
   openGraph: {
     title: 'ABUAD Fashion Hub',
     description: 'Discover. Connect. Slay. The #1 campus fashion marketplace.',
     type: 'website',
+    images: [{ url: '/logo.png' }],
   },
 };
 

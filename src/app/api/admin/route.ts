@@ -383,5 +383,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  if (action === 'send_notification') {
+    const { title, content, target, userId: targetUserId } = body;
+
+    if (!title || !content) {
+      return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
+    }
+
+    if (target === 'all') {
+      // Broadcast to all users — fetch all user IDs and insert for each
+      const { data: allUsers } = await supabaseAdmin.from('users').select('id');
+      if (allUsers && allUsers.length > 0) {
+        const rows = allUsers.map((u: any) => ({ user_id: u.id, title, content, is_read: false }));
+        const { error } = await supabaseAdmin.from('notifications').insert(rows);
+        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      return NextResponse.json({ success: true, sent: allUsers?.length || 0 });
+    }
+
+    if (target === 'specific' && targetUserId) {
+      const { error } = await supabaseAdmin.from('notifications').insert({
+        user_id: targetUserId,
+        title,
+        content,
+        is_read: false,
+      });
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true, sent: 1 });
+    }
+
+    return NextResponse.json({ error: 'Invalid target. Use "all" or "specific" with a userId.' }, { status: 400 });
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }

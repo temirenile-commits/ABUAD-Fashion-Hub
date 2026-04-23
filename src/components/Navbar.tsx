@@ -5,11 +5,13 @@ import { useState, useEffect } from 'react';
 import { Search, Heart, User, Menu, X, Store, Home, Layers, LogOut, LayoutDashboard, ShoppingBag, MessageCircle, Bell, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/context/CartContext';
+import { useNotifications } from '@/context/NotificationContext';
 import CartDrawer from './CartDrawer';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
   const { getItemCount } = useCart();
+  const { unreadCount, requestPermission, permission, markAllRead } = useNotifications();
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -141,8 +143,28 @@ export default function Navbar() {
           )}
 
           <div className={styles.actionItem}>
-            <Link href="/notifications" className={styles.actionLink} aria-label="Notifications">
-              <Bell size={20} />
+            <Link
+              href="/notifications"
+              className={styles.actionLink}
+              aria-label="Notifications"
+              onClick={() => markAllRead()}
+            >
+              <div className={styles.iconWrap}>
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className={styles.cartBadge} style={{ background: '#ef4444', color: '#fff' }}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </div>
+              {permission === 'default' && (
+                <span
+                  style={{ fontSize: '0.65rem', color: 'var(--primary)', cursor: 'pointer' }}
+                  onClick={(e) => { e.preventDefault(); requestPermission(); }}
+                >
+                  Enable
+                </span>
+              )}
             </Link>
           </div>
 

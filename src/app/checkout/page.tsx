@@ -21,10 +21,42 @@ function CheckoutContent() {
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<'platform' | 'vendor'>('platform');
+  const [promoCode, setPromoCode] = useState('');
+  const [promoDiscount, setPromoDiscount] = useState(0); // percentage off
+  const [promoApplied, setPromoApplied] = useState<string | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
 
   const deliveryFee = deliveryMethod === 'platform' ? 1500 : 0;
   const orderTotal = getCartTotal();
-  const finalTotal = orderTotal + deliveryFee;
+  const promoSavings = promoDiscount > 0 ? Math.round(orderTotal * (promoDiscount / 100)) : 0;
+  const finalTotal = orderTotal - promoSavings + deliveryFee;
+
+  const handlePromoCode = async () => {
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    try {
+      const { data: promo, error } = await supabase
+        .from('promo_codes')
+        .select('*')
+        .eq('code', promoCode.trim().toUpperCase())
+        .eq('is_active', true)
+        .single();
+
+      if (error || !promo) {
+        alert('❌ Invalid or expired promo code. Checkout will continue at the normal price.');
+        setPromoDiscount(0);
+        setPromoApplied(null);
+      } else {
+        setPromoDiscount(promo.discount_percent || 0);
+        setPromoApplied(promo.code);
+        alert(`✅ Promo code applied! ${promo.discount_percent}% off your order.`);
+      }
+    } catch {
+      alert('Error validating promo code.');
+    }
+    setPromoLoading(false);
+  };
+
 
   useEffect(() => {
     async function initCheckout() {
@@ -212,6 +244,31 @@ function CheckoutContent() {
                   Vendors do not receive funds until you confirm delivery.
                 </p>
               </div>
+
+              {/* Promo Code */}
+              <div style={{ marginBottom: '1.25rem', padding: '1rem', background: 'var(--bg-200)', borderRadius: 12, border: '1px solid var(--border)' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.9rem' }}>🎟️ Promo Code</label>
+                {promoApplied ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ color: '#10b981', fontWeight: 700 }}>✅ &quot;{promoApplied}&quot; applied — {promoDiscount}% off!</span>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { setPromoApplied(null); setPromoDiscount(0); setPromoCode(''); }}>Remove</button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input
+                      className="form-input"
+                      placeholder="Enter promo code (optional)"
+                      value={promoCode}
+                      onChange={e => setPromoCode(e.target.value.toUpperCase())}
+                      onKeyDown={e => e.key === 'Enter' && handlePromoCode()}
+                      style={{ flex: 1, letterSpacing: '0.05em', fontWeight: 600 }}
+                    />
+                    <button className="btn btn-secondary btn-sm" onClick={handlePromoCode} disabled={promoLoading}>
+                      {promoLoading ? '...' : 'Apply'}
+                    </button>
+                  </div>
+                )}
+              </div>
               
               <button 
                 className={`btn btn-primary btn-lg ${styles.payBtn}`}
@@ -257,6 +314,12 @@ function CheckoutContent() {
                   <span>Subtotal</span>
                   <span>{formatPrice(orderTotal)}</span>
                 </div>
+                {promoSavings > 0 && (
+                  <div className={styles.totalRow} style={{ color: '#10b981' }}>
+                    <span>Promo Discount ({promoDiscount}%)</span>
+                    <span>-{formatPrice(promoSavings)}</span>
+                  </div>
+                )}
                 <div className={styles.totalRow}>
                   <span>{deliveryMethod === 'platform' ? 'Platform Delivery' : 'Vendor Delivery'}</span>
                   <span>{formatPrice(deliveryFee)}</span>
