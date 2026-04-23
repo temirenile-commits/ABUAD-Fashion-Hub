@@ -312,7 +312,7 @@ export default function VendorDashboard() {
     
     if (reels.length >= reelLimit) {
       alert(`You have reached your limit of ${reelLimit} reels. Upgrade your power level to upload more!`);
-      router.push('/dashboard/vendor/subscription');
+      setActiveTab('plans');
       return;
     }
 
@@ -793,7 +793,7 @@ export default function VendorDashboard() {
                 <ShieldCheck className={styles.escrowIcon} style={{ color: 'var(--secondary)' }} />
                 <div className={styles.escrowText}>
                   <h4 style={{ color: 'var(--secondary)' }}>{currentTier.toUpperCase()} Power Active</h4>
-                  <p>Your subscription is active until {new Date(brand.subscription_expires_at).toLocaleDateString()}. <Link href="/dashboard/vendor/subscription" style={{ color: 'var(--primary)', fontWeight: 600 }}>Upgrade powers →</Link></p>
+                  <p>Your subscription is active until {new Date(brand.subscription_expires_at).toLocaleDateString()}. <button onClick={() => setActiveTab('plans')} style={{ color: 'var(--primary)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Upgrade powers →</button></p>
                 </div>
               </div>
             )}
@@ -803,7 +803,7 @@ export default function VendorDashboard() {
                 <AlertTriangle className={styles.escrowIcon} style={{ color: '#ef4444' }} />
                 <div className={styles.escrowText}>
                   <h4 style={{ color: '#ef4444' }}>Low Brand Power</h4>
-                  <p>Your trial/subscription has expired. <Link href="/dashboard/vendor/subscription" style={{ color: '#ef4444', fontWeight: 700, textDecoration: 'underline' }}>Activate your powers now</Link> to continue selling.</p>
+                  <p>Your trial/subscription has expired. <button onClick={() => setActiveTab('plans')} style={{ color: '#ef4444', fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 'inherit' }}>Activate your powers now</button> to continue selling.</p>
                 </div>
               </div>
             )}
@@ -1330,7 +1330,7 @@ export default function VendorDashboard() {
                   onClick={() => {
                     if (products.length >= productLimit) {
                       alert(`You have reached your limit of ${productLimit} products. Upgrade your power level to list more!`);
-                      router.push('/dashboard/vendor/subscription');
+                      setActiveTab('plans');
                     } else {
                       setIsAddingProduct(true);
                     }
@@ -2019,13 +2019,9 @@ export default function VendorDashboard() {
           <Package className={styles.mobNavIcon} />
           <span>Inv</span>
         </button>
-        <button className={`${styles.mobNavItem} ${activeTab === 'enquiries' ? styles.mobNavActive : ''}`} onClick={() => setActiveTab('enquiries')}>
-          <Bell className={styles.mobNavIcon} />
-          <span>Notifs</span>
-        </button>
-        <button className={`${styles.mobNavItem} ${activeTab === 'payments' ? styles.mobNavActive : ''}`} onClick={() => setActiveTab('payments')}>
-          <Wallet className={styles.mobNavIcon} />
-          <span>Wallet</span>
+        <button className={`${styles.mobNavItem} ${activeTab === 'plans' ? styles.mobNavActive : ''}`} onClick={() => setActiveTab('plans')}>
+          <Crown className={styles.mobNavIcon} />
+          <span>Plans</span>
         </button>
         <button className={`${styles.mobNavItem} ${activeTab === 'settings' ? styles.mobNavActive : ''}`} onClick={() => setActiveTab('settings')}>
           <Settings className={styles.mobNavIcon} />
