@@ -304,6 +304,10 @@ export default function VendorDashboard() {
       ...prev,
       mediaUrls: [...prev.mediaUrls, ...uploadedUrls]
     }));
+    
+    if (uploadedUrls.length > 0) {
+      alert(`Successfully attached ${uploadedUrls.length} file(s) to your product.`);
+    }
     setUploadingMedia(false);
   };
 
@@ -1479,7 +1483,11 @@ export default function VendorDashboard() {
                     <div className={styles.vividMediaGrid}>
                       {newProduct.mediaUrls.map((url, idx) => (
                         <div key={idx} className={styles.vividMediaItem}>
-                          <img src={url} alt={`Preview ${idx}`} />
+                          {url.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || url.includes('video') ? (
+                            <video src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted playsInline />
+                          ) : (
+                            <img src={url} alt={`Preview ${idx}`} />
+                          )}
                           <button
                             type="button"
                             className={styles.removeMedia}
@@ -1494,7 +1502,7 @@ export default function VendorDashboard() {
                           <input
                             type="file"
                             multiple
-                            accept="image/*"
+                            accept="image/*,video/*"
                             hidden
                             disabled={uploadingMedia}
                             onChange={(e) => handleProductMediaUpload(e)}

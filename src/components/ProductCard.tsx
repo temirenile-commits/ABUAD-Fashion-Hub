@@ -61,13 +61,25 @@ export default function ProductCard({ product }: Props) {
   return (
     <Link href={`/product/${product.id}`} className={styles.card}>
       <div className={styles.imageWrap}>
-        <Image
-          src={imageUrl}
-          alt={product.title}
-          fill
-          sizes="(max-width: 768px) 50vw, 25vw"
-          className={styles.image}
-        />
+        {imageUrl.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || imageUrl.includes('video') ? (
+          <video 
+            src={imageUrl} 
+            className={styles.image} 
+            muted 
+            autoPlay 
+            loop 
+            playsInline 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <Image
+            src={imageUrl}
+            alt={product.title}
+            fill
+            sizes="(max-width: 768px) 50vw, 25vw"
+            className={styles.image}
+          />
+        )}
 
         {product.stock_count === 0 && (
           <div className={styles.soldOutBadge}>Sold Out</div>
