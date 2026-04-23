@@ -20,8 +20,9 @@ export async function POST(req: Request) {
       .single();
 
     const reference = `SUB-${tierId.toUpperCase()}-${brandId}-${Date.now()}`;
-    const origin = req.headers.get('origin') || 'https://abuadfashionhub.com';
-    const baseDomain = origin.includes('localhost') ? origin : 'https://abuadfashionhub.com';
+    const host = req.headers.get('host') || 'abuadfashionhub.com';
+    const protocol = req.headers.get('x-forwarded-proto') || 'https';
+    const baseDomain = host.includes('localhost') ? `${protocol}://${host}` : 'https://abuadfashionhub.com';
 
     // 2. Initialize Paystack
     const paystackParams = {
