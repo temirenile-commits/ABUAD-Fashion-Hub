@@ -32,7 +32,8 @@ export default function VendorCard({ vendor, layout = 'grid' }: Props) {
   const fallbackCover = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&auto=format&fit=crop';
   
   // Create a slug from the name
-  const slug = vendor.name.toLowerCase().replace(/\s+/g, '-');
+  const vendorName = vendor.name || 'Anonymous Brand';
+  const slug = vendorName.toLowerCase().replace(/\s+/g, '-');
   
   // Get product count gracefully
   const productCount = vendor.products ? vendor.products.length : 0;
@@ -43,7 +44,7 @@ export default function VendorCard({ vendor, layout = 'grid' }: Props) {
       <div className={styles.coverWrap}>
         <Image
           src={vendor.coverImage || fallbackCover}
-          alt={vendor.name}
+          alt={vendorName}
           fill
           sizes="(max-width: 768px) 100vw, 400px"
           className={styles.cover}
@@ -54,9 +55,9 @@ export default function VendorCard({ vendor, layout = 'grid' }: Props) {
         <div className={styles.logoWrap}>
           <span className={styles.logoText}>
             {vendor.logo_url && vendor.logo_url.startsWith('http') ? (
-              <Image src={vendor.logo_url} alt={vendor.name} fill style={{objectFit: 'cover', borderRadius: '8px'}} />
+              <Image src={vendor.logo_url} alt={vendorName} fill style={{objectFit: 'cover', borderRadius: '8px'}} />
             ) : (
-              vendor.name.substring(0, 2).toUpperCase()
+              vendorName.substring(0, 2).toUpperCase()
             )}
           </span>
         </div>
@@ -65,7 +66,7 @@ export default function VendorCard({ vendor, layout = 'grid' }: Props) {
       {/* Body */}
       <div className={styles.body}>
         <div className={styles.nameRow}>
-          <h3 className={styles.name}>{vendor.name}</h3>
+          <h3 className={styles.name}>{vendorName}</h3>
           {vendor.verified && (
             <CheckCircle size={16} className="verified-icon" />
           )}

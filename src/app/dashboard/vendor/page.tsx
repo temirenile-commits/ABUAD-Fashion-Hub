@@ -568,13 +568,15 @@ export default function VendorDashboard() {
       <aside className={styles.sidebar}>
         <div className={styles.brandInfo}>
           <div className={styles.logo}>
-            {brand.logo_url ? (
-              <img src={brand.logo_url} alt={brand.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
-            ) : brand.name.substring(0, 2).toUpperCase()}
+            {brand?.logo_url ? (
+              <img src={brand.logo_url} alt={brand?.name || 'Brand'} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+            ) : (brand?.name || 'AF').substring(0, 2).toUpperCase()}
           </div>
           <div>
-            <h2 className={styles.brandName}>{brand.name}</h2>
-            {brand.verified && <span className={`badge badge-success`}>Verified Vendor</span>}
+            <h2 className={styles.brandName}>{brand?.name || 'Brand Portal'}</h2>
+            <div className={styles.brandType}>
+              <span className="badge badge-teal">{brand?.brand_type || 'Fashion'}</span>
+            </div>
           </div>
         </div>
 
