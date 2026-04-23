@@ -112,7 +112,7 @@ export default function Navbar() {
                 <div className={styles.actionItem}>
                   <Link href="/dashboard/vendor" className={styles.actionLink} style={{ color: 'var(--primary)' }}>
                     <Store size={20} />
-                    <span>My Store</span>
+                    <span>Vendor Dashboard</span>
                   </Link>
                 </div>
               )}
@@ -206,7 +206,7 @@ export default function Navbar() {
               )}
               {(role === 'vendor' || role === 'admin') ? (
                 <Link href="/dashboard/vendor" className={styles.mobileLink} onClick={() => setMenuOpen(false)} style={{ color: 'var(--primary)' }}>
-                  <Store size={16} /> My Vendor Store
+                  <Store size={16} /> Vendor Dashboard
                 </Link>
               ) : (
                 <Link href={dashboardLink} className={styles.mobileLink} onClick={() => setMenuOpen(false)}>

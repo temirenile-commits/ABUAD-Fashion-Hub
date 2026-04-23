@@ -263,6 +263,14 @@ export default function CustomerDashboard() {
               </Link>
             </div>
           </div>
+
+          <Link href="/onboarding" className={`card ${styles.vendorCard}`} style={{ background: 'linear-gradient(135deg, var(--bg-200), var(--bg-300))', border: '1px solid var(--border)', marginTop: '1.5rem' }}>
+            <div className={styles.vendorInfo}>
+              <h3 style={{ color: 'var(--primary)', marginBottom: '0.25rem' }}>Sell on AFH</h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-400)' }}>Open your campus boutique and grow your brand vividly.</p>
+            </div>
+            <ArrowRight size={20} color="var(--primary)" />
+          </Link>
         </div>
       </div>
     </div>

@@ -6,7 +6,7 @@ import { useMarketplaceStore } from '@/store/marketplaceStore';
 import { Toaster, toast } from 'react-hot-toast';
 
 export default function RealtimeProvider({ children }: { children: React.ReactNode }) {
-  const { 
+  const {
     addProduct, updateProduct, removeProduct, setProducts,
     addService, updateService, removeService, setServices,
     addVendor, updateVendor, setVendors,
@@ -24,7 +24,7 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
         .from('products')
         .select(`*, brands(*)`)
         .order('created_at', { ascending: false });
-      
+
       if (active && prodData) setProducts(prodData as any);
 
       // Brands (Vendors)
@@ -32,7 +32,7 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
         .from('brands')
         .select('*')
         .eq('verification_status', 'verified');
-      
+
       if (active && brandData) setVendors(brandData as any);
 
       if (active) setInitialized(true);
@@ -52,17 +52,17 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
           const { vendors } = useMarketplaceStore.getState();
           const brand = vendors.find((v: any) => v.id === payload.new.brand_id);
           const enriched = { ...payload.new, brands: brand };
-          
+
           addProduct(enriched as any);
           if (!payload.new.is_draft) {
-             toast.success(`New Product: ${payload.new.title}!`);
+            toast.success(`New Product: ${payload.new.title}!`);
           }
         }
         if (payload.eventType === 'UPDATE') {
           const { vendors } = useMarketplaceStore.getState();
           const brand = vendors.find((v: any) => v.id === payload.new.brand_id);
           const enriched = { ...payload.new, brands: brand };
-          
+
           updateProduct(payload.new.id, enriched as any);
         }
         if (payload.eventType === 'DELETE') {
@@ -107,7 +107,7 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
 
     // --- PRIVATE (AUTHED) SYNC ---
     let privateChannel: any;
-    
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user && active) {
         // Orders (We listen to ALL orders but realistically RLS blocks ones not belonging to user)
@@ -116,15 +116,15 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
           'postgres_changes',
           { event: '*', schema: 'public', table: 'orders' },
           (payload: any) => {
-             // For Orders, if user is buyer or seller, RLS lets this through.
-             if (payload.eventType === 'INSERT') {
-               addOrder(payload.new);
-               toast('You have a new Order update!', { icon: '📦' });
-             }
-             if (payload.eventType === 'UPDATE') {
-               updateOrder(payload.new.id, payload.new);
-               toast(`Order status changed to ${payload.new.status}`, { icon: '🔄' });
-             }
+            // For Orders, if user is buyer or seller, RLS lets this through.
+            if (payload.eventType === 'INSERT') {
+              addOrder(payload.new);
+              toast('You have a new Order update!', { icon: '📦' });
+            }
+            if (payload.eventType === 'UPDATE') {
+              updateOrder(payload.new.id, payload.new);
+              toast(`Order status changed to ${payload.new.status}`, { icon: '🔄' });
+            }
           }
         ).subscribe();
       }
