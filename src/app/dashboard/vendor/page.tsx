@@ -1937,7 +1937,7 @@ export default function VendorDashboard() {
 
                     <button
                       className="btn btn-primary"
-                      disabled={paying === tier.id || isActive || userRole === 'admin'}
+                      disabled={paying === tier.id || isActive}
                       onClick={() => handleSubscribe({ id: tier.id, price: tier.price })}
                       style={{
                         marginTop: 'auto',
@@ -1945,11 +1945,9 @@ export default function VendorDashboard() {
                         border: isActive ? `1px solid ${tier.color}` : 'none',
                         color: isActive ? tier.color : '#000',
                         fontWeight: 700,
-                        opacity: userRole === 'admin' ? 0.5 : 1,
                       }}
                     >
                       {paying === tier.id ? <><Loader2 size={16} className="spin" /> Processing…</> :
-                       userRole === 'admin' ? 'Admin — Free Access' :
                        isActive ? '✓ Current Plan' : `Subscribe — ₦${tier.price.toLocaleString()}/mo`}
                     </button>
                   </div>
