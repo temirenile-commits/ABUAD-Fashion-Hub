@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, CheckCircle2 } from 'lucide-react';
 import Papa from 'papaparse';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
@@ -10,6 +10,49 @@ import { uploadFile } from '@/lib/storage';
 import { useNotifications } from '@/context/NotificationContext';
 import { useMarketplaceStore } from '@/store/marketplaceStore';
 import styles from './dashboard.module.css';
+
+const TIERS = [
+  {
+    id: 'quarter',
+    name: 'Quarter Power',
+    price: 5000,
+    icon: <Target size={24} color="#3b82f6" />,
+    features: [
+      '10 Products',
+      '1 Reel',
+      'Basic Analytics',
+      'Standard Support'
+    ],
+    color: '#3b82f6'
+  },
+  {
+    id: 'half',
+    name: 'Half Power',
+    price: 10000,
+    icon: <Rocket size={24} color="var(--primary)" />,
+    features: [
+      '50 Products',
+      '5 Reels',
+      'Advanced Analytics',
+      'Promo Codes'
+    ],
+    color: 'var(--primary)',
+    popular: true
+  },
+  {
+    id: 'full',
+    name: 'Full Power',
+    price: 20000,
+    icon: <Crown size={24} color="#f59e0b" />,
+    features: [
+      'Unlimited Everything',
+      'Featured Shop Placement',
+      'Priority Support',
+      'Premium Analytics'
+    ],
+    color: '#f59e0b'
+  }
+];
 
 export default function VendorDashboard() {
   const router = useRouter();
@@ -45,6 +88,7 @@ export default function VendorDashboard() {
 
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [paying, setPaying] = useState('');
   const [withdrawalRequests, setWithdrawalRequests] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [enquiries, setEnquiries] = useState<any[]>([]);
@@ -418,6 +462,37 @@ export default function VendorDashboard() {
       alert('Error submitting withdrawal');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubscribe = async (tier: any) => {
+    setPaying(tier.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch('/api/vendor/subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId: session.user.id,
+          brandId: brand.id,
+          tierId: tier.id,
+          amount: tier.price
+        }),
+      });
+
+      const data = await res.json();
+      if (data.authorization_url) {
+        window.location.href = data.authorization_url;
+      } else {
+        alert(data.error || 'Payment initialization failed');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error initializing payment');
+    } finally {
+      setPaying('');
     }
   };
 
@@ -1045,6 +1120,49 @@ export default function VendorDashboard() {
                     defaultValue={brand.return_policy}
                     onBlur={(e) => handleUpdateSettings({ return_policy: e.target.value })}
                   />
+                </div>
+              </div>
+
+              <div className={styles.settingsSection} style={{ gridColumn: 'span 2' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                  <ShieldCheck size={24} color="var(--primary)" />
+                  <h3>Subscription & Brand Power</h3>
+                </div>
+                
+                <div className={styles.compactPricingGrid}>
+                  {TIERS.map((tier) => (
+                    <div key={tier.id} className={`${styles.compactPricingCard} ${currentTier === tier.id ? styles.activeTierCard : ''}`}>
+                      <div className={styles.tierHeader}>
+                        {tier.icon}
+                        <div>
+                          <h4>{tier.name}</h4>
+                          <span className={styles.tierPrice}>₦{tier.price.toLocaleString()}/mo</span>
+                        </div>
+                      </div>
+                      <ul className={styles.tierFeaturesMini}>
+                        {tier.features.map((f, i) => <li key={i}><CheckCircle2 size={12} /> {f}</li>)}
+                      </ul>
+                      <button 
+                        className={`btn ${tier.popular ? 'btn-primary' : 'btn-ghost'} btn-sm`}
+                        style={{ width: '100%', marginTop: 'auto' }}
+                        onClick={() => handleSubscribe(tier)}
+                        disabled={!!paying || currentTier === tier.id}
+                      >
+                        {paying === tier.id ? <Loader2 className="anim-spin" size={14} /> : (currentTier === tier.id ? 'Current Plan' : `Activate ${tier.name}`)}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={styles.boostBanner} style={{ marginTop: '2rem' }}>
+                   <div className={styles.boostContent}>
+                      <Zap size={20} color="#f59e0b" />
+                      <div>
+                        <h4>Need a temporary Boost?</h4>
+                        <p>Get priority placement in searches and discovery for ₦1,000/week.</p>
+                      </div>
+                   </div>
+                   <button className="btn btn-secondary btn-sm" onClick={() => alert('Boost system integration coming in next update!')}>Boost Now</button>
                 </div>
               </div>
             </div>

@@ -77,7 +77,6 @@ export default function OnboardingPage() {
         .insert({
           owner_id: user.id,
           name: form.brandName,
-          category: form.category,
           description: form.description,
           whatsapp_number: form.whatsapp,
           room_number: form.roomNo,
@@ -121,15 +120,16 @@ export default function OnboardingPage() {
             Your details (Room, Matric, College) have been submitted to our admin team. 
             Verification is manual to maintain campus integrity.
           </p>
-          <div style={{ background: 'var(--bg-200)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem' }}>
-            <p style={{ marginBottom: '1rem', fontWeight: 600 }}>Need faster approval or have enquiries?</p>
+          <div style={{ background: 'var(--bg-200)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', border: '1px solid var(--primary)' }}>
+            <p style={{ marginBottom: '1rem', fontWeight: 600, color: 'var(--primary)' }}>⚠️ MANDATORY NEXT STEP:</p>
+            <p style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}>Contact the Global Admin on WhatsApp to finalize your verification and unlock your store capabilities.</p>
             <a 
-              href={`https://wa.me/${ADMIN_WHATSAPP}?text=Hi Admin, I just submitted my vendor application for ${form.brandName}. My Matric No is ${form.matricNo}.`} 
+              href={`https://wa.me/${ADMIN_WHATSAPP}?text=Hi Admin, I just submitted my vendor application for "${form.brandName}". My Matric No is ${form.matricNo}. I'm ready to finalize my registration.`} 
               target="_blank" 
-              className="btn btn-whatsapp"
-              style={{ width: '100%', justifyContent: 'center' }}
+              className="btn btn-primary"
+              style={{ width: '100%', justifyContent: 'center', background: '#25D366', borderColor: '#25D366' }}
             >
-              <MessageCircle size={20} /> Contact Admin on WhatsApp
+              <MessageCircle size={20} /> MESSAGE ADMIN TO FINALIZE
             </a>
           </div>
           <Link href="/" className="btn btn-primary">Back to Hub</Link>
