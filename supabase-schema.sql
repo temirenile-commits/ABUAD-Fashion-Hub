@@ -27,6 +27,12 @@ CREATE TABLE IF NOT EXISTS public.brands (
   whatsapp_number TEXT,
   instagram_link TEXT,
   
+  -- Academic Verification Module
+  room_number TEXT,
+  matric_number TEXT,
+  college TEXT,
+  department TEXT,
+  
   -- Verification Module
   verification_status TEXT DEFAULT 'pending' CHECK (verification_status IN ('pending', 'verified', 'rejected', 'suspended')),
   student_id_url TEXT,
@@ -34,8 +40,12 @@ CREATE TABLE IF NOT EXISTS public.brands (
   
   -- Phase 3 Monitization & Limits
   delivery_preference TEXT DEFAULT 'platform' CHECK (delivery_preference IN ('platform', 'vendor')),
-  subscription_plan TEXT DEFAULT 'free' CHECK (subscription_plan IN ('free', 'unlimited')),
-  free_listings_count INTEGER DEFAULT 5,
+  subscription_tier TEXT DEFAULT 'free',
+  max_products INTEGER DEFAULT 0,
+  max_reels INTEGER DEFAULT 0,
+  subscription_expires_at TIMESTAMP WITH TIME ZONE,
+  trial_started_at TIMESTAMP WITH TIME ZONE,
+
   wallet_balance DECIMAL DEFAULT 0.00,
   visibility_score INTEGER DEFAULT 100,
   bank_account_number TEXT,

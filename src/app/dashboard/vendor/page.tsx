@@ -915,12 +915,13 @@ export default function VendorDashboard() {
             </div>
             
             {userRole === 'admin' && (
-              <div className={styles.adminQuickLink} style={{ marginTop: '2rem', background: 'var(--grad-brand-soft)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div className={styles.adminQuickLink} style={{ marginTop: '2rem', padding: '2rem', borderRadius: '16px', background: 'var(--bg-300)', border: '2px solid var(--accent-gold)', boxShadow: '0 0 30px rgba(212, 175, 55, 0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1rem' }}>
+                <ShieldCheck size={48} color="var(--accent-gold)" />
                 <div>
-                  <h4 style={{ color: 'var(--primary)', marginBottom: '0.25rem' }}>👑 Admin Access Active</h4>
-                  <p style={{ fontSize: '0.85rem' }}>You have full unlimited access to all platform features.</p>
+                  <h2 style={{ color: 'var(--accent-gold)', marginBottom: '0.5rem' }}>Global Admin Console</h2>
+                  <p style={{ color: 'var(--text-300)', maxWidth: '400px' }}>You have root access to manage all vendors, products, and financial transactions on the platform.</p>
                 </div>
-                <Link href="/admin" className="btn btn-primary btn-sm">Enter Admin Panel</Link>
+                <Link href="/admin" className="btn btn-primary" style={{ background: 'var(--accent-gold)', borderColor: 'var(--accent-gold)', color: '#000', fontWeight: 'bold', padding: '1rem 3rem' }}>ENTER ADMIN DASHBOARD</Link>
               </div>
             )}
           </div>
