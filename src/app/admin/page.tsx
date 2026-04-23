@@ -5,7 +5,7 @@ import {
   Users, Store, ShoppingBag, TrendingUp, CheckCircle, XCircle,
   Search, Settings, CreditCard, Loader2, RefreshCw, Trash2, Star,
   AlertTriangle, Eye, ShieldCheck, ShieldX, LogOut, X, FileText,
-  MapPin, Phone, Mail, ExternalLink
+  MapPin, Phone, Mail, ExternalLink, ShoppingCart
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
@@ -134,6 +134,9 @@ export default function AdminDashboard() {
         </nav>
 
         <div className={styles.sidebarFooter}>
+          <Link href="/dashboard/vendor" className={styles.exitLink} style={{ color: 'var(--primary)', marginBottom: '0.75rem', fontWeight: 600 }}>
+            <ShoppingCart size={16} /> My Vendor Store
+          </Link>
           <Link href="/" className={styles.exitLink}>← Back to Marketplace</Link>
         </div>
       </aside>

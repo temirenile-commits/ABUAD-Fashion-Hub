@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
 import { uploadFile } from '@/lib/storage';
@@ -16,6 +16,7 @@ export default function VendorDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [brand, setBrand] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   
   // Real-time states
   const { products: allProducts, orders: allOrders, setOrders: setGlobalOrders, addProduct, updateOrder, updateProduct: updateGlobalProduct } = useMarketplaceStore();
@@ -58,6 +59,10 @@ export default function VendorDashboard() {
         router.push('/auth/login?redirect=/dashboard/vendor');
         return;
       }
+
+      // Fetch Role
+      const { data: profile } = await supabase.from('users').select('role').eq('id', session.user.id).single();
+      if (profile) setUserRole(profile.role);
 
       // Fetch Brand
       const { data: brandData, error: brandError } = await supabase
@@ -533,6 +538,13 @@ export default function VendorDashboard() {
           <button className={`${styles.navItem} ${activeTab === 'settings' ? styles.navActive : ''}`} onClick={() => setActiveTab('settings')}>
             <Settings size={18} /> Store Settings
           </button>
+          
+          {userRole === 'admin' && (
+            <Link href="/admin" className={styles.navItem} style={{ color: 'var(--accent-gold)', marginTop: '0.5rem', background: 'rgba(212, 175, 55, 0.05)' }}>
+              <ShieldCheck size={18} /> Admin Control Panel
+            </Link>
+          )}
+
           <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0' }} />
           <button
             className={styles.navItem}

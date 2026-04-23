@@ -108,7 +108,7 @@ export default function Navbar() {
                   </Link>
                 </div>
               )}
-              {role === 'vendor' && (
+              {(role === 'vendor' || role === 'admin') && (
                 <div className={styles.actionItem}>
                   <Link href="/dashboard/vendor" className={styles.actionLink} style={{ color: 'var(--primary)' }}>
                     <Store size={20} />
@@ -204,9 +204,9 @@ export default function Navbar() {
                   <ShieldCheck size={16} /> Admin Panel
                 </Link>
               )}
-              {role === 'vendor' ? (
+              {(role === 'vendor' || role === 'admin') ? (
                 <Link href="/dashboard/vendor" className={styles.mobileLink} onClick={() => setMenuOpen(false)} style={{ color: 'var(--primary)' }}>
-                  <Store size={16} /> Manage My Store
+                  <Store size={16} /> My Vendor Store
                 </Link>
               ) : (
                 <Link href={dashboardLink} className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
