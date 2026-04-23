@@ -1134,7 +1134,7 @@ export default function VendorDashboard() {
                       type="text" 
                       placeholder="e.g. GTBank, Zenith" 
                       defaultValue={brand?.bank_name}
-                      onBlur={(e) => handleSettingsUpdate({ bank_name: e.target.value })}
+                      onBlur={(e) => handleUpdateSettings({ bank_name: e.target.value })}
                     />
                   </div>
                   <div className={styles.inputGroup}>
@@ -1144,7 +1144,7 @@ export default function VendorDashboard() {
                       placeholder="10-digit number" 
                       maxLength={10}
                       defaultValue={brand?.bank_account_number}
-                      onBlur={(e) => handleSettingsUpdate({ bank_account_number: e.target.value })}
+                      onBlur={(e) => handleUpdateSettings({ bank_account_number: e.target.value })}
                     />
                   </div>
                   <div className={styles.inputGroup}>
@@ -1153,7 +1153,7 @@ export default function VendorDashboard() {
                       type="text" 
                       placeholder="Full Name on Account" 
                       defaultValue={brand?.bank_code} // Using bank_code temporarily for holder name or I'll add a new field
-                      onBlur={(e) => handleSettingsUpdate({ bank_code: e.target.value })}
+                      onBlur={(e) => handleUpdateSettings({ bank_code: e.target.value })}
                     />
                   </div>
                 </div>
