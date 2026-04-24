@@ -16,6 +16,7 @@ import ProductInteraction from '@/components/ProductInteraction';
 import ViewTracker from '@/components/ViewTracker';
 import { formatPrice, getDiscount } from '@/lib/utils';
 import ProductEnquiry from '@/components/ProductEnquiry';
+import WishlistButton from '@/components/WishlistButton';
 import styles from './product.module.css';
 
 interface Props {
@@ -225,9 +226,7 @@ export default async function ProductPage({ params }: Props) {
                   <MessageCircle size={16} style={{ color: '#25D366' }} />
                   Inquiry via WhatsApp
                 </a>
-                <button className="btn btn-ghost btn-icon" aria-label="Wishlist">
-                  <Heart size={18} />
-                </button>
+                <WishlistButton productId={product.id} className="btn btn-ghost btn-icon" size={18} />
               </div>
             </div>
 

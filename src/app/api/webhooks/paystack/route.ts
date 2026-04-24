@@ -169,7 +169,7 @@ export async function POST(req: Request) {
           sales_count: (brandData?.sales_count || 0) + (order.quantity || 1) 
         }).eq('id', order.brand_id);
 
-        // C. Record Financial Transaction (Escrow)
+        // C. Record Financial Transaction (Escrow) & Update Wallet
         const transRecord = {
           order_id: order.id,
           brand_id: order.brand_id,
@@ -179,6 +179,12 @@ export async function POST(req: Request) {
           status: 'success',
           description: `Escrow payment secured for order #${order.id.slice(0, 8)}`,
         };
+
+        // Update vendor wallet (Pending Balance)
+        await supabaseAdmin.rpc('adjust_vendor_wallet', {
+          p_brand_id: order.brand_id,
+          p_pending_delta: order.vendor_earning
+        });
 
         // D. Create Dual Notifications
         const notifs = [

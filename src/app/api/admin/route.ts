@@ -208,14 +208,34 @@ export async function POST(req: NextRequest) {
       .from('products')
       .delete()
       .eq('id', productId);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    if (error) {
+      if (error.message.includes('foreign key constraint')) {
+        // Fallback to soft-deletion
+        const { error: softError } = await supabaseAdmin
+          .from('products')
+          .update({ is_draft: true, stock_count: 0 })
+          .eq('id', productId);
+        if (softError) return NextResponse.json({ error: softError.message }, { status: 500 });
+        return NextResponse.json({ success: true, message: 'Product archived due to existing orders.' });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ success: true });
   }
 
   if (action === 'delete_user') {
     const { userId } = body;
-    // Delete from public.users first (cascade should handle brands, but we do it explicitly)
-    await supabaseAdmin.from('users').delete().eq('id', userId);
+    // Attempt to delete from public.users first
+    const { error: profileError } = await supabaseAdmin.from('users').delete().eq('id', userId);
+    
+    if (profileError) {
+      if (profileError.message.includes('foreign key constraint')) {
+        return NextResponse.json({ error: 'User has active dependencies (orders/brands). Disable user instead of deleting.' }, { status: 400 });
+      }
+      return NextResponse.json({ error: profileError.message }, { status: 500 });
+    }
+    
     // Then delete from auth
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -372,16 +392,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
-  if (action === 'delete_product') {
-    const { productId } = body;
-    const { error } = await supabaseAdmin
-      .from('products')
-      .delete()
-      .eq('id', productId);
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true });
-  }
 
   if (action === 'send_notification') {
     const { title, content, target, userId: targetUserId } = body;

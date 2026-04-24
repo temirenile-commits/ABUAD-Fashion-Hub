@@ -57,11 +57,73 @@ export async function verifyTransaction(reference: string) {
   return data;
 }
 
-// Escrow Fund Release API Integration
-export async function releaseEscrowPayment(bankCode: string, accountNumber: string, amount: number, reason: string) {
-  const secret = process.env.PAYSTACK_SECRET_KEY;
-  if (!secret) throw new Error('Paystack Secret Key is missing');
+// Paystack Payout & Verification APIs
 
-  console.log(`[ESCROW] Releasing N${amount} to Bank Code ${bankCode}, Acc ${accountNumber} for reason: ${reason}`);
+export async function listBanks() {
+  const secret = process.env.PAYSTACK_SECRET_KEY;
+  const response = await fetch(`${PAYSTACK_BASE_URL}/bank?currency=NGN`, {
+    headers: { Authorization: `Bearer ${secret}` },
+  });
+  const data = await response.json();
+  return data.data; // Array of { name, code, ... }
+}
+
+export async function resolveAccountNumber(accountNumber: string, bankCode: string) {
+  const secret = process.env.PAYSTACK_SECRET_KEY;
+  const response = await fetch(`${PAYSTACK_BASE_URL}/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`, {
+    headers: { Authorization: `Bearer ${secret}` },
+  });
+  const data = await response.json();
+  if (!data.status) throw new Error(data.message || 'Could not resolve account');
+  return data.data; // { account_number, account_name, ... }
+}
+
+export async function createTransferRecipient(name: string, accountNumber: string, bankCode: string) {
+  const secret = process.env.PAYSTACK_SECRET_KEY;
+  const response = await fetch(`${PAYSTACK_BASE_URL}/transferrecipient`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${secret}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      type: 'nuban',
+      name,
+      account_number: accountNumber,
+      bank_code: bankCode,
+      currency: 'NGN',
+    }),
+  });
+  const data = await response.json();
+  if (!data.status) throw new Error(data.message || 'Failed to create recipient');
+  return data.data; // { recipient_code, ... }
+}
+
+export async function initiateTransfer(amount: number, recipientCode: string, reference: string, reason: string = 'Vendor Payout') {
+  const secret = process.env.PAYSTACK_SECRET_KEY;
+  const response = await fetch(`${PAYSTACK_BASE_URL}/transfer`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${secret}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      source: 'balance',
+      amount: Math.round(amount * 100), // Convert to Kobo
+      recipient: recipientCode,
+      reason,
+      reference,
+    }),
+  });
+  const data = await response.json();
+  // Transfer status can be 'otp', 'pending', 'success', 'failed'
+  return data;
+}
+
+// Escrow Fund Release API Integration (Legacy Mock - updated to use real logic if needed)
+export async function releaseEscrowPayment(bankCode: string, accountNumber: string, amount: number, reason: string) {
+  console.log(`[ESCROW] Legacy call for releasing N${amount} to Bank Code ${bankCode}, Acc ${accountNumber}`);
+  // In the new system, we move funds in DB, then the vendor initiates a withdrawal.
   return { success: true, reference: `es_rel_${Date.now()}` };
 }
+

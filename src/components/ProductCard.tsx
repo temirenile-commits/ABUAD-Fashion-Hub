@@ -6,6 +6,7 @@ import styles from './ProductCard.module.css';
 
 import { formatPrice, getDiscount } from '@/lib/utils';
 import { useCart } from '@/context/CartContext';
+import WishlistButton from '@/components/WishlistButton';
 
 // Joined Database Type Structure
 export interface LiveProduct {
@@ -94,6 +95,8 @@ export default function ProductCard({ product }: Props) {
             <ShieldCheck size={10} /> Official
           </div>
         )}
+
+        <WishlistButton productId={product.id} />
       </div>
 
       <div className={styles.info}>

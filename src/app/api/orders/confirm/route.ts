@@ -44,17 +44,16 @@ export async function POST(req: Request) {
 
     if (updateOrderError) throw updateOrderError;
 
-    // B. Increment Vendor Wallet
-    const { error: walletError } = await supabaseAdmin.rpc('increment_vendor_wallet', {
-      brand_id: order.brand_id,
-      amount: order.vendor_earning
+    // B. Increment Vendor Wallet (Move from Pending to Available)
+    const { error: walletError } = await supabaseAdmin.rpc('adjust_vendor_wallet', {
+      p_brand_id: order.brand_id,
+      p_available_delta: order.vendor_earning,
+      p_pending_delta: -order.vendor_earning
     });
 
     if (walletError) {
-      // Fallback if RPC not found: Manual increment
-      const { data: brand } = await supabaseAdmin.from('brands').select('wallet_balance').eq('id', order.brand_id).single();
-      const newBalance = (brand?.wallet_balance || 0) + order.vendor_earning;
-      await supabaseAdmin.from('brands').update({ wallet_balance: newBalance }).eq('id', order.brand_id);
+      console.error('Wallet update failed during confirmation:', walletError);
+      // Fallback: This should ideally not happen if migration was successful
     }
 
     // C. Create Transaction Record for the Vendor

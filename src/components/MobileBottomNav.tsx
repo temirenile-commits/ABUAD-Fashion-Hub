@@ -50,8 +50,8 @@ export default function MobileBottomNav() {
         </Link>
       ))}
       <Link 
-        href="/checkout" 
-        className={`${styles.navItem} ${pathname === '/checkout' ? styles.active : ''}`}
+        href="/cart" 
+        className={`${styles.navItem} ${pathname === '/cart' ? styles.active : ''}`}
       >
         <div className={styles.iconWrap}>
           <ShoppingBag size={22} />

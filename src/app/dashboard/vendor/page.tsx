@@ -78,6 +78,7 @@ export default function VendorDashboard() {
   const orders = brand ? allOrders.filter(o => o.brand_id === brand.id).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
 
   const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [paying, setPaying] = useState('');
   const [withdrawalRequests, setWithdrawalRequests] = useState<any[]>([]);
@@ -91,6 +92,10 @@ export default function VendorDashboard() {
   const [uploadingReel, setUploadingReel] = useState(false);
   const [promoCodes, setPromoCodes] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [wallet, setWallet] = useState<any>(null);
+  const [banks, setBanks] = useState<any[]>([]);
+  const [verifyingBank, setVerifyingBank] = useState(false);
+  const [isSettingUpBank, setIsSettingUpBank] = useState(false);
 
   const [newProduct, setNewProduct] = useState({
     title: '',
@@ -237,6 +242,19 @@ export default function VendorDashboard() {
         setActivationFee(settingsData.find(s => s.key === 'activation_fee')?.value?.amount || 2000);
       }
 
+      // Fetch Wallet
+      const { data: walletData } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('brand_id', brandData.id)
+        .single();
+      setWallet(walletData);
+
+      // Fetch Banks
+      const bankRes = await fetch('/api/paystack/banks');
+      const bankDataRes = await bankRes.json();
+      if (bankDataRes.success) setBanks(bankDataRes.data);
+
       setLoading(false);
     }
 
@@ -367,41 +385,74 @@ export default function VendorDashboard() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newProduct,
-          brandId: brand.id,
-          ownerId: brand.owner_id
-        })
-      });
+      if (editingProduct) {
+        const updates = {
+            title: newProduct.title,
+            description: newProduct.description,
+            price: Number(newProduct.price),
+            original_price: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined,
+            category: newProduct.category,
+            stock_count: Number(newProduct.stockCount),
+            media_urls: newProduct.mediaUrls,
+            image_url: newProduct.imageUrl || undefined,
+            video_url: newProduct.videoUrl || undefined,
+            variants: newProduct.variants,
+            is_draft: newProduct.isDraft
+        };
+        const { error } = await supabase
+          .from('products')
+          .update(updates)
+          .eq('id', editingProduct.id);
 
-      const data = await res.json();
-      if (data.success) {
-        setIsAddingProduct(false);
-        // Optimistic UI Update directly into global store
-        addProduct({
-          ...data.product,
-          brands: brand
-        });
-
-        setNewProduct({
-          title: '',
-          description: '',
-          price: '',
-          originalPrice: '',
-          category: 'Clothing',
-          stockCount: '10',
-          mediaUrls: [],
-          imageUrl: '',
-          videoUrl: '',
-          variants: [],
-          isDraft: false
-        });
-        alert('Product listed successfully!');
+        if (!error) {
+          setIsAddingProduct(false);
+          updateGlobalProduct(editingProduct.id, updates);
+          setEditingProduct(null);
+          setNewProduct({
+            title: '', description: '', price: '', originalPrice: '', category: 'Clothing',
+            stockCount: '10', mediaUrls: [], imageUrl: '', videoUrl: '', variants: [], isDraft: false
+          });
+          alert('Product updated successfully!');
+        } else {
+          alert('Failed to update product: ' + error.message);
+        }
       } else {
-        alert(data.error || 'Failed to list product');
+        const res = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...newProduct,
+            brandId: brand.id,
+            ownerId: brand.owner_id
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          setIsAddingProduct(false);
+          // Optimistic UI Update directly into global store
+          addProduct({
+            ...data.product,
+            brands: brand
+          });
+
+          setNewProduct({
+            title: '',
+            description: '',
+            price: '',
+            originalPrice: '',
+            category: 'Clothing',
+            stockCount: '10',
+            mediaUrls: [],
+            imageUrl: '',
+            videoUrl: '',
+            variants: [],
+            isDraft: false
+          });
+          alert('Product listed successfully!');
+        } else {
+          alert(data.error || 'Failed to list product');
+        }
       }
     } catch (err) {
       console.error(err);
@@ -446,38 +497,79 @@ export default function VendorDashboard() {
 
   const handleWithdrawalRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!brand) return;
+    if (!brand || !wallet) return;
     const amount = (e.target as any).amount.value;
+
+    if (Number(amount) > Number(wallet.available_balance)) {
+      alert('Insufficient available balance');
+      return;
+    }
 
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch('/api/vendor/withdrawals', {
+      const res = await fetch('/api/vendor/withdraw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           brandId: brand.id,
-          ownerId: session?.user.id,
-          amount,
-          bankDetails: {
-            account: brand.bank_account_number,
-            name: brand.bank_name
-          }
+          amount: Number(amount)
         })
       });
       const data = await res.json();
       if (data.success) {
-        alert('Withdrawal request submitted successfully!');
+        alert(`Withdrawal of ${formatPrice(amount)} initiated successfully! Ref: ${data.reference}`);
         setIsWithdrawing(false);
-        // Refresh data
-        window.location.reload();
+        // Refresh wallet
+        const { data: newWallet } = await supabase.from('wallets').select('*').eq('brand_id', brand.id).single();
+        setWallet(newWallet);
+        // Refresh withdrawals
+        const { data: withdrawData } = await supabase.from('withdrawals').select('*').eq('brand_id', brand.id).order('created_at', { ascending: false });
+        setWithdrawalRequests(withdrawData || []);
       } else {
-        alert(data.error);
+        alert(data.error || 'Withdrawal failed');
       }
     } catch (err) {
       alert('Error submitting withdrawal');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyBank = async (accountNumber: string, bankCode: string) => {
+    if (!accountNumber || !bankCode) return;
+    setVerifyingBank(true);
+    try {
+      const res = await fetch(`/api/paystack/resolve?accountNumber=${accountNumber}&bankCode=${bankCode}`);
+      const data = await res.json();
+      if (data.success) {
+        if (confirm(`Confirm account name: ${data.data.account_name}?`)) {
+          // Create Recipient
+          const recRes = await fetch('/api/paystack/recipient', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              brandId: brand.id,
+              name: data.data.account_name,
+              accountNumber,
+              bankCode
+            })
+          });
+          const recData = await recRes.json();
+          if (recData.success) {
+            alert('Bank details verified and saved successfully!');
+            setBrand({ ...brand, recipient_code: recData.recipient_code, bank_account_number: accountNumber, bank_code: bankCode, account_name: data.data.account_name });
+            setIsSettingUpBank(false);
+          } else {
+            alert(recData.error);
+          }
+        }
+      } else {
+        alert(data.error || 'Could not verify account');
+      }
+    } catch (err) {
+      alert('Error verifying bank');
+    } finally {
+      setVerifyingBank(false);
     }
   };
 
@@ -915,8 +1007,10 @@ export default function VendorDashboard() {
                   <Wallet size={20} color="var(--primary)" />
                   <span>Available Balance</span>
                 </div>
-                <div className={styles.statValue}>{formatPrice(brand?.wallet_balance || 0)}</div>
-                <div className={styles.statTrend}>Withdrawable immediately</div>
+                <div className={styles.statValue}>{formatPrice(wallet?.available_balance || 0)}</div>
+                <div className={styles.statTrend}>
+                  {wallet?.pending_balance > 0 && <span style={{ color: '#f59e0b' }}>{formatPrice(wallet.pending_balance)} pending</span>}
+                </div>
                 <div className={styles.growthBadge}><ArrowUpRight size={12} /> Live</div>
               </div>
               <div className={styles.statCard}>
@@ -1099,38 +1193,48 @@ export default function VendorDashboard() {
               {/* Payout Settings */}
               <div className={styles.settingsSection}>
                 <h3>Payout Bank Details</h3>
-                <p className={styles.formHint}>Funds are sent here when you request a withdrawal.</p>
-                <div className={styles.formRow} style={{ marginTop: '1rem' }}>
-                  <div className={styles.inputGroup}>
-                    <label>Bank Name</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. GTBank, Zenith Bank"
-                      defaultValue={brand.bank_name}
-                      onBlur={(e) => handleUpdateSettings({ bank_name: e.target.value })}
-                    />
+                <p className={styles.formHint}>Your earnings will be automatically sent to this account via Paystack.</p>
+                
+                {brand.recipient_code ? (
+                  <div className={styles.bankSuccessCard}>
+                    <ShieldCheck size={24} color="var(--success)" />
+                    <div>
+                      <p><strong>{brand.account_name}</strong></p>
+                      <span>{brand.bank_account_number} ({brand.bank_name})</span>
+                    </div>
+                    <button className="btn btn-ghost btn-sm" onClick={() => {
+                       if (confirm('Are you sure you want to change your payout account? This will require re-verification.')) {
+                         setBrand({...brand, recipient_code: null});
+                       }
+                    }}>Change</button>
                   </div>
-                  <div className={styles.inputGroup}>
-                    <label>Account Number</label>
-                    <input
-                      type="text"
-                      placeholder="10-digit number"
-                      maxLength={10}
-                      defaultValue={brand.bank_account_number}
-                      onBlur={(e) => handleUpdateSettings({ bank_account_number: e.target.value })}
-                    />
+                ) : (
+                  <div className={styles.bankSetupForm}>
+                    <div className={styles.inputGroup}>
+                      <label>Bank</label>
+                      <select id="setupBankCode">
+                        <option value="">Select Bank</option>
+                        {banks.map(b => <option key={b.code} value={b.code}>{b.name}</option>)}
+                      </select>
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label>Account Number</label>
+                      <input id="setupAccNum" type="text" maxLength={10} placeholder="10-digit account number" />
+                    </div>
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={() => {
+                        const code = (document.getElementById('setupBankCode') as HTMLSelectElement).value;
+                        const num = (document.getElementById('setupAccNum') as HTMLInputElement).value;
+                        handleVerifyBank(num, code);
+                      }}
+                      disabled={verifyingBank}
+                    >
+                      {verifyingBank ? <Loader2 className="anim-spin" size={16} /> : 'Verify & Link Account'}
+                    </button>
                   </div>
-                  <div className={styles.inputGroup}>
-                    <label>Account Holder Name</label>
-                    <input
-                      type="text"
-                      placeholder="Full name on bank account"
-                      defaultValue={brand.bank_code}
-                      onBlur={(e) => handleUpdateSettings({ bank_code: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <p className={styles.fieldNote}>* Ensure details are exact to avoid payout delays.</p>
+                )}
+                <p className={styles.fieldNote}>* We use Paystack for secure, real-time verification and payouts.</p>
               </div>
 
               {/* Store Policies */}
@@ -1437,8 +1541,8 @@ export default function VendorDashboard() {
             {isAddingProduct && (
               <div className={styles.formContainer}>
                 <div className={styles.formHead}>
-                  <h2>List New Product</h2>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setIsAddingProduct(false)}>Cancel</button>
+                  <h2>{editingProduct ? 'Edit Product' : 'List New Product'}</h2>
+                  <button className="btn btn-ghost btn-sm" onClick={() => { setIsAddingProduct(false); setEditingProduct(null); }}>Cancel</button>
                 </div>
                 <form onSubmit={handleProductSubmit} className={styles.productForm}>
                   <div className={styles.formRow}>
@@ -1616,7 +1720,7 @@ export default function VendorDashboard() {
                       )}
                     </div>
                     <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-                      {loading ? 'Processing...' : 'Post Product to Marketplace'}
+                      {loading ? 'Processing...' : (editingProduct ? 'Update Product' : 'Post Product to Marketplace')}
                     </button>
                   </div>
                 </form>
@@ -1639,14 +1743,41 @@ export default function VendorDashboard() {
                     </div>
                   </div>
                   <div className={styles.invActions}>
-                    <button className="btn btn-ghost btn-sm" onClick={() => alert('Edit coming soon!')}>Edit</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => {
+                      setNewProduct({
+                        title: p.title || '',
+                        description: p.description || '',
+                        price: p.price ? p.price.toString() : '',
+                        originalPrice: p.original_price ? p.original_price.toString() : '',
+                        category: p.category || 'Clothing',
+                        stockCount: p.stock_count ? p.stock_count.toString() : '10',
+                        mediaUrls: p.media_urls || [],
+                        imageUrl: p.image_url || '',
+                        videoUrl: p.video_url || '',
+                        variants: p.variants || [],
+                        isDraft: p.is_draft || false
+                      });
+                      setEditingProduct(p);
+                      setIsAddingProduct(true);
+                    }}>Edit</button>
                     <button
                       className="btn btn-ghost btn-sm"
                       style={{ color: '#ef4444' }}
                       onClick={async () => {
                         if (!confirm(`Delete "${p.title}"? This cannot be undone.`)) return;
                         const { error } = await supabase.from('products').delete().eq('id', p.id);
-                        if (error) alert('Delete failed: ' + error.message);
+                        if (error) {
+                          if (error.message.includes('foreign key constraint')) {
+                            const { error: softError } = await supabase.from('products').update({ is_draft: true, stock_count: 0 }).eq('id', p.id);
+                            if (softError) alert('Delete failed: ' + softError.message);
+                            else {
+                              alert('Product archived because it is tied to existing orders.');
+                              updateGlobalProduct(p.id, { is_draft: true, stock_count: 0 });
+                            }
+                          } else {
+                            alert('Delete failed: ' + error.message);
+                          }
+                        }
                         // Realtime will auto-remove it from the store
                       }}
                     >Delete</button>
@@ -1789,32 +1920,33 @@ export default function VendorDashboard() {
             <div className={styles.walletHero}>
               <div className={styles.walletMain}>
                 <span>Available Balance</span>
-                <h2>{formatPrice(brand?.wallet_balance || 0)}</h2>
+                <h2>{formatPrice(wallet?.available_balance || 0)}</h2>
                 <div className={styles.walletActions}>
                   <button
                     className="btn btn-primary"
-                    disabled={!brand?.wallet_balance || brand.wallet_balance < 1000}
+                    disabled={!wallet?.available_balance || wallet.available_balance < 1000 || !brand.recipient_code}
                     onClick={() => setIsWithdrawing(true)}
                   >
                     Withdraw Funds
                   </button>
                 </div>
+                {!brand.recipient_code && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.5rem' }}>Link your bank account in Settings to withdraw.</p>}
                 <p className={styles.minWithdrawal}>Minimum withdrawal: ₦1,000</p>
               </div>
 
               <div className={styles.walletEscrow} style={{ width: '100%', maxWidth: 'none', flexDirection: 'row', gap: '2rem', padding: '1.5rem', justifyContent: 'space-around' }}>
                 <div>
-                  <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Incoming (Preparing)</span>
-                  <h3 style={{ fontSize: '1.2rem', margin: '0.25rem 0' }}>{formatPrice(orders.filter(o => ['paid', 'ready', 'picked_up', 'in_transit'].includes(o.status)).reduce((acc, curr) => acc + Number(curr.vendor_earning || 0), 0))}</h3>
-                  <p style={{ fontSize: '0.7rem' }}>Orders on the move</p>
+                  <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Pending (Escrow)</span>
+                  <h3 style={{ fontSize: '1.2rem', margin: '0.25rem 0', color: '#f59e0b' }}>{formatPrice(wallet?.pending_balance || 0)}</h3>
+                  <p style={{ fontSize: '0.7rem' }}>Held until customer confirms delivery</p>
                 </div>
                 <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
                 <div>
-                  <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Muring (Delivered)</span>
+                  <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Lifetime Earnings</span>
                   <h3 style={{ fontSize: '1.2rem', margin: '0.25rem 0', color: 'var(--primary)' }}>
-                    {formatPrice(orders.filter(o => o.status === 'delivered' && (!o.payout_ready_at || new Date(o.payout_ready_at) > new Date())).reduce((acc, curr) => acc + Number(curr.vendor_earning || 0), 0))}
+                    {formatPrice(transactions.filter(t => t.type === 'escrow_release').reduce((acc, curr) => acc + Number(curr.amount || 0), 0))}
                   </h3>
-                  <p style={{ fontSize: '0.7rem' }}>Release: 24h + working days</p>
+                  <p style={{ fontSize: '0.7rem' }}>Total funds processed</p>
                 </div>
               </div>
             </div>
@@ -1825,11 +1957,11 @@ export default function VendorDashboard() {
                   <h2>Request Payout</h2>
                   <button className="btn btn-ghost btn-sm" onClick={() => setIsWithdrawing(false)}>Cancel</button>
                 </div>
-                <div className={styles.productForm}>
+                <form onSubmit={handleWithdrawalRequest} className={styles.productForm}>
                   <div className={styles.inputGroup}>
                     <label>Amount to Withdraw (₦)</label>
-                    <input type="number" placeholder="0.00" autoFocus />
-                    <p className={styles.formHint}>Available: <strong>{formatPrice(brand?.wallet_balance || 0)}</strong></p>
+                    <input name="amount" type="number" placeholder="0.00" autoFocus required />
+                    <p className={styles.formHint}>Available: <strong>{formatPrice(wallet?.available_balance || 0)}</strong></p>
                   </div>
                   <div className={styles.inputGroup}>
                     <label>Bank Account Details</label>
@@ -1841,8 +1973,10 @@ export default function VendorDashboard() {
                       </div>
                     </div>
                   </div>
-                  <button className="btn btn-primary btn-lg" disabled={!brand?.bank_account_number}>Confirm Withdrawal Request</button>
-                </div>
+                  <button type="submit" className="btn btn-primary btn-lg" disabled={!brand?.recipient_code || loading}>
+                    {loading ? <Loader2 className="anim-spin" size={18} /> : 'Confirm Withdrawal Request'}
+                  </button>
+                </form>
               </div>
             )}
 

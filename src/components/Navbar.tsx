@@ -98,39 +98,36 @@ export default function Navbar() {
         <div className={styles.actions}>
           {user ? (
             <>
-              {role === 'admin' && (
-                <div className={styles.actionItem}>
-                  <Link href="/admin" className={`${styles.actionLink} ${styles.adminBadge}`} style={{ color: 'var(--accent-gold)', border: '1px solid var(--accent-gold)', padding: '0.4rem 0.8rem', borderRadius: 'var(--radius-md)', background: 'rgba(212, 175, 55, 0.1)' }}>
-                    <ShieldCheck size={18} />
-                    <strong>ADMIN PANEL</strong>
-                  </Link>
-                </div>
-              )}
-              {(role === 'vendor' || role === 'admin') && (
-                <div className={styles.actionItem}>
-                  <Link href="/dashboard/vendor" className={styles.actionLink} style={{ color: 'var(--primary)' }}>
-                    <Store size={20} />
-                    <span>Vendor Dashboard</span>
-                  </Link>
-                </div>
-              )}
-              {role !== 'vendor' && (
-                <div className={styles.actionItem}>
-                  <Link href={dashboardLink} className={styles.actionLink}>
-                    {user.avatar_url ? (
-                      <img src={user.avatar_url} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }} />
-                    ) : (
-                      <User size={20} />
-                    )}
-                    <span>Account</span>
-                  </Link>
-                </div>
-              )}
+              {/* Notification (Always Visible) */}
               <div className={styles.actionItem}>
-                <button onClick={handleLogout} className={styles.actionLink} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                  <LogOut size={20} />
-                  <span>Logout</span>
-                </button>
+                <Link
+                  href="/notifications"
+                  className={styles.actionLink}
+                  aria-label="Notifications"
+                  onClick={() => markAllRead()}
+                >
+                  <div className={styles.iconWrap}>
+                    <Bell size={20} />
+                    {unreadCount > 0 && (
+                      <span className={styles.cartBadge} style={{ background: '#ef4444', color: '#fff' }}>
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              </div>
+
+              {/* Account Profile Pic (Always Visible) */}
+              <div className={styles.actionItem}>
+                <Link href={dashboardLink} className={styles.actionLink} title="Account">
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
+                  ) : (
+                    <div className={styles.avatarPlaceholder}>
+                      <User size={18} />
+                    </div>
+                  )}
+                </Link>
               </div>
             </>
           ) : (
@@ -142,49 +139,60 @@ export default function Navbar() {
             </div>
           )}
 
-          <div className={styles.actionItem}>
-            <Link
-              href="/notifications"
-              className={styles.actionLink}
-              aria-label="Notifications"
-              onClick={() => markAllRead()}
+          {/* Options Module Toggle */}
+          <div className={styles.actionItem} style={{ position: 'relative' }}>
+            <button 
+              className={styles.optionsToggle} 
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="More options"
             >
-              <div className={styles.iconWrap}>
-                <Bell size={20} />
-                {unreadCount > 0 && (
-                  <span className={styles.cartBadge} style={{ background: '#ef4444', color: '#fff' }}>
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
+              {menuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+
+            {/* The Options Module Dropdown */}
+            {menuOpen && (
+              <div className={styles.optionsModule} onClick={() => setMenuOpen(false)}>
+                {role === 'admin' && (
+                  <Link href="/admin" className={`${styles.moduleItem} ${styles.adminModuleLink}`}>
+                    <ShieldCheck size={18} />
+                    <span>Admin Panel</span>
+                  </Link>
+                )}
+                {(role === 'vendor' || role === 'admin') && (
+                  <Link href="/dashboard/vendor" className={styles.moduleItem}>
+                    <Store size={18} />
+                    <span>Vendor Dashboard</span>
+                  </Link>
+                )}
+                <Link href="https://wa.me/2347045592604" target="_blank" className={styles.moduleItem}>
+                  <MessageCircle size={18} />
+                  <span>Help Center</span>
+                </Link>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setCartOpen(true); setMenuOpen(false); }} 
+                  className={styles.moduleItem}
+                >
+                  <div className={styles.iconWrap}>
+                    <ShoppingBag size={18} />
+                    {getItemCount() > 0 && <span className={styles.cartBadge}>{getItemCount()}</span>}
+                  </div>
+                  <span>Cart</span>
+                </button>
+                <div className={styles.moduleDivider} />
+                {user ? (
+                  <button onClick={handleLogout} className={`${styles.moduleItem} ${styles.logoutModuleBtn}`}>
+                    <LogOut size={18} />
+                    <span>Logout</span>
+                  </button>
+                ) : (
+                  <Link href="/auth/login" className={styles.moduleItem}>
+                    <LogOut size={18} />
+                    <span>Login</span>
+                  </Link>
                 )}
               </div>
-              {permission === 'default' && (
-                <span
-                  style={{ fontSize: '0.65rem', color: 'var(--primary)', cursor: 'pointer' }}
-                  onClick={(e) => { e.preventDefault(); requestPermission(); }}
-                >
-                  Enable
-                </span>
-              )}
-            </Link>
+            )}
           </div>
-
-          <div className={styles.actionItem}>
-            <Link href="https://wa.me/2347045592604" target="_blank" className={styles.actionLink}>
-              <MessageCircle size={20} />
-              <span>Help</span>
-            </Link>
-          </div>
-
-          <button 
-            className={styles.cartBtn} 
-            onClick={() => setCartOpen(true)}
-          >
-            <div className={styles.iconWrap}>
-              <ShoppingBag size={20} />
-              {getItemCount() > 0 && <span className={styles.cartBadge}>{getItemCount()}</span>}
-            </div>
-            <span>Cart</span>
-          </button>
         </div>
       </nav>
 

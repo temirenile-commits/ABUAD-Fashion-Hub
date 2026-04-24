@@ -25,7 +25,7 @@ export default function ProductInteraction({ product }: Props) {
 
   const handleBuyNow = () => {
     addToCart(product, quantity);
-    router.push('/checkout');
+    router.push('/cart');
   };
 
   return (
