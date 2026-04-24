@@ -252,30 +252,52 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
-  if (action === 'set_delivery_role') {
-    const { userId } = body;
+  if (action === 'update_user_role') {
+    const { userId, newRole } = body;
+    const currentAdmin = await verifyAdmin(req); 
     
-    // 1. Update public.users role
-    const { error: roleError } = await supabaseAdmin
+    if (currentAdmin?.id === userId && newRole !== 'admin') {
+      return NextResponse.json({ error: 'You cannot demote yourself.' }, { status: 400 });
+    }
+
+    // 1. Update public.users
+    const { error: profileError } = await supabaseAdmin
       .from('users')
-      .update({ role: 'delivery' })
+      .update({ role: newRole })
       .eq('id', userId);
     
-    if (roleError) return NextResponse.json({ error: roleError.message }, { status: 500 });
+    if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 });
 
-    // 2. Initialize delivery_agents record
-    const { error: agentError } = await supabaseAdmin
-      .from('delivery_agents')
-      .upsert({ id: userId, is_active: false });
+    // 2. Specialized Initialization for Delivery Agents
+    if (newRole === 'delivery') {
+      await supabaseAdmin.from('delivery_agents').upsert({ id: userId, is_active: false });
+    }
 
-    if (agentError) return NextResponse.json({ error: agentError.message }, { status: 500 });
+    // 3. Specialized Initialization for Vendors
+    if (newRole === 'vendor') {
+        const { data: existingBrand } = await supabaseAdmin.from('brands').select('id').eq('owner_id', userId).single();
+        if (!existingBrand) {
+            const { data: user } = await supabaseAdmin.from('users').select('name').eq('id', userId).single();
+            await supabaseAdmin.from('brands').insert({ 
+                owner_id: userId, 
+                name: user?.name ? `${user.name}'s Store` : 'New Vendor Store',
+                verification_status: 'verified',
+                verified: true,
+                fee_paid: true,
+                terms_accepted: true,
+                description: 'Manually initialized by admin.',
+                student_id_url: 'https://placeholder.com'
+            });
+        }
+    }
 
-    // 3. Update auth metadata
-    await supabaseAdmin.auth.admin.updateUserById(userId, {
-      user_metadata: { role: 'delivery' }
+    // 4. Update Auth metadata
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      user_metadata: { role: newRole }
     });
 
-    return NextResponse.json({ success: true, message: 'User promoted to Delivery Agent.' });
+    if (authError) return NextResponse.json({ error: authError.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: `User role updated to ${newRole}` });
   }
 
   if (action === 'delete_review') {
@@ -292,53 +314,6 @@ export async function POST(req: NextRequest) {
       .update({ is_featured: featured })
       .eq('id', productId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true });
-  }
-
-  if (action === 'update_user_role') {
-    const { userId, newRole } = body;
-    const currentAdmin = await verifyAdmin(req); // Double check for safety
-    
-    // Safety check: Don't allow an admin to demote themselves
-    if (currentAdmin?.id === userId && newRole !== 'admin') {
-      return NextResponse.json({ error: 'You cannot demote yourself.' }, { status: 400 });
-    }
-
-    // 1. Update public.users
-    const { error: profileError } = await supabaseAdmin
-      .from('users')
-      .update({ role: newRole })
-      .eq('id', userId);
-    
-    if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 });
-
-    // 2. Update Auth metadata (to ensure consistent session role)
-    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-      user_metadata: { role: newRole }
-    });
-
-    if (authError) return NextResponse.json({ error: authError.message }, { status: 500 });
-    
-    // Auto-create brand profile if none exists so they can bypass onboarding
-    if (newRole === 'vendor' || newRole === 'admin') {
-      const { data: existingBrand } = await supabaseAdmin.from('brands').select('id').eq('owner_id', userId).single();
-      if (!existingBrand) {
-        // Fetch user basic info
-        const { data: p } = await supabaseAdmin.from('users').select('name').eq('id', userId).single();
-        await supabaseAdmin.from('brands').insert({
-          owner_id: userId,
-          name: p?.name ? `${p.name}'s Store` : 'New Vendor Store',
-          category: 'Clothing',
-          verification_status: 'verified',
-          verified: true,
-          fee_paid: true,
-          terms_accepted: true,
-          description: 'A pre-approved vendor store.',
-          student_id_url: 'https://placeholder.com' // bypass null constraint if any
-        });
-      }
-    }
-
     return NextResponse.json({ success: true });
   }
 

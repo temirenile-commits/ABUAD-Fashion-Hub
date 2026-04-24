@@ -255,21 +255,29 @@ export default function AdminDashboard() {
                         <td>{new Date(u.created_at).toLocaleDateString()}</td>
                         <td>
                           <div className={styles.actionRow}>
-                            {u.role === 'customer' && (
+                            <select 
+                              className="input input-sm" 
+                              style={{ width: '120px', fontSize: '0.75rem' }}
+                              value={u.role}
+                              onChange={(e) => adminAction('update_user_role', { userId: u.id, newRole: e.target.value })}
+                              disabled={actionLoading === 'update_user_role' + u.id}
+                            >
+                              <option value="customer">Customer</option>
+                              <option value="vendor">Vendor</option>
+                              <option value="delivery">Delivery</option>
+                              <option value="admin">Admin</option>
+                            </select>
+
+                            {u.role !== 'admin' && (
                               <button 
-                                className="btn btn-primary btn-sm"
-                                onClick={() => adminAction('set_delivery_role', { userId: u.id })}
-                                disabled={actionLoading === 'set_delivery_role' + u.id}
+                                className="btn btn-ghost btn-sm" 
+                                style={{ color: '#ef4444' }} 
+                                onClick={() => adminAction('delete_user', { userId: u.id })}
+                                title="Delete User Permanently"
                               >
-                                {actionLoading === 'set_delivery_role' + u.id ? 'Wait...' : 'Make Agent'}
+                                <Trash2 size={14} />
                               </button>
                             )}
-                            {u.role === 'vendor' && !vendors.find(v => v.owner_id === u.id) && (
-                              <button className="btn btn-secondary btn-sm" onClick={() => adminAction('initialize_brand', { userId: u.id })} title="Create missing brand record">
-                                Initialize Store
-                              </button>
-                            )}
-                            {u.role !== 'admin' && <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => adminAction('delete_user', { userId: u.id })}><Trash2 size={14} /></button>}
                           </div>
                         </td>
                       </tr>
