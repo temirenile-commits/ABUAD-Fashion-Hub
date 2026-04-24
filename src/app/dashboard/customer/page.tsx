@@ -28,7 +28,14 @@ export default function CustomerDashboard() {
         .select(`
           *,
           products (title, media_urls),
-          brands (name)
+          brands (name),
+          deliveries (
+            id,
+            status,
+            agent_id,
+            delivery_code,
+            users:agent_id (id, name, phone)
+          )
         `)
         .eq('customer_id', session.user.id)
         .order('created_at', { ascending: false });
@@ -155,7 +162,28 @@ export default function CustomerDashboard() {
                     </div>
                   </div>
 
-                  {order.status === 'paid' && (
+                  {(order.status === 'ready' || order.status === 'picked_up' || order.status === 'in_transit') && order.deliveries?.[0] && (
+                    <div className={styles.deliveryStatusCard} style={{ marginTop: '1rem', background: 'var(--bg-200)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <p style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '0.85rem' }}>🚚 Dispatch Details</p>
+                          <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>{order.deliveries[0].users?.name || 'Assigning Agent...'}</p>
+                          <p style={{ fontSize: '0.8rem', color: 'var(--text-400)' }}>{order.deliveries[0].users?.phone}</p>
+                        </div>
+                        {order.deliveries[0].delivery_code && (
+                          <div style={{ textAlign: 'right' }}>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-400)' }}>Delivery Code</p>
+                            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '2px' }}>{order.deliveries[0].delivery_code}</span>
+                          </div>
+                        )}
+                      </div>
+                      <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--text-400)', background: 'var(--bg-300)', padding: '0.5rem', borderRadius: '4px' }}>
+                        💡 Give this code to the agent <strong>only</strong> when you receive your item.
+                      </p>
+                    </div>
+                  )}
+
+                  {order.status === 'paid' && !order.deliveries?.[0] && (
                     <div className={styles.escrowBanner}>
                       <Clock size={14} />
                       <span>Funds held in Escrow. Vendor is processing your order.</span>

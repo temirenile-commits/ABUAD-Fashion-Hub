@@ -8,7 +8,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
 
-type Tab = 'overview' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'notices';
+type Tab = 'overview' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices';
 
 async function adminFetch(path: string, options: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -39,24 +39,26 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
-  const [platformSettings, setPlatformSettings] = useState<any>({});
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [platformSettings, setPlatformSettings] = useState<any>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, vendorsRes, productsRes, usersRes, txRes, ordersRes, settingsRes] = await Promise.all([
+      const [statsRes, vendorsRes, productsRes, usersRes, txRes, ordersRes, reviewsRes, settingsRes] = await Promise.all([
         adminFetch('/api/admin?action=stats'),
         adminFetch('/api/admin?action=vendors'),
         adminFetch('/api/admin?action=products'),
         adminFetch('/api/admin?action=users'),
         adminFetch('/api/admin?action=transactions'),
         adminFetch('/api/admin?action=orders'),
+        adminFetch('/api/admin?action=reviews'),
         adminFetch('/api/admin?action=settings'),
       ]);
 
-      const [statsData, vendorsData, productsData, usersData, txData, ordersData, settingsData] = await Promise.all([
+      const [statsData, vendorsData, productsData, usersData, txData, ordersData, reviewsData, settingsData] = await Promise.all([
         statsRes.json(), vendorsRes.json(), productsRes.json(),
-        usersRes.json(), txRes.json(), ordersRes.json(), settingsRes.json(),
+        usersRes.json(), txRes.json(), ordersRes.json(), reviewsRes.json(), settingsRes.json(),
       ]);
 
       if (statsData.stats) setStats(statsData.stats);
@@ -65,6 +67,7 @@ export default function AdminDashboard() {
       if (usersData.users) setUsers(usersData.users);
       if (txData.transactions) setTransactions(txData.transactions);
       if (ordersData.orders) setOrders(ordersData.orders);
+      if (reviewsData.reviews) setReviews(reviewsData.reviews);
       if (settingsData.settings) setPlatformSettings(settingsData.settings);
     } catch (e) {
       console.error('Admin fetch error:', e);
@@ -120,6 +123,7 @@ export default function AdminDashboard() {
             ['orders', 'Orders', ShoppingCart],
             ['financials', 'Payouts', CreditCard],
             ['settings', 'Settings', Settings],
+            ['reviews', 'Reviews ⭐', Star],
             ['notices', 'Notices 📣', Bell],
           ] as [Tab, string, any][]).map(([id, label, Icon]) => (
             <button
@@ -247,20 +251,19 @@ export default function AdminDashboard() {
                       <tr key={u.id}>
                         <td>{u.name || '—'}</td>
                         <td>{u.email}</td>
-                        <td>
-                          <select 
-                            className={`badge badge-${u.role}`}
-                            value={u.role}
-                            onChange={(e) => adminAction('update_user_role', { userId: u.id, newRole: e.target.value })}
-                          >
-                            <option value="customer">CUSTOMER</option>
-                            <option value="vendor">VENDOR</option>
-                            <option value="admin">ADMIN</option>
-                          </select>
-                        </td>
-                        <td className={styles.subText}>{new Date(u.created_at).toLocaleDateString()}</td>
+                        <td><span className={`badge badge-${u.role}`}>{u.role}</span></td>
+                        <td>{new Date(u.created_at).toLocaleDateString()}</td>
                         <td>
                           <div className={styles.actionRow}>
+                            {u.role === 'customer' && (
+                              <button 
+                                className="btn btn-primary btn-sm"
+                                onClick={() => adminAction('set_delivery_role', { userId: u.id })}
+                                disabled={actionLoading === 'set_delivery_role' + u.id}
+                              >
+                                {actionLoading === 'set_delivery_role' + u.id ? 'Wait...' : 'Make Agent'}
+                              </button>
+                            )}
                             {u.role === 'vendor' && !vendors.find(v => v.owner_id === u.id) && (
                               <button className="btn btn-secondary btn-sm" onClick={() => adminAction('initialize_brand', { userId: u.id })} title="Create missing brand record">
                                 Initialize Store
@@ -428,6 +431,45 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'reviews' && (
+              <div className={styles.sectionCard}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr><th>User</th><th>Product</th><th>Rating</th><th>Comment</th><th>Date</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody>
+                    {filterBy(reviews, ['comment', 'users.name']).map(r => (
+                      <tr key={r.id}>
+                        <td>
+                          <div className={styles.subText}>{r.users?.name || 'Anonymous'}</div>
+                          <div className={styles.subText} style={{ fontSize: '0.7rem' }}>{r.users?.email}</div>
+                        </td>
+                        <td>{r.products?.title || 'Unknown Product'}</td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '2px' }}>
+                            {new Array(5).fill(0).map((_, i) => (
+                              <Star key={i} size={12} fill={i < r.rating ? "#c9a14a" : "none"} stroke={i < r.rating ? "#c9a14a" : "#ccc"} />
+                            ))}
+                          </div>
+                        </td>
+                        <td><div style={{ maxWidth: '250px', fontSize: '0.85rem' }}>{r.comment}</div></td>
+                        <td className={styles.subText}>{new Date(r.created_at).toLocaleDateString()}</td>
+                        <td>
+                          <button 
+                            className="btn btn-ghost btn-sm" 
+                            style={{ color: '#ef4444' }} 
+                            onClick={() => { if(confirm('Delete this review?')) adminAction('delete_review', { reviewId: r.id }) }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
 

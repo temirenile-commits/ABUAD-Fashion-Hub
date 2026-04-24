@@ -5,7 +5,7 @@ import { initializeTransaction } from '@/lib/paystack';
 export async function POST(req: Request) {
   const commissionRate = 0.075; // 7.5% platform fee
   try {
-    const { userId, items, totalAmount, shippingAddress, deliveryMethod } = await req.json();
+    const { userId, items, totalAmount, shippingAddress } = await req.json();
 
     if (!userId || !items || items.length === 0) {
       return NextResponse.json({ error: 'Invalid checkout payload' }, { status: 400 });
@@ -42,8 +42,9 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
-    // 2. Validate Totals & Calculate Fees
-    const deliveryFee = deliveryMethod === 'platform' ? 1500 : 0;
+    // 2. Validate Totals & Calculate Fees (Only Platform Delivery supported now)
+    const deliveryMethod = 'platform';
+    const deliveryFee = 1500;
     
     let calculatedSubtotal = 0;
     items.forEach((item: any) => {

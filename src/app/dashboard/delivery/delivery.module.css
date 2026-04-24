@@ -1,0 +1,174 @@
+.page {
+  display: flex;
+  gap: 2rem;
+  padding: 2rem 0 5rem;
+  min-height: calc(100vh - 80px);
+}
+
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.agentCard {
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  background: var(--grad-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  border: 4px solid var(--bg-300);
+}
+
+.statusToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.statusOnline {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.statusOffline {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.main {
+  flex: 1;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.card {
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+.deliveryItem {
+  background: var(--bg-100);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+}
+
+.deliveryItem:hover {
+  border-color: var(--primary);
+}
+
+.deliveryHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.pickup {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.dropoff {
+  background: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
+}
+
+.infoRow {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.infoRow span {
+  color: var(--text-400);
+}
+
+.actionArea {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.capacityInput {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--bg-300);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: #fff;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 900px) {
+  .page { flex-direction: column; }
+  .sidebar { width: 100%; }
+  .grid { grid-template-columns: 1fr; }
+}
+
+.agentName { font-size: 1.25rem; margin-bottom: 0.25rem; }
+.agentBadge { font-size: 0.8rem; color: var(--text-400); text-transform: uppercase; letter-spacing: 1px; }
+.cardTitle { font-size: 1rem; margin-bottom: 1rem; color: var(--text-200); }
+
+.tabs { display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border); }
+.tab { padding: 1rem 1.5rem; background: none; border: none; color: var(--text-400); cursor: pointer; position: relative; }
+.tabActive { color: var(--primary); font-weight: 700; }
+.tabActive::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--primary); }
+
+.emptyState { padding: 5rem 2rem; text-align: center; color: var(--text-400); display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+.tags { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+
+.infoBlock { background: var(--bg-300); padding: 1rem; border-radius: var(--radius-md); }
+.infoBlock h5 { font-size: 0.8rem; color: var(--text-400); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.contactLink { font-size: 0.8rem; color: var(--primary); display: flex; align-items: center; gap: 0.35rem; margin-top: 0.5rem; text-decoration: none; }
+
+.verifyGroup { display: flex; gap: 1rem; }
+.codeInput { flex: 1; padding: 0.75rem; background: var(--bg-300); border: 1px solid var(--border); border-radius: var(--radius-md); color: #fff; }
+
+.invoiceBtn { font-size: 0.85rem; color: var(--text-400); display: flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+.invoiceBtn:hover { color: var(--primary); }
+
+.spinner-full { display: flex; align-items: center; justify-content: center; min-height: 80vh; }

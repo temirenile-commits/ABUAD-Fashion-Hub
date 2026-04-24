@@ -151,6 +151,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ settings: settingsMap });
   }
 
+  if (action === 'reviews') {
+    const { data, error } = await supabaseAdmin
+      .from('reviews')
+      .select('*, users:user_id(name, email), products:product_id(title)')
+      .order('created_at', { ascending: false });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ reviews: data });
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }
 
@@ -238,6 +248,39 @@ export async function POST(req: NextRequest) {
     
     // Then delete from auth
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'set_delivery_role') {
+    const { userId } = body;
+    
+    // 1. Update public.users role
+    const { error: roleError } = await supabaseAdmin
+      .from('users')
+      .update({ role: 'delivery' })
+      .eq('id', userId);
+    
+    if (roleError) return NextResponse.json({ error: roleError.message }, { status: 500 });
+
+    // 2. Initialize delivery_agents record
+    const { error: agentError } = await supabaseAdmin
+      .from('delivery_agents')
+      .upsert({ id: userId, is_active: false });
+
+    if (agentError) return NextResponse.json({ error: agentError.message }, { status: 500 });
+
+    // 3. Update auth metadata
+    await supabaseAdmin.auth.admin.updateUserById(userId, {
+      user_metadata: { role: 'delivery' }
+    });
+
+    return NextResponse.json({ success: true, message: 'User promoted to Delivery Agent.' });
+  }
+
+  if (action === 'delete_review') {
+    const { reviewId } = body;
+    const { error } = await supabaseAdmin.from('reviews').delete().eq('id', reviewId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }

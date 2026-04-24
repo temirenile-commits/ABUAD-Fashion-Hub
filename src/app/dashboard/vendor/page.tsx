@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera, MapPin, Navigation } from 'lucide-react';
 import Papa from 'papaparse';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
@@ -189,7 +189,14 @@ export default function VendorDashboard() {
         .select(`
           *,
           products (title),
-          users:customer_id (id, name, email)
+          users:customer_id (id, name, email),
+          deliveries (
+            id,
+            status,
+            agent_id,
+            delivery_code,
+            users:agent_id (id, name, phone)
+          )
         `)
         .eq('brand_id', brandData.id)
         .order('created_at', { ascending: false });
@@ -1205,6 +1212,60 @@ export default function VendorDashboard() {
                     onBlur={(e) => handleUpdateSettings({ description: e.target.value })}
                   />
                 </div>
+
+                <div className={styles.settingsSection} style={{ marginTop: '2rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                    <MapPin size={22} color="var(--primary)" />
+                    <h3>Pickup Location</h3>
+                  </div>
+                  <p className={styles.formHint}>Set where delivery agents should pick up your goods.</p>
+                  
+                  <div className={styles.inputGroup}>
+                    <label>Campus Location Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Afe Babalola Hall, Block A" 
+                      defaultValue={brand.location_name}
+                      onBlur={(e) => handleUpdateSettings({ location_name: e.target.value })}
+                    />
+                  </div>
+
+                  <div className={styles.formRow}>
+                    <div className={styles.inputGroup}>
+                      <label>Latitude (GPS)</label>
+                      <input 
+                        type="number" 
+                        step="0.000001"
+                        placeholder="7.612..."
+                        defaultValue={brand.latitude}
+                        onBlur={(e) => handleUpdateSettings({ latitude: Number(e.target.value) })}
+                      />
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label>Longitude (GPS)</label>
+                      <input 
+                        type="number" 
+                        step="0.000001"
+                        placeholder="5.234..."
+                        defaultValue={brand.longitude}
+                        onBlur={(e) => handleUpdateSettings({ longitude: Number(e.target.value) })}
+                      />
+                    </div>
+                  </div>
+                  <button className="btn btn-ghost btn-sm" onClick={() => {
+                    if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition((pos) => {
+                        handleUpdateSettings({ 
+                          latitude: pos.coords.latitude, 
+                          longitude: pos.coords.longitude 
+                        });
+                        alert('Live location captured!');
+                      });
+                    }
+                  }}>
+                    <Navigation size={14} /> Use My Current Location
+                  </button>
+                </div>
               </div>
 
               {/* Payout Settings */}
@@ -1353,12 +1414,8 @@ export default function VendorDashboard() {
                         {order.status === 'processing' && (
                           <div className={styles.statusBox}>
                             <div className={styles.deliverySelector}>
-                              <p>Select Delivery Method:</p>
-                              <button className="btn btn-primary btn-sm" style={{ width: '100%', marginBottom: '0.5rem' }} onClick={() => updateOrderStatus(order.id, 'ready')}>Use Platform Delivery</button>
-                              <button className="btn btn-ghost btn-sm" style={{ width: '100%' }} onClick={() => {
-                                const track = prompt('Enter Tracking/Reference Number:');
-                                updateOrderStatus(order.id, 'in_transit', { trackingNumber: track || 'Self-delivery' });
-                              }}>I will Deliver Personally</button>
+                              <p>Dispatch Delivery Agent:</p>
+                              <button className="btn btn-primary btn-sm" style={{ width: '100%' }} onClick={() => updateOrderStatus(order.id, 'ready')}>Use Platform Delivery Agent</button>
                             </div>
                           </div>
                         )}
@@ -1372,6 +1429,16 @@ export default function VendorDashboard() {
                             <span className={`${styles.statusBadge} ${styles.statusWarning}`}>
                               <Clock size={14} /> Awaiting Pickup
                             </span>
+                          </div>
+                        )}
+                        {(order.status === 'ready' || order.status === 'picked_up' || order.status === 'in_transit') && order.deliveries?.[0] && (
+                          <div className={styles.agentInfo} style={{ marginTop: '0.5rem', background: 'var(--bg-300)', padding: '0.75rem', borderRadius: '8px', fontSize: '0.8rem' }}>
+                            <p style={{ color: 'var(--primary)', fontWeight: 700, marginBottom: '0.25rem' }}>🚚 Assigned Agent:</p>
+                            <p><strong>{order.deliveries[0].users?.name || 'Assigned'}</strong></p>
+                            <p>{order.deliveries[0].users?.phone}</p>
+                            {order.deliveries[0].status === 'picked_up' && (
+                              <p style={{ marginTop: '0.5rem', color: 'var(--success)' }}>Status: In Transit to Customer</p>
+                            )}
                           </div>
                         )}
                         {(order.status === 'picked_up' || order.status === 'in_transit') && (

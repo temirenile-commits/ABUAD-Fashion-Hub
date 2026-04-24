@@ -25,17 +25,11 @@ export async function POST(req: Request) {
       if (error) throw error;
     }
 
-    // Update followers count in brands (Atomic increment)
-    // For simplicity, we'll just recount
+    // Update is now handled by DB Triggers for atomicity and speed
     const { count } = await supabaseAdmin
       .from('follows')
       .select('*', { count: 'exact', head: true })
       .eq('brand_id', brandId);
-
-    await supabaseAdmin
-      .from('brands')
-      .update({ followers_count: count || 0 })
-      .eq('id', brandId);
 
     return NextResponse.json({ success: true, count: count || 0 });
   } catch (error: any) {

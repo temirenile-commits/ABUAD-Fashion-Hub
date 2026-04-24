@@ -158,7 +158,7 @@ export async function POST(req: Request) {
       const fulfillmentPromises = orders.map(async (order) => {
         // A. Parallel Fetch: Vendor Data & Stock Decrement
         const [{ data: brandData }, _] = await Promise.all([
-          supabaseAdmin.from('brands').select('owner_id, sales_count').eq('id', order.brand_id).single(),
+          supabaseAdmin.from('brands').select('owner_id, sales_count, latitude, longitude').eq('id', order.brand_id).single(),
           supabaseAdmin.rpc('decrement_product_stock', { prod_id: order.product_id, qty: order.quantity || 1 })
         ]);
 
@@ -212,6 +212,21 @@ export async function POST(req: Request) {
           supabaseAdmin.from('transactions').insert(transRecord),
           supabaseAdmin.from('notifications').insert(notifs)
         ]);
+
+        // F. LOGISTICS: Auto-Assignment
+        if (order.delivery_method === 'platform') {
+          // 1. Create the delivery record first
+          await supabaseAdmin.from('deliveries').insert({
+             order_id: order.id,
+             status: 'pending'
+          });
+
+          // 2. Assign to nearest agent
+          if (brandData?.latitude && brandData?.longitude) {
+            const { autoAssignDelivery } = await import('@/lib/logistics');
+            await autoAssignDelivery(order.id, Number(brandData.latitude), Number(brandData.longitude));
+          }
+        }
       });
 
       await Promise.all(fulfillmentPromises);
