@@ -110,8 +110,8 @@ export default function ProductCard({ product }: Props) {
 
         <div className={styles.footer}>
           <div className={styles.rating}>
-            <Star size={10} fill="currentColor" />
-            <span>{product.rating || 4.5}</span>
+            <Star size={10} fill="currentColor" color="var(--primary)" />
+            <span>{product.rating ? Number(product.rating).toFixed(1) : '0.0'}</span>
           </div>
           {product.stock_count > 0 ? (
             <button

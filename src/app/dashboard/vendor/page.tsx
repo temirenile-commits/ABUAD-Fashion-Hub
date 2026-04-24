@@ -229,9 +229,9 @@ export default function VendorDashboard() {
 
       // Fetch Reviews
       const { data: reviewData } = await supabase
-        .from('product_reviews')
-        .select('*, customer:customer_id(name), product:product_id(title)')
-        .in('product_id', productData ? productData.map(p => p.id) : []); // Only reviews for vendor's products
+        .from('reviews')
+        .select('*, user:user_id(name:full_name), product:product_id(title)')
+        .in('product_id', productData ? productData.map(p => p.id) : []); 
       setReviews(reviewData || []);
 
       // Fetch Platform Settings
@@ -1445,7 +1445,7 @@ export default function VendorDashboard() {
                   <div key={review.id} className={styles.reviewCard}>
                     <div className={styles.reviewHeader}>
                       <div className={styles.reviewMain}>
-                        <strong>{review.customer?.name}</strong> on <span>{review.product?.title}</span>
+                        <strong>{review.user?.name || 'Anonymous'}</strong> on <span>{review.product?.title}</span>
                         <div className={styles.stars}>
                           {new Array(5).fill(0).map((_, i) => (
                             <Star key={i} size={14} fill={i < review.rating ? "var(--secondary)" : "none"} stroke={i < review.rating ? "var(--secondary)" : "#ccc"} />

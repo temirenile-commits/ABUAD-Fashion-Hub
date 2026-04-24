@@ -19,13 +19,26 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
 
     // --- INITIAL DATA FETCH ---
     const fetchInitialData = async () => {
-      // Products
+      // Products joined with stats
       const { data: prodData } = await supabase
         .from('products')
-        .select(`*, brands(*)`)
+        .select(`
+          *, 
+          brands(*),
+          product_stats!inner(*)
+        `)
         .order('created_at', { ascending: false });
 
-      if (active && prodData) setProducts(prodData as any);
+      if (active && prodData) {
+        // Flatten the stats into the product object
+        const enriched = prodData.map((p: any) => ({
+          ...p,
+          rating: p.product_stats?.avg_rating || 0,
+          reviews: p.product_stats?.review_count || 0,
+          wishlist_count: p.product_stats?.wishlist_count || 0
+        }));
+        setProducts(enriched);
+      }
 
       // Brands (Vendors)
       const { data: brandData } = await supabase

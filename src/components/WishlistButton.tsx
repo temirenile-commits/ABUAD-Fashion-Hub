@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Heart } from 'lucide-react';
+import { Heart, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface Props {
   productId: string;
@@ -10,34 +11,61 @@ interface Props {
 
 export default function WishlistButton({ productId, size = 16, className }: Props) {
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('wishlist');
-    if (saved) {
-      const list = JSON.parse(saved);
-      if (list.includes(productId)) setIsWishlisted(true);
-    }
+    const checkStatus = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setLoading(false);
+        return;
+      }
+
+      const { data } = await supabase
+        .from('wishlists')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('product_id', productId)
+        .single();
+      
+      if (data) setIsWishlisted(true);
+      setLoading(false);
+    };
+    checkStatus();
   }, [productId]);
 
-  const toggleWishlist = (e: React.MouseEvent) => {
+  const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const saved = localStorage.getItem('wishlist');
-    let list = saved ? JSON.parse(saved) : [];
-    if (list.includes(productId)) {
-      list = list.filter((id: string) => id !== productId);
-      setIsWishlisted(false);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return alert('Please login to wishlist items!');
+
+    setProcessing(true);
+    if (isWishlisted) {
+      const { error } = await supabase
+        .from('wishlists')
+        .delete()
+        .eq('user_id', session.user.id)
+        .eq('product_id', productId);
+      if (!error) setIsWishlisted(false);
     } else {
-      list.push(productId);
-      setIsWishlisted(true);
+      const { error } = await supabase
+        .from('wishlists')
+        .insert({ user_id: session.user.id, product_id: productId });
+      if (!error) setIsWishlisted(true);
     }
-    localStorage.setItem('wishlist', JSON.stringify(list));
+    setProcessing(false);
   };
+
+  if (loading) return null;
 
   return (
     <button 
       className={className}
       onClick={toggleWishlist}
+      disabled={processing}
       aria-label="Toggle wishlist"
       style={!className ? {
         position: 'absolute', top: '0.5rem', right: '0.5rem', zIndex: 10, 
@@ -47,7 +75,11 @@ export default function WishlistButton({ productId, size = 16, className }: Prop
         cursor: 'pointer', color: isWishlisted ? '#ef4444' : '#fff'
       } : undefined}
     >
-      <Heart size={size} fill={isWishlisted ? "#ef4444" : "none"} color={isWishlisted ? "#ef4444" : "currentColor"} />
+      {processing ? (
+        <Loader2 size={size} className="animate-spin" />
+      ) : (
+        <Heart size={size} fill={isWishlisted ? "#ef4444" : "none"} color={isWishlisted ? "#ef4444" : "currentColor"} />
+      )}
     </button>
   );
 }

@@ -17,6 +17,7 @@ import ViewTracker from '@/components/ViewTracker';
 import { formatPrice, getDiscount } from '@/lib/utils';
 import ProductEnquiry from '@/components/ProductEnquiry';
 import WishlistButton from '@/components/WishlistButton';
+import ReviewSection from '@/components/ReviewSection';
 import styles from './product.module.css';
 
 interface Props {
@@ -60,8 +61,16 @@ export default async function ProductPage({ params }: Props) {
 
   if (error || !productData) notFound();
 
+  // Fetch real-time stats
+  const { data: statsData } = await supabaseAdmin
+    .from('product_stats')
+    .select('*')
+    .eq('product_id', id)
+    .single();
+
   const product = productData as unknown as LiveProduct;
   const vendor = product.brands;
+  const stats = statsData || { avg_rating: 0, review_count: 0, wishlist_count: 0 };
   
   const discount = product.original_price
     ? getDiscount(product.price, product.original_price)
@@ -154,21 +163,21 @@ export default async function ProductPage({ params }: Props) {
 
             <h1 className={styles.productTitle}>{product.title}</h1>
 
-            {/* Rating Placeholder */}
+            {/* Rating Section (Real-time) */}
             <div className={styles.ratingRow}>
               <div className="stars">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <Star
                     key={s}
                     size={14}
-                    fill={s <= 4 ? 'currentColor' : 'none'}
-                    className={s <= 4 ? 'star-filled' : 'star-empty'}
+                    fill={s <= Math.round(stats.avg_rating) ? 'var(--primary)' : 'none'}
+                    color={s <= Math.round(stats.avg_rating) ? 'var(--primary)' : '#444'}
                   />
                 ))}
               </div>
-              <span className={styles.ratingNum}>4.5</span>
-              <span className={styles.ratingCount}>12 reviews</span>
-              <span className={styles.sold}>5 sold</span>
+              <span className={styles.ratingNum}>{stats.avg_rating || '0.0'}</span>
+              <span className={styles.ratingCount}>{stats.review_count} reviews</span>
+              <span className={styles.sold}>{product.sales_count || 0} sold</span>
             </div>
 
             {/* Price */}
@@ -251,6 +260,11 @@ export default async function ProductPage({ params }: Props) {
               <span className={styles.vendorMiniArrow}>→</span>
             </Link>
           </div>
+        </div>
+
+        {/* Real Customer Reviews Section */}
+        <div id="reviews">
+          <ReviewSection productId={product.id} />
         </div>
 
         {/* Related Products */}
