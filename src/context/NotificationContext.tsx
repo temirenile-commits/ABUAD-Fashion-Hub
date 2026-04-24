@@ -147,6 +147,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }, (payload) => {
           const status: string = payload.new.status ?? '';
           const labels: Record<string, string> = {
+            paid: '💰 Payment Secured! The vendor has been notified.',
             in_transit: '🚚 Your order is on the way!',
             delivered: '📦 Your order has been delivered! Confirm receipt to release payment.',
             confirmed: '✅ Delivery confirmed. Thank you!',

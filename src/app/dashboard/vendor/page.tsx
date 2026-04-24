@@ -166,6 +166,23 @@ export default function VendorDashboard() {
 
       setBrand(brandData);
 
+      // Check for payment status in URL
+      const searchParams = new URLSearchParams(window.location.search);
+      const payRef = searchParams.get('ref') || searchParams.get('reference');
+      if (payRef) {
+        // Clear the URL to avoid repeated alerts
+        window.history.replaceState({}, '', window.location.pathname);
+        
+        // Wait for webhook (3s), then re-fetch brand to check status
+        setTimeout(async () => {
+          const { data: brandUpdate } = await supabase.from('brands').select('subscription_tier, fee_paid').eq('id', brandData.id).single();
+          if (brandUpdate?.fee_paid || (brandUpdate?.subscription_tier && brandUpdate.subscription_tier !== 'free')) {
+            alert('🎉 Payment Successfully Verified! Your account has been updated.');
+          } else {
+            alert('⚠️ Payment Incomplete: We couldn\'t verify your payment. If you were debited, please contact support.');
+          }
+        }, 3000);
+      }
       // Fetch Orders initially, then pass to store
       const { data: ordersData } = await supabase
         .from('orders')

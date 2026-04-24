@@ -135,7 +135,12 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
             }
             if (payload.eventType === 'UPDATE') {
               updateOrder(payload.new.id, payload.new);
-              toast(`Order status changed to ${payload.new.status}`, { icon: '🔄' });
+              const status = payload.new.status;
+              if (status === 'paid') {
+                toast.success('Payment Verified! Your order is now live.', { icon: '💰' });
+              } else {
+                toast(`Order status changed to ${status}`, { icon: '🔄' });
+              }
             }
           }
         ).subscribe();
