@@ -234,11 +234,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
-  if (action === 'deactivate_user') {
+  if (action === 'block_user') {
     const { userId } = body;
-    const { error } = await supabaseAdmin.from('users').update({ status: 'deactivated' }).eq('id', userId);
+    const { error } = await supabaseAdmin.from('users').update({ status: 'blocked' }).eq('id', userId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true, message: 'User account deactivated.' });
+    return NextResponse.json({ success: true, message: 'User has been blocked.' });
+  }
+
+  if (action === 'unblock_user') {
+    const { userId } = body;
+    const { error } = await supabaseAdmin.from('users').update({ status: 'active' }).eq('id', userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'User has been unblocked.' });
   }
 
   if (action === 'delete_user') {
@@ -249,11 +256,11 @@ export async function POST(req: NextRequest) {
     
     if (profileError) {
       if (profileError.message.includes('foreign key constraint')) {
-        // Fallback: Just deactivate them
-        await supabaseAdmin.from('users').update({ status: 'deactivated' }).eq('id', userId);
+        // Fallback: Just block them if deletion fails due to history
+        await supabaseAdmin.from('users').update({ status: 'blocked' }).eq('id', userId);
         return NextResponse.json({ 
             success: true, 
-            message: 'User could not be deleted due to order history. They have been Deactivated instead.' 
+            message: 'User has active orders/brands and cannot be deleted. They have been BLOCKED instead to protect your records.' 
         });
       }
       return NextResponse.json({ error: profileError.message }, { status: 500 });

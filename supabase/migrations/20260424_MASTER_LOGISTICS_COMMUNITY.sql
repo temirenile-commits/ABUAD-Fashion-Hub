@@ -14,7 +14,10 @@ BEGIN
 
     -- Add Status Column
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'status') THEN
-        ALTER TABLE public.users ADD COLUMN status TEXT DEFAULT 'active' CHECK (status IN ('active', 'deactivated', 'suspended'));
+        ALTER TABLE public.users ADD COLUMN status TEXT DEFAULT 'active' CHECK (status IN ('active', 'deactivated', 'suspended', 'blocked'));
+    ELSE
+        ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_status_check;
+        ALTER TABLE public.users ADD CONSTRAINT users_status_check CHECK (status IN ('active', 'deactivated', 'suspended', 'blocked'));
     END IF;
 END $$;
 

@@ -270,14 +270,35 @@ export default function AdminDashboard() {
                             </select>
 
                             {u.role !== 'admin' && (
-                              <button 
-                                className="btn btn-ghost btn-sm" 
-                                style={{ color: '#ef4444' }} 
-                                onClick={() => adminAction('delete_user', { userId: u.id })}
-                                title="Delete User Permanently"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                                {u.status === 'blocked' ? (
+                                  <button 
+                                    className="btn btn-ghost btn-sm" 
+                                    style={{ color: '#10b981' }} 
+                                    onClick={() => adminAction('unblock_user', { userId: u.id })}
+                                    title="Unblock User"
+                                  >
+                                    <CheckCircle size={14} />
+                                  </button>
+                                ) : (
+                                  <button 
+                                    className="btn btn-ghost btn-sm" 
+                                    style={{ color: '#f59e0b' }} 
+                                    onClick={() => adminAction('block_user', { userId: u.id })}
+                                    title="Block User"
+                                  >
+                                    <XCircle size={14} />
+                                  </button>
+                                )}
+                                <button 
+                                  className="btn btn-ghost btn-sm" 
+                                  style={{ color: '#ef4444' }} 
+                                  onClick={() => { if(confirm('Permanently delete this user? This cannot be undone.')) adminAction('delete_user', { userId: u.id }) }}
+                                  title="Delete User Permanently"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
                             )}
                           </div>
                         </td>
