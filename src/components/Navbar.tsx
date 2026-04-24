@@ -77,7 +77,7 @@ export default function Navbar() {
     { href: '/services', label: 'Services', icon: <Layers size={16} /> },
   ];
 
-  const dashboardLink = role === 'vendor' ? '/dashboard/vendor' : '/dashboard/customer';
+  const dashboardLink = role === 'vendor' ? '/dashboard/vendor' : role === 'delivery' ? '/dashboard/delivery' : '/dashboard/customer';
 
   return (
     <header className={styles.header}>
@@ -173,6 +173,12 @@ export default function Navbar() {
                   <Link href="/dashboard/vendor" className={styles.moduleItem}>
                     <Store size={18} />
                     <span>Vendor Dashboard</span>
+                  </Link>
+                )}
+                {role === 'delivery' && (
+                  <Link href="/dashboard/delivery" className={styles.moduleItem}>
+                    <ShoppingBag size={18} />
+                    <span>Agent Dashboard</span>
                   </Link>
                 )}
                 <Link href="https://wa.me/2347045592604" target="_blank" className={styles.moduleItem}>

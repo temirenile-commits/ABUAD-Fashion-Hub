@@ -234,14 +234,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  if (action === 'deactivate_user') {
+    const { userId } = body;
+    const { error } = await supabaseAdmin.from('users').update({ status: 'deactivated' }).eq('id', userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'User account deactivated.' });
+  }
+
   if (action === 'delete_user') {
     const { userId } = body;
-    // Attempt to delete from public.users first
+    
+    // First try to delete from public.users (triggers FK errors if dependencies exist)
     const { error: profileError } = await supabaseAdmin.from('users').delete().eq('id', userId);
     
     if (profileError) {
       if (profileError.message.includes('foreign key constraint')) {
-        return NextResponse.json({ error: 'User has active dependencies (orders/brands). Disable user instead of deleting.' }, { status: 400 });
+        // Fallback: Just deactivate them
+        await supabaseAdmin.from('users').update({ status: 'deactivated' }).eq('id', userId);
+        return NextResponse.json({ 
+            success: true, 
+            message: 'User could not be deleted due to order history. They have been Deactivated instead.' 
+        });
       }
       return NextResponse.json({ error: profileError.message }, { status: 500 });
     }
@@ -249,7 +262,7 @@ export async function POST(req: NextRequest) {
     // Then delete from auth
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: 'User deleted successfully.' });
   }
 
   if (action === 'update_user_role') {

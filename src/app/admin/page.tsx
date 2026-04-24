@@ -244,7 +244,7 @@ export default function AdminDashboard() {
               <div className={styles.sectionCard}>
                 <table className={styles.table}>
                   <thead>
-                    <tr><th>User</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr>
+                    <tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {filterBy(users, ['name', 'email']).map(u => (
@@ -252,6 +252,7 @@ export default function AdminDashboard() {
                         <td>{u.name || '—'}</td>
                         <td>{u.email}</td>
                         <td><span className={`badge badge-${u.role}`}>{u.role}</span></td>
+                        <td><span className={`badge badge-${u.status || 'active'}`}>{u.status || 'active'}</span></td>
                         <td>{new Date(u.created_at).toLocaleDateString()}</td>
                         <td>
                           <div className={styles.actionRow}>
