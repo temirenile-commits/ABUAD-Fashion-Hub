@@ -152,6 +152,17 @@ export default function Navbar() {
             {/* The Options Module Dropdown */}
             {menuOpen && (
               <div className={styles.optionsModule} onClick={() => setMenuOpen(false)}>
+                {/* Main Nav Links (Mobile Only or Always for consistency) */}
+                <div className={styles.mobileOnlyLinks}>
+                  {navLinks.map(link => (
+                    <Link key={link.href} href={link.href} className={styles.moduleItem}>
+                      {link.icon}
+                      <span>{link.label}</span>
+                    </Link>
+                  ))}
+                  <div className={styles.moduleDivider} />
+                </div>
+
                 {role === 'admin' && (
                   <Link href="/admin" className={`${styles.moduleItem} ${styles.adminModuleLink}`}>
                     <ShieldCheck size={18} />
@@ -185,10 +196,16 @@ export default function Navbar() {
                     <span>Logout</span>
                   </button>
                 ) : (
-                  <Link href="/auth/login" className={styles.moduleItem}>
-                    <LogOut size={18} />
-                    <span>Login</span>
-                  </Link>
+                  <>
+                    <Link href="/auth/login" className={styles.moduleItem}>
+                      <User size={18} />
+                      <span>Login</span>
+                    </Link>
+                    <Link href="/auth/register" className={styles.moduleItem}>
+                      <ShieldCheck size={18} />
+                      <span>Join Free</span>
+                    </Link>
+                  </>
                 )}
               </div>
             )}
@@ -208,56 +225,6 @@ export default function Navbar() {
           ))}
         </div>
       </div>
-
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className={styles.mobileMenu}>
-          {navLinks.map(link => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={styles.mobileLink}
-              onClick={() => setMenuOpen(false)}
-            >
-              {link.icon} {link.label}
-            </Link>
-          ))}
-          <div className={styles.mobileDivider} />
-          {user ? (
-            <>
-              {role === 'admin' && (
-                <Link href="/admin" className={styles.mobileLink} onClick={() => setMenuOpen(false)} style={{ color: 'var(--accent-gold)' }}>
-                  <ShieldCheck size={16} /> Admin Panel
-                </Link>
-              )}
-              {(role === 'vendor' || role === 'admin') ? (
-                <Link href="/dashboard/vendor" className={styles.mobileLink} onClick={() => setMenuOpen(false)} style={{ color: 'var(--primary)' }}>
-                  <Store size={16} /> Vendor Dashboard
-                </Link>
-              ) : (
-                <Link href={dashboardLink} className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
-                  <LayoutDashboard size={16} /> Dashboard
-                </Link>
-              )}
-              <button 
-                onClick={() => { handleLogout(); setMenuOpen(false); }} 
-                className={`${styles.mobileLink} ${styles.logoutBtn}`}
-              >
-                <LogOut size={16} /> Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link href="/auth/login" className="btn btn-ghost" onClick={() => setMenuOpen(false)}>
-                Login
-              </Link>
-              <Link href="/auth/register" className="btn btn-primary" onClick={() => setMenuOpen(false)}>
-                Join Free
-              </Link>
-            </>
-          )}
-        </div>
-      )}
     </header>
   );
 }
