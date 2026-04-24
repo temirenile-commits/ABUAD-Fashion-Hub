@@ -3,7 +3,10 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { initializeTransaction } from '@/lib/paystack';
 
 export async function POST(req: Request) {
-  const commissionRate = 0.075; // 7.5% platform fee
+  // Default fallbacks
+  let commissionRate = 0.075; 
+  let deliveryFee = 1500;
+
   try {
     const { userId, items, totalAmount, shippingAddress } = await req.json();
 
@@ -11,10 +14,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid checkout payload' }, { status: 400 });
     }
 
-    // 0. Parallel Fetching for speed (Verify items and User profile)
+    // 0. Parallel Fetching for speed (Verify items, User profile, and Platform Fees)
     const productIds = items.map((i: any) => i.productId);
     
-    const [productsResult, profileResult] = await Promise.all([
+    const [productsResult, profileResult, settingsResult] = await Promise.all([
       supabaseAdmin
         .from('products')
         .select('id, brand_id, price, stock_count, brands(verified, fee_paid)')
@@ -23,11 +26,22 @@ export async function POST(req: Request) {
         .from('users')
         .select('email')
         .eq('id', userId)
+        .single(),
+      supabaseAdmin
+        .from('platform_settings')
+        .select('value')
+        .eq('key', 'platform_fees')
         .single()
     ]);
 
     const liveProducts = productsResult.data;
     const userProfile = profileResult.data;
+    const fees = settingsResult.data?.value as any;
+
+    if (fees) {
+        deliveryFee = fees.delivery_fee || 1500;
+        commissionRate = (fees.commission_rate || 7.5) / 100;
+    }
 
     if (!liveProducts || liveProducts.length === 0) {
       return NextResponse.json({ error: 'STALE_CART_ITEMS' }, { status: 400 });
@@ -44,7 +58,6 @@ export async function POST(req: Request) {
 
     // 2. Validate Totals & Calculate Fees (Only Platform Delivery supported now)
     const deliveryMethod = 'platform';
-    const deliveryFee = 1500;
     
     let calculatedSubtotal = 0;
     items.forEach((item: any) => {

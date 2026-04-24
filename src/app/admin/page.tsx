@@ -440,6 +440,35 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </div>
+
+                <div style={{ marginTop: '3rem' }}>
+                  <h3>Platform Fees & Commission</h3>
+                  <div className={styles.settingsGrid}>
+                    <div className={styles.settingsBox}>
+                      <label>Platform Delivery Fee (₦)</label>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input 
+                          type="number" 
+                          value={platformSettings.platform_fees?.delivery_fee || 0} 
+                          onChange={(e) => setPlatformSettings({ ...platformSettings, platform_fees: { ...platformSettings.platform_fees, delivery_fee: Number(e.target.value) } })}
+                        />
+                        <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_settings', { key: 'platform_fees', value: platformSettings.platform_fees })}>Save</button>
+                      </div>
+                    </div>
+                    <div className={styles.settingsBox}>
+                      <label>Platform Commission (%)</label>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input 
+                          type="number" 
+                          value={platformSettings.platform_fees?.commission_rate || 0} 
+                          onChange={(e) => setPlatformSettings({ ...platformSettings, platform_fees: { ...platformSettings.platform_fees, commission_rate: Number(e.target.value) } })}
+                        />
+                        <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_settings', { key: 'platform_fees', value: platformSettings.platform_fees })}>Save</button>
+                      </div>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '1rem' }}>Note: Commission is deducted from the vendor's total earning on each sale.</p>
+                </div>
               </div>
             )}
 

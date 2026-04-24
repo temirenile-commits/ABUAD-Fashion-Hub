@@ -17,7 +17,8 @@ INSERT INTO public.platform_settings (key, value) VALUES
   {"id": "boost_month", "name": "1-Month Homepage Boost", "emoji": "🔥", "price": 3000, "desc": "Top featured placement for 30 days", "duration": "30 days", "popular": true},
   {"id": "boost_top", "name": "Priority Top Slot", "emoji": "🏆", "price": 5000, "desc": "Pin your store at #1 position for 7 days", "duration": "7 days (prime)"}
 ]'::jsonb),
-('activation_fee', '{"amount": 2000}'::jsonb)
+('activation_fee', '{"amount": 2000}'::jsonb),
+('platform_fees', '{"delivery_fee": 1500, "commission_rate": 10}'::jsonb)
 ON CONFLICT (key) DO NOTHING;
 
 -- Policies
