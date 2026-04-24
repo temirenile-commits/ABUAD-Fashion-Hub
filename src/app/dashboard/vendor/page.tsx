@@ -13,7 +13,7 @@ import styles from './dashboard.module.css';
 
 // Icons mapper for dynamic rates
 const getIcon = (id: string) => {
-  switch(id) {
+  switch (id) {
     case 'quarter': return <Target size={24} color="#3b82f6" />;
     case 'half': return <Rocket size={24} color="var(--primary)" />;
     case 'full': return <Crown size={24} color="#f59e0b" />;
@@ -36,7 +36,7 @@ export default function VendorDashboard() {
   const [userRole, setUserRole] = useState<string | null>(null);
 
   // Subscription & Trial Logic
-  const trialDaysLeft = brand?.trial_started_at 
+  const trialDaysLeft = brand?.trial_started_at
     ? Math.max(0, 7 - Math.floor((new Date().getTime() - new Date(brand.trial_started_at).getTime()) / (1000 * 60 * 60 * 24)))
     : 0;
 
@@ -58,24 +58,24 @@ export default function VendorDashboard() {
     }
   }, [brand]);
   const isTrialActive = trialDaysLeft > 0;
-  
-  const isSubActive = brand?.subscription_expires_at 
+
+  const isSubActive = brand?.subscription_expires_at
     ? new Date(brand.subscription_expires_at).getTime() > new Date().getTime()
     : false;
 
   const currentTier = userRole === 'admin' ? 'full' : (isTrialActive ? 'full' : (isSubActive ? (brand?.subscription_tier || 'free') : 'free'));
-  
+
   const productLimit = (userRole === 'admin' || isTrialActive) ? 999999 : (isSubActive ? (brand?.max_products || 10) : 0);
   const reelLimit = (userRole === 'admin' || isTrialActive) ? 999999 : (isSubActive ? (brand?.max_reels || 1) : 0);
-  
+
   const canAccessAnalytics = userRole === 'admin' || currentTier !== 'free';
   const canAccessPromoCodes = userRole === 'admin' || ['half', 'full'].includes(currentTier);
-  
+
   // Real-time states
   const { products: allProducts, orders: allOrders, setOrders: setGlobalOrders, addProduct, updateOrder, updateProduct: updateGlobalProduct } = useMarketplaceStore();
-  
+
   const products = brand ? allProducts.filter(p => p.brand_id === brand.id) : [];
-  const orders = brand ? allOrders.filter(o => o.brand_id === brand.id).sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
+  const orders = brand ? allOrders.filter(o => o.brand_id === brand.id).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
 
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
@@ -84,14 +84,14 @@ export default function VendorDashboard() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [enquiries, setEnquiries] = useState<any[]>([]);
   const [reels, setReels] = useState<any[]>([]);
-  
+
   // New States for Advanced Features
   const [isSettingsLoading, setIsSettingsLoading] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [uploadingReel, setUploadingReel] = useState(false);
   const [promoCodes, setPromoCodes] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
-  
+
   const [newProduct, setNewProduct] = useState({
     title: '',
     description: '',
@@ -166,7 +166,8 @@ export default function VendorDashboard() {
         .from('orders')
         .select(`
           *,
-          products (title)
+          products (title),
+          users:customer_id (id, name, email)
         `)
         .eq('brand_id', brandData.id)
         .order('created_at', { ascending: false });
@@ -203,7 +204,7 @@ export default function VendorDashboard() {
         .from('products')
         .select('*')
         .eq('brand_id', brandData.id);
-      
+
       setReels(reelData || []);
 
       // Fetch Withdrawal Requests
@@ -285,8 +286,8 @@ export default function VendorDashboard() {
   const handleProductMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     if (!brand) {
-       alert('⚠️ Error: Your Brand profile is not initialized. Please go to "Overview" and complete your store setup first!');
-       return;
+      alert('⚠️ Error: Your Brand profile is not initialized. Please go to "Overview" and complete your store setup first!');
+      return;
     }
     setUploadingMedia(true);
 
@@ -315,7 +316,7 @@ export default function VendorDashboard() {
       ...prev,
       mediaUrls: [...prev.mediaUrls, ...uploadedUrls]
     }));
-    
+
     if (uploadedUrls.length > 0) {
       alert(`Successfully attached ${uploadedUrls.length} file(s) to your product.`);
     }
@@ -324,7 +325,7 @@ export default function VendorDashboard() {
 
   const handleReelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0] || !brand) return;
-    
+
     if (reels.length >= reelLimit) {
       alert(`You have reached your limit of ${reelLimit} reels. Upgrade your power level to upload more!`);
       setActiveTab('plans');
@@ -381,10 +382,10 @@ export default function VendorDashboard() {
         setIsAddingProduct(false);
         // Optimistic UI Update directly into global store
         addProduct({
-           ...data.product,
-           brands: brand
+          ...data.product,
+          brands: brand
         });
-        
+
         setNewProduct({
           title: '',
           description: '',
@@ -419,11 +420,11 @@ export default function VendorDashboard() {
       const res = await fetch('/api/orders/status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          orderId, 
-          status: newStatus, 
+        body: JSON.stringify({
+          orderId,
+          status: newStatus,
           vendorId: session.user.id,
-          ...extraData 
+          ...extraData
         })
       });
       const data = await res.json();
@@ -447,7 +448,7 @@ export default function VendorDashboard() {
     e.preventDefault();
     if (!brand) return;
     const amount = (e.target as any).amount.value;
-    
+
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -489,7 +490,7 @@ export default function VendorDashboard() {
       const res = await fetch('/api/vendor/subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           userId: session.user.id,
           brandId: brand.id,
           tierId: tier.id,
@@ -519,7 +520,7 @@ export default function VendorDashboard() {
     try {
       const { url, error } = await uploadFile(file, 'brand-logos', `logo-${brand.id}`);
       if (error) throw new Error(error);
-      
+
       await handleUpdateSettings({ logo_url: url });
     } catch (err: any) {
       alert('Error updating logo: ' + err.message);
@@ -626,7 +627,7 @@ export default function VendorDashboard() {
   const handleBulkUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
-    
+
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
@@ -655,11 +656,11 @@ export default function VendorDashboard() {
   const handlePrintInvoice = (order: any) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
-    
+
     const html = `
       <html>
         <head>
-          <title>Invoice - ${order.id.slice(0,8)}</title>
+          <title>Invoice - ${order.id.slice(0, 8)}</title>
           <style>
             body { font-family: sans-serif; padding: 40px; color: #333; }
             .header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 20px; }
@@ -720,41 +721,41 @@ export default function VendorDashboard() {
 
       <aside className={styles.sidebar}>
         <header className={styles.header}>
-        <div className={styles.brandInfo}>
-          <div className={`${styles.logo} ${uploadingLogo ? 'anim-pulse' : ''}`} style={{ cursor: 'pointer', overflow: 'hidden', position: 'relative' }} title="Change Logo" onClick={() => document.getElementById('logoInput')?.click()}>
-            {brand?.logo_url ? (
-              <img src={brand.logo_url} alt={brand?.name || 'Brand'} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
-            ) : (brand?.name || 'AF').substring(0, 2).toUpperCase()}
-            {uploadingLogo && (
-              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Loader2 size={16} className="anim-spin" />
-              </div>
-            )}
-            <input type="file" id="logoInput" hidden accept="image/*" onChange={handleLogoUpdate} />
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {isEditingName ? (
-                <div style={{ display: 'flex', gap: '0.3rem' }}>
-                  <input 
-                    className="input-sm" 
-                    value={tempName} 
-                    onChange={e => setTempName(e.target.value)}
-                    autoFocus
-                    onKeyDown={e => e.key === 'Enter' && handleNameUpdate()}
-                  />
-                  <button className="btn btn-primary btn-sm" onClick={handleNameUpdate}><CheckCircle size={14} /></button>
+          <div className={styles.brandInfo}>
+            <div className={`${styles.logo} ${uploadingLogo ? 'anim-pulse' : ''}`} style={{ cursor: 'pointer', overflow: 'hidden', position: 'relative' }} title="Change Logo" onClick={() => document.getElementById('logoInput')?.click()}>
+              {brand?.logo_url ? (
+                <img src={brand.logo_url} alt={brand?.name || 'Brand'} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+              ) : (brand?.name || 'AF').substring(0, 2).toUpperCase()}
+              {uploadingLogo && (
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Loader2 size={16} className="anim-spin" />
                 </div>
-              ) : (
-                <>
-                  <h2 className={styles.brandName} style={{ cursor: 'pointer' }} onClick={() => setIsEditingName(true)} title="Change Name">{brand?.name || 'Brand Portal'}</h2>
-                  <Edit3 size={14} className={styles.editIcon} onClick={() => setIsEditingName(true)} style={{ cursor: 'pointer', opacity: 0.5 }} />
-                </>
               )}
+              <input type="file" id="logoInput" hidden accept="image/*" onChange={handleLogoUpdate} />
             </div>
-            <div className={styles.brandType}>
-              <span className="badge badge-teal">{brand?.brand_type || 'Fashion'}</span>
-            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {isEditingName ? (
+                  <div style={{ display: 'flex', gap: '0.3rem' }}>
+                    <input
+                      className="input-sm"
+                      value={tempName}
+                      onChange={e => setTempName(e.target.value)}
+                      autoFocus
+                      onKeyDown={e => e.key === 'Enter' && handleNameUpdate()}
+                    />
+                    <button className="btn btn-primary btn-sm" onClick={handleNameUpdate}><CheckCircle size={14} /></button>
+                  </div>
+                ) : (
+                  <>
+                    <h2 className={styles.brandName} style={{ cursor: 'pointer' }} onClick={() => setIsEditingName(true)} title="Change Name">{brand?.name || 'Brand Portal'}</h2>
+                    <Edit3 size={14} className={styles.editIcon} onClick={() => setIsEditingName(true)} style={{ cursor: 'pointer', opacity: 0.5 }} />
+                  </>
+                )}
+              </div>
+              <div className={styles.brandType}>
+                <span className="badge badge-teal">{brand?.brand_type || 'Fashion'}</span>
+              </div>
             </div>
           </div>
         </header>
@@ -764,7 +765,7 @@ export default function VendorDashboard() {
             <Home size={18} /> Marketplace Hub
           </Link>
           <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '1rem' }} />
-          
+
           <button className={`${styles.navItem} ${activeTab === 'overview' ? styles.navActive : ''}`} onClick={() => setActiveTab('overview')}>
             <TrendingUp size={18} /> Overview
           </button>
@@ -802,7 +803,7 @@ export default function VendorDashboard() {
           <button className={`${styles.navItem} ${activeTab === 'plans' ? styles.navActive : ''}`} onClick={() => setActiveTab('plans')} style={{ color: 'var(--primary)', background: activeTab === 'plans' ? 'var(--primary-soft)' : 'transparent' }}>
             <Crown size={18} /> Plans & Upgrade
           </button>
-          
+
           {userRole === 'admin' && (
             <Link href="/admin" className={styles.navItem} style={{ color: 'var(--accent-gold)', marginTop: '0.5rem', background: 'rgba(212, 175, 55, 0.05)' }}>
               <ShieldCheck size={18} /> Admin Control Panel
@@ -830,7 +831,7 @@ export default function VendorDashboard() {
             <h2>Welcome to your Vendor Portal</h2>
             <p>You have been granted Vendor access! To start uploading products and tracking orders, you first need to set up your official Brand Profile.</p>
             <Link href="/onboarding" className="btn btn-primary btn-lg mt-4">
-               Setup My Store Now <ArrowRight size={18} />
+              Setup My Store Now <ArrowRight size={18} />
             </Link>
           </div>
         )}
@@ -856,7 +857,7 @@ export default function VendorDashboard() {
         {activeTab === 'overview' && (
           <div className={styles.tabContent}>
             <h1 className={styles.title}>Business Overview</h1>
-            
+
             {isTrialActive && (
               <div className={`${styles.escrowBanner} mb-4`} style={{ background: 'var(--grad-brand-soft)', borderColor: 'var(--primary)', marginBottom: '1.5rem', animation: 'fadeIn 0.5s ease' }}>
                 <Zap className={styles.escrowIcon} style={{ color: 'var(--primary)' }} />
@@ -995,7 +996,7 @@ export default function VendorDashboard() {
                 </div>
               </div>
             </div>
-            
+
             {userRole === 'admin' && (
               <div className={styles.adminQuickLink} style={{ marginTop: '2rem', padding: '2rem', borderRadius: '16px', background: 'var(--bg-300)', border: '2px solid var(--accent-gold)', boxShadow: '0 0 30px rgba(212, 175, 55, 0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1rem' }}>
                 <ShieldCheck size={48} color="var(--accent-gold)" />
@@ -1066,20 +1067,20 @@ export default function VendorDashboard() {
                       hidden
                       accept="image/*"
                       onChange={async (e) => {
-                          if (e.target.files?.[0]) {
-                            const { url } = await uploadFile(e.target.files[0], 'brand-assets', `cover-${brand.id}`);
-                            if (url) handleUpdateSettings({ cover_url: url });
-                          }
-                        }}
-                      />
+                        if (e.target.files?.[0]) {
+                          const { url } = await uploadFile(e.target.files[0], 'brand-assets', `cover-${brand.id}`);
+                          if (url) handleUpdateSettings({ cover_url: url });
+                        }
+                      }}
+                    />
                   </div>
                 </div>
 
                 <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
                   <label>Instagram / Portfolio Link</label>
-                  <input 
-                    type="text" 
-                    defaultValue={brand.instagram_handle} 
+                  <input
+                    type="text"
+                    defaultValue={brand.instagram_handle}
                     placeholder="@yourbrand or https://..."
                     onBlur={(e) => handleUpdateSettings({ instagram_handle: e.target.value })}
                   />
@@ -1087,8 +1088,8 @@ export default function VendorDashboard() {
 
                 <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
                   <label>Store Description</label>
-                  <textarea 
-                    rows={4} 
+                  <textarea
+                    rows={4}
                     defaultValue={brand.description}
                     onBlur={(e) => handleUpdateSettings({ description: e.target.value })}
                   />
@@ -1102,8 +1103,8 @@ export default function VendorDashboard() {
                 <div className={styles.formRow} style={{ marginTop: '1rem' }}>
                   <div className={styles.inputGroup}>
                     <label>Bank Name</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="e.g. GTBank, Zenith Bank"
                       defaultValue={brand.bank_name}
                       onBlur={(e) => handleUpdateSettings({ bank_name: e.target.value })}
@@ -1111,8 +1112,8 @@ export default function VendorDashboard() {
                   </div>
                   <div className={styles.inputGroup}>
                     <label>Account Number</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="10-digit number"
                       maxLength={10}
                       defaultValue={brand.bank_account_number}
@@ -1121,8 +1122,8 @@ export default function VendorDashboard() {
                   </div>
                   <div className={styles.inputGroup}>
                     <label>Account Holder Name</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="Full name on bank account"
                       defaultValue={brand.bank_code}
                       onBlur={(e) => handleUpdateSettings({ bank_code: e.target.value })}
@@ -1138,7 +1139,7 @@ export default function VendorDashboard() {
                   <ShieldCheck size={24} color="var(--primary)" />
                   <h3>Subscription & Brand Power</h3>
                 </div>
-                
+
                 <div className={styles.compactPricingGrid}>
                   {subscriptionRates.map((tier) => (
                     <div key={tier.id} className={`${styles.compactPricingCard} ${currentTier === tier.id ? styles.activeTierCard : ''}`}>
@@ -1152,7 +1153,7 @@ export default function VendorDashboard() {
                       <ul className={styles.tierFeaturesMini}>
                         {(tier.features || []).map((f: string, i: number) => <li key={i}><CheckCircle size={12} /> {f}</li>)}
                       </ul>
-                      <button 
+                      <button
                         className={`btn ${tier.popular ? 'btn-primary' : 'btn-ghost'} btn-sm`}
                         style={{ width: '100%', marginTop: 'auto' }}
                         onClick={() => handleSubscribe(tier)}
@@ -1165,14 +1166,14 @@ export default function VendorDashboard() {
                 </div>
 
                 <div className={styles.boostBanner} style={{ marginTop: '2rem' }}>
-                   <div className={styles.boostContent}>
-                      <Zap size={20} color="#f59e0b" />
-                      <div>
-                        <h4>Need a temporary Boost?</h4>
-                        <p>Get priority placement in searches and discovery for ₦1,000/week.</p>
-                      </div>
-                   </div>
-                   <button className="btn btn-secondary btn-sm" onClick={() => alert('Boost system integration coming in next update!')}>Boost Now</button>
+                  <div className={styles.boostContent}>
+                    <Zap size={20} color="#f59e0b" />
+                    <div>
+                      <h4>Need a temporary Boost?</h4>
+                      <p>Get priority placement in searches and discovery for ₦1,000/week.</p>
+                    </div>
+                  </div>
+                  <button className="btn btn-secondary btn-sm" onClick={() => alert('Boost system integration coming in next update!')}>Boost Now</button>
                 </div>
               </div>
             </div>
@@ -1196,6 +1197,9 @@ export default function VendorDashboard() {
                       <div>
                         <span className={styles.orderId}>#{order.id.slice(0, 8).toUpperCase()}</span>
                         <span className={styles.orderDate}>{new Date(order.created_at).toLocaleDateString()}</span>
+                        <span style={{ marginLeft: '0.75rem', fontSize: '0.8rem', color: 'var(--text-400)' }}>
+                          👤 {order.users?.name || order.users?.email || `Customer ${order.customer_id?.slice(0, 6)}`}
+                        </span>
                       </div>
                       <button className="btn btn-ghost btn-sm" onClick={() => handlePrintInvoice(order)}>
                         <FileText size={14} /> Print Invoice
@@ -1286,7 +1290,7 @@ export default function VendorDashboard() {
           <div className={styles.tabContent}>
             <h1 className={styles.title}>Marketing & Promotions</h1>
             <p className={styles.subtitle}>Create promo codes to boost your store's attraction.</p>
-            
+
             <div className={styles.promoForm}>
               <h3>Create New Promo Code</h3>
               <form onSubmit={handleCreatePromo} className={styles.formRow}>
@@ -1355,7 +1359,7 @@ export default function VendorDashboard() {
                     ) : (
                       <div className={styles.replyForm}>
                         <textarea id={`reply-${review.id}`} placeholder="Reply to this review..." rows={2}></textarea>
-                        <button 
+                        <button
                           className="btn btn-secondary btn-sm"
                           onClick={() => {
                             const reply = (document.getElementById(`reply-${review.id}`) as HTMLTextAreaElement).value;
@@ -1414,8 +1418,8 @@ export default function VendorDashboard() {
                   <input type="file" accept=".csv" hidden onChange={handleBulkUpload} />
                   <FileText size={18} /> Bulk Upload (CSV)
                 </label>
-                <button 
-                  className="btn btn-primary" 
+                <button
+                  className="btn btn-primary"
                   onClick={() => {
                     if (products.length >= productLimit) {
                       alert(`You have reached your limit of ${productLimit} products. Upgrade your power level to list more!`);
@@ -1507,8 +1511,8 @@ export default function VendorDashboard() {
                     <div className={styles.variantsGrid}>
                       {newProduct.variants.map((v, i) => (
                         <div key={i} className={styles.variantRow}>
-                          <select 
-                            value={v.type} 
+                          <select
+                            value={v.type}
                             onChange={(e) => {
                               const updated = [...newProduct.variants];
                               updated[i].type = e.target.value;
@@ -1519,22 +1523,22 @@ export default function VendorDashboard() {
                             <option>Color</option>
                             <option>Material</option>
                           </select>
-                          <input 
-                            type="text" 
-                            placeholder="e.g. XL or Maroon" 
-                            value={v.value} 
+                          <input
+                            type="text"
+                            placeholder="e.g. XL or Maroon"
+                            value={v.value}
                             onChange={(e) => updateVariant(i, e.target.value)}
                           />
-                          <button type="button" onClick={() => removeVariant(i)} className={styles.removeBtn}><X size={14}/></button>
+                          <button type="button" onClick={() => removeVariant(i)} className={styles.removeBtn}><X size={14} /></button>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   <div className={styles.formRow} style={{ marginTop: '2rem' }}>
-                    <button 
-                      type="button" 
-                      className="btn btn-ghost" 
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
                       style={{ flex: 1 }}
                       onClick={() => {
                         setNewProduct({ ...newProduct, isDraft: true });
@@ -1543,9 +1547,9 @@ export default function VendorDashboard() {
                     >
                       Save as Draft
                     </button>
-                    <button 
-                      type="submit" 
-                      className="btn btn-primary" 
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
                       style={{ flex: 2 }}
                       onClick={() => setNewProduct({ ...newProduct, isDraft: false })}
                     >
@@ -1736,30 +1740,30 @@ export default function VendorDashboard() {
                       <div className={styles.chartBar} style={{ height: `${h}%`, background: i === 6 ? 'var(--primary)' : 'var(--bg-300)' }}>
                         <span className={styles.barVal}>{h}k</span>
                       </div>
-                      <span className={styles.barLabel}>{['M','T','W','T','F','S','S'][i]}</span>
+                      <span className={styles.barLabel}>{['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className={styles.statsCardsMini}>
-                 <div className={`card ${styles.miniStat}`}>
-                   <span>Conversion Rate</span>
-                   <h3>3.2%</h3>
-                   <p style={{ color: 'var(--success)' }}>+0.4% from last week</p>
-                 </div>
-                 <div className={`card ${styles.miniStat}`}>
-                   <span>Average Order Value</span>
-                   <h3>{formatPrice(4500)}</h3>
-                   <p>Steady growth</p>
-                 </div>
+                <div className={`card ${styles.miniStat}`}>
+                  <span>Conversion Rate</span>
+                  <h3>3.2%</h3>
+                  <p style={{ color: 'var(--success)' }}>+0.4% from last week</p>
+                </div>
+                <div className={`card ${styles.miniStat}`}>
+                  <span>Average Order Value</span>
+                  <h3>{formatPrice(4500)}</h3>
+                  <p>Steady growth</p>
+                </div>
               </div>
             </div>
 
             <div className={styles.analyticsSection}>
               <h3>Best Selling Products</h3>
               <div className={styles.bestSellersList}>
-                {products.sort((a,b) => (b.sales_count || 0) - (a.sales_count || 0)).slice(0, 3).map(p => (
+                {products.sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0)).slice(0, 3).map(p => (
                   <div key={p.id} className={styles.bestSellerItem}>
                     <img src={p.media_urls?.[0]} alt="" />
                     <div className={styles.bsInfo}>
@@ -1885,42 +1889,42 @@ export default function VendorDashboard() {
             <p className={styles.subtitle}>Create excitement and drive sales with promo codes and spotlights.</p>
 
             <div className={styles.promoGrid}>
-               <div className={styles.promoOption}>
-                  <div className={styles.promoIcon}><Tag size={24} color="var(--primary)" /></div>
-                  <h3>Promo Codes</h3>
-                  <p>Offer discounts to your loyal campus customers.</p>
-                  <button className="btn btn-ghost btn-sm" onClick={() => alert('Integrated into Half Power tier!')}>Manage Codes</button>
-               </div>
-               <div className={styles.promoOption}>
-                  <div className={styles.promoIcon}><Zap size={24} color="#f59e0b" /></div>
-                  <h3>Billboard Boost</h3>
-                  <p>Get featured on the homepage "Gold Collection" for ₦500/week.</p>
-                  <button className="btn btn-primary btn-sm" onClick={() => setActiveTab('plans')}>Boost Now</button>
-               </div>
-               <div className={styles.promoOption} style={{ border: '1px solid var(--secondary)' }}>
-                  <div className={styles.promoIcon}><Bell size={24} color="var(--secondary)" /></div>
-                  <h3>Campus Nudge</h3>
-                  <p>Send a real-time smart notification to all your followers.</p>
-                  <button 
-                    className="btn btn-secondary btn-sm" 
-                    onClick={async () => {
-                      if (brand.subscription_tier === 'quarter') return alert('Upgrade to Half Power to use Nudges!');
-                      const msg = prompt('Enter the message for your followers:');
-                      if (msg) {
-                        const res = await fetch('/api/vendor/nudge', {
-                          method: 'POST',
-                          body: JSON.stringify({ brandId: brand.id, ownerId: brand.owner_id, message: msg })
-                        });
-                        const data = await res.json();
-                        if (data.success) alert(`Nudge sent to ${data.count} followers!`);
-                        else alert(data.error);
-                      }
-                    }}
-                  >
-                    Send Nudge 🚀
-                  </button>
-               </div>
-             </div>
+              <div className={styles.promoOption}>
+                <div className={styles.promoIcon}><Tag size={24} color="var(--primary)" /></div>
+                <h3>Promo Codes</h3>
+                <p>Offer discounts to your loyal campus customers.</p>
+                <button className="btn btn-ghost btn-sm" onClick={() => alert('Integrated into Half Power tier!')}>Manage Codes</button>
+              </div>
+              <div className={styles.promoOption}>
+                <div className={styles.promoIcon}><Zap size={24} color="#f59e0b" /></div>
+                <h3>Billboard Boost</h3>
+                <p>Get featured on the homepage "Gold Collection" for ₦500/week.</p>
+                <button className="btn btn-primary btn-sm" onClick={() => setActiveTab('plans')}>Boost Now</button>
+              </div>
+              <div className={styles.promoOption} style={{ border: '1px solid var(--secondary)' }}>
+                <div className={styles.promoIcon}><Bell size={24} color="var(--secondary)" /></div>
+                <h3>Campus Nudge</h3>
+                <p>Send a real-time smart notification to all your followers.</p>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={async () => {
+                    if (brand.subscription_tier === 'quarter') return alert('Upgrade to Half Power to use Nudges!');
+                    const msg = prompt('Enter the message for your followers:');
+                    if (msg) {
+                      const res = await fetch('/api/vendor/nudge', {
+                        method: 'POST',
+                        body: JSON.stringify({ brandId: brand.id, ownerId: brand.owner_id, message: msg })
+                      });
+                      const data = await res.json();
+                      if (data.success) alert(`Nudge sent to ${data.count} followers!`);
+                      else alert(data.error);
+                    }
+                  }}
+                >
+                  Send Nudge 🚀
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1938,165 +1942,165 @@ export default function VendorDashboard() {
               </button>
             </div>
           ) : (
-          <div className={styles.tabContent}>
-            <h1 className={styles.title}>Plans & Upgrade</h1>
-            <p style={{ color: 'var(--text-300)', marginBottom: '2rem' }}>
-              Choose a credit rate plan that fits your hustle. All plans unlock vendor superpowers instantly upon successful payment via Paystack.
-            </p>
+            <div className={styles.tabContent}>
+              <h1 className={styles.title}>Plans & Upgrade</h1>
+              <p style={{ color: 'var(--text-300)', marginBottom: '2rem' }}>
+                Choose a credit rate plan that fits your hustle. All plans unlock vendor superpowers instantly upon successful payment via Paystack.
+              </p>
 
-            {/* ── Current Status Banner ── */}
-            <div style={{ background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <div style={{ fontSize: '1.5rem' }}>
-                {currentTier === 'full' ? '👑' : currentTier === 'half' ? '🚀' : currentTier === 'quarter' ? '🎯' : '🌱'}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, color: 'var(--primary)', marginBottom: '0.25rem' }}>
-                  {userRole === 'admin' ? 'Admin — Unlimited Access (No Fees)' :
-                   isTrialActive ? `Free Trial Active — ${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining` :
-                   isSubActive ? `Current Plan: ${currentTier.charAt(0).toUpperCase() + currentTier.slice(1)} Power` :
-                   'No Active Plan — Free mode (limited access)'}
+              {/* ── Current Status Banner ── */}
+              <div style={{ background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ fontSize: '1.5rem' }}>
+                  {currentTier === 'full' ? '👑' : currentTier === 'half' ? '🚀' : currentTier === 'quarter' ? '🎯' : '🌱'}
                 </div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-400)' }}>
-                  {isSubActive && brand?.subscription_expires_at
-                    ? `Renews on ${new Date(brand.subscription_expires_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })}`
-                    : userRole !== 'admin' ? 'Subscribe below to unlock full vendor capabilities' : 'You have root access to all platform features'}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, color: 'var(--primary)', marginBottom: '0.25rem' }}>
+                    {userRole === 'admin' ? 'Admin — Unlimited Access (No Fees)' :
+                      isTrialActive ? `Free Trial Active — ${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining` :
+                        isSubActive ? `Current Plan: ${currentTier.charAt(0).toUpperCase() + currentTier.slice(1)} Power` :
+                          'No Active Plan — Free mode (limited access)'}
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-400)' }}>
+                    {isSubActive && brand?.subscription_expires_at
+                      ? `Renews on ${new Date(brand.subscription_expires_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                      : userRole !== 'admin' ? 'Subscribe below to unlock full vendor capabilities' : 'You have root access to all platform features'}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* ── Credit Rate Plans ── */}
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-100)' }}>
-              💳 Credit Rate Plans
-            </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '3rem' }}>
-              {subscriptionRates.map((tier: any) => {
-                const isActive = isSubActive && brand?.subscription_tier === tier.id;
-                return (
-                  <div
-                    key={tier.id}
-                    style={{
-                      background: isActive ? 'var(--primary-soft)' : 'var(--bg-300)',
-                      border: `2px solid ${isActive ? 'var(--primary)' : tier.popular ? 'var(--primary)' : 'var(--border)'}`,
-                      borderRadius: '16px',
-                      padding: '1.75rem',
-                      position: 'relative',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '1rem',
-                      transition: 'transform 0.2s, box-shadow 0.2s',
-                    }}
-                  >
-                    {tier.popular && !isActive && (
-                      <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#000', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 1rem', borderRadius: '999px', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
-                        MOST POPULAR
-                      </div>
-                    )}
-                    {isActive && (
-                      <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#000', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 1rem', borderRadius: '999px', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
-                        ✓ ACTIVE
-                      </div>
-                    )}
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span style={{ fontSize: '1.75rem' }}>{getIcon(tier.id)}</span>
-                      <div>
-                        <div style={{ fontWeight: 800, fontSize: '1.05rem', color: tier.color || 'var(--primary)' }}>{tier.name}</div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-400)' }}>{tier.tagline}</div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
-                      <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--text-100)' }}>
-                        ₦{tier.price.toLocaleString()}
-                      </span>
-                      <span style={{ color: 'var(--text-400)', fontSize: '0.9rem' }}>{tier.period}</span>
-                    </div>
-
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {(tier.features || ['Listing powers', 'Basic Analytics', 'Support']).map((f: string, i: number) => (
-                        <li key={i} style={{ fontSize: '0.85rem', color: f.startsWith('✅') ? 'var(--text-200)' : 'var(--text-500)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <CheckCircle size={14} color="var(--primary)" /> {f}
-                        </li>
-                      ))}
-                    </ul>
-
-                    <button
-                      className="btn btn-primary"
-                      disabled={paying === tier.id || isActive}
-                      onClick={() => handleSubscribe({ id: tier.id, price: tier.price })}
+              {/* ── Credit Rate Plans ── */}
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-100)' }}>
+                💳 Credit Rate Plans
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '3rem' }}>
+                {subscriptionRates.map((tier: any) => {
+                  const isActive = isSubActive && brand?.subscription_tier === tier.id;
+                  return (
+                    <div
+                      key={tier.id}
                       style={{
-                        marginTop: 'auto',
-                        background: isActive ? 'transparent' : `linear-gradient(135deg, ${tier.color || 'var(--primary)'}, ${tier.color || 'var(--primary)'}cc)`,
-                        border: isActive ? `1px solid ${tier.color || 'var(--primary)'}` : 'none',
-                        color: isActive ? (tier.color || 'var(--primary)') : '#000',
-                        fontWeight: 700,
+                        background: isActive ? 'var(--primary-soft)' : 'var(--bg-300)',
+                        border: `2px solid ${isActive ? 'var(--primary)' : tier.popular ? 'var(--primary)' : 'var(--border)'}`,
+                        borderRadius: '16px',
+                        padding: '1.75rem',
+                        position: 'relative',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1rem',
+                        transition: 'transform 0.2s, box-shadow 0.2s',
                       }}
                     >
-                      {paying === tier.id ? <><Loader2 size={16} className="spin" /> Processing…</> :
-                       isActive ? '✓ Current Plan' : `Subscribe — ₦${tier.price.toLocaleString()}/mo`}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+                      {tier.popular && !isActive && (
+                        <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#000', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 1rem', borderRadius: '999px', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+                          MOST POPULAR
+                        </div>
+                      )}
+                      {isActive && (
+                        <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#000', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 1rem', borderRadius: '999px', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+                          ✓ ACTIVE
+                        </div>
+                      )}
 
-            {/* ── Boost Store Section ── */}
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-100)' }}>
-              ⚡ Viral Boosters
-            </h2>
-            <p style={{ color: 'var(--text-400)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              One-time boosts to increase your store's visibility on the marketplace.
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-              {/* Billboard Boost */}
-              <div style={{ background: 'var(--bg-300)', border: '2px solid var(--accent-gold)', borderRadius: '16px', padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
-                 <div style={{ position: 'absolute', top: 0, right: 0, padding: '0.5rem', background: 'var(--accent-gold)', color: '#000', fontSize: '0.6rem', fontWeight: 900 }}>TRENDY BOARD</div>
-                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📢</div>
-                 <h3 style={{ fontSize: '1rem', color: 'var(--accent-gold)' }}>Campus Billboard</h3>
-                 <p style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Get featured on the main homepage "The Gold Collection" billboard for 7 days.</p>
-                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ fontSize: '1.75rem' }}>{getIcon(tier.id)}</span>
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: '1.05rem', color: tier.color || 'var(--primary)' }}>{tier.name}</div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-400)' }}>{tier.tagline}</div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
+                        <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--text-100)' }}>
+                          ₦{tier.price.toLocaleString()}
+                        </span>
+                        <span style={{ color: 'var(--text-400)', fontSize: '0.9rem' }}>{tier.period}</span>
+                      </div>
+
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {(tier.features || ['Listing powers', 'Basic Analytics', 'Support']).map((f: string, i: number) => (
+                          <li key={i} style={{ fontSize: '0.85rem', color: f.startsWith('✅') ? 'var(--text-200)' : 'var(--text-500)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <CheckCircle size={14} color="var(--primary)" /> {f}
+                          </li>
+                        ))}
+                      </ul>
+
+                      <button
+                        className="btn btn-primary"
+                        disabled={paying === tier.id || isActive}
+                        onClick={() => handleSubscribe({ id: tier.id, price: tier.price })}
+                        style={{
+                          marginTop: 'auto',
+                          background: isActive ? 'transparent' : `linear-gradient(135deg, ${tier.color || 'var(--primary)'}, ${tier.color || 'var(--primary)'}cc)`,
+                          border: isActive ? `1px solid ${tier.color || 'var(--primary)'}` : 'none',
+                          color: isActive ? (tier.color || 'var(--primary)') : '#000',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {paying === tier.id ? <><Loader2 size={16} className="spin" /> Processing…</> :
+                          isActive ? '✓ Current Plan' : `Subscribe — ₦${tier.price.toLocaleString()}/mo`}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* ── Boost Store Section ── */}
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-100)' }}>
+                ⚡ Viral Boosters
+              </h2>
+              <p style={{ color: 'var(--text-400)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                One-time boosts to increase your store's visibility on the marketplace.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                {/* Billboard Boost */}
+                <div style={{ background: 'var(--bg-300)', border: '2px solid var(--accent-gold)', borderRadius: '16px', padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: 0, right: 0, padding: '0.5rem', background: 'var(--accent-gold)', color: '#000', fontSize: '0.6rem', fontWeight: 900 }}>TRENDY BOARD</div>
+                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📢</div>
+                  <h3 style={{ fontSize: '1rem', color: 'var(--accent-gold)' }}>Campus Billboard</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Get featured on the main homepage "The Gold Collection" billboard for 7 days.</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontWeight: 900, color: '#fff' }}>₦500 <small>/week</small></span>
                     <button className="btn btn-primary btn-sm" onClick={() => handleSubscribe({ id: 'billboard_boost', price: 500 })}>Activate ⚡</button>
-                 </div>
-              </div>
-
-              {boostRates.map(boost => (
-                <div key={boost.id} style={{ background: 'var(--bg-300)', border: `1px solid ${boost.popular ? 'var(--primary)' : 'var(--border)'}`, borderRadius: '14px', padding: '1.5rem', position: 'relative' }}>
-                  {boost.popular && (
-                    <div style={{ position: 'absolute', top: '-12px', right: '1rem', background: 'var(--primary)', color: '#000', fontSize: '0.68rem', fontWeight: 800, padding: '0.25rem 0.75rem', borderRadius: '999px' }}>BEST VALUE</div>
-                  )}
-                  <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{getIcon(boost.id)}</div>
-                  <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{boost.name}</div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.5rem' }}>{boost.desc}</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-500)', marginBottom: '1.25rem' }}>Duration: {boost.duration}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-                    <span style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--primary)' }}>₦{boost.price.toLocaleString()}</span>
-                    <button
-                      className="btn btn-primary btn-sm"
-                      disabled={paying === boost.id}
-                      onClick={() => handleSubscribe({ id: boost.id, price: boost.price })}
-                      style={{ fontWeight: 700 }}
-                    >
-                      {paying === boost.id ? <><Loader2 size={14} className="spin" /> Paying…</> : 'Boost Now →'}
-                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
 
-            {/* ── Trial & Admin Notes ── */}
-            {isTrialActive && (
-              <div style={{ marginTop: '2rem', padding: '1.25rem', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '12px' }}>
-                <p style={{ color: '#60a5fa', fontWeight: 600, marginBottom: '0.5rem' }}>🎁 Free Trial Still Active</p>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-400)' }}>
-                  You have <strong style={{ color: '#fff' }}>{trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''}</strong> left on your free Full Power trial. 
-                  Subscribe before it expires to keep your powers uninterrupted.
-                </p>
+                {boostRates.map(boost => (
+                  <div key={boost.id} style={{ background: 'var(--bg-300)', border: `1px solid ${boost.popular ? 'var(--primary)' : 'var(--border)'}`, borderRadius: '14px', padding: '1.5rem', position: 'relative' }}>
+                    {boost.popular && (
+                      <div style={{ position: 'absolute', top: '-12px', right: '1rem', background: 'var(--primary)', color: '#000', fontSize: '0.68rem', fontWeight: 800, padding: '0.25rem 0.75rem', borderRadius: '999px' }}>BEST VALUE</div>
+                    )}
+                    <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{getIcon(boost.id)}</div>
+                    <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{boost.name}</div>
+                    <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.5rem' }}>{boost.desc}</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-500)', marginBottom: '1.25rem' }}>Duration: {boost.duration}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+                      <span style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--primary)' }}>₦{boost.price.toLocaleString()}</span>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        disabled={paying === boost.id}
+                        onClick={() => handleSubscribe({ id: boost.id, price: boost.price })}
+                        style={{ fontWeight: 700 }}
+                      >
+                        {paying === boost.id ? <><Loader2 size={14} className="spin" /> Paying…</> : 'Boost Now →'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
-        )
-      )}
+
+              {/* ── Trial & Admin Notes ── */}
+              {isTrialActive && (
+                <div style={{ marginTop: '2rem', padding: '1.25rem', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '12px' }}>
+                  <p style={{ color: '#60a5fa', fontWeight: 600, marginBottom: '0.5rem' }}>🎁 Free Trial Still Active</p>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-400)' }}>
+                    You have <strong style={{ color: '#fff' }}>{trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''}</strong> left on your free Full Power trial.
+                    Subscribe before it expires to keep your powers uninterrupted.
+                  </p>
+                </div>
+              )}
+            </div>
+          )
+        )}
       </main>
 
       {/* Mobile Bottom Navigation */}
