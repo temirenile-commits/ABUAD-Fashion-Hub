@@ -171,4 +171,23 @@
 .invoiceBtn { font-size: 0.85rem; color: var(--text-400); display: flex; align-items: center; gap: 0.5rem; text-decoration: none; }
 .invoiceBtn:hover { color: var(--primary); }
 
-.spinner-full { display: flex; align-items: center; justify-content: center; min-height: 80vh; }
+.spinnerWrap { display: flex; align-items: center; justify-content: center; min-height: 80vh; }
+
+.refreshBtn {
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  color: var(--text-200);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.refreshBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}

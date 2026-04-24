@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { 
   Zap, 
   MapPin, 
@@ -17,7 +18,8 @@ import {
   FileText,
   Phone,
   LayoutDashboard,
-  Bell
+  Bell,
+  RefreshCw
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
@@ -28,9 +30,55 @@ export default function DeliveryDashboard() {
   const [loading, setLoading] = useState(true);
   const [agent, setAgent] = useState<any>(null);
   const [deliveries, setDeliveries] = useState<any[]>([]);
+  const [availableDeliveries, setAvailableDeliveries] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('queue');
   const [verificationCode, setVerificationCode] = useState('');
   const [processingCode, setProcessingCode] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    // Fetch My Deliveries
+    const { data: myData } = await supabase
+      .from('deliveries')
+      .select(`
+        *,
+        orders (
+          id,
+          total_amount,
+          shipping_address,
+          customer_id,
+          users:customer_id (name, phone),
+          brands (name, latitude, longitude, location_name, whatsapp_number)
+        )
+      `)
+      .eq('agent_id', session.user.id)
+      .neq('status', 'delivered')
+      .order('created_at', { ascending: false });
+
+    // Fetch Available Deliveries (Pending and no agent)
+    const { data: availData } = await supabase
+      .from('deliveries')
+      .select(`
+        *,
+        orders (
+          id,
+          total_amount,
+          shipping_address,
+          brands (name, location_name)
+        )
+      `)
+      .is('agent_id', null)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
+    setDeliveries(myData || []);
+    setAvailableDeliveries(availData || []);
+    if (!silent) setLoading(false);
+  };
 
   useEffect(() => {
     async function init() {
@@ -40,14 +88,12 @@ export default function DeliveryDashboard() {
         return;
       }
 
-      // Check if user is actually a delivery agent
       const { data: userData } = await supabase.from('users').select('role, name').eq('id', session.user.id).single();
       if (userData?.role !== 'delivery' && userData?.role !== 'admin') {
         router.push('/dashboard/customer');
         return;
       }
 
-      // Fetch Agent Stats/Settings
       const { data: agentData } = await supabase
         .from('delivery_agents')
         .select('*')
@@ -55,84 +101,78 @@ export default function DeliveryDashboard() {
         .single();
 
       if (!agentData) {
-        // Initialize agent record if it doesn't exist
         const { data: newAgent } = await supabase.from('delivery_agents').insert({ id: session.user.id }).select().single();
         setAgent({ ...newAgent, name: userData.name });
       } else {
         setAgent({ ...agentData, name: userData.name });
       }
 
-      // Fetch Deliveries
-      const { data: deliveryData } = await supabase
-        .from('deliveries')
-        .select(`
-          *,
-          orders (
-            id,
-            total_amount,
-            delivery_lat,
-            delivery_long,
-            shipping_address,
-            customer_id,
-            users:customer_id (name, phone),
-            brands (name, latitude, longitude, location_name, whatsapp_number)
-          )
-        `)
-        .eq('agent_id', session.user.id)
-        .neq('status', 'delivered')
-        .order('created_at', { ascending: false });
-
-      setDeliveries(deliveryData || []);
-      setLoading(false);
+      await fetchData();
     }
     init();
+
+    // Set up Realtime for new available orders
+    const channel = supabase
+      .channel('available-deliveries')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'deliveries' }, () => fetchData(true))
+      .subscribe();
+
+    return () => { channel.unsubscribe(); };
   }, [router]);
 
   // GPS Tracking Loop
   useEffect(() => {
     let interval: any;
-
     if (agent?.id && agent?.is_active) {
       const updateLocation = () => {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude } = pos.coords;
-            await supabase
-              .from('delivery_agents')
-              .update({ 
-                current_lat: latitude, 
-                current_long: longitude,
-                last_active_at: new Date().toISOString()
-              })
-              .eq('id', agent.id);
+            await supabase.from('delivery_agents').update({ 
+              current_lat: latitude, 
+              current_long: longitude,
+              last_active_at: new Date().toISOString()
+            }).eq('id', agent.id);
           });
         }
       };
-
       updateLocation();
-      interval = setInterval(updateLocation, 5 * 60 * 1000); // 5 min
+      interval = setInterval(updateLocation, 5 * 60 * 1000);
     }
-
     return () => clearInterval(interval);
   }, [agent?.id, agent?.is_active]);
 
   const toggleActive = async () => {
     const newStatus = !agent.is_active;
-    const { error } = await supabase
-      .from('delivery_agents')
-      .update({ is_active: newStatus, last_active_at: new Date().toISOString() })
-      .eq('id', agent.id);
-
+    const { error } = await supabase.from('delivery_agents').update({ is_active: newStatus, last_active_at: new Date().toISOString() }).eq('id', agent.id);
     if (!error) setAgent({ ...agent, is_active: newStatus });
   };
 
   const updateCapacity = async (val: number) => {
-    const { error } = await supabase
-      .from('delivery_agents')
-      .update({ batch_capacity: val })
-      .eq('id', agent.id);
-
+    const { error } = await supabase.from('delivery_agents').update({ batch_capacity: val }).eq('id', agent.id);
     if (!error) setAgent({ ...agent, batch_capacity: val });
+  };
+
+  const claimDelivery = async (deliveryId: string) => {
+    if (!agent.is_active) {
+      alert('You must be ONLINE to accept orders.');
+      return;
+    }
+    setProcessingCode(deliveryId);
+    const { error } = await supabase
+      .from('deliveries')
+      .update({ agent_id: agent.id, status: 'assigned' })
+      .eq('id', deliveryId)
+      .is('agent_id', null); // Safety check: only if still unassigned
+
+    if (!error) {
+      alert('Order accepted! Head to the vendor for pickup.');
+      await fetchData(true);
+      setActiveTab('queue');
+    } else {
+      alert('This order was already claimed by another agent.');
+    }
+    setProcessingCode(null);
   };
 
   const verifyDelivery = async (deliveryId: string) => {
@@ -146,14 +186,7 @@ export default function DeliveryDashboard() {
       return;
     }
 
-    const { error } = await supabase
-      .from('deliveries')
-      .update({ 
-        status: 'delivered', 
-        delivered_at: new Date().toISOString() 
-      })
-      .eq('id', deliveryId);
-
+    const { error } = await supabase.from('deliveries').update({ status: 'delivered', delivered_at: new Date().toISOString() }).eq('id', deliveryId);
     if (!error) {
       setDeliveries(deliveries.filter(d => d.id !== deliveryId));
       setAgent((prev: any) => ({ ...prev, wallet_balance: Number(prev.wallet_balance) + 500 }));
@@ -166,24 +199,20 @@ export default function DeliveryDashboard() {
   };
 
   const updateStatus = async (deliveryId: string, newStatus: string) => {
-    const { error } = await supabase
-      .from('deliveries')
-      .update({ status: newStatus, picked_up_at: newStatus === 'picked_up' ? new Date().toISOString() : null })
-      .eq('id', deliveryId);
-
+    const { error } = await supabase.from('deliveries').update({ status: newStatus, picked_up_at: newStatus === 'picked_up' ? new Date().toISOString() : null }).eq('id', deliveryId);
     if (!error) {
       setDeliveries(deliveries.map(d => d.id === deliveryId ? { ...d, status: newStatus } : d));
     }
   };
 
-  if (loading) return <div className="spinner-full" />;
+  if (loading) return <div className={styles.spinnerWrap}><Loader2 className="anim-spin" size={48} /></div>;
 
   return (
     <div className={`container ${styles.page}`}>
       {/* Sidebar */}
       <aside className={styles.sidebar}>
         <div className={styles.agentCard}>
-          <div className={styles.avatar}>{agent.name[0]}</div>
+          <div className={styles.avatar}>{agent.name?.[0] || 'A'}</div>
           <h3 className={styles.agentName}>{agent.name}</h3>
           <p className={styles.agentBadge}>Delivery Partner</p>
           
@@ -203,7 +232,7 @@ export default function DeliveryDashboard() {
             <input 
               type="number" 
               className={styles.capacityInput} 
-              value={agent.batch_capacity} 
+              value={agent.batch_capacity || 10} 
               onChange={(e) => updateCapacity(parseInt(e.target.value))}
               min="10"
               max="50"
@@ -216,7 +245,7 @@ export default function DeliveryDashboard() {
             <Wallet size={20} color="var(--primary)" />
             <div>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-400)' }}>Wallet Balance</span>
-              <h3 style={{ fontSize: '1.5rem' }}>{formatPrice(agent.wallet_balance)}</h3>
+              <h3 style={{ fontSize: '1.5rem' }}>{formatPrice(agent.wallet_balance || 0)}</h3>
             </div>
           </div>
         </div>
@@ -229,32 +258,81 @@ export default function DeliveryDashboard() {
       {/* Main Content */}
       <main className={styles.main}>
         <div className={styles.header}>
-          <h1 className={styles.title}>Dispatch Console</h1>
-          <p className={styles.subtitle}>Manage your active delivery batches and confirm drop-offs.</p>
+          <div>
+            <h1 className={styles.title}>Dispatch Console</h1>
+            <p className={styles.subtitle}>Manage your active delivery batches and confirm drop-offs.</p>
+          </div>
+          <button className={styles.refreshBtn} onClick={() => fetchData(true)} disabled={refreshing}>
+            <RefreshCw size={18} className={refreshing ? 'anim-spin' : ''} />
+          </button>
         </div>
 
         <div className={styles.tabs}>
-          <button 
-            className={`${styles.tab} ${activeTab === 'queue' ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab('queue')}
-          >
-            Active Queue ({deliveries.length})
+          <button className={`${styles.tab} ${activeTab === 'available' ? styles.tabActive : ''}`} onClick={() => setActiveTab('available')}>
+            Available ({availableDeliveries.length})
           </button>
-          <button 
-            className={`${styles.tab} ${activeTab === 'history' ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab('history')}
-          >
+          <button className={`${styles.tab} ${activeTab === 'queue' ? styles.tabActive : ''}`} onClick={() => setActiveTab('queue')}>
+            My Batch ({deliveries.length})
+          </button>
+          <button className={`${styles.tab} ${activeTab === 'history' ? styles.tabActive : ''}`} onClick={() => setActiveTab('history')}>
             History
           </button>
         </div>
+
+        {activeTab === 'available' && (
+          <div className={styles.deliveryList}>
+            {availableDeliveries.length === 0 ? (
+              <div className={styles.emptyState}>
+                <Truck size={48} className="anim-float" />
+                <h3>No Orders Nearby</h3>
+                <p>New orders will appear here automatically. Stay online!</p>
+              </div>
+            ) : (
+              availableDeliveries.map((delivery) => (
+                <div key={delivery.id} className={styles.deliveryItem} style={{ borderLeft: '4px solid var(--primary)' }}>
+                  <div className={styles.deliveryHeader}>
+                    <div>
+                      <span className={styles.orderId}>#NEW-{delivery.order_id.slice(0, 8)}</span>
+                      <div className={styles.tags}>
+                         <span className={styles.badge} style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)' }}>₦1,500 Delivery Fee</span>
+                      </div>
+                    </div>
+                    <div className={styles.price}>₦500 Earning</div>
+                  </div>
+                  
+                  <div className={styles.grid}>
+                    <div className={styles.infoBlock}>
+                      <h5><MapPin size={14} /> Pickup</h5>
+                      <p><strong>{delivery.orders?.brands?.name}</strong></p>
+                      <p style={{ fontSize: '0.85rem' }}>{delivery.orders?.brands?.location_name}</p>
+                    </div>
+                    <div className={styles.infoBlock}>
+                      <h5><Navigation size={14} /> Destination</h5>
+                      <p style={{ fontSize: '0.85rem' }}>{delivery.orders?.shipping_address}</p>
+                    </div>
+                  </div>
+
+                  <button 
+                    className="btn btn-primary w-full" 
+                    style={{ marginTop: '1rem' }}
+                    onClick={() => claimDelivery(delivery.id)}
+                    disabled={processingCode === delivery.id}
+                  >
+                    {processingCode === delivery.id ? 'Claiming...' : 'Accept Delivery Task'}
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
 
         {activeTab === 'queue' && (
           <div className={styles.deliveryList}>
             {deliveries.length === 0 ? (
               <div className={styles.emptyState}>
-                <Truck size={48} className="anim-float" />
-                <h3>No Active Deliveries</h3>
-                <p>Go online and wait for new orders in your area.</p>
+                <Clock size={48} />
+                <h3>Batch is Empty</h3>
+                <p>Accept tasks from the 'Available' tab to start earning.</p>
               </div>
             ) : (
               deliveries.map((delivery) => (
@@ -271,17 +349,15 @@ export default function DeliveryDashboard() {
                   </div>
 
                   <div className={styles.grid}>
-                    {/* Pickup Details */}
                     <div className={styles.infoBlock}>
                       <h5><MapPin size={14} /> Pickup From</h5>
                       <p><strong>{delivery.orders?.brands?.name}</strong></p>
                       <p style={{ fontSize: '0.85rem' }}>{delivery.orders?.brands?.location_name || 'ABUAD Campus'}</p>
-                      <Link href={`https://wa.me/${delivery.orders?.brands?.whatsapp_number}`} className={styles.contactLink}>
+                      <Link href={`https://wa.me/${delivery.orders?.brands?.whatsapp_number}`} className={styles.contactLink} target="_blank">
                         <Phone size={12} /> Contact Vendor
                       </Link>
                     </div>
 
-                    {/* Dropoff Details */}
                     <div className={styles.infoBlock}>
                       <h5><Navigation size={14} /> Dropoff To</h5>
                       <p><strong>{delivery.orders?.users?.name}</strong></p>
@@ -294,10 +370,7 @@ export default function DeliveryDashboard() {
 
                   <div className={styles.actionArea}>
                     {delivery.status === 'assigned' && (
-                      <button 
-                        className="btn btn-primary w-full"
-                        onClick={() => updateStatus(delivery.id, 'picked_up')}
-                      >
+                      <button className="btn btn-primary w-full" onClick={() => updateStatus(delivery.id, 'picked_up')}>
                         <Package size={18} /> Confirm Pickup
                       </button>
                     )}
@@ -344,7 +417,6 @@ export default function DeliveryDashboard() {
   );
 }
 
-// Simple internal Link mock if not imported
-function Link({ href, children, className }: any) {
-  return <a href={href} className={className} target={href.startsWith('http') ? '_blank' : '_self'}>{children}</a>;
+function Loader2({ size, className }: any) {
+  return <RefreshCw size={size} className={className} />;
 }
