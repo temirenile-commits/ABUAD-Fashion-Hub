@@ -102,7 +102,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           handleIncoming(
             payload.new.title || 'ABUAD Fashion Hub',
             payload.new.content || payload.new.body || '',
-            payload.new.url
+            payload.new.link
           );
         })
         .subscribe();

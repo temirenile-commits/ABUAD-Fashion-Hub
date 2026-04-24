@@ -11,7 +11,8 @@ import {
   ArrowRight, 
   ShoppingBag,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Heart
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
@@ -19,7 +20,7 @@ import styles from './notifications.module.css';
 
 interface ProductNotification {
   id: string;
-  type: 'enquiry_reply' | 'price_drop' | 'vendor_update' | 'recommendation';
+  type: 'enquiry_reply' | 'price_drop' | 'vendor_update' | 'recommendation' | 'wishlist' | 'order_update' | 'new_order' | 'general';
   title: string;
   content: string;
   link: string;
@@ -140,6 +141,9 @@ export default function NotificationsPage() {
                       {n.type === 'price_drop' && <Tag size={18} />}
                       {n.type === 'vendor_update' && <User size={18} />}
                       {n.type === 'recommendation' && <Zap size={18} />}
+                      {n.type === 'wishlist' && <Heart size={18} color="var(--primary)" />}
+                      {n.type === 'order_update' && <ShoppingBag size={18} />}
+                      {n.type === 'new_order' && <Tag size={18} />}
                     </div>
                     <div className={styles.content}>
                       <div className={styles.itemHeader}>
