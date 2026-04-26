@@ -726,7 +726,7 @@ export default function VendorDashboard() {
     setCopilotLoading(true);
 
     try {
-      const res = await fetch('/api/ai/copilot', {
+      const res = await fetch(`/api/ai/copilot?v=3&t=${Date.now()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -740,12 +740,12 @@ export default function VendorDashboard() {
       if (data.text) {
         setCopilotMsgs([...newMsgs, { role: 'assistant', content: data.text }]);
       } else if (data.error) {
-        setCopilotMsgs([...newMsgs, { role: 'assistant', content: `⚠️ ${data.error}` }]);
+        setCopilotMsgs([...newMsgs, { role: 'assistant', content: `⚠️ [VER-3] ${data.error}` }]);
       } else {
-        setCopilotMsgs([...newMsgs, { role: 'assistant', content: '⚠️ No response received. Please try again.' }]);
+        setCopilotMsgs([...newMsgs, { role: 'assistant', content: '⚠️ [VER-3] No response received.' }]);
       }
     } catch (err: any) {
-      setCopilotMsgs([...newMsgs, { role: 'assistant', content: `⚠️ Connection error: ${err.message}` }]);
+      setCopilotMsgs([...newMsgs, { role: 'assistant', content: `⚠️ [VER-3] Connection error: ${err.message}` }]);
     }
     setCopilotLoading(false);
   };
