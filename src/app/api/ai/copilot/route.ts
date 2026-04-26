@@ -108,9 +108,9 @@ HOW TO ANSWER:
     const lastUserMsg = messages.filter((m: any) => m.role === 'user').slice(-1)[0]?.content || '';
     const conversationHistory = messages.map((m: any) => `${m.role === 'user' ? 'Vendor' : 'AI'}: ${m.content}`).join('\n');
 
-    console.log('Calling Gemini with model: gemini-1.5-flash');
+    console.log('Calling Gemini with model: gemini-1.5-pro');
     const { text } = await generateText({
-      model: google('gemini-1.5-flash'),
+      model: google('gemini-1.5-pro'),
       system: systemPrompt,
       prompt: conversationHistory + `\nVendor: ${lastUserMsg}\nAI:`,
     });
