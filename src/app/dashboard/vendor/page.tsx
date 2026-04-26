@@ -732,17 +732,20 @@ export default function VendorDashboard() {
         body: JSON.stringify({
           messages: newMsgs,
           vendorId: brand.owner_id,
-          brandId: brand.id
+          brandId: brand.id,
+          currentTab: activeTab
         })
       });
       const data = await res.json();
       if (data.text) {
         setCopilotMsgs([...newMsgs, { role: 'assistant', content: data.text }]);
+      } else if (data.error) {
+        setCopilotMsgs([...newMsgs, { role: 'assistant', content: `⚠️ ${data.error}` }]);
       } else {
-        setCopilotMsgs([...newMsgs, { role: 'assistant', content: "Sorry, I'm having trouble connecting right now." }]);
+        setCopilotMsgs([...newMsgs, { role: 'assistant', content: '⚠️ No response received. Please try again.' }]);
       }
-    } catch (err) {
-      setCopilotMsgs([...newMsgs, { role: 'assistant', content: "Sorry, I'm having trouble connecting right now." }]);
+    } catch (err: any) {
+      setCopilotMsgs([...newMsgs, { role: 'assistant', content: `⚠️ Connection error: ${err.message}` }]);
     }
     setCopilotLoading(false);
   };

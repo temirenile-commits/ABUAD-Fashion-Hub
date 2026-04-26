@@ -67,7 +67,15 @@ export default function VendorActions({ vendorId, vendorName, whatsappNumber, in
   };
 
   const waMessage = `Hi ${vendorName}! I found you on ABUAD Fashion Hub. I'd love to know more about your products.`;
-  const whatsapp = (whatsappNumber || '').replace('+', '');
+  // Normalize to Nigerian format: strip +, leading 0, then prepend 234
+  const normalizeNgPhone = (num: string) => {
+    const digits = (num || '').replace(/\D/g, '');
+    if (digits.startsWith('234')) return digits;
+    if (digits.startsWith('0')) return '234' + digits.slice(1);
+    if (digits.length === 10) return '234' + digits;
+    return digits || '2348000000000';
+  };
+  const whatsapp = normalizeNgPhone(whatsappNumber);
 
   return (
     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>

@@ -65,7 +65,14 @@ export default function ServicesPage() {
             {filtered.map((svc) => {
               const brand = svc.brands;
               const waMessage = `Hi ${brand.name}! I found you on ABUAD Fashion Hub and I'm interested in your service: *${svc.title}*. Please share more details.`;
-              const whatsapp = brand.whatsapp_number.replace('+', '');
+              const normalizeNgPhone = (num: string) => {
+                const digits = (num || '').replace(/\D/g, '');
+                if (digits.startsWith('234')) return digits;
+                if (digits.startsWith('0')) return '234' + digits.slice(1);
+                if (digits.length === 10) return '234' + digits;
+                return digits || '2348000000000';
+              };
+              const whatsapp = normalizeNgPhone(brand.whatsapp_number);
 
               return (
                 <div key={svc.id} className={styles.serviceCard}>

@@ -90,7 +90,14 @@ export default async function ProductPage({ params }: Props) {
   const relatedProducts = (relatedData || []) as unknown as LiveProduct[];
 
   const waMessage = `Hi! I'm interested in: *${product.title}* priced at *${formatPrice(product.price)}* from ABUAD Fashion Hub. Is it available?`;
-  const whatsappNumber = vendor?.whatsapp_number?.replace('+', '') || '';
+  const normalizeNgPhone = (num: string) => {
+    const digits = (num || '').replace(/\D/g, '');
+    if (digits.startsWith('234')) return digits;
+    if (digits.startsWith('0')) return '234' + digits.slice(1);
+    if (digits.length === 10) return '234' + digits;
+    return digits || '2348000000000';
+  };
+  const whatsappNumber = normalizeNgPhone(vendor?.whatsapp_number || '');
 
   const mainImage = product.image_url || product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60';
   const allImages = [...(product.image_url ? [product.image_url] : []), ...(product.media_urls || [])].filter((val, i, arr) => arr.indexOf(val) === i);
