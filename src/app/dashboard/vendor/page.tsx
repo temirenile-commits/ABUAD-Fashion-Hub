@@ -2398,7 +2398,7 @@ export default function VendorDashboard() {
         {activeTab === 'ai' && (
           <div style={{ padding: '2rem', maxWidth: 720, margin: '0 auto' }}>
             <div style={{ marginBottom: '2rem' }}>
-              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.4rem' }}>✨ AI Assistant</h2>
+              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.4rem' }}>✨ AI Assistant <span style={{ fontSize: '0.7rem', color: 'var(--primary)', verticalAlign: 'middle', background: 'rgba(167,139,250,0.1)', padding: '2px 8px', borderRadius: '4px' }}>v3.1 LIVE</span></h2>
               <p style={{ color: 'var(--text-400)', fontSize: '0.9rem' }}>Your AI Copilot helps you manage your store, guides customers automatically, and keeps your shop running even when you're offline.</p>
             </div>
 
