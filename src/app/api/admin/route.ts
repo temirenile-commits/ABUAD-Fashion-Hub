@@ -161,6 +161,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ reviews: data });
   }
 
+  if (action === 'payouts') {
+    const { data, error } = await supabaseAdmin
+      .from('payout_requests')
+      .select('*, users:user_id(name, email)')
+      .order('created_at', { ascending: false });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ payouts: data });
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }
 
@@ -462,6 +472,54 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid target. Use "all" or "specific" with a userId.' }, { status: 400 });
+  }
+
+  if (action === 'confirm_payout') {
+    const { requestId, proofUrl, reference } = body;
+    const admin = await verifyAdmin(req);
+    const adminId = admin ? admin.id : null;
+    
+    const { error } = await supabaseAdmin.rpc('confirm_payout', {
+      p_request_id: requestId,
+      p_admin_id: adminId,
+      p_proof_url: proofUrl,
+      p_reference: reference
+    });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    
+    const { data: reqData } = await supabaseAdmin.from('payout_requests').select('user_id').eq('id', requestId).single();
+    if (reqData) {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: reqData.user_id,
+        title: 'Payout Completed',
+        content: `Your payout request has been processed successfully. Reference: ${reference || 'N/A'}`,
+        is_read: false
+      });
+    }
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'reject_payout') {
+    const { requestId } = body;
+    const admin = await verifyAdmin(req);
+    const adminId = admin ? admin.id : null;
+    
+    const { error } = await supabaseAdmin.rpc('reject_payout', {
+      p_request_id: requestId,
+      p_admin_id: adminId
+    });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    const { data: reqData } = await supabaseAdmin.from('payout_requests').select('user_id').eq('id', requestId).single();
+    if (reqData) {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: reqData.user_id,
+        title: 'Payout Rejected',
+        content: `Your payout request was rejected. The funds have been returned to your available balance.`,
+        is_read: false
+      });
+    }
+    return NextResponse.json({ success: true });
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

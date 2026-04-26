@@ -11,6 +11,8 @@ import {
   ArrowLeft,
   ShieldCheck,
   MessageCircle,
+  Wallet,
+  Building
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import styles from './onboarding.module.css';
@@ -19,7 +21,8 @@ const STEPS = [
   { id: 1, label: 'Account Type', icon: <User size={20} /> },
   { id: 2, label: 'Brand Details', icon: <Store size={20} /> },
   { id: 3, label: 'Verification', icon: <GraduationCap size={20} /> },
-  { id: 4, label: 'Terms', icon: <ShieldCheck size={20} /> },
+  { id: 4, label: 'Bank Details', icon: <Wallet size={20} /> },
+  { id: 5, label: 'Terms', icon: <ShieldCheck size={20} /> },
 ];
 
 const ADMIN_WHATSAPP = "2348012345678"; // Replace with your actual number
@@ -31,7 +34,7 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState('');
-  const [acceptedTerms, setAcceptedTerms] = useState(true);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const [form, setForm] = useState({
@@ -39,10 +42,17 @@ export default function OnboardingPage() {
     description: '',
     category: 'Clothing',
     whatsapp: '',
+    verificationType: 'academic',
     roomNo: '',
     matricNo: '',
     college: '',
     department: '',
+    businessName: '',
+    businessRegNo: '',
+    businessAddress: '',
+    bankName: '',
+    accountNumber: '',
+    accountName: '',
   });
 
   useEffect(() => {
@@ -62,7 +72,7 @@ export default function OnboardingPage() {
     checkUser();
   }, [router]);
 
-  const next = () => setStep((s) => Math.min(s + 1, 4));
+  const next = () => setStep((s) => Math.min(s + 1, 5));
   const prev = () => setStep((s) => Math.max(s - 1, 1));
 
   const handleSubmit = async () => {
@@ -79,10 +89,17 @@ export default function OnboardingPage() {
           name: form.brandName,
           description: form.description,
           whatsapp_number: form.whatsapp,
-          room_number: form.roomNo,
-          matric_number: form.matricNo,
-          college: form.college,
-          department: form.department,
+          verification_type: form.verificationType,
+          room_number: form.verificationType === 'academic' ? form.roomNo : null,
+          matric_number: form.verificationType === 'academic' ? form.matricNo : null,
+          college: form.verificationType === 'academic' ? form.college : null,
+          department: form.verificationType === 'academic' ? form.department : null,
+          business_name: form.verificationType === 'business' ? form.businessName : null,
+          business_registration_number: form.verificationType === 'business' ? form.businessRegNo : null,
+          business_address: form.verificationType === 'business' ? form.businessAddress : null,
+          bank_name: form.bankName,
+          bank_account_number: form.accountNumber,
+          bank_account_name: form.accountName,
           verification_status: 'pending',
           verified: false,
           fee_paid: true, // We auto-mark fee as paid because we removed the naira fee
@@ -214,46 +231,133 @@ export default function OnboardingPage() {
 
           {step === 3 && (
             <div className={styles.stepContent}>
-              <h2 className={styles.stepTitle}>Academic Verification</h2>
-              <p className={styles.stepDesc}>Details will be verified manually by the admin team.</p>
-              <div className={styles.formGrid}>
-                <div className="form-group">
-                  <label className="form-label">Matric Number *</label>
-                  <input className="form-input" placeholder="e.g. 21/ENG02/001" value={form.matricNo} onChange={e => setForm({...form, matricNo: e.target.value})} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Room Number *</label>
-                  <input className="form-input" placeholder="e.g. PG4, Room 102" value={form.roomNo} onChange={e => setForm({...form, roomNo: e.target.value})} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">College *</label>
-                  <input className="form-input" placeholder="e.g. Engineering" value={form.college} onChange={e => setForm({...form, college: e.target.value})} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Department *</label>
-                  <input className="form-input" placeholder="e.g. Electrical Engineering" value={form.department} onChange={e => setForm({...form, department: e.target.value})} />
-                </div>
+              <h2 className={styles.stepTitle}>Identity Verification</h2>
+              <p className={styles.stepDesc}>Choose how you want to verify your identity.</p>
+
+              <div className={styles.typeGrid} style={{ marginBottom: '2rem' }}>
+                <button
+                  className={`${styles.typeCard} ${form.verificationType === 'academic' ? styles.typeSelected : ''}`}
+                  onClick={() => setForm({...form, verificationType: 'academic'})}
+                >
+                  <span className={styles.typeEmoji}>🎓</span>
+                  <h3>Student</h3>
+                </button>
+                <button
+                  className={`${styles.typeCard} ${form.verificationType === 'business' ? styles.typeSelected : ''}`}
+                  onClick={() => setForm({...form, verificationType: 'business'})}
+                >
+                  <span className={styles.typeEmoji}>🏢</span>
+                  <h3>Registered Business</h3>
+                </button>
               </div>
+
+              {form.verificationType === 'academic' ? (
+                <div className={styles.formGrid}>
+                  <div className="form-group">
+                    <label className="form-label">Matric Number *</label>
+                    <input className="form-input" placeholder="e.g. 21/ENG02/001" value={form.matricNo} onChange={e => setForm({...form, matricNo: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Room Number *</label>
+                    <input className="form-input" placeholder="e.g. PG4, Room 102" value={form.roomNo} onChange={e => setForm({...form, roomNo: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">College *</label>
+                    <input className="form-input" placeholder="e.g. Engineering" value={form.college} onChange={e => setForm({...form, college: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Department *</label>
+                    <input className="form-input" placeholder="e.g. Electrical Engineering" value={form.department} onChange={e => setForm({...form, department: e.target.value})} />
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.formGrid}>
+                  <div className="form-group">
+                    <label className="form-label">Business Name *</label>
+                    <input className="form-input" placeholder="e.g. Trendy Collections LTD" value={form.businessName} onChange={e => setForm({...form, businessName: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Registration Number (CAC) *</label>
+                    <input className="form-input" placeholder="e.g. RC 123456" value={form.businessRegNo} onChange={e => setForm({...form, businessRegNo: e.target.value})} />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label className="form-label">Business Address *</label>
+                    <input className="form-input" placeholder="Full physical address" value={form.businessAddress} onChange={e => setForm({...form, businessAddress: e.target.value})} />
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {step === 4 && (
             <div className={styles.stepContent}>
-              <h2 className={styles.stepTitle}>Ready to begin?</h2>
-              <div className={styles.termsBox}>
-                <p><strong>Matric Verification:</strong> Admin will verify your identity. False info leads to permanent ban.</p>
-                <p><strong>Credit System:</strong> You get 5 free listing credits today.</p>
-                <p><strong>Power Week:</strong> One week free of full vendor abilities. After that, credit rates apply.</p>
+              <h2 className={styles.stepTitle}>Bank Details for Payouts</h2>
+              <p className={styles.stepDesc}>Where should we send your earnings?</p>
+              <div className={styles.formGrid}>
+                <div className="form-group">
+                  <label className="form-label">Bank Name *</label>
+                  <input className="form-input" placeholder="e.g. GTBank" value={form.bankName} onChange={e => setForm({...form, bankName: e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Account Number *</label>
+                  <input className="form-input" placeholder="10-digit number" value={form.accountNumber} onChange={e => setForm({...form, accountNumber: e.target.value})} />
+                </div>
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="form-label">Account Name *</label>
+                  <input className="form-input" placeholder="Exact name on account" value={form.accountName} onChange={e => setForm({...form, accountName: e.target.value})} />
+                </div>
               </div>
-              <button className="btn btn-primary btn-lg" style={{ width: '100%' }} onClick={handleSubmit} disabled={loading}>
-                {loading ? 'Submitting...' : 'Complete Registration & Contact Admin'}
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className={styles.stepContent}>
+              <h2 className={styles.stepTitle}>Terms & Conditions</h2>
+              <p className={styles.stepDesc}>Please read carefully before completing your registration.</p>
+              
+              <div style={{ height: '300px', overflowY: 'auto', padding: '1.25rem', background: 'var(--bg-200)', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1.5rem', border: '1px solid var(--border)', lineHeight: '1.6' }}>
+                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-100)' }}>1. Identity Verification</h4>
+                <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>All vendors must undergo manual identity verification. Submitting false academic (Matriculation/Room number) or business credentials will lead to an immediate and permanent ban from the ABUAD Fashion Hub platform.</p>
+                
+                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-100)' }}>2. Financial Escrow & Payouts</h4>
+                <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>To protect our customers, all funds from completed orders are held in a secure Escrow system for a mandatory 24-hour period post-delivery. Once the hold clears, you may request a manual payout to your registered bank account. Minimum withdrawal is ₦1,000.</p>
+                
+                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-100)' }}>3. Fees & Subscriptions (Subject to Change)</h4>
+                <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>The platform operates on a subscription and commission model. By proceeding, you agree to pay the current subscription rates required to keep your store active. <strong>Please note: All platform fees, commissions, and subscription prices are subject to change.</strong> However, you will be notified via in-app alerts and email prior to any pricing adjustments.</p>
+                
+                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-100)' }}>4. Free Trial & Credits</h4>
+                <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>New vendors receive a "Power Week" (7 days) of free full-access to platform features and 5 free product listing credits. Once exhausted, standard rates apply.</p>
+
+                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-100)' }}>5. Vendor Conduct</h4>
+                <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>You agree to fulfill orders promptly, communicate respectfully with customers, and only list authentic items. The admin reserves the right to suspend or terminate any store violating platform integrity, selling prohibited items, or engaging in fraudulent behavior.</p>
+              </div>
+
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', marginBottom: '1.5rem', fontSize: '0.9rem', padding: '1rem', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                <input 
+                  type="checkbox" 
+                  checked={acceptedTerms} 
+                  onChange={(e) => setAcceptedTerms(e.target.checked)} 
+                  style={{ marginTop: '0.2rem', minWidth: '18px', height: '18px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                />
+                <span style={{ color: 'var(--text-200)', lineHeight: '1.5' }}>
+                  I have read, understood, and accept the complete Terms & Conditions, and acknowledge that all platform fees are subject to change with prior notice.
+                </span>
+              </label>
+
+              <button 
+                className="btn btn-primary btn-lg" 
+                style={{ width: '100%', opacity: (!acceptedTerms || loading) ? 0.5 : 1 }} 
+                onClick={handleSubmit} 
+                disabled={loading || !acceptedTerms}
+              >
+                {loading ? 'Submitting...' : 'Accept & Complete Registration'}
               </button>
             </div>
           )}
 
           <div className={styles.navButtons}>
             {step > 1 && <button className="btn btn-ghost" onClick={prev}><ArrowLeft size={16} /> Back</button>}
-            {step < 4 && <button className="btn btn-primary" onClick={next} disabled={!vendorType && step === 1}>Continue <ArrowRight size={16} /></button>}
+            {step < 5 && <button className="btn btn-primary" onClick={next} disabled={!vendorType && step === 1}>Continue <ArrowRight size={16} /></button>}
           </div>
         </div>
       </div>

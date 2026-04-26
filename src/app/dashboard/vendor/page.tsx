@@ -236,11 +236,11 @@ export default function VendorDashboard() {
 
       setReels(reelData || []);
 
-      // Fetch Withdrawal Requests
+      // Fetch Payout Requests
       const { data: withdrawData } = await supabase
-        .from('withdrawal_requests')
+        .from('payout_requests')
         .select('*')
-        .eq('brand_id', brandData.id)
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
       setWithdrawalRequests(withdrawData || []);
 
@@ -531,26 +531,27 @@ export default function VendorDashboard() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/vendor/withdraw', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          brandId: brand.id,
-          amount: Number(amount)
-        })
+      const { data, error } = await supabase.rpc('request_payout', {
+        p_user_id: brand.owner_id,
+        p_role: 'vendor',
+        p_amount: Number(amount),
+        p_bank_details: {
+          bankName: brand.bank_name,
+          accountNumber: brand.bank_account_number,
+          accountName: brand.bank_account_name || brand.account_name
+        }
       });
-      const data = await res.json();
-      if (data.success) {
-        alert(`Withdrawal of ${formatPrice(amount)} initiated successfully! Ref: ${data.reference}`);
+      if (!error) {
+        alert(`Withdrawal request submitted successfully! Ref ID: ${data}`);
         setIsWithdrawing(false);
         // Refresh wallet
         const { data: newWallet } = await supabase.from('wallets').select('*').eq('brand_id', brand.id).single();
         setWallet(newWallet);
         // Refresh withdrawals
-        const { data: withdrawData } = await supabase.from('withdrawals').select('*').eq('brand_id', brand.id).order('created_at', { ascending: false });
+        const { data: withdrawData } = await supabase.from('payout_requests').select('*').eq('user_id', brand.owner_id).order('created_at', { ascending: false });
         setWithdrawalRequests(withdrawData || []);
       } else {
-        alert(data.error || 'Withdrawal failed');
+        alert(error.message || 'Withdrawal failed');
       }
     } catch (err) {
       alert('Error submitting withdrawal');
@@ -2008,13 +2009,13 @@ export default function VendorDashboard() {
                 <div className={styles.walletActions}>
                   <button
                     className="btn btn-primary"
-                    disabled={!wallet?.available_balance || wallet.available_balance < 1000 || !brand.recipient_code}
+                    disabled={!wallet?.available_balance || wallet.available_balance < 1000 || !brand.bank_account_number}
                     onClick={() => setIsWithdrawing(true)}
                   >
                     Withdraw Funds
                   </button>
                 </div>
-                {!brand.recipient_code && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.5rem' }}>Link your bank account in Settings to withdraw.</p>}
+                {!brand.bank_account_number && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.5rem' }}>Update your bank details in Settings to withdraw.</p>}
                 <p className={styles.minWithdrawal}>Minimum withdrawal: ₦1,000</p>
               </div>
 
@@ -2022,15 +2023,15 @@ export default function VendorDashboard() {
                 <div>
                   <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Pending (Escrow)</span>
                   <h3 style={{ fontSize: '1.2rem', margin: '0.25rem 0', color: '#f59e0b' }}>{formatPrice(wallet?.pending_balance || 0)}</h3>
-                  <p style={{ fontSize: '0.7rem' }}>Held until customer confirms delivery</p>
+                  <p style={{ fontSize: '0.7rem' }}>Held for 24hrs post-delivery</p>
                 </div>
                 <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
                 <div>
                   <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Lifetime Earnings</span>
                   <h3 style={{ fontSize: '1.2rem', margin: '0.25rem 0', color: 'var(--primary)' }}>
-                    {formatPrice(transactions.filter(t => t.type === 'escrow_release').reduce((acc, curr) => acc + Number(curr.amount || 0), 0))}
+                    {formatPrice(wallet?.total_earnings || 0)}
                   </h3>
-                  <p style={{ fontSize: '0.7rem' }}>Total funds processed</p>
+                  <p style={{ fontSize: '0.7rem' }}>Total funds earned</p>
                 </div>
               </div>
             </div>
@@ -2052,12 +2053,12 @@ export default function VendorDashboard() {
                     <div className={styles.bankPreview}>
                       <CreditCard size={18} />
                       <div>
-                        <p>{brand?.bank_name || 'No Bank Added'}</p>
+                        <p>{brand?.bank_account_name || brand?.bank_name || 'No Bank Added'}</p>
                         <span>{brand?.bank_account_number || 'Update in settings'}</span>
                       </div>
                     </div>
                   </div>
-                  <button type="submit" className="btn btn-primary btn-lg" disabled={!brand?.recipient_code || loading}>
+                  <button type="submit" className="btn btn-primary btn-lg" disabled={!brand?.bank_account_number || loading}>
                     {loading ? <Loader2 className="anim-spin" size={18} /> : 'Confirm Withdrawal Request'}
                   </button>
                 </form>
@@ -2065,23 +2066,26 @@ export default function VendorDashboard() {
             )}
 
             <div className={styles.transactionSection}>
-              <h3>Transaction History</h3>
+              <h3>Payout Requests History</h3>
               <div className={styles.transactionTable}>
-                {transactions.map(tx => (
-                  <div key={tx.id} className={styles.txRow}>
+                {withdrawalRequests.map(req => (
+                  <div key={req.id} className={styles.txRow}>
                     <div className={styles.txIcon}>
-                      {tx.type === 'escrow_release' ? <CheckCircle size={16} color="#10b981" /> : <CreditCard size={16} color="var(--primary)" />}
+                      <CreditCard size={16} color="var(--primary)" />
                     </div>
                     <div className={styles.txInfo}>
-                      <p>{tx.description || tx.type.replace('_', ' ')}</p>
-                      <span>{new Date(tx.created_at).toLocaleDateString()}</span>
+                      <p>Payout to {req.bank_details?.bankName}</p>
+                      <span style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        {new Date(req.created_at).toLocaleDateString()}
+                        <span className={`badge badge-${req.status}`}>{req.status}</span>
+                      </span>
                     </div>
-                    <div className={`${styles.txAmount} ${tx.amount > 0 ? styles.txPos : styles.txNeg}`}>
-                      {tx.amount > 0 ? '+' : ''}{formatPrice(tx.amount)}
+                    <div className={`${styles.txAmount} ${styles.txNeg}`}>
+                      {formatPrice(req.amount_requested)}
                     </div>
                   </div>
                 ))}
-                {transactions.length === 0 && <p className={styles.emptyText}>No transactions yet.</p>}
+                {withdrawalRequests.length === 0 && <p className={styles.emptyText}>No payout requests yet.</p>}
               </div>
             </div>
           </div>

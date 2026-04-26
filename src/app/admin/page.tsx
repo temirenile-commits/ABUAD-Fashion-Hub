@@ -32,6 +32,11 @@ export default function AdminDashboard() {
   const [enlargedImg, setEnlargedImg] = useState<string | null>(null);
   const [notifForm, setNotifForm] = useState({ title: '', content: '', target: 'all', userId: '' });
   const [notifSending, setNotifSending] = useState(false);
+  
+  const [confirmPayoutModal, setConfirmPayoutModal] = useState<any>(null);
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [transferRef, setTransferRef] = useState('');
+  const [uploadingProof, setUploadingProof] = useState(false);
 
   const [stats, setStats] = useState({ userCount: 0, brandCount: 0, productCount: 0, totalRevenue: 0 });
   const [vendors, setVendors] = useState<any[]>([]);
@@ -40,12 +45,13 @@ export default function AdminDashboard() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [payouts, setPayouts] = useState<any[]>([]);
   const [platformSettings, setPlatformSettings] = useState<any>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, vendorsRes, productsRes, usersRes, txRes, ordersRes, reviewsRes, settingsRes] = await Promise.all([
+      const [statsRes, vendorsRes, productsRes, usersRes, txRes, ordersRes, reviewsRes, payoutsRes, settingsRes] = await Promise.all([
         adminFetch('/api/admin?action=stats'),
         adminFetch('/api/admin?action=vendors'),
         adminFetch('/api/admin?action=products'),
@@ -53,12 +59,13 @@ export default function AdminDashboard() {
         adminFetch('/api/admin?action=transactions'),
         adminFetch('/api/admin?action=orders'),
         adminFetch('/api/admin?action=reviews'),
+        adminFetch('/api/admin?action=payouts'),
         adminFetch('/api/admin?action=settings'),
       ]);
 
-      const [statsData, vendorsData, productsData, usersData, txData, ordersData, reviewsData, settingsData] = await Promise.all([
+      const [statsData, vendorsData, productsData, usersData, txData, ordersData, reviewsData, payoutsData, settingsData] = await Promise.all([
         statsRes.json(), vendorsRes.json(), productsRes.json(),
-        usersRes.json(), txRes.json(), ordersRes.json(), reviewsRes.json(), settingsRes.json(),
+        usersRes.json(), txRes.json(), ordersRes.json(), reviewsRes.json(), payoutsRes.json(), settingsRes.json(),
       ]);
 
       if (statsData.stats) setStats(statsData.stats);
@@ -68,6 +75,7 @@ export default function AdminDashboard() {
       if (txData.transactions) setTransactions(txData.transactions);
       if (ordersData.orders) setOrders(ordersData.orders);
       if (reviewsData.reviews) setReviews(reviewsData.reviews);
+      if (payoutsData.payouts) setPayouts(payoutsData.payouts);
       if (settingsData.settings) setPlatformSettings(settingsData.settings);
     } catch (e) {
       console.error('Admin fetch error:', e);
@@ -96,6 +104,26 @@ export default function AdminDashboard() {
       alert('Network error');
     }
     setActionLoading('');
+  };
+
+  const handleConfirmPayout = async () => {
+    if (!proofFile || !transferRef) return alert('Please attach proof and enter reference');
+    setUploadingProof(true);
+    try {
+      const fileExt = proofFile.name.split('.').pop();
+      const filePath = `payouts/${confirmPayoutModal.id}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('payout_proofs').upload(filePath, proofFile, { upsert: true });
+      if (uploadError) throw uploadError;
+      
+      const { data } = supabase.storage.from('payout_proofs').getPublicUrl(filePath);
+      await adminAction('confirm_payout', { requestId: confirmPayoutModal.id, proofUrl: data.publicUrl, reference: transferRef });
+      setConfirmPayoutModal(null);
+      setProofFile(null);
+      setTransferRef('');
+    } catch (e: any) {
+      alert(e.message || 'Upload failed');
+    }
+    setUploadingProof(false);
   };
 
   const filterBy = (items: any[], fields: string[]) => {
@@ -374,21 +402,50 @@ export default function AdminDashboard() {
 
             {activeTab === 'financials' && (
               <div className={styles.sectionCard}>
-                <table className={styles.table}>
+                <h2>Payout Requests</h2>
+                <table className={styles.table} style={{ marginTop: '1rem' }}>
                   <thead>
-                    <tr><th>Type</th><th>Reference</th><th>Brand</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+                    <tr><th>ID</th><th>User</th><th>Role</th><th>Amount</th><th>Bank</th><th>Status</th><th>Date</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
-                    {filterBy(transactions, ['type', 'description']).map(tx => (
-                      <tr key={tx.id}>
-                        <td><span className={`badge badge-${tx.type}`}>{tx.type.replace('_', ' ')}</span></td>
-                        <td className={styles.subText}>{tx.description}</td>
-                        <td>{tx.brands?.name || 'System'}</td>
-                        <td style={{ color: tx.type === 'payment_in' ? '#10b981' : '#f59e0b' }}>
-                          {tx.type === 'payment_in' ? '+' : '-'}₦{Number(tx.amount).toLocaleString()}
+                    {filterBy(payouts, ['role', 'status', 'users.name']).map(req => (
+                      <tr key={req.id}>
+                        <td className={styles.subText}>#{req.id.slice(0, 8)}</td>
+                        <td>
+                          <div>{req.users?.name || 'Unknown'}</div>
+                          <div className={styles.subText}>{req.users?.email}</div>
                         </td>
-                        <td>{tx.status}</td>
-                        <td className={styles.subText}>{new Date(tx.created_at).toLocaleDateString()}</td>
+                        <td><span className={`badge badge-${req.role}`}>{req.role}</span></td>
+                        <td style={{ color: '#f59e0b', fontWeight: 'bold' }}>
+                          ₦{Number(req.amount_requested).toLocaleString()}
+                        </td>
+                        <td>
+                          <div style={{ fontSize: '0.8rem' }}>{req.bank_details?.bankName}</div>
+                          <div style={{ fontSize: '0.8rem', fontFamily: 'monospace' }}>{req.bank_details?.accountNumber}</div>
+                        </td>
+                        <td><span className={`badge badge-${req.status}`}>{req.status}</span></td>
+                        <td className={styles.subText}>{new Date(req.created_at).toLocaleDateString()}</td>
+                        <td>
+                          {req.status === 'pending' || req.status === 'processing' ? (
+                            <div className={styles.actionRow}>
+                              <button 
+                                className="btn btn-primary btn-sm"
+                                onClick={() => setConfirmPayoutModal(req)}
+                              >
+                                Confirm
+                              </button>
+                              <button 
+                                className="btn btn-ghost btn-sm"
+                                style={{ color: '#ef4444' }}
+                                onClick={() => { if(confirm('Reject payout? Funds will be returned.')) adminAction('reject_payout', { requestId: req.id }) }}
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          ) : req.proof_url ? (
+                            <a href={req.proof_url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">View Proof</a>
+                          ) : '—'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -624,12 +681,27 @@ export default function AdminDashboard() {
               <button onClick={() => setSelectedVendor(null)}><XCircle size={24} /></button>
             </div>
             <div className={styles.modalBody}>
+              {selectedVendor.verification_type === 'business' ? (
+                <div className={styles.modalSection}>
+                  <h3>Business Profile</h3>
+                  <p><strong>Business Name:</strong> {selectedVendor.business_name || '—'}</p>
+                  <p><strong>Registration No (CAC):</strong> {selectedVendor.business_registration_number || '—'}</p>
+                  <p><strong>Address:</strong> {selectedVendor.business_address || '—'}</p>
+                </div>
+              ) : (
+                <div className={styles.modalSection}>
+                  <h3>Academic Profile</h3>
+                  <p><strong>Matric No:</strong> {selectedVendor.matric_number || '—'}</p>
+                  <p><strong>Room No:</strong> {selectedVendor.room_number || '—'}</p>
+                  <p><strong>College:</strong> {selectedVendor.college || '—'}</p>
+                  <p><strong>Department:</strong> {selectedVendor.department || '—'}</p>
+                </div>
+              )}
               <div className={styles.modalSection}>
-                <h3>Academic Profile</h3>
-                <p><strong>Matric No:</strong> {selectedVendor.matric_number}</p>
-                <p><strong>Room No:</strong> {selectedVendor.room_number}</p>
-                <p><strong>College:</strong> {selectedVendor.college}</p>
-                <p><strong>Department:</strong> {selectedVendor.department}</p>
+                <h3>Bank Details for Payouts</h3>
+                <p><strong>Bank Name:</strong> {selectedVendor.bank_name || '—'}</p>
+                <p><strong>Account Name:</strong> {selectedVendor.bank_account_name || '—'}</p>
+                <p><strong>Account Number:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedVendor.bank_account_number || '—'}</span></p>
               </div>
               <div className={styles.modalSection}>
                 <h3>Contact</h3>
@@ -659,6 +731,54 @@ export default function AdminDashboard() {
                   <button className="btn btn-ghost" style={{ color: '#ef4444' }} onClick={() => adminAction('reject_vendor', { brandId: selectedVendor.id })}>Reject</button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmPayoutModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h2>Confirm Transfer</h2>
+              <button onClick={() => setConfirmPayoutModal(null)}><XCircle size={24} /></button>
+            </div>
+            <div className={styles.modalBody}>
+              <div style={{ padding: '1rem', background: 'var(--bg-300)', borderRadius: '8px', marginBottom: '1.5rem' }}>
+                <p>Transfer <strong>₦{Number(confirmPayoutModal.amount_requested).toLocaleString()}</strong> to:</p>
+                <p><strong>{confirmPayoutModal.bank_details?.accountName}</strong></p>
+                <p><strong>{confirmPayoutModal.bank_details?.bankName}</strong> - {confirmPayoutModal.bank_details?.accountNumber}</p>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Transfer Reference ID</label>
+                <input 
+                  className="form-input" 
+                  placeholder="e.g. TRF-123456789" 
+                  value={transferRef} 
+                  onChange={e => setTransferRef(e.target.value)} 
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Upload Payment Receipt</label>
+                <input 
+                  type="file" 
+                  accept="image/*,.pdf"
+                  className="form-input" 
+                  style={{ padding: '0.5rem' }}
+                  onChange={e => setProofFile(e.target.files?.[0] || null)}
+                />
+              </div>
+
+              <button 
+                className="btn btn-primary" 
+                style={{ width: '100%', marginTop: '1rem' }}
+                onClick={handleConfirmPayout}
+                disabled={uploadingProof || !proofFile || !transferRef}
+              >
+                {uploadingProof ? 'Uploading & Confirming...' : 'Upload Proof & Complete Payout'}
+              </button>
             </div>
           </div>
         </div>
