@@ -109,7 +109,7 @@ HOW TO ANSWER:
     const conversationHistory = messages.map((m: any) => `${m.role === 'user' ? 'Vendor' : 'AI'}: ${m.content}`).join('\n');
 
     const { text } = await generateText({
-      model: google('models/gemini-1.5-flash-latest'),
+      model: google('gemini-1.5-flash'),
       system: systemPrompt,
       prompt: conversationHistory + `\nVendor: ${lastUserMsg}\nAI:`,
     });

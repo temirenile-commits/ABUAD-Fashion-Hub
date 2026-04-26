@@ -47,7 +47,7 @@ RULES:
 4. Keep the answer under 3 sentences. Be friendly and concise.`;
 
     const { text } = await generateText({
-      model: google('models/gemini-1.5-flash-latest'),
+      model: google('gemini-1.5-flash'),
       system: systemPrompt,
       prompt: `Customer message: "${content}"`,
     });
