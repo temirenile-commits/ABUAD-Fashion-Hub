@@ -12,6 +12,7 @@ interface Message {
   receiver_id: string;
   content: string;
   is_read: boolean;
+  answered_by_ai?: boolean;
   created_at: string;
 }
 
@@ -125,6 +126,19 @@ function MessagesContent() {
 
     const { error } = await supabase.from('messages').insert(newMsg);
     if (error) console.error(error);
+    else {
+      if (activePartner.role === 'vendor') {
+        fetch('/api/ai/auto-reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            receiverId: activePartner.id,
+            senderId: user.id,
+            content: input
+          })
+        }).catch(err => console.error('Auto-reply trigger failed', err));
+      }
+    }
     fetchConversations(user.id);
   };
 
@@ -178,6 +192,7 @@ function MessagesContent() {
                   <div className={styles.messageBubble}>
                     <p>{msg.content}</p>
                     <div className={styles.messageFooter}>
+                      {msg.answered_by_ai && <span style={{ color: '#f59e0b', fontSize: '0.7rem', marginRight: '6px', fontWeight: 'bold' }}>✨ AI</span>}
                       <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       {msg.sender_id === user.id && (
                         msg.is_read ? <CheckCheck size={12} className={styles.readIcon} /> : <Check size={12} className={styles.sentIcon} />

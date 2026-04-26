@@ -97,6 +97,13 @@ export default function VendorDashboard() {
   const [verifyingBank, setVerifyingBank] = useState(false);
   const [isSettingUpBank, setIsSettingUpBank] = useState(false);
 
+  // AI States
+  const [aiSettings, setAiSettings] = useState<any>(null);
+  const [showCopilot, setShowCopilot] = useState(false);
+  const [copilotMsgs, setCopilotMsgs] = useState<any[]>([{ role: 'assistant', content: "Hi! I'm your AI Copilot. How can I help you grow your store today?" }]);
+  const [copilotInput, setCopilotInput] = useState('');
+  const [copilotLoading, setCopilotLoading] = useState(false);
+
   const [newProduct, setNewProduct] = useState({
     title: '',
     description: '',
@@ -278,6 +285,14 @@ export default function VendorDashboard() {
       const bankRes = await fetch('/api/paystack/banks');
       const bankDataRes = await bankRes.json();
       if (bankDataRes.success) setBanks(bankDataRes.data);
+
+      // Fetch AI Settings
+      const { data: aiData } = await supabase
+        .from('vendor_ai_settings')
+        .select('*')
+        .eq('brand_id', brandData.id)
+        .single();
+      setAiSettings(aiData || { ai_enabled: true, auto_reply_enabled: false, custom_instructions: '' });
 
       setLoading(false);
     }
@@ -683,6 +698,55 @@ export default function VendorDashboard() {
     }
   };
 
+  const handleUpdateAiSettings = async (updates: any) => {
+    if (!brand) return;
+    setIsSettingsLoading(true);
+    try {
+      const { error } = await supabase.from('vendor_ai_settings').update(updates).eq('brand_id', brand.id);
+      if (!error) {
+        setAiSettings({ ...aiSettings, ...updates });
+        alert('AI Settings updated successfully!');
+      } else {
+        alert('Error updating AI settings: ' + error.message);
+      }
+    } catch (err) {
+      alert('Error updating AI settings');
+    } finally {
+      setIsSettingsLoading(false);
+    }
+  };
+
+  const handleCopilotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!copilotInput.trim() || !brand) return;
+    
+    const newMsgs = [...copilotMsgs, { role: 'user', content: copilotInput }];
+    setCopilotMsgs(newMsgs);
+    setCopilotInput('');
+    setCopilotLoading(true);
+
+    try {
+      const res = await fetch('/api/ai/copilot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: newMsgs,
+          vendorId: brand.owner_id,
+          brandId: brand.id
+        })
+      });
+      const data = await res.json();
+      if (data.text) {
+        setCopilotMsgs([...newMsgs, { role: 'assistant', content: data.text }]);
+      } else {
+        setCopilotMsgs([...newMsgs, { role: 'assistant', content: "Sorry, I'm having trouble connecting right now." }]);
+      }
+    } catch (err) {
+      setCopilotMsgs([...newMsgs, { role: 'assistant', content: "Sorry, I'm having trouble connecting right now." }]);
+    }
+    setCopilotLoading(false);
+  };
+
   const addVariant = () => {
     setNewProduct(prev => ({
       ...prev,
@@ -919,6 +983,9 @@ export default function VendorDashboard() {
           </button>
           <button className={`${styles.navItem} ${activeTab === 'plans' ? styles.navActive : ''}`} onClick={() => setActiveTab('plans')} style={{ color: 'var(--primary)', background: activeTab === 'plans' ? 'var(--primary-soft)' : 'transparent' }}>
             <Crown size={18} /> Plans & Upgrade
+          </button>
+          <button className={`${styles.navItem} ${activeTab === 'ai' ? styles.navActive : ''}`} onClick={() => setActiveTab('ai')} style={{ color: '#a78bfa', background: activeTab === 'ai' ? 'rgba(167,139,250,0.1)' : 'transparent' }}>
+            <Zap size={18} /> AI Assistant
           </button>
 
           {userRole === 'admin' && (
@@ -2323,6 +2390,79 @@ export default function VendorDashboard() {
             </div>
           )
         )}
+
+        {/* ─── AI Assistant Settings Tab ─── */}
+        {activeTab === 'ai' && (
+          <div style={{ padding: '2rem', maxWidth: 720, margin: '0 auto' }}>
+            <div style={{ marginBottom: '2rem' }}>
+              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.4rem' }}>✨ AI Assistant</h2>
+              <p style={{ color: 'var(--text-400)', fontSize: '0.9rem' }}>Your AI Copilot helps you manage your store, guides customers automatically, and keeps your shop running even when you're offline.</p>
+            </div>
+
+            {/* Master Toggle */}
+            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid rgba(167,139,250,0.2)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>🤖 Enable AI Copilot</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-400)' }}>Master switch. Turns the AI on or off for your entire store.</div>
+                </div>
+                <button
+                  onClick={() => handleUpdateAiSettings({ ai_enabled: !aiSettings?.ai_enabled })}
+                  style={{ width: 52, height: 28, borderRadius: '999px', border: 'none', cursor: 'pointer', transition: 'background 0.3s', background: aiSettings?.ai_enabled ? '#7c3aed' : 'var(--bg-300)', position: 'relative', flexShrink: 0 }}
+                >
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, transition: 'left 0.3s', left: aiSettings?.ai_enabled ? 26 : 4 }} />
+                </button>
+              </div>
+            </div>
+
+            {/* Auto-Reply Toggle */}
+            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid rgba(167,139,250,0.2)', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>💬 Auto-Reply to Customers</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-400)' }}>When enabled, the AI automatically answers customer messages about your products — even when you're offline. Replies show a ✨ AI badge.</div>
+                </div>
+                <button
+                  onClick={() => handleUpdateAiSettings({ auto_reply_enabled: !aiSettings?.auto_reply_enabled })}
+                  style={{ width: 52, height: 28, borderRadius: '999px', border: 'none', cursor: 'pointer', transition: 'background 0.3s', background: aiSettings?.auto_reply_enabled ? '#7c3aed' : 'var(--bg-300)', position: 'relative', flexShrink: 0 }}
+                >
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, transition: 'left 0.3s', left: aiSettings?.auto_reply_enabled ? 26 : 4 }} />
+                </button>
+              </div>
+            </div>
+
+            {/* Custom Instructions */}
+            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid rgba(167,139,250,0.2)', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
+              <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>📝 Custom AI Instructions</div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.75rem' }}>Tell the AI how to represent your brand. E.g. "Always greet customers with 'Hey boss!'", "Never negotiate on prices", "Speak in a friendly, casual tone".</div>
+              <textarea
+                rows={4}
+                value={aiSettings?.custom_instructions || ''}
+                onChange={e => setAiSettings({ ...aiSettings, custom_instructions: e.target.value })}
+                placeholder="e.g. Always be friendly and end replies with 'Shop now at our store!'"
+                style={{ width: '100%', background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.85rem', color: '#fff', fontSize: '0.85rem', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              />
+              <button
+                onClick={() => handleUpdateAiSettings({ custom_instructions: aiSettings?.custom_instructions })}
+                disabled={isSettingsLoading}
+                className="btn btn-primary"
+                style={{ marginTop: '0.75rem' }}
+              >
+                {isSettingsLoading ? <Loader2 size={14} className="anim-spin" /> : null} Save Instructions
+              </button>
+            </div>
+
+            {/* Open Copilot CTA */}
+            <div style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.15),rgba(167,139,250,0.08))', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(167,139,250,0.25)', textAlign: 'center' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✨</div>
+              <div style={{ fontWeight: 700, marginBottom: '0.4rem' }}>Talk to your Copilot</div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Ask it anything: "What are my earnings?", "How do I add a product?", "Why is my balance pending?"</div>
+              <button onClick={() => setShowCopilot(true)} className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#7c3aed,#a78bfa)', border: 'none' }}>
+                Open AI Chat ✨
+              </button>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Mobile Bottom Navigation */}
@@ -2348,6 +2488,78 @@ export default function VendorDashboard() {
           <span>Config</span>
         </button>
       </nav>
+
+      {/* ─── AI Copilot Floating Widget ─── */}
+      {showCopilot && (
+        <div style={{
+          position: 'fixed', bottom: '6rem', right: '1.5rem', width: '360px', maxHeight: '500px',
+          background: 'var(--bg-200)', border: '1px solid rgba(167,139,250,0.35)', borderRadius: '20px',
+          boxShadow: '0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(167,139,250,0.12)',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 9999,
+          backdropFilter: 'blur(24px)'
+        }}>
+          {/* Header */}
+          <div style={{ padding: '1rem 1.25rem', background: 'linear-gradient(135deg,rgba(167,139,250,0.2),rgba(139,92,246,0.1))', borderBottom: '1px solid rgba(167,139,250,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#a78bfa,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>✨</div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>AI Copilot</div>
+                <div style={{ fontSize: '0.7rem', color: '#a78bfa' }}>Powered by Gemini</div>
+              </div>
+            </div>
+            <button onClick={() => setShowCopilot(false)} style={{ background: 'none', border: 'none', color: 'var(--text-400)', cursor: 'pointer', padding: '4px' }}><X size={16} /></button>
+          </div>
+
+          {/* Messages */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {copilotMsgs.map((msg, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                <div style={{
+                  maxWidth: '85%', padding: '0.65rem 0.9rem', borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                  background: msg.role === 'user' ? 'linear-gradient(135deg,#7c3aed,#6d28d9)' : 'var(--bg-300)',
+                  fontSize: '0.83rem', lineHeight: 1.5, whiteSpace: 'pre-wrap'
+                }}>
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {copilotLoading && (
+              <div style={{ display: 'flex', gap: '4px', padding: '0.5rem' }}>
+                {[0,1,2].map(i => <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#a78bfa', animation: `bounce 1.2s ${i * 0.2}s infinite` }} />)}
+              </div>
+            )}
+          </div>
+
+          {/* Input */}
+          <form onSubmit={handleCopilotSubmit} style={{ padding: '0.75rem', borderTop: '1px solid rgba(167,139,250,0.15)', display: 'flex', gap: '0.5rem' }}>
+            <input
+              value={copilotInput}
+              onChange={e => setCopilotInput(e.target.value)}
+              placeholder="Ask your AI anything..."
+              disabled={copilotLoading}
+              style={{ flex: 1, background: 'var(--bg-300)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '999px', padding: '0.55rem 1rem', fontSize: '0.83rem', color: '#fff', outline: 'none' }}
+            />
+            <button type="submit" disabled={copilotLoading || !copilotInput.trim()} style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {copilotLoading ? <Loader2 size={14} className="anim-spin" color="#fff" /> : <ArrowRight size={14} color="#fff" />}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Floating AI Copilot Button */}
+      <button
+        onClick={() => setShowCopilot(v => !v)}
+        title="Open AI Copilot"
+        style={{
+          position: 'fixed', bottom: '1.5rem', right: '1.5rem', width: '56px', height: '56px',
+          borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#a78bfa)',
+          border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 8px 32px rgba(124,58,237,0.5)', zIndex: 10000,
+          fontSize: '1.5rem', transition: 'transform 0.2s'
+        }}
+        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
+        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+      >✨</button>
     </div>
   );
 }
