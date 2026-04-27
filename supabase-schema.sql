@@ -50,10 +50,11 @@ CREATE TABLE IF NOT EXISTS public.brands (
 
   wallet_balance DECIMAL DEFAULT 0.00,
   visibility_score INTEGER DEFAULT 100,
-  bank_account_number TEXT,
-  bank_name TEXT,
-  bank_code TEXT,
-  terms_accepted BOOLEAN DEFAULT FALSE,
+   bank_account_number TEXT,
+   bank_account_name TEXT,
+   bank_name TEXT,
+   bank_code TEXT,
+   terms_accepted BOOLEAN DEFAULT FALSE,
   
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );

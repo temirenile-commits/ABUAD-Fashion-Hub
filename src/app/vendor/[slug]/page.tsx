@@ -52,6 +52,12 @@ export default async function VendorPage({ params, searchParams }: Props) {
     `)
     .eq('brand_id', id);
 
+  // Fetch vendor reels
+  const { data: reelsData } = await supabaseAdmin
+    .from('brand_reels')
+    .select('*')
+    .eq('brand_id', id);
+
   const vendorProducts = (productsData || []) as any[] as LiveProduct[];
   const vendor = vendorData;
   
@@ -112,10 +118,11 @@ export default async function VendorPage({ params, searchParams }: Props) {
         {/* Stats Bar */}
         <div className={styles.statsBar}>
           {[
-            { icon: <Star size={16} />, value: Number(vendor.rating || 0).toFixed(1), label: 'Rating' },
-            { icon: <Package size={16} />, value: vendorProducts.length, label: 'Products' },
-            { icon: <Users size={16} />, value: (vendor.followers_count || 0) > 1000 ? `${((vendor.followers_count || 0)/1000).toFixed(1)}k` : (vendor.followers_count || 0), label: 'Followers' },
-            { icon: <Calendar size={16} />, value: new Date(vendor.created_at).getFullYear(), label: 'Member Since' },
+             { icon: <Star size={16} />, value: Number(vendor.rating || 0).toFixed(1), label: 'Rating' },
+             { icon: <Package size={16} />, value: vendorProducts.length, label: 'Products' },
+             { icon: <Users size={16} />, value: (vendor.followers_count || 0) > 1000 ? `${((vendor.followers_count || 0)/1000).toFixed(1)}k` : (vendor.followers_count || 0), label: 'Followers' },
+             { icon: <Calendar size={16} />, value: new Date(vendor.created_at).getFullYear(), label: 'Member Since' },
+             { icon: <Package size={16} />, value: reelsData?.length || 0, label: 'Reels' },
           ].map(({ icon, value, label }) => (
             <div key={label} className={styles.statItem}>
               {icon}
@@ -126,6 +133,29 @@ export default async function VendorPage({ params, searchParams }: Props) {
             </div>
           ))}
         </div>
+
+        {/* Reels Section */}
+        {reelsData && reelsData.length > 0 && (
+          <section className={styles.productsSection} style={{ borderBottom: '1px solid var(--border)', paddingBottom: '3rem', marginBottom: '3rem' }}>
+            <h2 className={styles.productsTitle}>Collection Reels</h2>
+            <div className={styles.reelsGrid}>
+              {reelsData.map((reel) => (
+                <div key={reel.id} className={styles.reelCard}>
+                  <video 
+                    src={reel.video_url} 
+                    className={styles.reelVideo}
+                    loop 
+                    muted 
+                    playsInline
+                    autoPlay
+                    preload="auto"
+                  />
+                  {reel.title && <div className={styles.reelTitleOverlay}>{reel.title}</div>}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Products */}
         <section className={styles.productsSection}>
