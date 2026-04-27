@@ -70,6 +70,7 @@ export default function ProductCard({ product }: Props) {
             autoPlay 
             loop 
             playsInline 
+            preload="auto"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : imageUrl.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || imageUrl.includes('video') ? (
@@ -80,6 +81,7 @@ export default function ProductCard({ product }: Props) {
             autoPlay 
             loop 
             playsInline 
+            preload="auto"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (

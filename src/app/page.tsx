@@ -154,8 +154,8 @@ export default function Home() {
                 <Video size={20} className={styles.goldIcon} />
                 <h2>Trending Collection Reels</h2>
               </div>
-              <Link href="/explore" className={styles.seeAll}>
-                Explore Videos <ArrowRight size={14} />
+              <Link href="/reels" className={styles.seeAll}>
+                Watch Full Feed <ArrowRight size={14} />
               </Link>
             </div>
             <div className={styles.reelsRow}>
@@ -167,6 +167,8 @@ export default function Home() {
                     loop 
                     muted 
                     playsInline
+                    autoPlay
+                    preload="auto"
                     onMouseOver={e => e.currentTarget.play()}
                     onMouseOut={e => e.currentTarget.pause()}
                   />

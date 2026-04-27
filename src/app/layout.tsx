@@ -3,6 +3,7 @@ import { CartProvider } from '@/context/CartContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import RealtimeProvider from '@/components/providers/RealtimeProvider';
 import LayoutWrapper from '@/components/LayoutWrapper';
+import { ThemeProvider } from '@/context/ThemeContext';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -43,15 +44,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <RealtimeProvider>
-          <CartProvider>
-            <NotificationProvider>
-              <LayoutWrapper>
-                {children}
-              </LayoutWrapper>
-            </NotificationProvider>
-          </CartProvider>
-        </RealtimeProvider>
+        <ThemeProvider>
+          <RealtimeProvider>
+            <CartProvider>
+              <NotificationProvider>
+                <LayoutWrapper>
+                  {children}
+                </LayoutWrapper>
+              </NotificationProvider>
+            </CartProvider>
+          </RealtimeProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

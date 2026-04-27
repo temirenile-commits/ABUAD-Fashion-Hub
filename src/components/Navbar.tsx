@@ -2,16 +2,18 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Search, Heart, User, Menu, X, Store, Home, Layers, LogOut, LayoutDashboard, ShoppingBag, MessageCircle, Bell, ShieldCheck } from 'lucide-react';
+import { Search, Heart, User, Menu, X, Store, Home, Layers, LogOut, LayoutDashboard, ShoppingBag, MessageCircle, Bell, ShieldCheck, Sun, Moon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/context/CartContext';
 import { useNotifications } from '@/context/NotificationContext';
+import { useTheme } from '@/context/ThemeContext';
 import CartDrawer from './CartDrawer';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
   const { getItemCount } = useCart();
   const { unreadCount, requestPermission, permission, markAllRead } = useNotifications();
+  const { theme, toggleTheme } = useTheme();
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -96,6 +98,14 @@ export default function Navbar() {
 
         {/* Actions (Right) */}
         <div className={styles.actions}>
+          <button 
+            className={styles.themeToggle} 
+            onClick={toggleTheme} 
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+          </button>
+
           {user ? (
             <>
               {/* Notification (Always Visible) */}
