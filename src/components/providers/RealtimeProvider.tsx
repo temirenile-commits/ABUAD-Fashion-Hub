@@ -26,7 +26,7 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
         .select(`
           *, 
           brands(*),
-          product_stats!inner(*)
+          product_stats(*)
         `)
         .order('created_at', { ascending: false });
 
@@ -59,7 +59,17 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
       if (active) setInitialized(true);
     };
 
+    // Always re-fetch reels (they update frequently and must always be fresh)
+    const fetchReels = async () => {
+      const { data: reelData } = await supabase
+        .from('brand_reels')
+        .select('*, brands(name, logo_url)')
+        .order('created_at', { ascending: false });
+      if (active && reelData) setReels(reelData as any);
+    };
+
     if (!isInitialized) fetchInitialData();
+    fetchReels(); // Always refresh reels
 
     // We bind a single global channel for public tables
     const publicChannel = supabase.channel('public:marketplace');

@@ -13,35 +13,34 @@ export default function VividVideo({ src, className, style }: Props) {
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !src) return;
 
-    // Ensure muted is set on the DOM element specifically for browser compliance
+    // Force mute at DOM level — needed for Safari/iOS autoplay policy
     video.muted = true;
-    video.defaultMuted = true;
-    video.setAttribute('muted', ''); // Force attribute for some browsers
+    (video as any).defaultMuted = true;
+    video.setAttribute('muted', '');
     video.setAttribute('playsinline', '');
 
-    const playVideo = async () => {
-      try {
-        video.load(); // Force re-scan of the source
-        await video.play();
-      } catch (err) {
-        // Fallback for browsers that block autoplay
-        const retryPlay = () => {
-          video.play();
-          window.removeEventListener('click', retryPlay);
-          window.removeEventListener('touchstart', retryPlay);
+    // Attempt to play once on mount
+    const tryPlay = () => {
+      video.play().catch(() => {
+        // If autoplay is blocked, retry on first user touch/click
+        const unlock = () => {
+          video.play().catch(() => {});
+          document.removeEventListener('click', unlock);
+          document.removeEventListener('touchstart', unlock);
         };
-        window.addEventListener('click', retryPlay);
-        window.addEventListener('touchstart', retryPlay);
-      }
+        document.addEventListener('click', unlock, { once: true });
+        document.addEventListener('touchstart', unlock, { once: true });
+      });
     };
 
-    // Use Intersection Observer to play when visible
+    // IntersectionObserver: play when visible, pause when not
+    // We do NOT call load() here — only play/pause
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          playVideo();
+          video.play().catch(() => {});
         } else {
           video.pause();
         }
@@ -50,6 +49,7 @@ export default function VividVideo({ src, className, style }: Props) {
     );
 
     observer.observe(video);
+    tryPlay();
 
     return () => {
       observer.disconnect();
@@ -67,8 +67,6 @@ export default function VividVideo({ src, className, style }: Props) {
       loop
       autoPlay
       preload="auto"
-      crossOrigin="anonymous"
-      onContextMenu={(e) => e.preventDefault()} // Premium feel
     />
   );
 }
