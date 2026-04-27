@@ -52,6 +52,12 @@ export default function ProductCard({ product }: Props) {
   const brandName = product.brands?.name || 'Unknown Brand';
   const whatsapp = product.brands?.whatsapp_number || '';
 
+  const isVideo = product.video_url || 
+                  imageUrl.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || 
+                  imageUrl.includes('video') || 
+                  imageUrl.includes('reel') ||
+                  product.media_urls?.some(url => url.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || url.includes('video') || url.includes('reel'));
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -60,7 +66,7 @@ export default function ProductCard({ product }: Props) {
   };
 
   return (
-    <Link href={`/product/${product.id}`} className={styles.card}>
+    <Link href={`/product/${product.id}`} className={`${styles.card} ${isVideo ? styles.videoCard : ''}`}>
       <div className={styles.imageWrap}>
         {product.video_url ? (
           <video 
@@ -73,9 +79,20 @@ export default function ProductCard({ product }: Props) {
             preload="auto"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
-        ) : imageUrl.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || imageUrl.includes('video') ? (
+        ) : (imageUrl.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || imageUrl.includes('video') || imageUrl.includes('reel')) ? (
           <video 
             src={imageUrl} 
+            className={styles.image} 
+            muted 
+            autoPlay 
+            loop 
+            playsInline 
+            preload="auto"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : product.media_urls?.find(url => url.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || url.includes('video') || url.includes('reel')) ? (
+          <video 
+            src={product.media_urls.find(url => url.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || url.includes('video') || url.includes('reel'))} 
             className={styles.image} 
             muted 
             autoPlay 

@@ -128,6 +128,7 @@
 .productGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-auto-flow: dense;
   gap: 1.25rem;
 }
 

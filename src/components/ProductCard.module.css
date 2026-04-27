@@ -10,6 +10,10 @@
   height: 100%;
 }
 
+.videoCard {
+  grid-row: span 2;
+}
+
 .card:hover {
   border-color: var(--primary);
   transform: translateY(-4px);
@@ -22,6 +26,10 @@
   aspect-ratio: 1/1;
   background: #111;
   overflow: hidden;
+}
+
+.videoCard .imageWrap {
+  aspect-ratio: 9/16;
 }
 
 .image {
