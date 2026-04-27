@@ -68,6 +68,9 @@ export async function POST(req: Request) {
     const finalChargeAmount = calculatedSubtotal + deliveryFee;
     const batchReference = `BATCH-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 30);
+
     const ordersToInsert = items.map((item: any, index: number) => {
       const liveProduct = liveProducts.find(p => p.id === item.productId);
       const price = liveProduct?.price || item.price;
@@ -93,6 +96,7 @@ export async function POST(req: Request) {
         delivery_method: deliveryMethod || 'platform',
         shipping_address: shippingAddress,
         paystack_reference: batchReference,
+        expires_at: expiresAt.toISOString(),
       };
     });
 

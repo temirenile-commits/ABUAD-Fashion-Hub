@@ -2,7 +2,7 @@
   "name": "abuad-fashion-hub",
   "$schema": "",
   "description": "The premier digital fashion marketplace for ABUAD students.",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "private": true,
   "scripts": {
     "dev": "next dev",

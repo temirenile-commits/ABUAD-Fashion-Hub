@@ -364,6 +364,8 @@ export default function VendorDashboard() {
         if (isVideo) {
           setNewProduct(prev => ({ ...prev, videoUrl: url }));
         }
+        // Affirmation
+        alert(`✅ ${isVideo ? 'Video' : 'Picture'} uploaded successfully!`);
       } else {
         alert(`Upload failed for ${file.name}: ${error}`);
       }
@@ -395,6 +397,7 @@ export default function VendorDashboard() {
     const { url, error } = await uploadFile(file, 'brand-reels', `reel-${brand.id}`);
 
     if (url) {
+      alert("✅ Reel uploaded successfully!");
       const { error: dbError } = await supabase
         .from('brand_reels')
         .insert({
@@ -425,6 +428,26 @@ export default function VendorDashboard() {
 
     try {
       if (editingProduct) {
+        // Cleanup old media if changed
+        const oldImage = editingProduct.image_url;
+        const oldVideo = editingProduct.video_url;
+        const filesToPurge: string[] = [];
+        if (newProduct.imageUrl && oldImage && newProduct.imageUrl !== oldImage) filesToPurge.push(oldImage);
+        if (newProduct.videoUrl && oldVideo && newProduct.videoUrl !== oldVideo) filesToPurge.push(oldVideo);
+        if (filesToPurge.length > 0) {
+          filesToPurge.forEach(url => {
+            try {
+              const parts = url.split('/public/');
+              if (parts.length > 1) {
+                const path = parts[1].split('?')[0];
+                const bucket = path.split('/')[0];
+                const filePath = path.split('/').slice(1).join('/');
+                supabase.storage.from(bucket).remove([filePath]);
+              }
+            } catch (e) { console.error('Cleanup failed:', e); }
+          });
+        }
+
         const updates = {
             title: newProduct.title,
             description: newProduct.description,
@@ -1562,9 +1585,15 @@ export default function VendorDashboard() {
                         )}
                         {order.status === 'pending' && (
                           <div className={styles.statusBox}>
-                            <span className={`${styles.statusBadge}`} style={{ background: 'var(--bg-200)' }}>
-                              Pending Payment
-                            </span>
+                            {order.expires_at && new Date(order.expires_at) < new Date() ? (
+                               <span className={`${styles.statusBadge}`} style={{ background: '#ef4444', color: '#fff' }}>
+                                 EXPIRED / CANCELLED
+                               </span>
+                            ) : (
+                               <span className={`${styles.statusBadge}`} style={{ background: 'var(--bg-200)' }}>
+                                 Pending Payment
+                               </span>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1959,20 +1988,49 @@ export default function VendorDashboard() {
                       className="btn btn-ghost btn-sm"
                       style={{ color: '#ef4444' }}
                       onClick={async () => {
-                        if (!confirm(`Delete "${p.title}"? This cannot be undone.`)) return;
-                        const { error } = await supabase.from('products').delete().eq('id', p.id);
-                        if (error) {
-                          if (error.message.includes('foreign key constraint')) {
-                            const { error: softError } = await supabase.from('products').update({ is_draft: true, stock_count: 0 }).eq('id', p.id);
-                            if (softError) alert('Delete failed: ' + softError.message);
-                            else {
-                              alert('Product archived because it is tied to existing orders.');
-                              updateGlobalProduct(p.id, { is_draft: true, stock_count: 0 });
-                            }
-                          } else {
-                            alert('Delete failed: ' + error.message);
-                          }
-                        }
+                         if (!confirm(`Delete "${p.title}"? This cannot be undone.`)) return;
+                         
+                         // 1. Storage Cleanup (Images & Videos)
+                         const filesToDelete: string[] = [];
+                         if (p.image_url) filesToDelete.push(p.image_url);
+                         if (p.video_url) filesToDelete.push(p.video_url);
+                         if (p.media_urls && p.media_urls.length > 0) filesToDelete.push(...p.media_urls);
+                         
+                         // Extract paths from URLs
+                         const paths = filesToDelete.map(url => {
+                           try {
+                             const parts = url.split('/public/');
+                             if (parts.length > 1) return parts[1].split('?')[0];
+                             return null;
+                           } catch { return null; }
+                         }).filter(Boolean) as string[];
+
+                         if (paths.length > 0) {
+                           // We don't await this to keep the UI snappy, but we trigger it
+                           for (const path of paths) {
+                             const bucket = path.split('/')[0];
+                             const filePath = path.split('/').slice(1).join('/');
+                             supabase.storage.from(bucket).remove([filePath]);
+                           }
+                         }
+
+                         // 2. DB Deletion
+                         const { error } = await supabase.from('products').delete().eq('id', p.id);
+                         if (error) {
+                           if (error.message.includes('foreign key constraint')) {
+                             const { error: softError } = await supabase.from('products').update({ is_draft: true, stock_count: 0 }).eq('id', p.id);
+                             if (softError) alert('Delete failed: ' + softError.message);
+                             else {
+                               alert('Product hidden from buyers because it is tied to existing orders.');
+                               updateGlobalProduct(p.id, { is_draft: true, stock_count: 0 });
+                             }
+                           } else {
+                             alert('Delete failed: ' + error.message);
+                           }
+                         } else {
+                            // Immediate UI update for hard delete
+                            updateGlobalProduct(p.id, { is_draft: true }); // Using is_draft as a flag to hide it
+                         }
                       }}
                     >Delete</button>
                   </div>

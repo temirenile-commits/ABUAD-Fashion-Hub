@@ -29,3 +29,6 @@ USING (bucket_id = 'brand-reels');
 CREATE POLICY "Auth Upload for brand-reels" 
 ON storage.objects FOR INSERT 
 WITH CHECK (bucket_id = 'brand-reels' AND auth.role() = 'authenticated');
+
+-- 7. Add expiration to orders for 30-min window
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE;

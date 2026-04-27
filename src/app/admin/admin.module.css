@@ -569,3 +569,34 @@
   font-weight: 700;
   color: var(--primary);
 }
+
+.filterBar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+}
+
+.filterBtn {
+  background: var(--bg-300);
+  border: 1px solid var(--border);
+  color: var(--text-400);
+  padding: 0.4rem 1rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.filterBtn:hover {
+  background: var(--bg-200);
+  color: var(--text-100);
+}
+
+.filterActive {
+  background: var(--primary);
+  color: #000;
+  border-color: var(--primary);
+}

@@ -44,6 +44,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'paid' | 'pending' | 'cancelled'>('all');
   const [reviews, setReviews] = useState<any[]>([]);
   const [payouts, setPayouts] = useState<any[]>([]);
   const [platformSettings, setPlatformSettings] = useState<any>(null);
@@ -377,12 +378,23 @@ export default function AdminDashboard() {
 
             {activeTab === 'orders' && (
               <div className={styles.sectionCard}>
+                <div className={styles.filterBar}>
+                  {(['all', 'paid', 'pending', 'cancelled'] as const).map(f => (
+                    <button 
+                      key={f}
+                      className={`${styles.filterBtn} ${orderStatusFilter === f ? styles.filterActive : ''}`}
+                      onClick={() => setOrderStatusFilter(f)}
+                    >
+                      {f.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
                 <table className={styles.table}>
                   <thead>
                     <tr><th>Order ID</th><th>Customer</th><th>Brand</th><th>Amount</th><th>Status</th><th>Date</th></tr>
                   </thead>
                   <tbody>
-                    {filterBy(orders, ['id', 'status']).map(o => (
+                    {filterBy(orders.filter(o => orderStatusFilter === 'all' || o.status === orderStatusFilter), ['id', 'status']).map(o => (
                       <tr key={o.id}>
                         <td className={styles.subText}>#{o.id.slice(0, 8)}</td>
                         <td>
@@ -391,7 +403,13 @@ export default function AdminDashboard() {
                         </td>
                         <td>{o.brands?.name}</td>
                         <td>₦{Number(o.total_amount).toLocaleString()}</td>
-                        <td><span className={`badge badge-${o.status}`}>{o.status}</span></td>
+                        <td>
+                          {o.status === 'pending' && o.expires_at && new Date(o.expires_at) < new Date() ? (
+                            <span className="badge badge-cancelled" style={{ background: '#ef4444' }}>EXPIRED</span>
+                          ) : (
+                            <span className={`badge badge-${o.status}`}>{o.status}</span>
+                          )}
+                        </td>
                         <td className={styles.subText}>{new Date(o.created_at).toLocaleDateString()}</td>
                       </tr>
                     ))}

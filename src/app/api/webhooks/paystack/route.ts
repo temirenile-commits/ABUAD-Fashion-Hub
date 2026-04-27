@@ -144,6 +144,15 @@ export async function POST(req: Request) {
       }
 
       // 2. Update all these orders to 'paid' (Securing Escrow)
+      const totalExpected = orders.reduce((sum, o) => sum + Number(o.total_amount), 0);
+      const paidAmount = verification.data.amount / 100;
+
+      // STRICT VERIFICATION: Ensure paid amount matches expected amount (tolerance of 1 Naira for rounding)
+      if (Math.abs(paidAmount - totalExpected) > 1) {
+        console.error(`[WEBHOOK] Amount mismatch for ref ${reference}: Expected ₦${totalExpected}, Paid ₦${paidAmount}`);
+        return NextResponse.json({ error: 'Amount mismatch' }, { status: 400 });
+      }
+
       const { error: updateError } = await supabaseAdmin
         .from('orders')
         .update({ status: 'paid' })
@@ -154,7 +163,18 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Batch update failed' }, { status: 500 });
       }
 
-      // 3. RAPID FULFILLMENT: Batch process each order
+      // 3. Automated Email Notification (Fire and forget)
+      const { sendEmail, emailTemplates } = await import('@/lib/mail');
+      const { data: customer } = await supabaseAdmin.from('users').select('email, name').eq('id', orders[0].customer_id).single();
+      if (customer?.email) {
+        sendEmail({
+          to: customer.email,
+          subject: 'Payment Secured! 🎉 ABUAD Fashion Hub',
+          html: emailTemplates.paymentSuccess(customer.name || '', reference.slice(-8), `₦${paidAmount.toLocaleString()}`)
+        });
+      }
+
+      // 4. RAPID FULFILLMENT: Batch process each order
       const fulfillmentPromises = orders.map(async (order) => {
         // A. Parallel Fetch: Vendor Data & Stock Decrement
         const [{ data: brandData }, _] = await Promise.all([

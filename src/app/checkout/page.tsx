@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CreditCard, ShoppingBag, Truck, Lock, Loader2, CheckCircle, MapPin, Phone, ArrowRight, User, ShieldCheck } from 'lucide-react';
+import { CreditCard, ShoppingBag, Truck, Lock, Loader2, CheckCircle, MapPin, Phone, ArrowRight, User, ShieldCheck, Clock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/context/CartContext';
 import { LiveProduct } from '@/components/ProductCard';
@@ -25,6 +25,7 @@ function CheckoutContent() {
   const [promoDiscount, setPromoDiscount] = useState(0); // percentage off
   const [promoApplied, setPromoApplied] = useState<string | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
 
   const deliveryFee = deliveryMethod === 'platform' ? 1500 : 0;
   const orderTotal = getCartTotal();
@@ -84,7 +85,28 @@ function CheckoutContent() {
       setDataLoading(false);
     }
     initCheckout();
+
+    // 3. 30-Minute Security Timer
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          alert('⏰ Security window expired. Please refresh the page to start a new checkout session.');
+          router.push('/cart');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, [router, cart.length]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handlePaystackCheckout = async () => {
     if (cart.length === 0 || !user) return;
@@ -172,6 +194,10 @@ function CheckoutContent() {
           <ArrowRight style={{ transform: 'rotate(180deg)' }} size={16} /> Continue Shopping
         </Link>
         <h1 className={styles.title}>Secure Checkout</h1>
+        <div className={styles.securityTimer}>
+          <Clock size={16} /> 
+          <span>Session expires in: <strong>{formatTime(timeLeft)}</strong></span>
+        </div>
       </div>
 
       {cart.length === 0 ? (
