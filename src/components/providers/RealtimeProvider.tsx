@@ -11,6 +11,7 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
     addService, updateService, removeService, setServices,
     addVendor, updateVendor, setVendors,
     addOrder, updateOrder, setOrders,
+    addReel, removeReel, setReels,
     setInitialized, isInitialized
   } = useMarketplaceStore();
 
@@ -46,6 +47,14 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
         .select('*');
 
       if (active && brandData) setVendors(brandData as any);
+
+      // Brand Reels
+      const { data: reelData } = await supabase
+        .from('brand_reels')
+        .select('*, brands(name, logo_url)')
+        .order('created_at', { ascending: false });
+
+      if (active && reelData) setReels(reelData as any);
 
       if (active) setInitialized(true);
     };
@@ -111,6 +120,26 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
         }
         if (payload.eventType === 'UPDATE') {
           updateVendor(payload.new.id, payload.new as any);
+        }
+      }
+    );
+
+    // --- REELS SYNC ---
+    publicChannel.on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'brand_reels' },
+      async (payload: any) => {
+        if (payload.eventType === 'INSERT') {
+          const { vendors } = useMarketplaceStore.getState();
+          const brand = vendors.find((v: any) => v.id === payload.new.brand_id);
+          const enriched = { 
+            ...payload.new, 
+            brands: brand ? { name: brand.name, logo_url: brand.logo_url } : undefined 
+          };
+          addReel(enriched as any);
+        }
+        if (payload.eventType === 'DELETE') {
+          removeReel(payload.old.id);
         }
       }
     );

@@ -36,6 +36,8 @@ export default function OnboardingPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [banks, setBanks] = useState<any[]>([]);
+  const [verifyingBank, setVerifyingBank] = useState(false);
 
   const [form, setForm] = useState({
     brandName: '',
@@ -51,6 +53,7 @@ export default function OnboardingPage() {
     businessRegNo: '',
     businessAddress: '',
     bankName: '',
+    bankCode: '',
     accountNumber: '',
     accountName: '',
   });
@@ -70,7 +73,41 @@ export default function OnboardingPage() {
       }
     };
     checkUser();
+
+    const fetchBanks = async () => {
+      try {
+        const res = await fetch('/api/paystack/banks');
+        const data = await res.json();
+        if (data.success) setBanks(data.data);
+      } catch (err) {
+        console.error('Failed to fetch banks');
+      }
+    };
+    fetchBanks();
   }, [router]);
+
+  // Auto-resolve bank name
+  useEffect(() => {
+    const resolveBank = async () => {
+      if (form.accountNumber.length === 10 && form.bankCode) {
+        setVerifyingBank(true);
+        try {
+          const res = await fetch(`/api/paystack/resolve?accountNumber=${form.accountNumber}&bankCode=${form.bankCode}`);
+          const data = await res.json();
+          if (data.success) {
+            setForm(prev => ({ ...prev, accountName: data.data.account_name }));
+          } else {
+            setForm(prev => ({ ...prev, accountName: '' }));
+          }
+        } catch (err) {
+          console.error('Bank resolution error');
+        } finally {
+          setVerifyingBank(false);
+        }
+      }
+    };
+    resolveBank();
+  }, [form.accountNumber, form.bankCode]);
 
   const next = () => setStep((s) => Math.min(s + 1, 5));
   const prev = () => setStep((s) => Math.max(s - 1, 1));
@@ -98,6 +135,7 @@ export default function OnboardingPage() {
           business_registration_number: form.verificationType === 'business' ? form.businessRegNo : null,
           business_address: form.verificationType === 'business' ? form.businessAddress : null,
           bank_name: form.bankName,
+          bank_code: form.bankCode,
           bank_account_number: form.accountNumber,
           bank_account_name: form.accountName,
           verification_status: 'pending',
@@ -294,18 +332,38 @@ export default function OnboardingPage() {
               <h2 className={styles.stepTitle}>Bank Details for Payouts</h2>
               <p className={styles.stepDesc}>Where should we send your earnings?</p>
               <div className={styles.formGrid}>
-                <div className="form-group">
-                  <label className="form-label">Bank Name *</label>
-                  <input className="form-input" placeholder="e.g. GTBank" value={form.bankName} onChange={e => setForm({...form, bankName: e.target.value})} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Account Number *</label>
-                  <input className="form-input" placeholder="10-digit number" value={form.accountNumber} onChange={e => setForm({...form, accountNumber: e.target.value})} />
-                </div>
-                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="form-label">Account Name *</label>
-                  <input className="form-input" placeholder="Exact name on account" value={form.accountName} onChange={e => setForm({...form, accountName: e.target.value})} />
-                </div>
+                 <div className="form-group">
+                   <label className="form-label">Select Bank *</label>
+                   <select 
+                     className="form-input" 
+                     value={form.bankCode} 
+                     onChange={e => {
+                       const bank = banks.find(b => b.code === e.target.value);
+                       setForm({...form, bankCode: e.target.value, bankName: bank?.name || ''});
+                     }}
+                   >
+                     <option value="">-- Choose Bank --</option>
+                     {banks.map(b => (
+                       <option key={b.code} value={b.code}>{b.name}</option>
+                     ))}
+                   </select>
+                 </div>
+                 <div className="form-group">
+                   <label className="form-label">Account Number *</label>
+                   <input className="form-input" placeholder="10-digit number" value={form.accountNumber} onChange={e => setForm({...form, accountNumber: e.target.value})} maxLength={10} />
+                 </div>
+                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                   <label className="form-label">
+                     Account Name {verifyingBank && <span style={{ color: 'var(--primary)', fontSize: '0.75rem', marginLeft: '0.5rem' }}>(Verifying...)</span>}
+                   </label>
+                   <input 
+                     className="form-input" 
+                     placeholder={verifyingBank ? "Looking up..." : "Enter account number to fetch name"} 
+                     value={form.accountName} 
+                     readOnly 
+                     style={{ background: 'var(--bg-200)', cursor: 'not-allowed', color: 'var(--primary)', fontWeight: 600 }}
+                   />
+                 </div>
               </div>
             </div>
           )}

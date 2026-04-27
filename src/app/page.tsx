@@ -9,7 +9,8 @@ import {
   ArrowRight,
   ShieldCheck,
   Truck,
-  RotateCcw
+  RotateCcw,
+  Video
 } from 'lucide-react';
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
 import VendorCard, { LiveVendor } from '@/components/VendorCard';
@@ -27,6 +28,7 @@ import FlashSales from '@/components/FlashSales';
 export default function Home() {
   const allProducts = useMarketplaceStore(s => s.products);
   const allBrands = useMarketplaceStore(s => s.vendors);
+  const allReels = useMarketplaceStore(s => s.reels);
   const isInitialized = useMarketplaceStore(s => s.isInitialized);
 
   const [preferredCategories, setPreferredCategories] = useState<string[]>([]);
@@ -143,6 +145,49 @@ export default function Home() {
 
         {/* ───── FLASH SALES ───── */}
         {flashSaleItems.length > 0 && <FlashSales items={flashSaleItems} />}
+
+        {/* ───── FASHION REELS (Vivid Videos) ───── */}
+        {allReels.length > 0 && (
+          <section className={styles.section} style={{ paddingBottom: 0 }}>
+            <div className={styles.sectionHead}>
+              <div className={styles.sectionTitleGroup}>
+                <Video size={20} className={styles.goldIcon} />
+                <h2>Trending Collection Reels</h2>
+              </div>
+              <Link href="/explore" className={styles.seeAll}>
+                Explore Videos <ArrowRight size={14} />
+              </Link>
+            </div>
+            <div className={styles.reelsRow}>
+              {allReels.map((reel) => (
+                <div key={reel.id} className={styles.reelCard}>
+                  <video 
+                    src={reel.video_url} 
+                    className={styles.reelVideo}
+                    loop 
+                    muted 
+                    playsInline
+                    onMouseOver={e => e.currentTarget.play()}
+                    onMouseOut={e => e.currentTarget.pause()}
+                  />
+                  <div className={styles.reelOverlay}>
+                    <div className={styles.reelTitle}>{reel.title || 'Collection Reel'}</div>
+                    <div className={styles.reelBrand}>
+                      {reel.brands?.logo_url ? (
+                        <img src={reel.brands.logo_url} alt="" className={styles.reelBrandLogo} />
+                      ) : (
+                        <div className={styles.reelBrandLogo} style={{ background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px' }}>
+                          {reel.brands?.name?.substring(0, 1)}
+                        </div>
+                      )}
+                      <span>{reel.brands?.name}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ───── TRENDING PRODUCTS (Personalized) ───── */}
         <section className={styles.section}>

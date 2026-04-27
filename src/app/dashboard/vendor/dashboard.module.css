@@ -1331,3 +1331,53 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Restricted Access View */
+.restrictedView {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 70vh;
+  padding: 2rem;
+  background: var(--bg-100);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  gap: 1.5rem;
+}
+
+.restrictedIcon {
+  width: 80px;
+  height: 80px;
+  background: rgba(212, 175, 55, 0.1);
+  color: var(--warning);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.restrictedView h2 {
+  font-size: 2rem;
+  font-family: var(--font-display);
+}
+
+.restrictedView p {
+  max-width: 500px;
+  font-size: 1.1rem;
+  color: var(--text-300);
+  line-height: 1.6;
+}
+
+/* Share Button */
+.shareButton {
+  background: rgba(59, 130, 246, 0.1) !important;
+  color: #3b82f6 !important;
+}
+
+.shareButton:hover {
+  background: #3b82f6 !important;
+  color: #fff !important;
+}

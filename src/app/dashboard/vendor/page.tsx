@@ -74,7 +74,7 @@ export default function VendorDashboard() {
   // Real-time states
   const { products: allProducts, orders: allOrders, setOrders: setGlobalOrders, addProduct, updateOrder, updateProduct: updateGlobalProduct } = useMarketplaceStore();
 
-  const products = brand ? allProducts.filter(p => p.brand_id === brand.id) : [];
+  const products = brand ? allProducts.filter(p => p.brand_id === brand.id && !p.is_draft) : [];
   const orders = brand ? allOrders.filter(o => o.brand_id === brand.id).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
 
   const [isAddingProduct, setIsAddingProduct] = useState(false);
@@ -798,13 +798,23 @@ export default function VendorDashboard() {
     };
 
     try {
-      const { data, error } = await supabase.from('promo_codes').insert(body).select().single();
-      if (error) throw error;
-      setPromoCodes([...promoCodes, data]);
-      form.reset();
-      alert('Promo code created!');
+      const res = await supabase.from('promo_codes').insert(body);
+      if (!res.error) {
+        alert('Promo code created!');
+        setPromoCodes([...promoCodes, { ...body, id: Math.random().toString() }]);
+      }
     } catch (err) {
       alert('Error creating promo code');
+    }
+  };
+
+  const handleShareProduct = async (productId: string) => {
+    const url = `${window.location.origin}/product/${productId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      alert('🚀 Product link copied to clipboard! You can now share it anywhere.');
+    } catch (err) {
+      alert('Failed to copy link.');
     }
   };
 
@@ -903,7 +913,31 @@ export default function VendorDashboard() {
         </div>
       )}
 
-      <aside className={styles.sidebar}>
+      {brand?.verification_status !== 'verified' && userRole !== 'admin' ? (
+        <div className="container" style={{ padding: '4rem 2rem' }}>
+          <div className={styles.restrictedView}>
+            <div className={styles.restrictedIcon}>
+              <ShieldAlert size={48} />
+            </div>
+            <h2>Dashboard Restricted</h2>
+            <p>
+              {brand?.verification_status === 'pending' 
+                ? "Your brand application is currently being reviewed by our admin team. To maintain platform integrity, your dashboard tools will remain locked until your verification is approved."
+                : brand?.verification_status === 'rejected'
+                ? "Your brand application was unfortunately declined. Please contact the platform administrator to resolve any issues."
+                : "Your vendor account is currently suspended. Please contact support for assistance."}
+            </p>
+            
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <Link href="/" className="btn btn-primary">Return to Hub</Link>
+              <a href="https://wa.me/2348012345678" target="_blank" className="btn btn-ghost">Contact Admin</a>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <aside className={styles.sidebar}>
+
         <header className={styles.header}>
           <div className={styles.brandInfo}>
             <div className={`${styles.logo} ${uploadingLogo ? 'anim-pulse' : ''}`} style={{ cursor: 'pointer', overflow: 'hidden', position: 'relative' }} title="Change Logo" onClick={() => document.getElementById('logoInput')?.click()}>
@@ -1669,7 +1703,7 @@ export default function VendorDashboard() {
               <div>
                 <h1 className={styles.title}>Inventory Management</h1>
                 <p className={styles.subtitle}>
-                  Manage your listings. {isTrialActive ? '⚡ Trial (Unlimited)' : `${products.length} / ${productLimit} products used.`}
+                  Manage your listings. {isTrialActive ? '⚡ Trial (Unlimited)' : `${products.filter(p => !p.is_draft).length} / ${productLimit} products used.`}
                 </p>
               </div>
               <div className={styles.tabActions}>
@@ -1680,7 +1714,7 @@ export default function VendorDashboard() {
                 <button
                   className="btn btn-primary"
                   onClick={() => {
-                    if (products.length >= productLimit) {
+                    if (products.filter(p => !p.is_draft).length >= productLimit) {
                       alert(`You have reached your limit of ${productLimit} products. Upgrade your power level to list more!`);
                       setActiveTab('plans');
                     } else {
@@ -1868,10 +1902,10 @@ export default function VendorDashboard() {
 
                   <div className={styles.formFooter}>
                     <div className={styles.billingNote}>
-                      {products.length >= 5 ? (
+                      {products.filter(p => !p.is_draft).length >= 5 ? (
                         <p>Listing Fee: <strong>₦200</strong> (Wallet: {formatPrice(brand?.wallet_balance || 0)})</p>
                       ) : (
-                        <p>Listing: <strong>FREE</strong> ({5 - products.length} credits remaining)</p>
+                        <p>Listing: <strong>FREE</strong> ({5 - products.filter(p => !p.is_draft).length} credits remaining)</p>
                       )}
                     </div>
                     <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
@@ -1883,7 +1917,7 @@ export default function VendorDashboard() {
             )}
 
             <div className={styles.inventoryGrid}>
-              {products.map(p => (
+              {products.filter(p => !p.is_draft).map(p => (
                 <div key={p.id} className={styles.inventoryCard}>
                   <div className={styles.invImg}>
                     <img src={p.media_urls?.[0]} alt={p.title} />
@@ -1915,6 +1949,9 @@ export default function VendorDashboard() {
                       setEditingProduct(p);
                       setIsAddingProduct(true);
                     }}>Edit</button>
+                    <button className={`btn btn-ghost btn-sm ${styles.shareButton}`} onClick={() => handleShareProduct(p.id)}>
+                      <Share2 size={14} /> Share
+                    </button>
                     <button
                       className="btn btn-ghost btn-sm"
                       style={{ color: '#ef4444' }}
@@ -1933,13 +1970,12 @@ export default function VendorDashboard() {
                             alert('Delete failed: ' + error.message);
                           }
                         }
-                        // Realtime will auto-remove it from the store
                       }}
                     >Delete</button>
                   </div>
                 </div>
               ))}
-              {products.length === 0 && <p className={styles.emptyText}>No products yet.</p>}
+              {products.filter(p => !p.is_draft).length === 0 && <p className={styles.emptyText}>No products yet.</p>}
             </div>
           </div>
         )}
@@ -2558,11 +2594,12 @@ export default function VendorDashboard() {
           borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#a78bfa)',
           border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 8px 32px rgba(124,58,237,0.5)', zIndex: 10000,
-          fontSize: '1.5rem', transition: 'transform 0.2s'
         }}
         onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
         onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
       >✨</button>
+      </>
+      )}
     </div>
   );
 }

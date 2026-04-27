@@ -67,11 +67,25 @@ export interface Order {
   [key: string]: any;
 }
 
+export interface Reel {
+  id: string;
+  brand_id: string;
+  video_url: string;
+  thumbnail_url?: string;
+  title?: string;
+  created_at: string;
+  brands?: {
+    name: string;
+    logo_url?: string;
+  };
+}
+
 interface MarketplaceState {
   products: Product[];
   services: Service[];
   vendors: Vendor[];
   orders: Order[];
+  reels: Reel[];
   isInitialized: boolean;
 
   // Actions
@@ -93,6 +107,10 @@ interface MarketplaceState {
   addOrder: (order: Order) => void;
   updateOrder: (id: string, order: Partial<Order>) => void;
 
+  setReels: (reels: Reel[]) => void;
+  addReel: (reel: Reel) => void;
+  removeReel: (id: string) => void;
+
   setInitialized: (status: boolean) => void;
 }
 
@@ -101,6 +119,7 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
   services: [],
   vendors: [],
   orders: [],
+  reels: [],
   isInitialized: false,
 
   setProducts: (products) => set({ products }),
@@ -143,6 +162,15 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
   }),
   updateOrder: (id, updates) => set((state) => ({
     orders: state.orders.map(o => o.id === id ? { ...o, ...updates } : o)
+  })),
+
+  setReels: (reels) => set({ reels }),
+  addReel: (reel) => set((state) => {
+    if (state.reels.find(r => r.id === reel.id)) return state;
+    return { reels: [reel, ...state.reels] };
+  }),
+  removeReel: (id) => set((state) => ({
+    reels: state.reels.filter(r => r.id !== id)
   })),
 
   setInitialized: (status) => set({ isInitialized: status }),

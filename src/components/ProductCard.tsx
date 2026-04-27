@@ -62,7 +62,17 @@ export default function ProductCard({ product }: Props) {
   return (
     <Link href={`/product/${product.id}`} className={styles.card}>
       <div className={styles.imageWrap}>
-        {imageUrl.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || imageUrl.includes('video') ? (
+        {product.video_url ? (
+          <video 
+            src={product.video_url} 
+            className={styles.image} 
+            muted 
+            autoPlay 
+            loop 
+            playsInline 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : imageUrl.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || imageUrl.includes('video') ? (
           <video 
             src={imageUrl} 
             className={styles.image} 
