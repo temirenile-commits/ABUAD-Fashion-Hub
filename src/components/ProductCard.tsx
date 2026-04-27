@@ -53,9 +53,12 @@ export default function ProductCard({ product }: Props) {
   const brandName = product.brands?.name || 'Unknown Brand';
   const whatsapp = product.brands?.whatsapp_number || '';
 
-  // DEEP SEARCH: Find the first actual video in all media fields
+  // DEEP SEARCH: Find the first actual video in all media fields (including image_url if misclassified)
+  const isVideoExt = (url: string) => url.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || url.toLowerCase().includes('video') || url.toLowerCase().includes('reel');
+  
   const detectedVideo = product.video_url || 
-                        product.media_urls?.find(url => url.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || url.includes('video') || url.includes('reel'));
+                        (product.image_url && isVideoExt(product.image_url) ? product.image_url : null) ||
+                        product.media_urls?.find(url => isVideoExt(url));
   
   const isVideo = !!detectedVideo;
   
