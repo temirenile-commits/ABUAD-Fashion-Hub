@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { CheckCircle, MessageCircle, Star, Package, Users, Calendar } from 'lucide-react';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
+import VividVideo from '@/components/VividVideo';
 import styles from './vendor.module.css';
 
 interface Props {
@@ -50,7 +51,8 @@ export default async function VendorPage({ params, searchParams }: Props) {
       *,
       brands (name, whatsapp_number)
     `)
-    .eq('brand_id', id);
+    .eq('brand_id', id)
+    .eq('is_draft', false);
 
   // Fetch vendor reels
   const { data: reelsData } = await supabaseAdmin
@@ -141,14 +143,9 @@ export default async function VendorPage({ params, searchParams }: Props) {
             <div className={styles.reelsGrid}>
               {reelsData.map((reel) => (
                 <div key={reel.id} className={styles.reelCard}>
-                  <video 
+                  <VividVideo 
                     src={reel.video_url} 
                     className={styles.reelVideo}
-                    loop 
-                    muted 
-                    playsInline
-                    autoPlay
-                    preload="auto"
                   />
                   {reel.title && <div className={styles.reelTitleOverlay}>{reel.title}</div>}
                 </div>

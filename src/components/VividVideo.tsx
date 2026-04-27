@@ -67,6 +67,7 @@ export default function VividVideo({ src, className, style }: Props) {
       loop
       autoPlay
       preload="auto"
+      crossOrigin="anonymous"
     />
   );
 }

@@ -1776,7 +1776,10 @@ export default function VendorDashboard() {
                         onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                       >
                         <option>Clothing</option>
-                        <option>Shoes</option>
+                        <option>Mens-Fashion</option>
+                        <option>Womens-Fashion</option>
+                        <option>Traditional-Wear</option>
+                        <option>Footwear</option>
                         <option>Accessories</option>
                         <option>Bags</option>
                         <option>Handmade</option>
