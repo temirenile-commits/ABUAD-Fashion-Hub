@@ -192,3 +192,7 @@ CREATE TABLE IF NOT EXISTS public.brand_reels (
 ALTER TABLE public.brand_reels ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Brand reels are public." ON public.brand_reels FOR SELECT USING (true);
 CREATE POLICY "Vendors manage own reels." ON public.brand_reels FOR ALL USING (EXISTS (SELECT 1 FROM public.brands WHERE id = brand_id AND owner_id = auth.uid()));
+
+-- 10. Storage Policies (Ensure videos are playable)
+INSERT INTO storage.buckets (id, name, public) VALUES ('product-media', 'product-media', true), ('brand-reels', 'brand-reels', true) ON CONFLICT (id) DO UPDATE SET public = true;
+CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING ( bucket_id IN ('product-media', 'brand-reels', 'product-images', 'brand-logos') );

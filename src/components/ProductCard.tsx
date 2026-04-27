@@ -53,11 +53,14 @@ export default function ProductCard({ product }: Props) {
   const brandName = product.brands?.name || 'Unknown Brand';
   const whatsapp = product.brands?.whatsapp_number || '';
 
-  const isVideo = product.video_url || 
-                  imageUrl.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || 
-                  imageUrl.includes('video') || 
-                  imageUrl.includes('reel') ||
-                  product.media_urls?.some(url => url.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || url.includes('video') || url.includes('reel'));
+  // DEEP SEARCH: Find the first actual video in all media fields
+  const detectedVideo = product.video_url || 
+                        product.media_urls?.find(url => url.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || url.includes('video') || url.includes('reel'));
+  
+  const isVideo = !!detectedVideo;
+  
+  // If we have a video, it becomes the main "imageUrl" for the card logic if needed
+  const displayUrl = detectedVideo || product.image_url || product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60';
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -69,27 +72,15 @@ export default function ProductCard({ product }: Props) {
   return (
     <Link href={`/product/${product.id}`} className={`${styles.card} ${isVideo ? styles.videoCard : ''}`}>
       <div className={styles.imageWrap}>
-        {product.video_url ? (
+        {isVideo ? (
           <VividVideo 
-            src={product.video_url} 
-            className={styles.image} 
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        ) : (imageUrl.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || imageUrl.includes('video') || imageUrl.includes('reel')) ? (
-          <VividVideo 
-            src={imageUrl} 
-            className={styles.image} 
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        ) : product.media_urls?.find(url => url.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || url.includes('video') || url.includes('reel')) ? (
-          <VividVideo 
-            src={product.media_urls.find(url => url.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || url.includes('video') || url.includes('reel'))!} 
+            src={detectedVideo!} 
             className={styles.image} 
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
           <Image
-            src={imageUrl}
+            src={displayUrl}
             alt={product.title}
             fill
             sizes="(max-width: 768px) 50vw, 25vw"
