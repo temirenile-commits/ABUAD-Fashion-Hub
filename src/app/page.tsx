@@ -17,6 +17,7 @@ import VendorCard, { LiveVendor } from '@/components/VendorCard';
 import { useMarketplaceStore } from '@/store/marketplaceStore';
 import { supabase } from '@/lib/supabase';
 import styles from './page.module.css';
+import VividVideo from '@/components/VividVideo';
 
 // New Jumia-style Components
 import CategorySidebar from '@/components/CategorySidebar';
@@ -161,16 +162,9 @@ export default function Home() {
             <div className={styles.reelsRow}>
               {allReels.map((reel) => (
                 <div key={reel.id} className={styles.reelCard}>
-                  <video 
+                  <VividVideo 
                     src={reel.video_url} 
                     className={styles.reelVideo}
-                    loop 
-                    muted 
-                    playsInline
-                    autoPlay
-                    preload="auto"
-                    onMouseOver={e => e.currentTarget.play()}
-                    onMouseOut={e => e.currentTarget.pause()}
                   />
                   <div className={styles.reelOverlay}>
                     <div className={styles.reelTitle}>{reel.title || 'Collection Reel'}</div>

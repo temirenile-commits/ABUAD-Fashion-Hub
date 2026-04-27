@@ -1,6 +1,7 @@
 'use client';
 
 import { useMarketplaceStore } from '@/store/marketplaceStore';
+import VividVideo from '@/components/VividVideo';
 import styles from './reels.module.css';
 import { ArrowLeft, Store } from 'lucide-react';
 import Link from 'next/link';
@@ -68,33 +69,12 @@ export default function ReelsPage() {
 }
 
 function ReelItem({ reel }: { reel: any }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const brandSlug = reel.brands?.name?.toLowerCase().replace(/\s+/g, '-') || 'brand';
   
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          videoRef.current?.play().catch(() => {});
-        } else {
-          videoRef.current?.pause();
-        }
-      },
-      { threshold: 0.6 }
-    );
-    if (videoRef.current) observer.observe(videoRef.current);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <div className={styles.reelWrapper}>
-       <video 
-         ref={videoRef}
+       <VividVideo 
          src={reel.video_url} 
-         loop 
-         muted 
-         playsInline 
-         preload="auto"
          className={styles.video}
        />
        <div className={styles.overlay}>

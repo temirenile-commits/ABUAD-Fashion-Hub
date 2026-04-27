@@ -7,6 +7,7 @@ import styles from './ProductCard.module.css';
 import { formatPrice, getDiscount } from '@/lib/utils';
 import { useCart } from '@/context/CartContext';
 import WishlistButton from '@/components/WishlistButton';
+import VividVideo from '@/components/VividVideo';
 
 // Joined Database Type Structure
 export interface LiveProduct {
@@ -69,36 +70,21 @@ export default function ProductCard({ product }: Props) {
     <Link href={`/product/${product.id}`} className={`${styles.card} ${isVideo ? styles.videoCard : ''}`}>
       <div className={styles.imageWrap}>
         {product.video_url ? (
-          <video 
+          <VividVideo 
             src={product.video_url} 
             className={styles.image} 
-            muted 
-            autoPlay 
-            loop 
-            playsInline 
-            preload="auto"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (imageUrl.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || imageUrl.includes('video') || imageUrl.includes('reel')) ? (
-          <video 
+          <VividVideo 
             src={imageUrl} 
             className={styles.image} 
-            muted 
-            autoPlay 
-            loop 
-            playsInline 
-            preload="auto"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : product.media_urls?.find(url => url.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || url.includes('video') || url.includes('reel')) ? (
-          <video 
-            src={product.media_urls.find(url => url.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || url.includes('video') || url.includes('reel'))} 
+          <VividVideo 
+            src={product.media_urls.find(url => url.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || url.includes('video') || url.includes('reel'))!} 
             className={styles.image} 
-            muted 
-            autoPlay 
-            loop 
-            playsInline 
-            preload="auto"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
