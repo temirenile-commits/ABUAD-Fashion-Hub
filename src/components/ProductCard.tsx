@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Star, MessageCircle, ShoppingBag, ShieldCheck } from 'lucide-react';
+import { Heart, Star, MessageCircle, ShoppingBag, ShieldCheck, Download } from 'lucide-react';
 import styles from './ProductCard.module.css';
 
 import { formatPrice, getDiscount } from '@/lib/utils';
@@ -75,6 +75,17 @@ export default function ProductCard({ product }: Props) {
   return (
     <Link href={`/product/${product.id}`} className={`${styles.card} ${isVideo ? styles.videoCard : ''}`}>
       <div className={styles.imageWrap}>
+        <a 
+          href={isVideo ? detectedVideo! : displayUrl} 
+          download 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className={styles.downloadBtn}
+          onClick={(e) => e.stopPropagation()}
+          title={`Download ${isVideo ? 'Video' : 'Image'}`}
+        >
+          <Download size={14} />
+        </a>
         {isVideo ? (
           <VividVideo 
             src={detectedVideo!} 

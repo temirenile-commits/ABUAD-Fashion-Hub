@@ -5,7 +5,7 @@ import { supabase } from './supabase';
  * Handles file uploads to predefined buckets.
  */
 
-type BucketName = 'brand-assets' | 'product-media' | 'verification-docs' | 'brand-logos' | 'product-images' | 'product-videos';
+type BucketName = 'brand-assets' | 'product-media' | 'verification-docs' | 'brand-logos' | 'product-images' | 'product-videos' | 'brand-reels';
 
 const SKIP_THRESHOLD = 5 * 1024 * 1024; // 5MB fast-track
 const TARGET_SIZE = 1280; // Standard HD

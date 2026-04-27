@@ -353,7 +353,7 @@ export default function VendorDashboard() {
 
     for (const file of files) {
       const isVideo = file.type.startsWith('video/');
-      const bucket = 'product-media';
+      const bucket = isVideo ? 'product-videos' : 'product-media';
 
       const { url, error } = await uploadFile(file, bucket, `prod-${brand.id}`);
       if (url) {
@@ -392,7 +392,7 @@ export default function VendorDashboard() {
     setUploadingReel(true);
 
     const file = e.target.files[0];
-    const { url, error } = await uploadFile(file, 'product-media', `reel-${brand.id}`);
+    const { url, error } = await uploadFile(file, 'brand-reels', `reel-${brand.id}`);
 
     if (url) {
       const { error: dbError } = await supabase

@@ -11,7 +11,7 @@
 }
 
 .videoCard {
-  grid-row: span 2;
+  grid-column: span 2;
 }
 
 .card:hover {
@@ -29,7 +29,7 @@
 }
 
 .videoCard .imageWrap {
-  aspect-ratio: 9/16;
+  aspect-ratio: 16/9;
 }
 
 .image {
@@ -136,4 +136,27 @@
 .quickAdd:hover {
   background: var(--primary);
   color: #000;
+}
+
+.downloadBtn {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border-radius: 50%;
+  padding: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  transition: all 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.downloadBtn:hover {
+  background: var(--primary);
+  color: #000;
+  transform: scale(1.1);
 }
