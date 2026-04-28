@@ -22,15 +22,34 @@ function CheckoutContent() {
   const [phone, setPhone] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<'platform' | 'vendor'>('platform');
   const [promoCode, setPromoCode] = useState('');
-  const [promoDiscount, setPromoDiscount] = useState(0); // percentage off
   const [promoApplied, setPromoApplied] = useState<string | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
 
   const deliveryFee = deliveryMethod === 'platform' ? 1500 : 0;
   const orderTotal = getCartTotal();
-  const promoSavings = promoDiscount > 0 ? Math.round(orderTotal * (promoDiscount / 100)) : 0;
+  const calculatePromoSavings = () => {
+    if (!promoAppliedData) return 0;
+    let savings = 0;
+    cart.forEach(item => {
+      // If general promo OR specific to this product
+      if (!promoAppliedData.product_id || promoAppliedData.product_id === item.id) {
+        const itemSubtotal = item.price * (item.quantity || 1);
+        if (promoAppliedData.type === 'percentage') {
+          savings += itemSubtotal * (Number(promoAppliedData.value) / 100);
+        } else if (promoAppliedData.type === 'fixed') {
+          // For fixed, we apply it to the first eligible item we find (simplification)
+          if (savings === 0) savings += Number(promoAppliedData.value);
+        }
+      }
+    });
+    return Math.round(savings);
+  };
+
+  const promoSavings = calculatePromoSavings();
   const finalTotal = orderTotal - promoSavings + deliveryFee;
+
+  const [promoAppliedData, setPromoAppliedData] = useState<any>(null);
 
   const handlePromoCode = async () => {
     if (!promoCode.trim()) return;
@@ -44,13 +63,21 @@ function CheckoutContent() {
         .single();
 
       if (error || !promo) {
-        alert('❌ Invalid or expired promo code. Checkout will continue at the normal price.');
-        setPromoDiscount(0);
+        alert('❌ Invalid or expired promo code.');
+        setPromoAppliedData(null);
         setPromoApplied(null);
       } else {
-        setPromoDiscount(promo.discount_percent || 0);
-        setPromoApplied(promo.code);
-        alert(`✅ Promo code applied! ${promo.discount_percent}% off your order.`);
+        // Check if promo applies to anything in cart
+        const appliesToAny = !promo.product_id || cart.some(item => item.id === promo.product_id);
+        if (!appliesToAny) {
+            alert('❌ This promo code does not apply to any items in your cart.');
+            setPromoAppliedData(null);
+            setPromoApplied(null);
+        } else {
+            setPromoAppliedData(promo);
+            setPromoApplied(promo.code);
+            alert(`✅ Promo code applied! ${promo.type === 'percentage' ? promo.value + '%' : formatPrice(promo.value)} off eligible items.`);
+        }
       }
     } catch {
       alert('Error validating promo code.');
@@ -125,6 +152,7 @@ function CheckoutContent() {
           totalAmount: finalTotal,
           deliveryMethod: deliveryMethod,
           shippingAddress: address,
+          promoCode: promoApplied,
           items: cart.map((item: LiveProduct & { quantity: number }) => ({
             brandId: item.brand_id,
             productId: item.id,

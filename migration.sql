@@ -32,3 +32,24 @@ WITH CHECK (bucket_id = 'brand-reels' AND auth.role() = 'authenticated');
 
 -- 7. Add expiration to orders for 30-min window
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE;
+
+-- 8. Promo Codes Table (Updated)
+CREATE TABLE IF NOT EXISTS public.promo_codes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  brand_id UUID REFERENCES public.brands(id),
+  product_id UUID REFERENCES public.products(id), -- Nullable for general store codes
+  code TEXT UNIQUE NOT NULL,
+  type TEXT NOT NULL DEFAULT 'percentage' CHECK (type IN ('percentage', 'fixed')),
+  value DECIMAL NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  usage_count INTEGER DEFAULT 0,
+  max_usage INTEGER,
+  expires_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.promo_codes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Promo codes are viewable by everyone." ON public.promo_codes;
+CREATE POLICY "Promo codes are viewable by everyone." ON public.promo_codes FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Vendors manage own promo codes." ON public.promo_codes;
+CREATE POLICY "Vendors manage own promo codes." ON public.promo_codes FOR ALL USING (EXISTS (SELECT 1 FROM public.brands WHERE id = brand_id AND owner_id = auth.uid()));

@@ -814,7 +814,8 @@ export default function VendorDashboard() {
     const form = e.target as any;
     const body = {
       brand_id: brand.id,
-      code: form.code.value,
+      product_id: form.product_id?.value || null,
+      code: form.code.value.toUpperCase(),
       type: form.type.value,
       value: Number(form.value.value),
       is_active: true
@@ -1014,7 +1015,7 @@ export default function VendorDashboard() {
             <Package size={18} /> Orders & Fulfillment
           </button>
           <button className={`${styles.navItem} ${activeTab === 'inventory' ? styles.navActive : ''}`} onClick={() => setActiveTab('inventory')}>
-            <ShoppingCart size={18} /> Listings & Inventory
+            <ShoppingCart size={18} /> My Store & Stocks
           </button>
           <button className={`${styles.navItem} ${activeTab === 'payments' ? styles.navActive : ''}`} onClick={() => setActiveTab('payments')}>
             <Wallet size={18} /> Wallet & Payouts
@@ -1628,6 +1629,15 @@ export default function VendorDashboard() {
                 <div className={styles.inputGroup}>
                   <input name="value" type="number" placeholder="Value" required />
                 </div>
+                <div className={styles.inputGroup} style={{ flex: '1 1 250px' }}>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-400)' }}>Apply To (Optional)</label>
+                  <select name="product_id">
+                    <option value="">All Products (General)</option>
+                    {products.map(p => (
+                      <option key={p.id} value={p.id}>{p.title}</option>
+                    ))}
+                  </select>
+                </div>
                 <button type="submit" className="btn btn-primary">Create Code</button>
               </form>
             </div>
@@ -1641,7 +1651,19 @@ export default function VendorDashboard() {
                       <span className={styles.promoCodeText}>{promo.code}</span>
                       <span>{promo.type === 'percentage' ? `${promo.value}% Off` : `${formatPrice(promo.value)} Off`}</span>
                     </div>
-                    <button className={styles.removeBtn}><Trash2 size={16} /></button>
+                    <button 
+                      className={styles.removeBtn}
+                      onClick={async () => {
+                        if (!confirm(`Delete promo code "${promo.code}"?`)) return;
+                        const { error } = await supabase.from('promo_codes').delete().eq('id', promo.id);
+                        if (!error) {
+                          setPromoCodes(prev => prev.filter(p => p.id !== promo.id));
+                          alert('Promo code deleted!');
+                        }
+                      }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 ))
               ) : (
