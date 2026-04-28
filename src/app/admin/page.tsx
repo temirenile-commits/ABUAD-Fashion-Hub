@@ -482,17 +482,46 @@ export default function AdminDashboard() {
                     {platformSettings.subscription_rates?.map((tier: any, i: number) => (
                       <div key={tier.id} className={styles.settingsBox}>
                         <label>{tier.name}</label>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <input 
-                            type="number" 
-                            value={tier.price} 
-                            onChange={(e) => {
-                              const updated = [...platformSettings.subscription_rates];
-                              updated[i].price = Number(e.target.value);
-                              setPlatformSettings({ ...platformSettings, subscription_rates: updated });
-                            }}
-                          />
-                          <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_settings', { key: 'subscription_rates', value: platformSettings.subscription_rates })}>Save</button>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                          <div>
+                            <span className={styles.subText} style={{ fontSize: '0.7rem' }}>Price (₦)</span>
+                            <input 
+                              type="number" 
+                              value={tier.price} 
+                              onChange={(e) => {
+                                const updated = [...platformSettings.subscription_rates];
+                                updated[i].price = Number(e.target.value);
+                                setPlatformSettings({ ...platformSettings, subscription_rates: updated });
+                              }}
+                            />
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                            <div>
+                              <span className={styles.subText} style={{ fontSize: '0.7rem' }}>Max Products</span>
+                              <input 
+                                type="number" 
+                                value={tier.max_products || 0} 
+                                onChange={(e) => {
+                                  const updated = [...platformSettings.subscription_rates];
+                                  updated[i].max_products = Number(e.target.value);
+                                  setPlatformSettings({ ...platformSettings, subscription_rates: updated });
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <span className={styles.subText} style={{ fontSize: '0.7rem' }}>Max Reels</span>
+                              <input 
+                                type="number" 
+                                value={tier.max_reels || 0} 
+                                onChange={(e) => {
+                                  const updated = [...platformSettings.subscription_rates];
+                                  updated[i].max_reels = Number(e.target.value);
+                                  setPlatformSettings({ ...platformSettings, subscription_rates: updated });
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_settings', { key: 'subscription_rates', value: platformSettings.subscription_rates })}>Save Plan</button>
                         </div>
                       </div>
                     ))}
@@ -505,17 +534,46 @@ export default function AdminDashboard() {
                     {platformSettings.boost_rates?.map((boost: any, i: number) => (
                       <div key={boost.id} className={styles.settingsBox}>
                         <label>{boost.name}</label>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <input 
-                            type="number" 
-                            value={boost.price} 
-                            onChange={(e) => {
-                              const updated = [...platformSettings.boost_rates];
-                              updated[i].price = Number(e.target.value);
-                              setPlatformSettings({ ...platformSettings, boost_rates: updated });
-                            }}
-                          />
-                          <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_settings', { key: 'boost_rates', value: platformSettings.boost_rates })}>Save</button>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                          <div>
+                            <span className={styles.subText} style={{ fontSize: '0.7rem' }}>Price (₦)</span>
+                            <input 
+                              type="number" 
+                              value={boost.price} 
+                              onChange={(e) => {
+                                const updated = [...platformSettings.boost_rates];
+                                updated[i].price = Number(e.target.value);
+                                setPlatformSettings({ ...platformSettings, boost_rates: updated });
+                              }}
+                            />
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                            <div>
+                              <span className={styles.subText} style={{ fontSize: '0.7rem' }}>Visibility Credit</span>
+                              <input 
+                                type="number" 
+                                value={boost.visibility_score || 0} 
+                                onChange={(e) => {
+                                  const updated = [...platformSettings.boost_rates];
+                                  updated[i].visibility_score = Number(e.target.value);
+                                  setPlatformSettings({ ...platformSettings, boost_rates: updated });
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <span className={styles.subText} style={{ fontSize: '0.7rem' }}>Duration (Days)</span>
+                              <input 
+                                type="number" 
+                                value={boost.duration_days || 0} 
+                                onChange={(e) => {
+                                  const updated = [...platformSettings.boost_rates];
+                                  updated[i].duration_days = Number(e.target.value);
+                                  setPlatformSettings({ ...platformSettings, boost_rates: updated });
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_settings', { key: 'boost_rates', value: platformSettings.boost_rates })}>Save Boost</button>
                         </div>
                       </div>
                     ))}

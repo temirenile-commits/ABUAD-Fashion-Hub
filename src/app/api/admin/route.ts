@@ -380,17 +380,10 @@ export async function POST(req: NextRequest) {
 
   if (action === 'activate_plan') {
     const { brandId, tierId } = body;
-    
-    let maxProducts = 10;
-    let maxReels = 1;
-
-    if (tierId === 'half') {
-      maxProducts = 50;
-      maxReels = 5;
-    } else if (tierId === 'full') {
-      maxProducts = 100000;
-      maxReels = 100000;
-    }
+    // Fetch current limits from settings
+    const { data: settings } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'subscription_rates').single();
+    const rates = (settings?.value as any[]) || [];
+    const plan = rates.find(r => r.id === tierId) || { max_products: 10, max_reels: 1 };
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
@@ -400,8 +393,8 @@ export async function POST(req: NextRequest) {
       .update({ 
         subscription_tier: tierId, 
         subscription_expires_at: expiresAt.toISOString(),
-        max_products: maxProducts,
-        max_reels: maxReels
+        max_products: plan.max_products || 10,
+        max_reels: plan.max_reels || 1
       })
       .eq('id', brandId);
 
@@ -412,27 +405,20 @@ export async function POST(req: NextRequest) {
   if (action === 'activate_boost') {
     const { brandId, boostId } = body;
     
-    let visibilityBoost = 50; // rodeo
-    let durationDays = 7;
-
-    if (boostId === 'nitro') {
-      visibilityBoost = 150;
-      durationDays = 14;
-    }
-    if (boostId === 'apex') {
-      visibilityBoost = 500;
-      durationDays = 30;
-    }
+    // Fetch boost config from settings
+    const { data: settings } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'boost_rates').single();
+    const rates = (settings?.value as any[]) || [];
+    const boost = rates.find(b => b.id === boostId) || { visibility_score: 50, duration_days: 7 };
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + durationDays);
+    expiresAt.setDate(expiresAt.getDate() + (boost.duration_days || 7));
     
     const { error } = await supabaseAdmin
       .from('brands')
       .update({ 
         boost_level: boostId,
         boost_expires_at: expiresAt.toISOString(),
-        visibility_score: 100 + visibilityBoost 
+        visibility_score: 100 + (boost.visibility_score || 50) 
       })
       .eq('id', brandId);
 

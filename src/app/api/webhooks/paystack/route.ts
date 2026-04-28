@@ -63,19 +63,20 @@ export async function POST(req: Request) {
         const { brand_id, tier } = metadata;
         
         // 1. Handle Visibility Boosts
-        const boostDurations: Record<string, number> = { rodeo: 7, nitro: 14, apex: 30 };
-        const boostScores: Record<string, number> = { rodeo: 50, nitro: 150, apex: 500 };
+        const { data: boostSettings } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'boost_rates').single();
+        const boostRates = (boostSettings?.value as any[]) || [];
+        const boostConfig = boostRates.find(b => b.id === tier);
 
-        if (boostDurations[tier]) {
+        if (boostConfig) {
           const expiresAt = new Date();
-          expiresAt.setDate(expiresAt.getDate() + boostDurations[tier]);
+          expiresAt.setDate(expiresAt.getDate() + (boostConfig.duration_days || 7));
 
           const { error: boostError } = await supabaseAdmin
             .from('brands')
             .update({ 
                boost_level: tier,
                boost_expires_at: expiresAt.toISOString(),
-               visibility_score: 100 + boostScores[tier] 
+               visibility_score: 100 + (boostConfig.visibility_score || 50) 
             })
             .eq('id', brand_id);
           
@@ -98,16 +99,9 @@ export async function POST(req: Request) {
         }
 
         // 2. Handle System Plans
-        let maxProducts = 10;
-        let maxReels = 1;
-
-        if (tier === 'half') {
-          maxProducts = 50;
-          maxReels = 5;
-        } else if (tier === 'full') {
-          maxProducts = 999999;
-          maxReels = 999999;
-        }
+        const { data: subSettings } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'subscription_rates').single();
+        const subRates = (subSettings?.value as any[]) || [];
+        const planConfig = subRates.find(r => r.id === tier) || { max_products: 10, max_reels: 1 };
 
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
@@ -117,8 +111,8 @@ export async function POST(req: Request) {
           .update({ 
             subscription_tier: tier, 
             subscription_expires_at: expiresAt.toISOString(),
-            max_products: maxProducts,
-            max_reels: maxReels
+            max_products: planConfig.max_products || 10,
+            max_reels: planConfig.max_reels || 1
           })
           .eq('id', brand_id);
 
