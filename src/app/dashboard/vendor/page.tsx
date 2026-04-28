@@ -73,8 +73,9 @@ export default function VendorDashboard() {
 
   // Real-time states
   const { products: allProducts, orders: allOrders, setOrders: setGlobalOrders, addProduct, updateOrder, updateProduct: updateGlobalProduct } = useMarketplaceStore();
+  const [showDraftsOnly, setShowDraftsOnly] = useState(false);
 
-  const products = brand ? allProducts.filter(p => p.brand_id === brand.id && !p.is_draft) : [];
+  const products = brand ? allProducts.filter(p => p.brand_id === brand.id) : [];
   const orders = brand ? allOrders.filter(o => o.brand_id === brand.id).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
 
   const [isAddingProduct, setIsAddingProduct] = useState(false);
@@ -419,6 +420,25 @@ export default function VendorDashboard() {
       alert('Upload failed: ' + error);
     }
     setUploadingReel(false);
+  };
+
+  const updateStock = async (productId: string, delta: number) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    const newStock = Math.max(0, (product.stock_count || 0) + delta);
+    
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ stock_count: newStock })
+        .eq('id', productId);
+      
+      if (!error) {
+        updateGlobalProduct(productId, { stock_count: newStock });
+      }
+    } catch (err) {
+      console.error('Stock update failed:', err);
+    }
   };
 
   const handleProductSubmit = async (e: React.FormEvent) => {
@@ -1970,8 +1990,12 @@ export default function VendorDashboard() {
               </div>
             )}
 
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+               <button className="btn btn-sm" style={{ background: !showDraftsOnly ? 'var(--primary)' : 'var(--bg-300)', color: 'white' }} onClick={() => setShowDraftsOnly(false)}>Live Store</button>
+               <button className="btn btn-sm" style={{ background: showDraftsOnly ? 'var(--primary)' : 'var(--bg-300)', color: 'white' }} onClick={() => setShowDraftsOnly(true)}>Drafts Manager</button>
+            </div>
             <div className={styles.inventoryGrid}>
-              {products.filter(p => !p.is_draft).map(p => (
+              {products.filter(p => showDraftsOnly ? p.is_draft : !p.is_draft).map(p => (
                 <div key={p.id} className={styles.inventoryCard}>
                   <div className={styles.invImg}>
                     <img src={p.media_urls?.[0]} alt={p.title} />
@@ -1980,6 +2004,11 @@ export default function VendorDashboard() {
                   <div className={styles.invInfo}>
                     <h4>{p.title}</h4>
                     <span className={styles.invPrice}>{formatPrice(p.price)}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0', background: 'var(--bg-300)', padding: '4px', borderRadius: '4px' }}>
+                       <button className="btn btn-ghost btn-sm" style={{ padding: '0 8px' }} onClick={() => updateStock(p.id, -1)}>-</button>
+                       <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.stock_count || 0}</span>
+                       <button className="btn btn-ghost btn-sm" style={{ padding: '0 8px' }} onClick={() => updateStock(p.id, 1)}>+</button>
+                    </div>
                     <div className={styles.invStats}>
                       <span><BarChart3 size={12} /> {p.views_count || 0} views</span>
                       <span><ShoppingCart size={12} /> {p.sales_count || 0} sales</span>
