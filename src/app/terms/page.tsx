@@ -36,28 +36,44 @@ export default function TermsPage() {
     last_updated: 'April 2026',
     sections: [
       {
-        title: '1. Platform Acceptance',
-        content: 'ABUAD Fashion Hub is a dedicated marketplace for student entrepreneurs. By accessing this platform, you agree to abide by the university code of conduct and our digital commerce policies.'
+        title: '1. Platform Identity & Mission',
+        content: 'ABUAD Fashion Hub (AFH) is a digital marketplace designed exclusively for Afe Babalola University student entrepreneurs. Our mission is to provide a "Vivid" commercial experience that empowers students to build brands while maintaining academic integrity. All operations are sponsored and governed by MIGHTY SEEDS EXCEL INVESTMENT LTD.'
       },
       {
-        title: '2. Escrow Protection',
-        content: 'To ensure 100% trust, all payments are held in our secure Escrow system. Funds are released to vendors 24 hours after a successful delivery is confirmed by the customer.'
+        title: '2. User Eligibility & Verification',
+        content: 'Access to AFH is restricted to verified students, alumni, and staff of Afe Babalola University. Registration requires a valid university email or matriculation details. We reserve the right to suspend any account that cannot provide proof of campus affiliation upon request.'
       },
       {
-        title: '3. Vendor Obligations',
-        content: 'Vendors must maintain accurate stock counts. Incomplete brand profiles (logo, location, WhatsApp) must be finalized within 48 hours of registration to prevent listing suspension.'
+        title: '3. The Escrow Payment System',
+        content: 'To protect both buyers and sellers, AFH utilizes a mandatory Escrow system. When a customer pays for an item, the funds are securely held by the platform. Funds are ONLY released to the vendor wallet 24 hours after the customer confirms receipt of the goods via the unique delivery code system. This 24-hour window allows for dispute filing in case of "item not as described".'
       },
       {
-        title: '4. Commission & Fees',
-        content: 'The platform operates on a commission-based model. A small service fee is applied to each sale to power our real-time notification systems and delivery infrastructure.'
+        title: '4. Vendor Listing Credits & Tiers',
+        content: 'The platform operates on a Listing Credit model. 1 Credit equals 1 Active Product Listing. Vendors can subscribe to different "Power Tiers" (Quarter, Half, Full Power) to unlock more credits, real-time analytics, and promotion tools. Credits never expire as long as the subscription remains active.'
       },
       {
-        title: '5. Logistics & Delivery',
-        content: 'Deliveries are managed by verified on-campus agents. Customers must provide a unique delivery code to the agent to confirm receipt of goods.'
+        title: '5. The 48-Hour Vendor Demotion Policy',
+        content: 'In line with our commitment to quality, new vendors MUST complete their brand profile (Upload Logo, Cover, Location, and WhatsApp details) within 48 hours of registration. Failure to do so will result in an automatic "Store Suspension" where listings become invisible to the public until the profile is finalized.'
       },
       {
-        title: '6. Governance',
-        content: 'All financial and operational protocols of ABUAD Fashion Hub are governed and sponsored by MIGHTY SEEDS EXCEL INVESTMENT LTD.'
+        title: '6. Logistics & Delivery Agent Protocol',
+        content: 'Deliveries within the ABUAD campus are handled by verified Student Delivery Agents. Each order generates a unique 6-digit Delivery Code. Customers must ONLY provide this code to the agent once they have physically inspected and received their item. Handing over the code is the legal confirmation of delivery.'
+      },
+      {
+        title: '7. Prohibited Items & Conduct',
+        content: 'The sale of illegal substances, weapons, offensive materials, or items that violate the ABUAD University Handbook is strictly prohibited. Vendors found selling counterfeit or stolen goods will be permanently banned from the platform and reported to the Dean of Student Affairs.'
+      },
+      {
+        title: '8. Withdrawals & Payouts',
+        content: 'Vendors can request a withdrawal from their wallet once funds are cleared from Escrow. Payouts are processed via Paystack to any Nigerian bank account. A standard platform commission (currently 10%) is deducted from each sale to cover operational costs, payment processing, and server maintenance.'
+      },
+      {
+        title: '9. Marketing & Promotions',
+        content: 'Vendors may use "Billboard Boosts" or "Flash Sales" to increase visibility. These are premium features that place your brand in the homepage spotlight. Content for these promotions must be high-fidelity and professional (Vivid) to maintain the platform aesthetics.'
+      },
+      {
+        title: '10. Disputes & Resolutions',
+        content: 'In the event of a dispute, the AFH Admin team acts as the final arbitrator. We will review chat logs, order history, and delivery timestamps. Decisions made by the Admin team regarding refunds or fund releases are final.'
       }
     ]
   };

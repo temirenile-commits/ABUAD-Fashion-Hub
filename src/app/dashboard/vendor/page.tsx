@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -2249,43 +2249,116 @@ export default function VendorDashboard() {
         {activeTab === 'marketing' && brand && (
           <div className={styles.tabContent}>
             <h1 className={styles.title}>Marketing & Promos</h1>
-            <p className={styles.subtitle}>Create excitement and drive sales with promo codes and spotlights.</p>
+            <p className={styles.subtitle}>Create excitement and drive sales with professional spotlight tools.</p>
 
             <div className={styles.promoGrid}>
-              <div className={styles.promoOption}>
-                <div className={styles.promoIcon}><Tag size={24} color="var(--primary)" /></div>
-                <h3>Promo Codes</h3>
-                <p>Offer discounts to your loyal campus customers.</p>
-                <button className="btn btn-ghost btn-sm" onClick={() => alert('Integrated into Half Power tier!')}>Manage Codes</button>
-              </div>
-              <div className={styles.promoOption}>
+              {/* Billboard Boost */}
+              <div className={styles.promoOption} style={{ background: brand.billboard_boost_expires_at && new Date(brand.billboard_boost_expires_at) > new Date() ? 'var(--primary-soft)' : 'var(--bg-300)' }}>
                 <div className={styles.promoIcon}><Zap size={24} color="#f59e0b" /></div>
                 <h3>Billboard Boost</h3>
-                <p>Get featured on the homepage "Gold Collection" for ?500/week.</p>
-                <button className="btn btn-primary btn-sm" onClick={() => setActiveTab('plans')}>Boost Now</button>
+                <p>Featured on homepage "Gold Collection".</p>
+                {brand.billboard_boost_expires_at && new Date(brand.billboard_boost_expires_at) > new Date() ? (
+                  <div className={styles.activeStatus}>
+                    <CheckCircle size={14} /> Active until {new Date(brand.billboard_boost_expires_at).toLocaleDateString()}
+                  </div>
+                ) : (
+                  <button 
+                    className="btn btn-primary btn-sm" 
+                    onClick={async () => {
+                      if (!confirm('Boost your brand on the homepage billboard for 7 days? This requires a premium tier.')) return;
+                      if (brand.subscription_tier === 'free') return alert('Upgrade to a Power Plan to unlock Billboard Boosts!');
+                      
+                      const { error } = await supabase
+                        .from('brands')
+                        .update({ 
+                          billboard_boost_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() 
+                        })
+                        .eq('id', brand.id);
+                      
+                      if (!error) {
+                        setBrand((prev: any) => ({ ...prev, billboard_boost_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() }));
+                        alert('🚀 Brand Boosted! You are now on the Billboard.');
+                      }
+                    }}
+                  >
+                    Boost Store ??
+                  </button>
+                )}
               </div>
-              <div className={styles.promoOption} style={{ border: '1px solid var(--secondary)' }}>
-                <div className={styles.promoIcon}><Bell size={24} color="var(--secondary)" /></div>
-                <h3>Campus Nudge</h3>
-                <p>Send a real-time smart notification to all your followers.</p>
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={async () => {
-                    if (brand.subscription_tier === 'quarter') return alert('Upgrade to Half Power to use Nudges!');
-                    const msg = prompt('Enter the message for your followers:');
-                    if (msg) {
-                      const res = await fetch('/api/vendor/nudge', {
-                        method: 'POST',
-                        body: JSON.stringify({ brandId: brand.id, ownerId: brand.owner_id, message: msg })
-                      });
-                      const data = await res.json();
-                      if (data.success) alert(`Nudge sent to ${data.count} followers!`);
-                      else alert(data.error);
-                    }
-                  }}
-                >
-                  Send Nudge ??
-                </button>
+
+              {/* Flash Sales Section */}
+              <div className={styles.promoOption} style={{ gridColumn: 'span 2' }}>
+                <div className={styles.promoIcon}><Tag size={24} color="var(--primary)" /></div>
+                <h3>Flash Sale Manager</h3>
+                <p>Put your best items in the "Flash Sale" track with a custom discount.</p>
+                
+                <div style={{ marginTop: '1.5rem', maxHeight: '400px', overflowY: 'auto' }}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>Current Price</th>
+                        <th>Flash Price</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.filter(p => !p.is_draft).map(p => (
+                        <tr key={p.id}>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <img src={p.media_urls?.[0]} style={{ width: 32, height: 32, borderRadius: 4, objectFit: 'cover' }} />
+                              <span style={{ fontSize: '0.85rem' }}>{p.title}</span>
+                            </div>
+                          </td>
+                          <td>{formatPrice(p.price)}</td>
+                          <td>
+                             {p.is_flash_sale ? (
+                               <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{formatPrice(p.flash_sale_price || p.price)}</span>
+                             ) : '-'}
+                          </td>
+                          <td>
+                            {p.is_flash_sale ? (
+                              <button 
+                                className="btn btn-ghost btn-sm"
+                                onClick={async () => {
+                                   const { error } = await supabase.from('products').update({ is_flash_sale: false, flash_sale_price: null }).eq('id', p.id);
+                                   if (!error) {
+                                      updateGlobalProduct(p.id, { is_flash_sale: false, flash_sale_price: null });
+                                   }
+                                }}
+                              >
+                                End Sale
+                              </button>
+                            ) : (
+                              <button 
+                                className="btn btn-secondary btn-sm"
+                                onClick={async () => {
+                                  const price = prompt(`Enter Flash Sale Price for ${p.title} (Must be lower than ${p.price}):`);
+                                  if (price && Number(price) < p.price) {
+                                     const { error } = await supabase.from('products').update({ 
+                                       is_flash_sale: true, 
+                                       flash_sale_price: Number(price),
+                                       original_price: p.price // backup current price
+                                     }).eq('id', p.id);
+                                     if (!error) {
+                                        updateGlobalProduct(p.id, { is_flash_sale: true, flash_sale_price: Number(price), original_price: p.price });
+                                        alert('Product added to Flash Sales!');
+                                     }
+                                  } else if (price) {
+                                    alert('Flash price must be lower than original price.');
+                                  }
+                                }}
+                              >
+                                Start Flash Sale
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>

@@ -8,6 +8,7 @@ import { formatPrice, getDiscount } from '@/lib/utils';
 import { useCart } from '@/context/CartContext';
 import WishlistButton from '@/components/WishlistButton';
 import VividVideo from '@/components/VividVideo';
+import VendorActions from '@/app/vendor/[slug]/VendorActions';
 
 // Joined Database Type Structure
 export interface LiveProduct {
@@ -163,7 +164,16 @@ export default function ProductCard({ product }: Props) {
             )}
           </div>
           <div className={styles.videoMeta}>
-            <h3 className={styles.videoTitle}>{product.title}</h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 className={styles.videoTitle}>{product.title}</h3>
+              <VendorActions 
+                vendorId={product.brand_id} 
+                vendorName={brandName} 
+                whatsappNumber={product.brands?.whatsapp_number}
+                initialFollowers={0}
+                minimal
+              />
+            </div>
             <div className={styles.videoStats}>
               <span>{brandName}</span>
               <span>•</span>
@@ -181,7 +191,16 @@ export default function ProductCard({ product }: Props) {
         </div>
       ) : (
         <div className={styles.info}>
-          <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{brandName}</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+             <span className={styles.brandName}>{brandName}</span>
+             <VendorActions 
+                vendorId={product.brand_id} 
+                vendorName={brandName} 
+                whatsappNumber={product.brands?.whatsapp_number}
+                initialFollowers={0}
+                minimal
+              />
+          </div>
           <h3 className={styles.title}>{product.title}</h3>
           <div className={styles.priceRow}>
             <span className={styles.price}>{formatPrice(product.price)}</span>

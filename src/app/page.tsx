@@ -77,7 +77,10 @@ export default function Home() {
   }, [allBrands]);
 
   const genuineFlashSales = useMemo(() => {
-     return allProducts.filter(p => !p.is_draft && (p.original_price || 0) > (p.price || 0)).slice(0, 10);
+     return allProducts.filter(p => 
+       !p.is_draft && 
+       ((p as any).is_flash_sale || (p.original_price || 0) > (p.price || 0))
+     ).slice(0, 10);
   }, [allProducts]);
 
   const fallbackFlashSaleItems = genuineFlashSales.map(p => {

@@ -9,9 +9,10 @@ interface Props {
   vendorName: string;
   whatsappNumber: string;
   initialFollowers: number;
+  minimal?: boolean;
 }
 
-export default function VendorActions({ vendorId, vendorName, whatsappNumber, initialFollowers }: Props) {
+export default function VendorActions({ vendorId, vendorName, whatsappNumber, initialFollowers, minimal }: Props) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(initialFollowers);
   const [loading, setLoading] = useState(false);
@@ -65,6 +66,20 @@ export default function VendorActions({ vendorId, vendorName, whatsappNumber, in
       setLoading(false);
     }
   };
+
+  if (minimal) {
+    return (
+      <button 
+        className={`btn btn-sm ${isFollowing ? 'btn-ghost' : 'btn-primary'}`} 
+        onClick={handleFollow}
+        disabled={loading}
+        style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem', height: 'auto', minHeight: '24px' }}
+      >
+        <Users size={12} />
+        {loading ? '...' : isFollowing ? 'Following' : 'Follow'}
+      </button>
+    );
+  }
 
   const waMessage = `Hi ${vendorName}! I found you on ABUAD Fashion Hub. I'd love to know more about your products.`;
   // Normalize to Nigerian format: strip +, leading 0, then prepend 234
