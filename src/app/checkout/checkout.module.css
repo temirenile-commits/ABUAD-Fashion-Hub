@@ -55,53 +55,38 @@
   color: var(--text-100);
 }
 
-.deliveryToggle {
+.deliveryStatus {
   margin-top: 2rem;
   background: var(--bg-100);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
-}
-
-.deliveryToggle h3 {
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-}
-
-.deliveryOption {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1rem;
-  border-radius: var(--radius-md);
-  background: var(--bg-200);
-  margin-bottom: 0.5rem;
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.deliveryOption:hover {
-  border-color: var(--border-hover);
-}
-
-.deliveryOption input[type="radio"] {
-  margin-top: 0.2rem;
-  accent-color: var(--primary);
-  width: 18px;
-  height: 18px;
-}
-
-.deliveryOption label {
   display: flex;
   flex-direction: column;
-  cursor: pointer;
-  gap: 0.2rem;
+  gap: 1rem;
 }
 
-.deliveryOption label span {
+.deliveryBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--bg-300);
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--primary-soft);
+  color: var(--text-100);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.deliveryBadge svg {
+  color: var(--primary);
+}
+
+.deliveryNote {
   font-size: 0.85rem;
   color: var(--text-400);
+  line-height: 1.5;
 }
 
 /* Escrow Notice */

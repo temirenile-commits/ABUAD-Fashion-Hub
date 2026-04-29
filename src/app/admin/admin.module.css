@@ -600,3 +600,93 @@
   color: #000;
   border-color: var(--primary);
 }
+
+/* Market Tab Styles */
+.marketGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.marketHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 1.5rem;
+}
+
+.marketInsights {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.marketInsights h3 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-400);
+}
+
+.insightCard {
+  background: var(--bg-100);
+  border: 1px solid var(--border);
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.insightValue {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.insightLabel {
+  font-size: 0.75rem;
+  color: var(--text-400);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.healthGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.healthCard {
+  background: var(--bg-100);
+  border: 1px solid var(--border);
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.healthCard h4 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.healthCard p {
+  font-size: 0.75rem;
+  color: var(--text-400);
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -108,13 +108,14 @@ export async function GET(req: NextRequest) {
       supabaseAdmin.from('users').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('brands').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('products').select('*', { count: 'exact', head: true }),
-      supabaseAdmin.from('orders').select('total_amount').eq('status', 'paid'),
+      supabaseAdmin.from('orders').select('total_amount, admin_discount').eq('status', 'paid'),
     ]);
 
     const totalRevenue = (revenueData || []).reduce((sum: number, o: any) => sum + Number(o.total_amount), 0);
+    const totalSubsidies = (revenueData || []).reduce((sum: number, o: any) => sum + Number(o.admin_discount || 0), 0);
 
     return NextResponse.json({
-      stats: { userCount, brandCount, productCount, totalRevenue }
+      stats: { userCount, brandCount, productCount, totalRevenue, totalSubsidies }
     });
   }
 
@@ -169,6 +170,57 @@ export async function GET(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ payouts: data });
+  }
+
+  if (action === 'market_analytics') {
+    const { data: salesData } = await supabaseAdmin
+      .from('orders')
+      .select('created_at, total_amount, admin_discount')
+      .eq('status', 'paid')
+      .order('created_at', { ascending: true });
+
+    const aggregated = (salesData || []).reduce((acc: any, curr: any) => {
+      const date = new Date(curr.created_at).toLocaleDateString();
+      if (!acc[date]) acc[date] = { revenue: 0, subsidy: 0 };
+      acc[date].revenue += Number(curr.total_amount);
+      acc[date].subsidy += Number(curr.admin_discount || 0);
+      return acc;
+    }, {});
+
+    const chartData = Object.entries(aggregated).map(([time, val]: any) => ({ 
+      time, 
+      value: val.revenue,
+      subsidy: val.subsidy 
+    }));
+    return NextResponse.json({ chartData });
+  }
+
+  if (action === 'delivery_agents') {
+    const { data, error } = await supabaseAdmin
+      .from('delivery_agents')
+      .select('*, users:id(name, email)')
+      .order('created_at', { ascending: false });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    
+    // Flatten data
+    const transformed = (data || []).map(a => ({
+      ...a,
+      name: (a as any).users?.name || 'Rider',
+      email: (a as any).users?.email || 'N/A'
+    }));
+
+    return NextResponse.json({ agents: transformed });
+  }
+
+  if (action === 'promo_codes') {
+    const { data, error } = await supabaseAdmin
+      .from('promo_codes')
+      .select('*, brands(name), products(title)')
+      .order('created_at', { ascending: false });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ promoCodes: data });
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
@@ -428,6 +480,16 @@ export async function POST(req: NextRequest) {
 
 
 
+  if (action === 'update_vendor_credits') {
+    const { brandId, credits } = body;
+    const { error } = await supabaseAdmin
+      .from('brands')
+      .update({ free_listings_count: credits })
+      .eq('id', brandId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
   if (action === 'send_notification') {
     const { title, content, target, userId: targetUserId } = body;
 
@@ -435,15 +497,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
     }
 
-    if (target === 'all') {
-      // Broadcast to all users — fetch all user IDs and insert for each
-      const { data: allUsers } = await supabaseAdmin.from('users').select('id');
-      if (allUsers && allUsers.length > 0) {
-        const rows = allUsers.map((u: any) => ({ user_id: u.id, title, content, is_read: false }));
+    if (target === 'all' || target === 'all_vendors' || target === 'all_delivery' || target === 'all_customers') {
+      let query = supabaseAdmin.from('users').select('id');
+      
+      if (target === 'all_vendors') query = query.eq('role', 'vendor');
+      if (target === 'all_delivery') query = query.eq('role', 'delivery');
+      if (target === 'all_customers') query = query.eq('role', 'customer');
+
+      const { data: targetUsers } = await query;
+      
+      if (targetUsers && targetUsers.length > 0) {
+        const rows = targetUsers.map((u: any) => ({ user_id: u.id, title, content, is_read: false }));
         const { error } = await supabaseAdmin.from('notifications').insert(rows);
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       }
-      return NextResponse.json({ success: true, sent: allUsers?.length || 0 });
+      return NextResponse.json({ success: true, sent: targetUsers?.length || 0 });
     }
 
     if (target === 'specific' && targetUserId) {
@@ -505,6 +573,81 @@ export async function POST(req: NextRequest) {
         is_read: false
       });
     }
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'reset_vendor_to_free') {
+    const { brandId } = body;
+    
+    // Fetch free config from settings
+    const { data: config } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'free_tier_config').single();
+    const freeLimits = (config?.value as any) || { max_products: 10, max_reels: 1 };
+
+    const { error } = await supabaseAdmin
+      .from('brands')
+      .update({ 
+        subscription_tier: 'free',
+        subscription_expires_at: null,
+        max_products: freeLimits.max_products || 10,
+        max_reels: freeLimits.max_reels || 1,
+        boost_level: null,
+        visibility_score: 100
+      })
+      .eq('id', brandId);
+    
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Vendor has been reset to the free tier.' });
+  }
+
+  if (action === 'update_delivery_config') {
+    const { brandId, scope, system } = body;
+    const updateData: any = {};
+    if (scope) updateData.delivery_scope = scope;
+    if (system) updateData.assigned_delivery_system = system;
+
+    const { error } = await supabaseAdmin
+      .from('brands')
+      .update(updateData)
+      .eq('id', brandId);
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Delivery configuration updated.' });
+  }
+
+  if (action === 'recalculate_ratings') {
+    const { error } = await supabaseAdmin.rpc('recalculate_vendor_ratings');
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'All vendor ratings have been recalculated.' });
+  }
+
+  if (action === 'update_admin_permissions') {
+    const { userId, permissions } = body;
+    const { error } = await supabaseAdmin
+      .from('users')
+      .update({ admin_permissions: permissions })
+      .eq('id', userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'create_promo_code') {
+    const { code, type, value, max_uses, product_id } = body;
+    const { error } = await supabaseAdmin.from('promo_codes').insert({
+      code: code.toUpperCase(),
+      type,
+      value,
+      max_uses,
+      product_id: product_id || null,
+      is_active: true
+    });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'delete_promo_code') {
+    const { codeId } = body;
+    const { error } = await supabaseAdmin.from('promo_codes').delete().eq('id', codeId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }
 

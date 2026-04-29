@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera, MapPin, Navigation } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera, MapPin, Navigation, Eye, ShoppingBag } from 'lucide-react';
 import Papa from 'papaparse';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
@@ -17,9 +17,9 @@ const getIcon = (id: string) => {
     case 'quarter': return <Target size={24} color="#3b82f6" />;
     case 'half': return <Rocket size={24} color="var(--primary)" />;
     case 'full': return <Crown size={24} color="#f59e0b" />;
-    case 'boost_week': return '📣';
-    case 'boost_month': return '🔥';
-    case 'boost_top': return '🏆';
+    case 'boost_week': return '??';
+    case 'boost_month': return '??';
+    case 'boost_top': return '??';
     default: return <Zap size={24} />;
   }
 };
@@ -51,7 +51,7 @@ export default function VendorDashboard() {
         // Send a temporary UI notification if not already notified
         const hasNotified = localStorage.getItem(`expire_notif_${brand.id}`);
         if (!hasNotified) {
-          alert(`⚠️ Your ${brand.subscription_tier} plan is expiring soon! Upgrade now to keep your store active.`);
+          alert(`?? Your ${brand.subscription_tier} plan is expiring soon! Upgrade now to keep your store active.`);
           localStorage.setItem(`expire_notif_${brand.id}`, 'true');
         }
       }
@@ -122,6 +122,10 @@ export default function VendorDashboard() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [passForm, setPassForm] = useState({ current: '', next: '', confirm: '' });
+  const [passLoading, setPassLoading] = useState(false);
+  const [passError, setPassError] = useState('');
+  const [passSuccess, setPassSuccess] = useState(false);
 
   useEffect(() => {
     if (brand) setTempName(brand.name);
@@ -185,9 +189,9 @@ export default function VendorDashboard() {
         setTimeout(async () => {
           const { data: brandUpdate } = await supabase.from('brands').select('subscription_tier, fee_paid').eq('id', brandData.id).single();
           if (brandUpdate?.fee_paid || (brandUpdate?.subscription_tier && brandUpdate.subscription_tier !== 'free')) {
-            alert('🎉 Payment Successfully Verified! Your account has been updated.');
+            alert('?? Payment Successfully Verified! Your account has been updated.');
           } else {
-            alert('⚠️ Payment Incomplete: We couldn\'t verify your payment. If you were debited, please contact support.');
+            alert('?? Payment Incomplete: We couldn\'t verify your payment. If you were debited, please contact support.');
           }
         }, 3000);
       }
@@ -344,7 +348,7 @@ export default function VendorDashboard() {
   const handleProductMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     if (!brand) {
-      alert('⚠️ Error: Your Brand profile is not initialized. Please go to "Overview" and complete your store setup first!');
+      alert('?? Error: Your Brand profile is not initialized. Please go to "Overview" and complete your store setup first!');
       return;
     }
     setUploadingMedia(true);
@@ -366,7 +370,7 @@ export default function VendorDashboard() {
           setNewProduct(prev => ({ ...prev, videoUrl: url }));
         }
         // Affirmation
-        alert(`✅ ${isVideo ? 'Video' : 'Picture'} uploaded successfully!`);
+        alert(`? ${isVideo ? 'Video' : 'Picture'} uploaded successfully!`);
       } else {
         alert(`Upload failed for ${file.name}: ${error}`);
       }
@@ -398,7 +402,7 @@ export default function VendorDashboard() {
     const { url, error } = await uploadFile(file, 'brand-reels', `reel-${brand.id}`);
 
     if (url) {
-      alert("✅ Reel uploaded successfully!");
+      alert("? Reel uploaded successfully!");
       const { error: dbError } = await supabase
         .from('brand_reels')
         .insert({
@@ -741,6 +745,27 @@ export default function VendorDashboard() {
     }
   };
 
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passForm.next !== passForm.confirm) {
+      setPassError('New passwords do not match');
+      return;
+    }
+    setPassLoading(true);
+    setPassError('');
+    setPassSuccess(false);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: passForm.next });
+      if (error) throw error;
+      setPassSuccess(true);
+      setPassForm({ current: '', next: '', confirm: '' });
+    } catch (err: any) {
+      setPassError(err.message || 'Failed to update password');
+    } finally {
+      setPassLoading(false);
+    }
+  };
+
   const handleUpdateAiSettings = async (updates: any) => {
     if (!brand) return;
     setIsSettingsLoading(true);
@@ -783,12 +808,12 @@ export default function VendorDashboard() {
       if (data.text) {
         setCopilotMsgs([...newMsgs, { role: 'assistant', content: data.text }]);
       } else if (data.error) {
-        setCopilotMsgs([...newMsgs, { role: 'assistant', content: `⚠️ [VER-3] ${data.error}` }]);
+        setCopilotMsgs([...newMsgs, { role: 'assistant', content: `?? [VER-3] ${data.error}` }]);
       } else {
-        setCopilotMsgs([...newMsgs, { role: 'assistant', content: '⚠️ [VER-3] No response received.' }]);
+        setCopilotMsgs([...newMsgs, { role: 'assistant', content: '?? [VER-3] No response received.' }]);
       }
     } catch (err: any) {
-      setCopilotMsgs([...newMsgs, { role: 'assistant', content: `⚠️ [VER-3] Connection error: ${err.message}` }]);
+      setCopilotMsgs([...newMsgs, { role: 'assistant', content: `?? [VER-3] Connection error: ${err.message}` }]);
     }
     setCopilotLoading(false);
   };
@@ -856,7 +881,7 @@ export default function VendorDashboard() {
     const url = `${window.location.origin}/product/${productId}`;
     try {
       await navigator.clipboard.writeText(url);
-      alert('🚀 Product link copied to clipboard! You can now share it anywhere.');
+      alert('?? Product link copied to clipboard! You can now share it anywhere.');
     } catch (err) {
       alert('Failed to copy link.');
     }
@@ -922,10 +947,10 @@ export default function VendorDashboard() {
           <table>
             <thead><tr><th>Product</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr></thead>
             <tbody>
-              <tr><td>${order.products?.title}</td><td>1</td><td>₦${Number(order.total_amount).toLocaleString()}</td><td>₦${Number(order.total_amount).toLocaleString()}</td></tr>
+              <tr><td>${order.products?.title}</td><td>1</td><td>?${Number(order.total_amount).toLocaleString()}</td><td>?${Number(order.total_amount).toLocaleString()}</td></tr>
             </tbody>
           </table>
-          <div class="total">Total: ₦${Number(order.total_amount).toLocaleString()}</div>
+          <div class="total">Total: ?${Number(order.total_amount).toLocaleString()}</div>
           <div class="footer">Thank you for your business! Generated by ABUAD Fashion Hub.</div>
           <script>window.print();</script>
         </body>
@@ -945,7 +970,7 @@ export default function VendorDashboard() {
 
   return (
     <div className={`container ${styles.page} pb-mobile-nav`}>
-      {/* 💳 Payment Processing Overlay */}
+      {/* ?? Payment Processing Overlay */}
       {paying && (
         <div className={styles.loadingOverlay}>
           <div className={styles.loadingContent}>
@@ -1105,7 +1130,7 @@ export default function VendorDashboard() {
           <div className={styles.activationNotice}>
             <Clock size={48} color="var(--primary)" />
             <h2>Application Under Review</h2>
-            <p>Your brand registration is being reviewed by our admin team. This usually takes 24-48 hours. You will be notified once you are approved to pay the ₦2,000 activation fee.</p>
+            <p>Your brand registration is being reviewed by our admin team. This usually takes 24-48 hours. You will be notified once you are approved to pay the ?2,000 activation fee.</p>
             <Link href="/" className="btn btn-primary">Back to Hub</Link>
           </div>
         )}
@@ -1127,20 +1152,39 @@ export default function VendorDashboard() {
               <div className={`${styles.escrowBanner} mb-4`} style={{ background: 'var(--grad-brand-soft)', borderColor: 'var(--primary)', marginBottom: '1.5rem', animation: 'fadeIn 0.5s ease' }}>
                 <Zap className={styles.escrowIcon} style={{ color: 'var(--primary)' }} />
                 <div className={styles.escrowText}>
-                  <h4 style={{ color: 'var(--primary)' }}>"Power Week" Active ⚡</h4>
+                  <h4 style={{ color: 'var(--primary)' }}>"Power Week" Active ?</h4>
                   <p>You have UNLIMITED powers for the next <strong>{trialDaysLeft} days</strong>. Enjoy the full ABUAD experience!</p>
                 </div>
               </div>
             )}
 
             {!isTrialActive && isSubActive && (
-              <div className={`${styles.escrowBanner} mb-4`} style={{ background: 'var(--bg-200)', borderColor: 'var(--secondary)', marginBottom: '1.5rem' }}>
-                <ShieldCheck className={styles.escrowIcon} style={{ color: 'var(--secondary)' }} />
-                <div className={styles.escrowText}>
-                  <h4 style={{ color: 'var(--secondary)' }}>{currentTier.toUpperCase()} Power Active</h4>
-                  <p>Your subscription is active until {new Date(brand.subscription_expires_at).toLocaleDateString()}. <button onClick={() => setActiveTab('plans')} style={{ color: 'var(--primary)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Upgrade powers →</button></p>
+            <div className={styles.powerCenter}>
+              <div className={styles.powerCard}>
+                <div className={styles.powerInfo}>
+                  <Zap size={24} color="var(--primary)" />
+                  <div>
+                    <h3>{brand?.subscription_tier?.toUpperCase() || 'FREE'} PLAN</h3>
+                    <p>Current Store Power</p>
+                  </div>
                 </div>
+                <div className={styles.powerMeta}>
+                   <div className={styles.metaItem}>
+                      <Clock size={14} />
+                      <span>
+                        {brand?.subscription_expires_at 
+                          ? `${Math.max(0, Math.ceil((new Date(brand.subscription_expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))} days left`
+                          : 'No active plan'}
+                      </span>
+                   </div>
+                   <div className={styles.metaItem}>
+                      <Package size={14} />
+                      <span>{brand?.free_listings_count || 0} Credits Left</span>
+                   </div>
+                </div>
+                <button className="btn btn-primary btn-sm" onClick={() => setActiveTab('plans')}>Boost Power</button>
               </div>
+            </div>
             )}
 
             {!isTrialActive && !isSubActive && (
@@ -1216,11 +1260,35 @@ export default function VendorDashboard() {
               </div>
               <div className={styles.statCard}>
                 <div className={styles.statHead}>
+                  <Eye size={20} color="var(--primary)" />
+                  <span>Profile Views</span>
+                </div>
+                <div className={styles.statValue}>
+                  {brand?.profile_views || 0}
+                </div>
+                <div className={styles.statTrend}>Lifetime metric</div>
+                <div className={styles.growthBadge} style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}><ArrowUpRight size={12} /> Traffic</div>
+              </div>
+              <div className={styles.statCard}>
+                <div className={styles.statHead}>
                   <Star size={20} color="var(--secondary)" />
                   <span>Avg. Rating</span>
                 </div>
                 <div className={styles.statValue}>{reviews.length > 0 ? (reviews.reduce((a, b) => a + b.rating, 0) / reviews.length).toFixed(1) : '5.0'}</div>
                 <div className={styles.statTrend}>From {reviews.length} customer reviews</div>
+              </div>
+              <div className={`${styles.statCard} ${brand?.free_listings_count <= 2 ? styles.statCardWarning : ''}`}>
+                <div className={styles.statHead}>
+                  <ShoppingBag size={20} color="#f59e0b" />
+                  <span>Upload Credits</span>
+                </div>
+                <div className={styles.statValue}>{brand?.free_listings_count || 0}</div>
+                <div className={styles.statTrend}>
+                  {brand?.free_listings_count <= 2 ? (
+                    <button onClick={() => setActiveTab('plans')} style={{ color: '#ef4444', fontWeight: 600, background: 'none', border: 'none', padding: 0, textDecoration: 'underline', cursor: 'pointer' }}>Running Low! Top Up</button>
+                  ) : 'Ready for new listings'}
+                </div>
+                <div className={styles.growthBadge} style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>Real-time</div>
               </div>
             </div>
 
@@ -1478,7 +1546,7 @@ export default function VendorDashboard() {
                         {getIcon(tier.id)}
                         <div>
                           <h4>{tier.name}</h4>
-                          <span className={styles.tierPrice}>₦{tier.price.toLocaleString()}/mo</span>
+                          <span className={styles.tierPrice}>?{tier.price.toLocaleString()}/mo</span>
                         </div>
                       </div>
                       <ul className={styles.tierFeaturesMini}>
@@ -1501,12 +1569,50 @@ export default function VendorDashboard() {
                     <Zap size={20} color="#f59e0b" />
                     <div>
                       <h4>Need a temporary Boost?</h4>
-                      <p>Get priority placement in searches and discovery for ₦1,000/week.</p>
+                      <p>Get priority placement in searches and discovery for ?1,000/week.</p>
                     </div>
                   </div>
                   <button className="btn btn-secondary btn-sm" onClick={() => alert('Boost system integration coming in next update!')}>Boost Now</button>
                 </div>
               </div>
+
+                {/* Security Section */}
+                <div className={styles.settingsSection}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                    <ShieldAlert size={24} color="#ef4444" />
+                    <h3>Account Security</h3>
+                  </div>
+                  <p className={styles.formHint}>Protect your store by keeping your password updated.</p>
+
+                  <form onSubmit={handlePasswordChange} style={{ maxWidth: '400px' }}>
+                    {passError && <div style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(239, 68, 68, 0.1)', padding: '0.5rem', borderRadius: '4px' }}>{passError}</div>}
+                    {passSuccess && <div style={{ color: 'var(--success)', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(34, 197, 94, 0.1)', padding: '0.5rem', borderRadius: '4px' }}>Password updated successfully!</div>}
+                    
+                    <div className={styles.inputGroup}>
+                      <label>New Password</label>
+                      <input 
+                        type="password" 
+                        placeholder="At least 6 characters"
+                        required
+                        value={passForm.next}
+                        onChange={(e) => setPassForm({ ...passForm, next: e.target.value })}
+                      />
+                    </div>
+                    <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
+                      <label>Confirm New Password</label>
+                      <input 
+                        type="password" 
+                        placeholder="Repeat new password"
+                        required
+                        value={passForm.confirm}
+                        onChange={(e) => setPassForm({ ...passForm, confirm: e.target.value })}
+                      />
+                    </div>
+                    <button type="submit" className="btn btn-primary btn-sm" style={{ marginTop: '1.5rem' }} disabled={passLoading}>
+                      {passLoading ? <Loader2 className="anim-spin" size={14} /> : 'Update Password'}
+                    </button>
+                  </form>
+                </div>
             </div>
             {isSettingsLoading && (
               <div className={styles.settingsSaving}>
@@ -1529,7 +1635,7 @@ export default function VendorDashboard() {
                         <span className={styles.orderId}>#{order.id.slice(0, 8).toUpperCase()}</span>
                         <span className={styles.orderDate}>{new Date(order.created_at).toLocaleDateString()}</span>
                         <span style={{ marginLeft: '0.75rem', fontSize: '0.8rem', color: 'var(--text-400)' }}>
-                          👤 {order.users?.name || order.users?.email || `Customer ${order.customer_id?.slice(0, 6)}`}
+                          ?? {order.users?.name || order.users?.email || `Customer ${order.customer_id?.slice(0, 6)}`}
                         </span>
                       </div>
                       <button className="btn btn-ghost btn-sm" onClick={() => handlePrintInvoice(order)}>
@@ -1582,7 +1688,7 @@ export default function VendorDashboard() {
                         )}
                         {(order.status === 'ready' || order.status === 'picked_up' || order.status === 'in_transit') && order.deliveries?.[0] && (
                           <div className={styles.agentInfo} style={{ marginTop: '0.5rem', background: 'var(--bg-300)', padding: '0.75rem', borderRadius: '8px', fontSize: '0.8rem' }}>
-                            <p style={{ color: 'var(--primary)', fontWeight: 700, marginBottom: '0.25rem' }}>🚚 Assigned Agent:</p>
+                            <p style={{ color: 'var(--primary)', fontWeight: 700, marginBottom: '0.25rem' }}>?? Assigned Agent:</p>
                             <p><strong>{order.deliveries[0].users?.name || 'Assigned'}</strong></p>
                             <p>{order.deliveries[0].users?.phone}</p>
                             {order.deliveries[0].status === 'picked_up' && (
@@ -1628,70 +1734,7 @@ export default function VendorDashboard() {
           </div>
         )}
 
-        {/* Marketing Tab */}
-        {activeTab === 'marketing' && (
-          <div className={styles.tabContent}>
-            <h1 className={styles.title}>Marketing & Promotions</h1>
-            <p className={styles.subtitle}>Create promo codes to boost your store's attraction.</p>
 
-            <div className={styles.promoForm}>
-              <h3>Create New Promo Code</h3>
-              <form onSubmit={handleCreatePromo} className={styles.formRow}>
-                <div className={styles.inputGroup}>
-                  <input name="code" type="text" placeholder="CODE (e.g. SAVE10)" required />
-                </div>
-                <div className={styles.inputGroup}>
-                  <select name="type">
-                    <option value="percentage">Percentage (%)</option>
-                    <option value="fixed">Fixed Amount (₦)</option>
-                  </select>
-                </div>
-                <div className={styles.inputGroup}>
-                  <input name="value" type="number" placeholder="Value" required />
-                </div>
-                <div className={styles.inputGroup} style={{ flex: '1 1 250px' }}>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--text-400)' }}>Apply To (Optional)</label>
-                  <select name="product_id">
-                    <option value="">All Products (General)</option>
-                    {products.map(p => (
-                      <option key={p.id} value={p.id}>{p.title}</option>
-                    ))}
-                  </select>
-                </div>
-                <button type="submit" className="btn btn-primary">Create Code</button>
-              </form>
-            </div>
-
-            <div className={styles.promoList} style={{ marginTop: '2rem' }}>
-              <h3>Active Promo Codes</h3>
-              {promoCodes.length > 0 ? (
-                promoCodes.map(promo => (
-                  <div key={promo.id} className={styles.promoCard}>
-                    <div className={styles.promoInfo}>
-                      <span className={styles.promoCodeText}>{promo.code}</span>
-                      <span>{promo.type === 'percentage' ? `${promo.value}% Off` : `${formatPrice(promo.value)} Off`}</span>
-                    </div>
-                    <button 
-                      className={styles.removeBtn}
-                      onClick={async () => {
-                        if (!confirm(`Delete promo code "${promo.code}"?`)) return;
-                        const { error } = await supabase.from('promo_codes').delete().eq('id', promo.id);
-                        if (!error) {
-                          setPromoCodes(prev => prev.filter(p => p.id !== promo.id));
-                          alert('Promo code deleted!');
-                        }
-                      }}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p className={styles.emptyText}>No promo codes created yet.</p>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Reviews Tab */}
         {activeTab === 'reviews' && (
@@ -1774,7 +1817,7 @@ export default function VendorDashboard() {
               <div>
                 <h1 className={styles.title}>Inventory Management</h1>
                 <p className={styles.subtitle}>
-                  Manage your listings. {isTrialActive ? '⚡ Trial (Unlimited)' : `${products.filter(p => !p.is_draft).length} / ${productLimit} products used.`}
+                  Manage your listings. {isTrialActive ? '? Trial (Unlimited)' : `${products.filter(p => !p.is_draft).length} / ${productLimit} products used.`}
                 </p>
               </div>
               <div className={styles.tabActions}>
@@ -1819,7 +1862,7 @@ export default function VendorDashboard() {
                   </div>
                   <div className={styles.formRow}>
                     <div className={styles.inputGroup}>
-                      <label>Sale Price (₦) - What customers pay</label>
+                      <label>Sale Price (?) - What customers pay</label>
                       <input
                         type="number"
                         placeholder="0.00"
@@ -1829,7 +1872,7 @@ export default function VendorDashboard() {
                       />
                     </div>
                     <div className={styles.inputGroup}>
-                      <label>Original Price (₦) - Optional "Discount" tag</label>
+                      <label>Original Price (?) - Optional "Discount" tag</label>
                       <input
                         type="number"
                         placeholder="e.g. 15000"
@@ -1867,7 +1910,6 @@ export default function VendorDashboard() {
                     </div>
                   </div>
 
-                  {/* Variants Section */}
                   <div className={styles.variantsSection}>
                     <div className={styles.sectionHead}>
                       <label>Product Variants (Sizes, Colors, etc.)</label>
@@ -1900,28 +1942,6 @@ export default function VendorDashboard() {
                         </div>
                       ))}
                     </div>
-                  </div>
-
-                  <div className={styles.formRow} style={{ marginTop: '2rem' }}>
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      style={{ flex: 1 }}
-                      onClick={() => {
-                        setNewProduct({ ...newProduct, isDraft: true });
-                        handleProductSubmit(new window.Event('submit') as any);
-                      }}
-                    >
-                      Save as Draft
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn btn-primary"
-                      style={{ flex: 2 }}
-                      onClick={() => setNewProduct({ ...newProduct, isDraft: false })}
-                    >
-                      List for Sale
-                    </button>
                   </div>
 
                   <div className={styles.inputGroup}>
@@ -1975,14 +1995,7 @@ export default function VendorDashboard() {
                   </div>
 
                   <div className={styles.formFooter}>
-                    <div className={styles.billingNote}>
-                      {products.filter(p => !p.is_draft).length >= 5 ? (
-                        <p>Listing Fee: <strong>₦200</strong> (Wallet: {formatPrice(brand?.wallet_balance || 0)})</p>
-                      ) : (
-                        <p>Listing: <strong>FREE</strong> ({5 - products.filter(p => !p.is_draft).length} credits remaining)</p>
-                      )}
-                    </div>
-                    <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
+                    <button type="submit" className="btn btn-primary btn-lg" disabled={loading || (brand?.free_listings_count <= 0 && !editingProduct && !newProduct.isDraft)}>
                       {loading ? 'Processing...' : (editingProduct ? 'Update Product' : 'Post Product to Marketplace')}
                     </button>
                   </div>
@@ -1994,12 +2007,12 @@ export default function VendorDashboard() {
                <button className="btn btn-sm" style={{ background: !showDraftsOnly ? 'var(--primary)' : 'var(--bg-300)', color: 'white' }} onClick={() => setShowDraftsOnly(false)}>Live Store</button>
                <button className="btn btn-sm" style={{ background: showDraftsOnly ? 'var(--primary)' : 'var(--bg-300)', color: 'white' }} onClick={() => setShowDraftsOnly(true)}>Drafts Manager</button>
             </div>
+
             <div className={styles.inventoryGrid}>
               {products.filter(p => showDraftsOnly ? p.is_draft : !p.is_draft).map(p => (
                 <div key={p.id} className={styles.inventoryCard}>
                   <div className={styles.invImg}>
                     <img src={p.media_urls?.[0]} alt={p.title} />
-                    {p.locked && <div className={styles.lockedLabel}>Payment Required</div>}
                   </div>
                   <div className={styles.invInfo}>
                     <h4>{p.title}</h4>
@@ -2009,90 +2022,12 @@ export default function VendorDashboard() {
                        <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.stock_count || 0}</span>
                        <button className="btn btn-ghost btn-sm" style={{ padding: '0 8px' }} onClick={() => updateStock(p.id, 1)}>+</button>
                     </div>
-                    <div className={styles.invStats}>
-                      <span><BarChart3 size={12} /> {p.views_count || 0} views</span>
-                      <span><ShoppingCart size={12} /> {p.sales_count || 0} sales</span>
-                    </div>
-                  </div>
-                  <div className={styles.invActions}>
-                    <button className="btn btn-ghost btn-sm" onClick={() => {
-                      setNewProduct({
-                        title: p.title || '',
-                        description: p.description || '',
-                        price: p.price ? p.price.toString() : '',
-                        originalPrice: p.original_price ? p.original_price.toString() : '',
-                        category: p.category || 'Clothing',
-                        stockCount: p.stock_count ? p.stock_count.toString() : '10',
-                        mediaUrls: p.media_urls || [],
-                        imageUrl: p.image_url || '',
-                        videoUrl: p.video_url || '',
-                        variants: p.variants || [],
-                        isDraft: p.is_draft || false
-                      });
-                      setEditingProduct(p);
-                      setIsAddingProduct(true);
-                    }}>Edit</button>
-                    <button className={`btn btn-ghost btn-sm ${styles.shareButton}`} onClick={() => handleShareProduct(p.id)}>
-                      <Share2 size={14} /> Share
-                    </button>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      style={{ color: '#ef4444' }}
-                      onClick={async () => {
-                         if (!confirm(`Delete "${p.title}"? This cannot be undone.`)) return;
-                         
-                         // 1. Storage Cleanup (Images & Videos)
-                         const filesToDelete: string[] = [];
-                         if (p.image_url) filesToDelete.push(p.image_url);
-                         if (p.video_url) filesToDelete.push(p.video_url);
-                         if (p.media_urls && p.media_urls.length > 0) filesToDelete.push(...p.media_urls);
-                         
-                         // Extract paths from URLs
-                         const paths = filesToDelete.map(url => {
-                           try {
-                             const parts = url.split('/public/');
-                             if (parts.length > 1) return parts[1].split('?')[0];
-                             return null;
-                           } catch { return null; }
-                         }).filter(Boolean) as string[];
-
-                         if (paths.length > 0) {
-                           // We don't await this to keep the UI snappy, but we trigger it
-                           for (const path of paths) {
-                             const bucket = path.split('/')[0];
-                             const filePath = path.split('/').slice(1).join('/');
-                             supabase.storage.from(bucket).remove([filePath]);
-                           }
-                         }
-
-                         // 2. DB Deletion
-                         const { error } = await supabase.from('products').delete().eq('id', p.id);
-                         if (error) {
-                           if (error.message.includes('foreign key constraint')) {
-                             const { error: softError } = await supabase.from('products').update({ is_draft: true, stock_count: 0 }).eq('id', p.id);
-                             if (softError) alert('Delete failed: ' + softError.message);
-                             else {
-                               alert('Product hidden from buyers because it is tied to existing orders.');
-                               updateGlobalProduct(p.id, { is_draft: true, stock_count: 0 });
-                             }
-                           } else {
-                             alert('Delete failed: ' + error.message);
-                           }
-                         } else {
-                            // Immediate UI update for hard delete
-                            updateGlobalProduct(p.id, { is_draft: true }); // Using is_draft as a flag to hide it
-                         }
-                      }}
-                    >Delete</button>
-                  </div>
+                   </div>
                 </div>
-              ))}
-              {products.filter(p => !p.is_draft).length === 0 && <p className={styles.emptyText}>No products yet.</p>}
+               ))}
             </div>
           </div>
         )}
-
-        {/* Services Tab */}
         {activeTab === 'services' && brand && (
           <div className={styles.tabContent}>
             <div className={styles.tabHeader}>
@@ -2234,7 +2169,7 @@ export default function VendorDashboard() {
                   </button>
                 </div>
                 {!brand.bank_account_number && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.5rem' }}>Update your bank details in Settings to withdraw.</p>}
-                <p className={styles.minWithdrawal}>Minimum withdrawal: ₦1,000</p>
+                <p className={styles.minWithdrawal}>Minimum withdrawal: ?1,000</p>
               </div>
 
               <div className={styles.walletEscrow} style={{ width: '100%', maxWidth: 'none', flexDirection: 'row', gap: '2rem', padding: '1.5rem', justifyContent: 'space-around' }}>
@@ -2262,7 +2197,7 @@ export default function VendorDashboard() {
                 </div>
                 <form onSubmit={handleWithdrawalRequest} className={styles.productForm}>
                   <div className={styles.inputGroup}>
-                    <label>Amount to Withdraw (₦)</label>
+                    <label>Amount to Withdraw (?)</label>
                     <input name="amount" type="number" placeholder="0.00" autoFocus required />
                     <p className={styles.formHint}>Available: <strong>{formatPrice(wallet?.available_balance || 0)}</strong></p>
                   </div>
@@ -2309,19 +2244,7 @@ export default function VendorDashboard() {
           </div>
         )}
 
-        {/* Analytics Tab (Placeholder) */}
-        {activeTab === 'analytics' && (
-          <div className={styles.tabContent}>
-            <h1 className={styles.title}>Performance Insights</h1>
-            <p className={styles.subtitle}>Understand how your brand is growing on campus.</p>
 
-            <div className={styles.analyticsPlaceholder}>
-              <BarChart3 size={48} />
-              <h3>Visualizing your growth...</h3>
-              <p>Custom charts for your daily sales and conversion rates will appear here as you get more orders.</p>
-            </div>
-          </div>
-        )}
         {/* Marketing Tab */}
         {activeTab === 'marketing' && brand && (
           <div className={styles.tabContent}>
@@ -2338,7 +2261,7 @@ export default function VendorDashboard() {
               <div className={styles.promoOption}>
                 <div className={styles.promoIcon}><Zap size={24} color="#f59e0b" /></div>
                 <h3>Billboard Boost</h3>
-                <p>Get featured on the homepage "Gold Collection" for ₦500/week.</p>
+                <p>Get featured on the homepage "Gold Collection" for ?500/week.</p>
                 <button className="btn btn-primary btn-sm" onClick={() => setActiveTab('plans')}>Boost Now</button>
               </div>
               <div className={styles.promoOption} style={{ border: '1px solid var(--secondary)' }}>
@@ -2361,16 +2284,16 @@ export default function VendorDashboard() {
                     }
                   }}
                 >
-                  Send Nudge 🚀
+                  Send Nudge ??
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* ══════════════════════════════════════════════════
-            PLANS & UPGRADE TAB — Credit Rate Checkout
-        ══════════════════════════════════════════════════ */}
+        {/* --------------------------------------------------
+            PLANS & UPGRADE TAB â€” Credit Rate Checkout
+        -------------------------------------------------- */}
         {activeTab === 'plans' && (
           !brand ? (
             <div className={styles.activationNotice}>
@@ -2388,29 +2311,40 @@ export default function VendorDashboard() {
                 Choose a credit rate plan that fits your hustle. All plans unlock vendor superpowers instantly upon successful payment via Paystack.
               </p>
 
-              {/* ── Current Status Banner ── */}
+              {/* -- Current Status Banner -- */}
               <div style={{ background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                 <div style={{ fontSize: '1.5rem' }}>
-                  {currentTier === 'full' ? '👑' : currentTier === 'half' ? '🚀' : currentTier === 'quarter' ? '🎯' : '🌱'}
+                  {currentTier === 'full' ? '??' : currentTier === 'half' ? '??' : currentTier === 'quarter' ? '??' : '??'}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, color: 'var(--primary)', marginBottom: '0.25rem' }}>
-                    {userRole === 'admin' ? 'Admin — Unlimited Access (No Fees)' :
-                      isTrialActive ? `Free Trial Active — ${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining` :
+                    {userRole === 'admin' ? 'Admin â€” Unlimited Access (No Fees)' :
+                      isTrialActive ? `Free Trial Active â€” ${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining` :
                         isSubActive ? `Current Plan: ${currentTier.charAt(0).toUpperCase() + currentTier.slice(1)} Power` :
-                          'No Active Plan — Free mode (limited access)'}
-                  </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-400)' }}>
-                    {isSubActive && brand?.subscription_expires_at
-                      ? `Renews on ${new Date(brand.subscription_expires_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })}`
-                      : userRole !== 'admin' ? 'Subscribe below to unlock full vendor capabilities' : 'You have root access to all platform features'}
+                          'Upgrade your power level to list more products!'}
                   </div>
                 </div>
               </div>
 
-              {/* ── Credit Rate Plans ── */}
+              {/* ?? Credit Status Banner */}
+              <div style={{ background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '16px', padding: '1.5rem', marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '2rem', alignItems: 'center' }}>
+                <div style={{ flex: 1, minWidth: '200px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                    <ShoppingBag size={20} color="var(--primary)" />
+                    <h3 style={{ margin: 0, fontSize: '1rem' }}>Listing Credits 101</h3>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-400)' }}>1 Credit = 1 Live Product. Drafts are always free. Credits never expire as long as your sub is active.</p>
+                </div>
+                <div style={{ textAlign: 'center', padding: '0.5rem 1.5rem', background: 'var(--bg-200)', borderRadius: '12px', border: '1px solid var(--primary-soft)' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-400)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Balance</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--primary)' }}>{brand?.free_listings_count || 0}</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--primary)' }}>Credits Remaining</div>
+                </div>
+              </div>
+
+              {/* -- Credit Rate Plans -- */}
               <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-100)' }}>
-                💳 Credit Rate Plans
+                ?? Credit Rate Plans
               </h2>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '3rem' }}>
                 {subscriptionRates.map((tier: any) => {
@@ -2437,7 +2371,7 @@ export default function VendorDashboard() {
                       )}
                       {isActive && (
                         <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#000', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 1rem', borderRadius: '999px', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
-                          ✓ ACTIVE
+                          ? ACTIVE
                         </div>
                       )}
 
@@ -2451,14 +2385,14 @@ export default function VendorDashboard() {
 
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
                         <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--text-100)' }}>
-                          ₦{tier.price.toLocaleString()}
+                          ?{tier.price.toLocaleString()}
                         </span>
                         <span style={{ color: 'var(--text-400)', fontSize: '0.9rem' }}>{tier.period}</span>
                       </div>
 
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {(tier.features || ['Listing powers', 'Basic Analytics', 'Support']).map((f: string, i: number) => (
-                          <li key={i} style={{ fontSize: '0.85rem', color: f.startsWith('✅') ? 'var(--text-200)' : 'var(--text-500)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <li key={i} style={{ fontSize: '0.85rem', color: f.startsWith('?') ? 'var(--text-200)' : 'var(--text-500)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <CheckCircle size={14} color="var(--primary)" /> {f}
                           </li>
                         ))}
@@ -2476,17 +2410,17 @@ export default function VendorDashboard() {
                           fontWeight: 700,
                         }}
                       >
-                        {paying === tier.id ? <><Loader2 size={16} className="spin" /> Processing…</> :
-                          isActive ? '✓ Current Plan' : `Subscribe — ₦${tier.price.toLocaleString()}/mo`}
+                        {paying === tier.id ? <><Loader2 size={16} className="spin" /> Processingâ€¦</> :
+                          isActive ? '? Current Plan' : `Subscribe â€” ?${tier.price.toLocaleString()}/mo`}
                       </button>
                     </div>
                   );
                 })}
               </div>
 
-              {/* ── Boost Store Section ── */}
+              {/* -- Boost Store Section -- */}
               <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-100)' }}>
-                ⚡ Viral Boosters
+                ? Viral Boosters
               </h2>
               <p style={{ color: 'var(--text-400)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
                 One-time boosts to increase your store's visibility on the marketplace.
@@ -2495,12 +2429,12 @@ export default function VendorDashboard() {
                 {/* Billboard Boost */}
                 <div style={{ background: 'var(--bg-300)', border: '2px solid var(--accent-gold)', borderRadius: '16px', padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
                   <div style={{ position: 'absolute', top: 0, right: 0, padding: '0.5rem', background: 'var(--accent-gold)', color: '#000', fontSize: '0.6rem', fontWeight: 900 }}>TRENDY BOARD</div>
-                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📢</div>
+                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>??</div>
                   <h3 style={{ fontSize: '1rem', color: 'var(--accent-gold)' }}>Campus Billboard</h3>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Get featured on the main homepage "The Gold Collection" billboard for 7 days.</p>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 900, color: '#fff' }}>₦500 <small>/week</small></span>
-                    <button className="btn btn-primary btn-sm" onClick={() => handleSubscribe({ id: 'billboard_boost', price: 500 })}>Activate ⚡</button>
+                    <span style={{ fontWeight: 900, color: '#fff' }}>?500 <small>/week</small></span>
+                    <button className="btn btn-primary btn-sm" onClick={() => handleSubscribe({ id: 'billboard_boost', price: 500 })}>Activate ?</button>
                   </div>
                 </div>
 
@@ -2514,24 +2448,24 @@ export default function VendorDashboard() {
                     <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.5rem' }}>{boost.desc}</div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-500)', marginBottom: '1.25rem' }}>Duration: {boost.duration}</div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-                      <span style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--primary)' }}>₦{boost.price.toLocaleString()}</span>
+                      <span style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--primary)' }}>?{boost.price.toLocaleString()}</span>
                       <button
                         className="btn btn-primary btn-sm"
                         disabled={paying === boost.id}
                         onClick={() => handleSubscribe({ id: boost.id, price: boost.price })}
                         style={{ fontWeight: 700 }}
                       >
-                        {paying === boost.id ? <><Loader2 size={14} className="spin" /> Paying…</> : 'Boost Now →'}
+                        {paying === boost.id ? <><Loader2 size={14} className="spin" /> Payingâ€¦</> : 'Boost Now ?'}
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* ── Trial & Admin Notes ── */}
+              {/* -- Trial & Admin Notes -- */}
               {isTrialActive && (
                 <div style={{ marginTop: '2rem', padding: '1.25rem', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '12px' }}>
-                  <p style={{ color: '#60a5fa', fontWeight: 600, marginBottom: '0.5rem' }}>🎁 Free Trial Still Active</p>
+                  <p style={{ color: '#60a5fa', fontWeight: 600, marginBottom: '0.5rem' }}>?? Free Trial Still Active</p>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-400)' }}>
                     You have <strong style={{ color: '#fff' }}>{trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''}</strong> left on your free Full Power trial.
                     Subscribe before it expires to keep your powers uninterrupted.
@@ -2542,11 +2476,11 @@ export default function VendorDashboard() {
           )
         )}
 
-        {/* ─── AI Assistant Settings Tab ─── */}
+        {/* --- AI Assistant Settings Tab --- */}
         {activeTab === 'ai' && (
           <div style={{ padding: '2rem', maxWidth: 720, margin: '0 auto' }}>
             <div style={{ marginBottom: '2rem' }}>
-              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.4rem' }}>✨ AI Assistant <span style={{ fontSize: '0.7rem', color: 'var(--primary)', verticalAlign: 'middle', background: 'rgba(167,139,250,0.1)', padding: '2px 8px', borderRadius: '4px' }}>v3.1 LIVE</span></h2>
+              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.4rem' }}>? AI Assistant <span style={{ fontSize: '0.7rem', color: 'var(--primary)', verticalAlign: 'middle', background: 'rgba(167,139,250,0.1)', padding: '2px 8px', borderRadius: '4px' }}>v3.1 LIVE</span></h2>
               <p style={{ color: 'var(--text-400)', fontSize: '0.9rem' }}>Your AI Copilot helps you manage your store, guides customers automatically, and keeps your shop running even when you're offline.</p>
             </div>
 
@@ -2554,7 +2488,7 @@ export default function VendorDashboard() {
             <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid rgba(167,139,250,0.2)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>🤖 Enable AI Copilot</div>
+                  <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>?? Enable AI Copilot</div>
                   <div style={{ fontSize: '0.82rem', color: 'var(--text-400)' }}>Master switch. Turns the AI on or off for your entire store.</div>
                 </div>
                 <button
@@ -2570,8 +2504,8 @@ export default function VendorDashboard() {
             <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid rgba(167,139,250,0.2)', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>💬 Auto-Reply to Customers</div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-400)' }}>When enabled, the AI automatically answers customer messages about your products — even when you're offline. Replies show a ✨ AI badge.</div>
+                  <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>?? Auto-Reply to Customers</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-400)' }}>When enabled, the AI automatically answers customer messages about your products â€” even when you're offline. Replies show a ? AI badge.</div>
                 </div>
                 <button
                   onClick={() => handleUpdateAiSettings({ auto_reply_enabled: !aiSettings?.auto_reply_enabled })}
@@ -2584,7 +2518,7 @@ export default function VendorDashboard() {
 
             {/* Custom Instructions */}
             <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid rgba(167,139,250,0.2)', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
-              <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>📝 Custom AI Instructions</div>
+              <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>?? Custom AI Instructions</div>
               <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.75rem' }}>Tell the AI how to represent your brand. E.g. "Always greet customers with 'Hey boss!'", "Never negotiate on prices", "Speak in a friendly, casual tone".</div>
               <textarea
                 rows={4}
@@ -2605,11 +2539,11 @@ export default function VendorDashboard() {
 
             {/* Open Copilot CTA */}
             <div style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.15),rgba(167,139,250,0.08))', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(167,139,250,0.25)', textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✨</div>
+              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>?</div>
               <div style={{ fontWeight: 700, marginBottom: '0.4rem' }}>Talk to your Copilot</div>
               <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Ask it anything: "What are my earnings?", "How do I add a product?", "Why is my balance pending?"</div>
               <button onClick={() => setShowCopilot(true)} className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#7c3aed,#a78bfa)', border: 'none' }}>
-                Open AI Chat ✨
+                Open AI Chat ?
               </button>
             </div>
           </div>
@@ -2640,7 +2574,7 @@ export default function VendorDashboard() {
         </button>
       </nav>
 
-      {/* ─── AI Copilot Floating Widget ─── */}
+      {/* --- AI Copilot Floating Widget --- */}
       {showCopilot && (
         <div style={{
           position: 'fixed', bottom: '6rem', right: '1.5rem', width: '360px', maxHeight: '500px',
@@ -2652,7 +2586,7 @@ export default function VendorDashboard() {
           {/* Header */}
           <div style={{ padding: '1rem 1.25rem', background: 'linear-gradient(135deg,rgba(167,139,250,0.2),rgba(139,92,246,0.1))', borderBottom: '1px solid rgba(167,139,250,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#a78bfa,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>✨</div>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#a78bfa,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>?</div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>AI Copilot</div>
                 <div style={{ fontSize: '0.7rem', color: '#a78bfa' }}>Powered by Gemini</div>
@@ -2709,9 +2643,10 @@ export default function VendorDashboard() {
         }}
         onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
         onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
-      >✨</button>
+      >?</button>
       </>
       )}
     </div>
   );
 }
+

@@ -170,3 +170,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+.mapCard {
+    margin-top: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+}

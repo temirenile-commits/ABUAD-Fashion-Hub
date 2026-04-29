@@ -103,7 +103,7 @@ export default function LoginPage() {
           <div className="form-group">
             <div className={styles.passLabelRow}>
               <label className="form-label">Password</label>
-              <Link href="#" className={styles.forgot}>Forgot?</Link>
+              <Link href="/auth/forgot-password" className={styles.forgot}>Forgot?</Link>
             </div>
             <div className={styles.passWrap}>
               <input className="form-input" type={showPass ? 'text' : 'password'} placeholder="••••••••" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} />

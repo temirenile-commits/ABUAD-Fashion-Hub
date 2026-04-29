@@ -27,6 +27,7 @@ import MainSlider from '@/components/MainSlider';
 import HeroExtras from '@/components/HeroExtras';
 import TopCategories from '@/components/TopCategories';
 import FlashSales from '@/components/FlashSales';
+import WelcomeModal from '@/components/WelcomeModal';
 
 export default function Home() {
   const allProducts = useMarketplaceStore(s => s.products);
@@ -37,7 +38,16 @@ export default function Home() {
   const [preferredCategories, setPreferredCategories] = useState<string[]>([]);
   const [targetedProducts, setTargetedProducts] = useState<LiveProduct[]>([]);
   const [fetchingTargeted, setFetchingTargeted] = useState(false);
-  
+  const [flashSalesEvents, setFlashSalesEvents] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchFlashSales = async () => {
+      const { data } = await supabase.from('platform_settings').select('value').eq('key', 'flash_sales_events').single();
+      if (data && data.value) setFlashSalesEvents(data.value as any[]);
+    };
+    fetchFlashSales();
+  }, []);
+
   useEffect(() => {
     const fetchDiscovery = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -70,7 +80,7 @@ export default function Home() {
      return allProducts.filter(p => !p.is_draft && (p.original_price || 0) > (p.price || 0)).slice(0, 10);
   }, [allProducts]);
 
-  const flashSaleItems = genuineFlashSales.map(p => {
+  const fallbackFlashSaleItems = genuineFlashSales.map(p => {
     const originalPrice = p.original_price || 0;
     const price = p.price || 0;
     const discount = originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
@@ -103,6 +113,7 @@ export default function Home() {
 
   return (
     <main className={styles.main}>
+      <WelcomeModal />
       {/* ───── JUMIA HERO TRIFECTA ───── */}
       <section className={styles.heroSection}>
         <div className="container-wide">
@@ -147,7 +158,37 @@ export default function Home() {
         </div>
 
         {/* ───── FLASH SALES ───── */}
-        {flashSaleItems.length > 0 && <FlashSales items={flashSaleItems} />}
+        {flashSalesEvents.length > 0 ? flashSalesEvents.map((event, idx) => {
+          // Map the event's product IDs to actual product data
+          const eventItems = allProducts
+            .filter(p => event.product_ids?.includes(p.id) && !p.is_draft)
+            .map(p => {
+              const originalPrice = p.original_price || p.price;
+              const price = p.price || 0;
+              const discount = originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
+              return {
+                id: p.id,
+                title: p.title,
+                price: price,
+                oldPrice: originalPrice,
+                image: p.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500',
+                discount: discount
+              };
+            });
+            
+          if (eventItems.length === 0) return null;
+          
+          return (
+            <div key={event.id || idx}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '2rem', marginBottom: '-1rem', color: 'var(--primary)' }}>
+                ⚡ {event.title}
+              </h2>
+              <FlashSales items={eventItems} />
+            </div>
+          );
+        }) : (
+          fallbackFlashSaleItems.length > 0 && <FlashSales items={fallbackFlashSaleItems} />
+        )}
 
         {/* ───── FASHION REELS (Vivid Videos) ───── */}
         {allReels.length > 0 && (

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const [productsResult, profileResult, settingsResult, promoResult] = await Promise.all([
       supabaseAdmin
         .from('products')
-        .select('id, brand_id, price, stock_count, brands(verified, fee_paid)')
+        .select('id, brand_id, price, stock_count, brands(verified, fee_paid, delivery_scope, assigned_delivery_system)')
         .in('id', productIds),
       supabaseAdmin
         .from('users')
@@ -52,8 +52,15 @@ export async function POST(req: Request) {
         message: 'A brand in your cart is currently offline. Please remove their items to proceed.' 
       }, { status: 400 });
     }
-    // 2. Validate Totals & Calculate Fees (Only Platform Delivery supported now)
-    const deliveryMethod = 'platform';
+
+    // 2. Determine Delivery Logic from Brands
+    const hasOutSchool = liveProducts.some((p: any) => p.brands?.delivery_scope === 'out-school');
+    const hasPlatform = liveProducts.some((p: any) => p.brands?.assigned_delivery_system === 'platform');
+    
+    let totalDeliveryFee = 0;
+    if (hasPlatform) {
+      totalDeliveryFee = hasOutSchool ? 3000 : 1500;
+    }
 
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 30);
@@ -63,12 +70,16 @@ export async function POST(req: Request) {
       const originalPrice = liveProduct?.price || item.price;
       const isFirst = index === 0;
       
+      const brandData = Array.isArray(liveProduct?.brands) ? liveProduct.brands[0] : liveProduct?.brands;
+      
+      const vendorScope = brandData?.delivery_scope || 'in-school';
+      const vendorSystem = brandData?.assigned_delivery_system || 'platform';
+
       const baseItemSubtotal = originalPrice * (item.quantity || 1);
       
       // Calculate Discount (Paid by Admin)
       let itemDiscount = 0;
       if (promoData) {
-          // Check if promo is general OR limited to this specific product
           if (!promoData.product_id || promoData.product_id === item.productId) {
               if (promoData.type === 'percentage') {
                   itemDiscount = baseItemSubtotal * (Number(promoData.value) / 100);
@@ -79,15 +90,12 @@ export async function POST(req: Request) {
       }
 
       const discountedItemSubtotal = Math.max(0, baseItemSubtotal - itemDiscount);
-      const itemDeliveryFee = isFirst ? deliveryFee : 0;
+      // Only charge delivery fee on the FIRST item of the order batch if platform delivery is involved
+      const itemDeliveryFee = isFirst ? totalDeliveryFee : 0;
       const finalItemTotal = discountedItemSubtotal + itemDeliveryFee;
       
       const baseCommission = baseItemSubtotal * commissionRate;
-      
-      // Vendor Earning remains constant (based on ORIGINAL price - standard commission)
       const vendorEarning = baseItemSubtotal - baseCommission;
-      
-      // Admin takes the hit for the discount: commission - discount
       const adminCommission = baseCommission - itemDiscount;
       const totalCommissionForRecord = adminCommission + itemDeliveryFee;
 
@@ -100,10 +108,13 @@ export async function POST(req: Request) {
         commission_amount: totalCommissionForRecord,
         vendor_earning: vendorEarning,
         status: 'pending',
-        delivery_method: deliveryMethod || 'platform',
+        delivery_method: vendorSystem,
+        delivery_scope: vendorScope,
+        assigned_delivery_system: vendorSystem,
         shipping_address: shippingAddress,
-        paystack_reference: '', // Will fill in a moment
+        paystack_reference: '', 
         expires_at: expiresAt.toISOString(),
+        admin_discount: itemDiscount,
       };
     });
 

@@ -23,6 +23,19 @@ export default function RegisterPage() {
     setLoading(true);
     setErrorMsg('');
 
+    // Password validation
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSymbols = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    const isLongEnough = password.length >= 6;
+
+    if (!isLongEnough || !hasUpperCase || !hasLowerCase || !hasNumbers || !hasSymbols) {
+      setErrorMsg('Password must be at least 6 characters and include uppercase, lowercase, numbers, and symbols.');
+      setLoading(false);
+      return;
+    }
+
     try {
       // 1. Register with Supabase Auth
       // We pass name and role in metadata (options.data) 
@@ -126,6 +139,9 @@ export default function RegisterPage() {
                 {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+            <p className={styles.subText} style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: 'var(--text-muted)' }}>
+              Mix of uppercase, lowercase, numbers & symbols (min 6 chars)
+            </p>
           </div>
 
           <button type="submit" className={`btn btn-primary ${styles.submitBtn}`} disabled={loading}>

@@ -8,7 +8,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
   height: 100%;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Lighter shadow for non-video cards */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
   background: var(--bg-100);
   border: 1px solid var(--border);
 }
@@ -31,12 +31,12 @@
 .imageWrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 1; /* Square for catalog feel */
+  aspect-ratio: 3 / 4; /* Standard fashion portrait ratio */
   background: #111;
   overflow: hidden;
-  border-radius: 8px; /* Slightly tighter for images */
-  margin: 0.4rem; 
-  width: calc(100% - 0.8rem);
+  border-radius: 6px; 
+  margin: 0.25rem; 
+  width: calc(100% - 0.5rem);
 }
 
 .videoCard .imageWrap {
@@ -118,14 +118,12 @@
 }
 
 .info {
-  padding: 1rem;
+  padding: 0.75rem 0.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.25rem;
   flex: 1;
   background: transparent;
-  justify-content: center;
-  align-items: flex-start;
 }
 
 .videoCard .info {
@@ -254,5 +252,28 @@
 .downloadBtn:hover {
   background: var(--primary);
   color: #000;
+  transform: scale(1.1);
+}
+
+.shareBtn {
+  position: absolute;
+  top: 0.5rem;
+  right: 2.5rem; /* Next to discount badge or on its own */
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border-radius: 50%;
+  padding: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  transition: all 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.shareBtn:hover {
+  background: var(--secondary);
+  color: #fff;
   transform: scale(1.1);
 }

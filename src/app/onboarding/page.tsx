@@ -143,8 +143,7 @@ export default function OnboardingPage() {
           fee_paid: true, // We auto-mark fee as paid because we removed the naira fee
           delivery_preference: 'platform',
           subscription_tier: 'free',
-          max_products: 0,
-          max_reels: 0,
+          free_listings_count: 5,
           terms_accepted: true,
           trial_started_at: new Date().toISOString(),
         })

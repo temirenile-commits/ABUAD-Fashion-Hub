@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import SplashScreen from '@/components/SplashScreen';
+import WelcomeModal from '@/components/WelcomeModal';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -15,6 +16,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   return (
     <>
+      <WelcomeModal />
       <SplashScreen />
       <Navbar />
       <div style={{ minHeight: 'calc(100vh - 64px)' }}>

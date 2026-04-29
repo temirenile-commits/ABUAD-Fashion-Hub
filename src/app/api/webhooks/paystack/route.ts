@@ -121,7 +121,11 @@ export async function POST(req: Request) {
           return NextResponse.json({ error: 'Subscription update failed' }, { status: 500 });
         }
 
-        console.log(`[WEBHOOK] Subscription for ${brand_id} updated to ${tier}!`);
+        // 3. Add Listing Credits
+        const creditsToAdd = planConfig.max_products || 10;
+        await supabaseAdmin.rpc('add_listing_credits', { p_brand_id: brand_id, p_count: creditsToAdd });
+
+        console.log(`[WEBHOOK] Subscription for ${brand_id} updated to ${tier} with ${creditsToAdd} credits!`);
         return NextResponse.json({ status: 'success' }, { status: 200 });
       }
 

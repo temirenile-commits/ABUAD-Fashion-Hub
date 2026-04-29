@@ -11,24 +11,52 @@ export default function MainSlider() {
 
   useEffect(() => {
     const fetchBillboard = async () => {
-      const { data, error } = await supabase
+      // 1. Fetch Organic Brand Boosts
+      const { data: brandData } = await supabase
         .from('brands')
         .select('id, name, description, cover_url, billboard_boost_expires_at, sales_count')
         .or(`billboard_boost_expires_at.gt.${new Date().toISOString()},sales_count.gt.10`)
         .order('sales_count', { ascending: false })
         .limit(5);
 
-      if (data && data.length > 0) {
-        setSlides(data.map(b => ({
+      // 2. Fetch Manual Billboards
+      const { data: settingsData } = await supabase
+        .from('platform_settings')
+        .select('value')
+        .eq('key', 'manual_billboards')
+        .single();
+        
+      const manualBillboards = (settingsData?.value as any[]) || [];
+      
+      // 3. Merge & Format
+      let mergedSlides = [];
+      
+      if (manualBillboards.length > 0) {
+        mergedSlides.push(...manualBillboards.map(mb => ({
+          id: mb.id || `mb_${Math.random()}`,
+          image: mb.cover_url || '/gold_fashion_banner_1_1776541486791.png',
+          title: mb.title,
+          sub: mb.description,
+          link: mb.link
+        })));
+      }
+
+      if (brandData && brandData.length > 0) {
+        mergedSlides.push(...brandData.map(b => ({
           id: b.id,
           image: b.cover_url || '/gold_fashion_banner_1_1776541486791.png',
           title: b.name,
-          sub: b.description || 'Verified Campus Brand'
+          sub: b.description || 'Verified Campus Brand',
+          link: `/vendor/${b.id}`
         })));
+      }
+
+      if (mergedSlides.length > 0) {
+        setSlides(mergedSlides.slice(0, 8)); // Limit total slides
       } else {
         setSlides([
-          { id: 1, image: '/gold_fashion_banner_1_1776541486791.png', title: 'The Gold Collection', sub: 'Discover premium campus fashion redefined.' },
-          { id: 2, image: '/gold_fashion_banner_2_1776541653764.png', title: 'Luxury Accessories', sub: 'Elevate your style with metallic accents.' }
+          { id: 1, image: '/gold_fashion_banner_1_1776541486791.png', title: 'The Gold Collection', sub: 'Discover premium campus fashion redefined.', link: null },
+          { id: 2, image: '/gold_fashion_banner_2_1776541653764.png', title: 'Luxury Accessories', sub: 'Elevate your style with metallic accents.', link: null }
         ]);
       }
     };
@@ -53,7 +81,12 @@ export default function MainSlider() {
         style={{ transform: `translateX(-${current * 100}%)` }}
       >
         {slides.map((slide) => (
-          <div key={slide.id} className={styles.slide}>
+          <div 
+            key={slide.id} 
+            className={styles.slide}
+            onClick={() => { if(slide.link) window.location.href = slide.link; }}
+            style={{ cursor: slide.link ? 'pointer' : 'default' }}
+          >
             <Image 
               src={slide.image} 
               alt={slide.title} 

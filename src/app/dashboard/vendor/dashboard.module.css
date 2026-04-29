@@ -1381,3 +1381,82 @@
   background: #3b82f6 !important;
   color: #fff !important;
 }
+
+.powerCenter {
+  margin-bottom: 2rem;
+}
+
+.powerCard {
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.powerCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary);
+}
+
+.powerInfo {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.powerInfo h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.powerInfo p {
+  font-size: 0.85rem;
+  color: var(--text-400);
+  margin-top: 0.2rem;
+}
+
+.powerMeta {
+  display: flex;
+  gap: 2rem;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-200);
+}
+
+.metaItem svg {
+  color: var(--primary);
+  opacity: 0.8;
+}
+
+@media (max-width: 900px) {
+  .powerCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  .powerMeta {
+    width: 100%;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+}

@@ -153,14 +153,25 @@ export default async function ProductPage({ params }: Props) {
                   Your browser does not support the video tag.
                 </video>
               ) : (
-                <Image
-                  src={mainImage}
-                  alt={product.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  priority
-                  className={styles.mainImgEl}
-                />
+                <div className={styles.imageWrapper}>
+                  <Image
+                    src={mainImage}
+                    alt={product.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    priority
+                    className={styles.mainImgEl}
+                  />
+                  <a 
+                    href={mainImage} 
+                    download={`${product.title}.jpg`}
+                    target="_blank"
+                    className={styles.downloadBtn}
+                    title="Download high-res image"
+                  >
+                    <Share2 size={16} /> Download
+                  </a>
+                </div>
               )}
               {discount && discount > 0 ? (
                 <span className={`badge badge-flash ${styles.imgDiscount}`}>
@@ -268,25 +279,25 @@ export default async function ProductPage({ params }: Props) {
             </div>
 
             {/* Vendor Card Mini */}
-            <Link href={`/vendor/${vendor.name.toLowerCase().replace(/\s+/g, '-')}?id=${vendor.id}`} className={styles.vendorMini}>
-              <div className={styles.vendorMiniLogo}>
-                {vendor.logo_url ? (
-                  <Image src={vendor.logo_url} alt={vendor.name} fill style={{objectFit: 'cover'}} />
-                ) : (
-                  vendor.name.substring(0, 2).toUpperCase()
-                )}
-              </div>
-              <div className={styles.vendorMiniInfo}>
-                <div className={styles.vendorMiniName}>
-                  {vendor.name}
-                  {vendor.verified && <CheckCircle size={13} className="verified-icon" />}
+              <Link href={`/vendor/${vendor.name.toLowerCase().replace(/\s+/g, '-')}?id=${vendor.id}`} className={styles.vendorMini}>
+                <div className={styles.vendorMiniLogo}>
+                  {vendor.logo_url ? (
+                    <Image src={vendor.logo_url} alt={vendor.name} fill style={{objectFit: 'cover'}} />
+                  ) : (
+                    vendor.name.substring(0, 2).toUpperCase()
+                  )}
                 </div>
-                <p className={styles.vendorMiniStats}>
-                  Visit Store
-                </p>
-              </div>
-              <span className={styles.vendorMiniArrow}>→</span>
-            </Link>
+                <div className={styles.vendorMiniInfo}>
+                  <div className={styles.vendorMiniName}>
+                    {vendor.name}
+                    {vendor.verified && <CheckCircle size={13} className="verified-icon" />}
+                  </div>
+                  <p className={styles.vendorMiniStats}>
+                    Official Vendor Store • Visit Profile
+                  </p>
+                </div>
+                <span className={styles.vendorMiniArrow}>→</span>
+              </Link>
           </div>
         </div>
 

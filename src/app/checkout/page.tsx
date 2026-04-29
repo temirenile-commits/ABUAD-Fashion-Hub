@@ -20,14 +20,15 @@ function CheckoutContent() {
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
-  const [deliveryMethod, setDeliveryMethod] = useState<'platform' | 'vendor'>('platform');
+  const [promoLoading, setPromoLoading] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState<string | null>(null);
   const [promoAppliedData, setPromoAppliedData] = useState<any>(null);
-  const [promoLoading, setPromoLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
+  const [calculatedDeliveryFee, setCalculatedDeliveryFee] = useState(1500);
+  const [deliveryConfigs, setDeliveryConfigs] = useState<any[]>([]);
 
-  const deliveryFee = deliveryMethod === 'platform' ? 1500 : 0;
+  const deliveryFee = calculatedDeliveryFee;
   const orderTotal = getCartTotal();
   const calculatePromoSavings = () => {
     if (!promoAppliedData) return 0;
@@ -104,8 +105,27 @@ function CheckoutContent() {
 
       // 2. Check Cart
       if (cart.length === 0) {
-        setDataLoading(false); // Let the UI show 'empty' state or redirect
+        setDataLoading(false);
         return;
+      }
+
+      // Fetch delivery settings for all vendors in cart
+      const brandIds = Array.from(new Set(cart.map(item => item.brand_id)));
+      const { data: vendorConfigs } = await supabase
+        .from('brands')
+        .select('id, delivery_scope, assigned_delivery_system')
+        .in('id', brandIds);
+
+      if (vendorConfigs) {
+        const hasOutSchool = vendorConfigs.some(v => v.delivery_scope === 'out-school');
+        const hasPlatform = vendorConfigs.some(v => v.assigned_delivery_system === 'platform');
+        
+        let fee = 0;
+        if (hasPlatform) {
+          fee = hasOutSchool ? 3000 : 1500;
+        }
+        setCalculatedDeliveryFee(fee);
+        setDeliveryConfigs(vendorConfigs);
       }
 
       setDataLoading(false);
@@ -149,7 +169,7 @@ function CheckoutContent() {
         body: JSON.stringify({
           userId: user.id,
           totalAmount: finalTotal,
-          deliveryMethod: deliveryMethod,
+          // Delivery info is now inferred on server from vendor configs
           shippingAddress: address,
           promoCode: promoApplied,
           items: cart.map((item: LiveProduct & { quantity: number }) => ({
@@ -265,26 +285,21 @@ function CheckoutContent() {
                 </div>
               </div>
 
-              <div className={styles.deliveryToggle}>
-                <h3>Delivery Method</h3>
-                <div className={`${styles.deliveryOption} ${deliveryMethod === 'platform' ? styles.deliveryActive : ''}`} onClick={() => setDeliveryMethod('platform')}>
-                  <div className={styles.radioBox}>
-                    {deliveryMethod === 'platform' && <CheckCircle size={14} />}
-                  </div>
-                  <div className={styles.deliveryInfo}>
-                    <strong>Platform Delivery</strong>
-                    <span>Fast, tracked campus delivery. ₦1,500</span>
-                  </div>
+              <div className={styles.deliveryStatus}>
+                <div className={styles.deliveryBadge}>
+                   <Truck size={16} /> 
+                   {deliveryFee > 0 ? (
+                     <span>Fixed Platform Delivery: {formatPrice(deliveryFee)}</span>
+                   ) : (
+                     <span>Vendor Managed Delivery: FREE</span>
+                   )}
                 </div>
-                <div className={`${styles.deliveryOption} ${deliveryMethod === 'vendor' ? styles.deliveryActive : ''}`} onClick={() => setDeliveryMethod('vendor')}>
-                  <div className={styles.radioBox}>
-                    {deliveryMethod === 'vendor' && <CheckCircle size={14} />}
-                  </div>
-                  <div className={styles.deliveryInfo}>
-                    <strong>Vendor Delivery</strong>
-                    <span>Vendor manually delivers. Free.</span>
-                  </div>
-                </div>
+                <p className={styles.deliveryNote}>
+                  {deliveryFee > 0 
+                    ? "Logistics are managed by ABUAD Fashion Hub for safety and speed."
+                    : "The vendor will contact you directly to arrange delivery."
+                  }
+                </p>
               </div>
             </section>
 
@@ -374,7 +389,7 @@ function CheckoutContent() {
                   </div>
                 )}
                 <div className={styles.totalRow}>
-                  <span>{deliveryMethod === 'platform' ? 'Platform Delivery' : 'Vendor Delivery'}</span>
+                  <span>Delivery Fee</span>
                   <span>{formatPrice(deliveryFee)}</span>
                 </div>
                 <div className={`${styles.totalRow} ${styles.totalFinal}`}>

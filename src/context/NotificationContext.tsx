@@ -136,7 +136,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         })
         .subscribe();
 
-      // ── Subscribe: my orders status change ─────────────────────────────────
+      // ── Subscribe: my orders status change (Customer side) ─────────────────
       const orderChannel = supabase
         .channel(`orders-${userId}`)
         .on('postgres_changes', {
@@ -158,11 +158,50 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         })
         .subscribe();
 
+      // ── Subscribe: New orders received (Vendor side) ────────────────────────
+      const vendorOrderChannel = supabase
+        .channel(`vendor-orders-${userId}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+        }, async (payload) => {
+          // Check if this order belongs to the user's brand
+          const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', userId).single();
+          if (brand && payload.new.brand_id === brand.id) {
+            handleIncoming('🛒 New Order Received!', `You have a new order for ₦${Number(payload.new.total_amount).toLocaleString()}`, '/dashboard/vendor');
+          }
+        })
+        .subscribe();
+
+      // ── Subscribe: Brand Trends & Account Events ───────────────────────────
+      const brandChannel = supabase
+        .channel(`brand-events-${userId}`)
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'brands',
+          filter: `owner_id=eq.${userId}`,
+        }, (payload) => {
+          const oldTier = payload.old.subscription_tier;
+          const newTier = payload.new.subscription_tier;
+          if (oldTier !== newTier) {
+            handleIncoming('⚡ Account Tier Upgraded', `Your store is now on the ${newTier.toUpperCase()} power level!`, '/dashboard/vendor');
+          }
+          
+          if (payload.new.free_listings_count < 2 && payload.old.free_listings_count >= 2) {
+            handleIncoming('⚠️ Low Credits', 'Your product upload credits are almost exhausted.', '/dashboard/vendor/plans');
+          }
+        })
+        .subscribe();
+
       cleanup = () => {
         supabase.removeChannel(notifyChannel);
         supabase.removeChannel(broadcastChannel);
         supabase.removeChannel(msgChannel);
         supabase.removeChannel(orderChannel);
+        supabase.removeChannel(vendorOrderChannel);
+        supabase.removeChannel(brandChannel);
       };
     };
 

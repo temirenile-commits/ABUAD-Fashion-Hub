@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Star, MessageCircle, ShoppingBag, ShieldCheck, Download, Play, MoreVertical } from 'lucide-react';
+import { Heart, Star, MessageCircle, ShoppingBag, ShieldCheck, Download, Play, MoreVertical, Share2 } from 'lucide-react';
 import styles from './ProductCard.module.css';
 
 import { formatPrice, getDiscount } from '@/lib/utils';
@@ -69,7 +69,25 @@ export default function ProductCard({ product }: Props) {
     e.preventDefault();
     e.stopPropagation();
     addToCart(product);
-    // Notification or visual feedback could be added here
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const shareUrl = `${window.location.origin}/product/${product.id}`;
+    const shareText = `Check out this ${product.title} on ABUAD Fashion Hub! ??`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: product.title,
+        text: shareText,
+        url: shareUrl,
+      }).catch(console.error);
+    } else {
+      // Fallback to WhatsApp
+      window.open(`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, '_blank');
+    }
   };
 
   return (
@@ -121,6 +139,14 @@ export default function ProductCard({ product }: Props) {
           </div>
         )}
 
+        <button 
+          className={styles.shareBtn}
+          onClick={handleShare}
+          title="Share Product"
+        >
+          <Share2 size={14} />
+        </button>
+
         <WishlistButton productId={product.id} />
       </div>
 
@@ -155,6 +181,7 @@ export default function ProductCard({ product }: Props) {
         </div>
       ) : (
         <div className={styles.info}>
+          <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{brandName}</span>
           <h3 className={styles.title}>{product.title}</h3>
           <div className={styles.priceRow}>
             <span className={styles.price}>{formatPrice(product.price)}</span>

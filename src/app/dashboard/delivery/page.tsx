@@ -128,19 +128,34 @@ export default function DeliveryDashboard() {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude } = pos.coords;
+            
+            // Update Agent Profile
             await supabase.from('delivery_agents').update({ 
               current_lat: latitude, 
               current_long: longitude,
               last_active_at: new Date().toISOString()
             }).eq('id', agent.id);
+
+            // Update Active Deliveries for Live Map (Picked up / In Transit)
+            const activeIds = deliveries
+              .filter(d => ['picked_up', 'in_transit', 'assigned'].includes(d.status))
+              .map(d => d.id);
+
+            if (activeIds.length > 0) {
+              await supabase.from('deliveries').update({ 
+                live_location_lat: latitude, 
+                live_location_lng: longitude,
+                last_updated_at: new Date().toISOString()
+              }).in('id', activeIds);
+            }
           });
         }
       };
       updateLocation();
-      interval = setInterval(updateLocation, 5 * 60 * 1000);
+      interval = setInterval(updateLocation, 30000); // 30 second precision for live map
     }
     return () => clearInterval(interval);
-  }, [agent?.id, agent?.is_active]);
+  }, [agent?.id, agent?.is_active, deliveries]);
 
   const toggleActive = async () => {
     const newStatus = !agent.is_active;

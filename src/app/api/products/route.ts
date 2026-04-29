@@ -26,6 +26,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // 0. Credit Check (Only for live products)
+    if (!isDraft) {
+      const { data: brand, error: brandError } = await supabaseAdmin
+        .from('brands')
+        .select('free_listings_count')
+        .eq('id', brandId)
+        .single();
+
+      if (brandError || !brand) {
+        return NextResponse.json({ error: 'Brand not found' }, { status: 404 });
+      }
+
+      if (brand.free_listings_count <= 0) {
+        return NextResponse.json({ 
+          error: 'Insufficient listing credits. Please upgrade your plan to upload more products.',
+          insufficientCredits: true 
+        }, { status: 403 });
+      }
+    }
+
     // 1. Create the Product record
     const { data: product, error: productError } = await supabaseAdmin
       .from('products')
@@ -53,6 +73,11 @@ export async function POST(req: Request) {
       .single();
 
     if (productError) throw productError;
+
+    // 1.1 Decrement credits if live
+    if (!isDraft) {
+      await supabaseAdmin.rpc('decrement_listing_credits', { p_brand_id: brandId });
+    }
 
     // 2. Notify Follower/Marketplace (Optional smart trigger)
     // For now, just return success

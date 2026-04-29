@@ -52,6 +52,7 @@ export async function generateMetadata({ params, searchParams }: Props) {
 }
 
 import VendorActions from './VendorActions';
+import ProfileViewTracker from '@/components/ProfileViewTracker';
 
 export default async function VendorPage({ params, searchParams }: Props) {
   const { id } = await searchParams;
@@ -91,6 +92,7 @@ export default async function VendorPage({ params, searchParams }: Props) {
 
   return (
     <main>
+      <ProfileViewTracker brandId={vendor.id} />
       {/* Cover */}
       <div className={styles.cover}>
         <Image

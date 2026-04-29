@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
+import DeliveryMap from '@/components/DeliveryMap';
 import styles from './track.module.css';
 
 export default function TrackingPage() {
@@ -15,6 +16,7 @@ export default function TrackingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<any>(null);
+  const [delivery, setDelivery] = useState<any>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -39,6 +41,13 @@ export default function TrackingPage() {
         setError('Order not found or access denied.');
       } else {
         setOrder(data);
+        // Fetch delivery info
+        const { data: delivData } = await supabase
+          .from('deliveries')
+          .select('*')
+          .eq('order_id', id)
+          .single();
+        if (delivData) setDelivery(delivData);
       }
       setLoading(false);
     }
@@ -111,7 +120,17 @@ export default function TrackingPage() {
                 </div>
               ))}
             </div>
-          </div>
+            </div>
+
+          {(order.status === 'in_transit' || order.status === 'delivered') && (
+            <div className={`card ${styles.mapCard}`} style={{ height: '350px', padding: 0, overflow: 'hidden', position: 'relative' }}>
+                <DeliveryMap 
+                    lat={delivery?.live_location_lat || 7.6125} 
+                    lng={delivery?.live_location_lng || 5.2345} 
+                    riderName={delivery?.rider_name}
+                />
+            </div>
+          )}
 
           <div className={`card ${styles.detailsCard}`}>
             <h3>Delivery Information</h3>
@@ -125,8 +144,11 @@ export default function TrackingPage() {
             <div className={styles.detailRow}>
               <Truck size={18} />
               <div>
-                <strong>Method</strong>
-                <p>{order.delivery_method === 'platform' ? 'Campus Platform Logistics' : 'Vendor Self-Delivery'}</p>
+                <strong>Method & Scope</strong>
+                <p>
+                    {order.delivery_method === 'platform' ? 'Campus Platform Logistics' : 'Vendor Self-Delivery'}
+                    {order.delivery_scope && (' \u2022 ' + (order.delivery_scope === 'in-school' ? 'In-School' : 'Out-School'))}
+                </p>
               </div>
             </div>
           </div>
