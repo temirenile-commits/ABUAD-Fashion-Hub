@@ -32,6 +32,38 @@ export default function TermsPage() {
     );
   }
 
+  const defaultPolicy = {
+    last_updated: 'April 2026',
+    sections: [
+      {
+        title: '1. Platform Acceptance',
+        content: 'ABUAD Fashion Hub is a dedicated marketplace for student entrepreneurs. By accessing this platform, you agree to abide by the university code of conduct and our digital commerce policies.'
+      },
+      {
+        title: '2. Escrow Protection',
+        content: 'To ensure 100% trust, all payments are held in our secure Escrow system. Funds are released to vendors 24 hours after a successful delivery is confirmed by the customer.'
+      },
+      {
+        title: '3. Vendor Obligations',
+        content: 'Vendors must maintain accurate stock counts. Incomplete brand profiles (logo, location, WhatsApp) must be finalized within 48 hours of registration to prevent listing suspension.'
+      },
+      {
+        title: '4. Commission & Fees',
+        content: 'The platform operates on a commission-based model. A small service fee is applied to each sale to power our real-time notification systems and delivery infrastructure.'
+      },
+      {
+        title: '5. Logistics & Delivery',
+        content: 'Deliveries are managed by verified on-campus agents. Customers must provide a unique delivery code to the agent to confirm receipt of goods.'
+      },
+      {
+        title: '6. Governance',
+        content: 'All financial and operational protocols of ABUAD Fashion Hub are governed and sponsored by MIGHTY SEEDS EXCEL INVESTMENT LTD.'
+      }
+    ]
+  };
+
+  const activePolicy = policy || defaultPolicy;
+
   return (
     <main style={{ background: 'var(--bg-100)', minHeight: '100vh' }}>
       {/* Hero */}
@@ -52,7 +84,7 @@ export default function TermsPage() {
         </p>
         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <span style={{ background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '999px', padding: '0.3rem 1rem', fontSize: '0.8rem', color: 'var(--text-400)' }}>
-            Last Updated: {policy?.last_updated || 'April 2026'}
+            Last Updated: {activePolicy.last_updated}
           </span>
           <span style={{ background: 'var(--bg-300)', border: '1px solid var(--accent-gold)', borderRadius: '999px', padding: '0.3rem 1rem', fontSize: '0.8rem', color: 'var(--accent-gold)' }}>
             Official ABUAD Fashion Hub Policy
@@ -61,7 +93,7 @@ export default function TermsPage() {
       </div>
 
       <div className="container" style={{ maxWidth: '860px', padding: '3rem 1.5rem 6rem' }}>
-        {policy?.sections?.map((section: any, idx: number) => (
+        {activePolicy.sections.map((section: any, idx: number) => (
           <div key={idx} style={{ marginBottom: '3rem' }}>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-100)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                <div style={{ width: '8px', height: '24px', background: 'var(--primary)', borderRadius: '4px' }} />
@@ -74,13 +106,6 @@ export default function TermsPage() {
             </div>
           </div>
         ))}
-
-        {!policy && (
-            <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-                 <p style={{ color: 'var(--text-400)' }}>No policy sections found. Please check back later.</p>
-                 <Link href="/" className="btn btn-primary mt-4">Back to Marketplace</Link>
-            </div>
-        )}
 
         {/* Sponsor Footer */}
         <div style={{

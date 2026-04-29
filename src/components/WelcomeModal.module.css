@@ -121,13 +121,49 @@
   line-height: 1.4;
 }
 
-.policyBox {
-  font-size: 0.75rem;
-  color: var(--text-400);
+.policySummary {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  width: 100%;
   margin-bottom: 2rem;
+  text-align: left;
 }
 
-.policyBox a {
+.policySummary h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--primary);
+}
+
+.policySummary ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.policySummary li {
+  font-size: 0.75rem;
+  color: var(--text-300);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.policySummary p {
+  font-size: 0.75rem;
+  color: var(--text-400);
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+}
+
+.policySummary a {
   color: var(--primary);
   text-decoration: underline;
   font-weight: 600;
