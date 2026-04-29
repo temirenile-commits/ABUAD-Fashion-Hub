@@ -10,7 +10,8 @@ import {
   ShieldCheck,
   Truck,
   RotateCcw,
-  Video
+  Video,
+  Play
 } from 'lucide-react';
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
 import VendorCard, { LiveVendor } from '@/components/VendorCard';
@@ -166,6 +167,9 @@ export default function Home() {
                     src={reel.video_url} 
                     className={styles.reelVideo}
                   />
+                  <div className={styles.playOverlay}>
+                    <Play size={20} fill="currentColor" />
+                  </div>
                   <div className={styles.reelOverlay}>
                     <div className={styles.reelTitle}>{reel.title || 'Collection Reel'}</div>
                     <div className={styles.reelBrand}>

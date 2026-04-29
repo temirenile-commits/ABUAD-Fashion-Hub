@@ -187,16 +187,16 @@
 }
 
 .reelCard {
-  min-width: 160px;
-  width: 160px;
-  aspect-ratio: 9/16;
-  border-radius: var(--radius-md);
+  min-width: 280px;
+  width: 280px;
+  aspect-ratio: 16/9; /* YouTube standard */
+  border-radius: 12px; /* YouTube standard radius */
   overflow: hidden;
   background: #000;
   position: relative;
   scroll-snap-align: start;
   border: 1px solid var(--border);
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .reelCard:hover {
@@ -206,7 +206,34 @@
 .reelVideo {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* YouTube style */
+}
+
+.playOverlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.reelCard:hover .playOverlay {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.1);
+  background: var(--primary);
+  color: #000;
 }
 
 .reelOverlay {
