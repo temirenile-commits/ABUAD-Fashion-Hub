@@ -8,7 +8,9 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
   height: 100%;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15); /* More pronounced YouTube-style shadow */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Lighter shadow for non-video cards */
+  background: var(--bg-100);
+  border: 1px solid var(--border);
 }
 
 .videoCard {
@@ -29,12 +31,12 @@
 .imageWrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 3/4; /* Portrait feel for images */
+  aspect-ratio: 1; /* Square for catalog feel */
   background: #111;
   overflow: hidden;
-  border-radius: 12px; /* YouTube standard thumbnail radius */
-  margin: 0.5rem; /* Slight inward margin to separate from card border */
-  width: calc(100% - 1rem);
+  border-radius: 8px; /* Slightly tighter for images */
+  margin: 0.4rem; 
+  width: calc(100% - 0.8rem);
 }
 
 .videoCard .imageWrap {
@@ -119,9 +121,9 @@
   padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
   flex: 1;
-  background: var(--bg-100);
+  background: transparent;
   justify-content: center;
   align-items: flex-start;
 }
