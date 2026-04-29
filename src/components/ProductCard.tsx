@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Star, MessageCircle, ShoppingBag, ShieldCheck, Download, Play } from 'lucide-react';
+import { Heart, Star, MessageCircle, ShoppingBag, ShieldCheck, Download, Play, MoreVertical } from 'lucide-react';
 import styles from './ProductCard.module.css';
 
 import { formatPrice, getDiscount } from '@/lib/utils';
@@ -125,33 +125,64 @@ export default function ProductCard({ product }: Props) {
         <WishlistButton productId={product.id} />
       </div>
 
-      <div className={styles.info}>
-        <h3 className={styles.title}>{product.title}</h3>
-        <div className={styles.priceRow}>
-          <span className={styles.price}>{formatPrice(product.price)}</span>
-          {product.original_price && product.original_price > product.price && (
-            <span className={styles.oldPrice}>{formatPrice(product.original_price)}</span>
-          )}
-        </div>
 
-        <div className={styles.footer}>
-          <div className={styles.rating}>
-            <Star size={12} fill="currentColor" color="#EAB308" />
-            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{product.rating ? Number(product.rating).toFixed(1) : '5.0'}</span>
+      {isVideo ? (
+        <div className={styles.info}>
+          <div className={styles.videoAvatar}>
+            {product.brands?.logo_url ? (
+              <Image src={product.brands.logo_url} alt="" width={40} height={40} style={{ objectFit: 'cover' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary)', color: '#000', fontWeight: 800 }}>
+                {brandName.substring(0, 1)}
+              </div>
+            )}
           </div>
-          {product.stock_count > 0 ? (
-            <button
-              className={styles.quickAdd}
-              onClick={handleAddToCart}
-              aria-label="Add to cart"
-            >
-              <ShoppingBag size={16} />
-            </button>
-          ) : (
-            <span className={styles.outOfStockText}>Out of Stock</span>
-          )}
+          <div className={styles.videoMeta}>
+            <h3 className={styles.videoTitle}>{product.title}</h3>
+            <div className={styles.videoStats}>
+              <span>{brandName}</span>
+              <span>•</span>
+              <span>{formatPrice(product.price)}</span>
+              <span>•</span>
+              <div className={styles.rating} style={{ display: 'inline-flex' }}>
+                <Star size={10} fill="currentColor" color="#EAB308" />
+                <span>{product.rating ? Number(product.rating).toFixed(1) : '5.0'}</span>
+              </div>
+            </div>
+          </div>
+          <button className="btn btn-ghost btn-icon" style={{ padding: 0, opacity: 0.6 }}>
+            <MoreVertical size={18} />
+          </button>
         </div>
-      </div>
+      ) : (
+        <div className={styles.info}>
+          <h3 className={styles.title}>{product.title}</h3>
+          <div className={styles.priceRow}>
+            <span className={styles.price}>{formatPrice(product.price)}</span>
+            {product.original_price && product.original_price > product.price && (
+              <span className={styles.oldPrice}>{formatPrice(product.original_price)}</span>
+            )}
+          </div>
+
+          <div className={styles.footer}>
+            <div className={styles.rating}>
+              <Star size={12} fill="currentColor" color="#EAB308" />
+              <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{product.rating ? Number(product.rating).toFixed(1) : '5.0'}</span>
+            </div>
+            {product.stock_count > 0 ? (
+              <button
+                className={styles.quickAdd}
+                onClick={handleAddToCart}
+                aria-label="Add to cart"
+              >
+                <ShoppingBag size={16} />
+              </button>
+            ) : (
+              <span className={styles.outOfStockText}>Out of Stock</span>
+            )}
+          </div>
+        </div>
+      )}
     </Link>
   );
 }

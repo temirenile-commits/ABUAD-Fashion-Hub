@@ -11,7 +11,8 @@ import {
   Truck,
   RotateCcw,
   Video,
-  Play
+  Play,
+  MoreVertical
 } from 'lucide-react';
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
 import VendorCard, { LiveVendor } from '@/components/VendorCard';
@@ -163,25 +164,31 @@ export default function Home() {
             <div className={styles.reelsRow}>
               {allReels.map((reel) => (
                 <div key={reel.id} className={styles.reelCard}>
-                  <VividVideo 
-                    src={reel.video_url} 
-                    className={styles.reelVideo}
-                  />
-                  <div className={styles.playOverlay}>
-                    <Play size={20} fill="currentColor" />
-                  </div>
-                  <div className={styles.reelOverlay}>
-                    <div className={styles.reelTitle}>{reel.title || 'Collection Reel'}</div>
-                    <div className={styles.reelBrand}>
-                      {reel.brands?.logo_url ? (
-                        <img src={reel.brands.logo_url} alt="" className={styles.reelBrandLogo} />
-                      ) : (
-                        <div className={styles.reelBrandLogo} style={{ background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px' }}>
-                          {reel.brands?.name?.substring(0, 1)}
-                        </div>
-                      )}
-                      <span>{reel.brands?.name}</span>
+                  <div className={styles.reelVideoWrap}>
+                    <VividVideo 
+                      src={reel.video_url} 
+                      className={styles.reelVideo}
+                    />
+                    <div className={styles.playOverlay}>
+                      <Play size={24} fill="currentColor" />
                     </div>
+                  </div>
+                  
+                  <div className={styles.reelInfo}>
+                    {reel.brands?.logo_url ? (
+                      <img src={reel.brands.logo_url} alt="" className={styles.reelBrandLogo} />
+                    ) : (
+                      <div className={styles.reelBrandLogo} style={{ background: 'var(--primary)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800 }}>
+                        {reel.brands?.name?.substring(0, 1)}
+                      </div>
+                    )}
+                    <div className={styles.reelMeta}>
+                      <div className={styles.reelTitle}>{reel.title || 'Collection Reel'}</div>
+                      <div className={styles.reelBrandName}>{reel.brands?.name}</div>
+                    </div>
+                    <button className="btn btn-ghost btn-icon" style={{ padding: 0, opacity: 0.6 }}>
+                      <MoreVertical size={18} />
+                    </button>
                   </div>
                 </div>
               ))}
