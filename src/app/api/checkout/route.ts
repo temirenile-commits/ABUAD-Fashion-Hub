@@ -112,7 +112,7 @@ export async function POST(req: Request) {
     const batchReference = `BATCH-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     // Fill the reference
-    ordersToInsert.forEach(o => o.paystack_reference = batchReference);
+    ordersToInsert.forEach((o: any) => o.paystack_reference = batchReference);
 
 
     // 3. SECURE DATA PERSISTENCE: Save state before redirect

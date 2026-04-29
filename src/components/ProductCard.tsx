@@ -75,17 +75,19 @@ export default function ProductCard({ product }: Props) {
   return (
     <Link href={`/product/${product.id}`} className={`${styles.card} ${isVideo ? styles.videoCard : ''}`}>
       <div className={styles.imageWrap}>
-        <a 
-          href={isVideo ? detectedVideo! : displayUrl} 
-          download 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className={styles.downloadBtn}
-          onClick={(e) => e.stopPropagation()}
-          title={`Download ${isVideo ? 'Video' : 'Image'}`}
-        >
-          <Download size={14} />
-        </a>
+        {isVideo && (
+          <a 
+            href={detectedVideo!} 
+            download 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className={styles.downloadBtn}
+            onClick={(e) => e.stopPropagation()}
+            title="Download Video"
+          >
+            <Download size={14} />
+          </a>
+        )}
         {isVideo ? (
           <VividVideo 
             src={detectedVideo!} 
@@ -130,8 +132,8 @@ export default function ProductCard({ product }: Props) {
 
         <div className={styles.footer}>
           <div className={styles.rating}>
-            <Star size={10} fill="currentColor" color="var(--primary)" />
-            <span>{product.rating ? Number(product.rating).toFixed(1) : '0.0'}</span>
+            <Star size={12} fill="currentColor" color="#EAB308" />
+            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{product.rating ? Number(product.rating).toFixed(1) : '5.0'}</span>
           </div>
           {product.stock_count > 0 ? (
             <button
@@ -139,7 +141,7 @@ export default function ProductCard({ product }: Props) {
               onClick={handleAddToCart}
               aria-label="Add to cart"
             >
-              <ShoppingBag size={14} />
+              <ShoppingBag size={16} />
             </button>
           ) : (
             <span className={styles.outOfStockText}>Out of Stock</span>

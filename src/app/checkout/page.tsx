@@ -23,6 +23,7 @@ function CheckoutContent() {
   const [deliveryMethod, setDeliveryMethod] = useState<'platform' | 'vendor'>('platform');
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState<string | null>(null);
+  const [promoAppliedData, setPromoAppliedData] = useState<any>(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
 
@@ -48,8 +49,6 @@ function CheckoutContent() {
 
   const promoSavings = calculatePromoSavings();
   const finalTotal = orderTotal - promoSavings + deliveryFee;
-
-  const [promoAppliedData, setPromoAppliedData] = useState<any>(null);
 
   const handlePromoCode = async () => {
     if (!promoCode.trim()) return;
@@ -304,8 +303,8 @@ function CheckoutContent() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.9rem' }}>🎟️ Promo Code</label>
                 {promoApplied ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span style={{ color: '#10b981', fontWeight: 700 }}>✅ &quot;{promoApplied}&quot; applied — {promoDiscount}% off!</span>
-                    <button className="btn btn-ghost btn-sm" onClick={() => { setPromoApplied(null); setPromoDiscount(0); setPromoCode(''); }}>Remove</button>
+                    <span style={{ color: '#10b981', fontWeight: 700 }}>✅ &quot;{promoApplied}&quot; applied — {promoAppliedData?.type === 'percentage' ? promoAppliedData.value + '%' : formatPrice(promoAppliedData?.value || 0)} off!</span>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { setPromoApplied(null); setPromoAppliedData(null); setPromoCode(''); }}>Remove</button>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -370,7 +369,7 @@ function CheckoutContent() {
                 </div>
                 {promoSavings > 0 && (
                   <div className={styles.totalRow} style={{ color: '#10b981' }}>
-                    <span>Promo Discount ({promoDiscount}%)</span>
+                    <span>Promo Discount ({promoAppliedData?.type === 'percentage' ? promoAppliedData.value + '%' : 'Applied'})</span>
                     <span>-{formatPrice(promoSavings)}</span>
                   </div>
                 )}

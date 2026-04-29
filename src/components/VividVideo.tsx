@@ -15,9 +15,8 @@ export default function VividVideo({ src, className, style }: Props) {
     const video = videoRef.current;
     if (!video || !src) return;
 
-    video.muted = true;
-    (video as any).defaultMuted = true;
-    video.setAttribute('muted', '');
+    video.muted = false;
+    (video as any).defaultMuted = false;
     video.setAttribute('playsinline', '');
 
     const observer = new IntersectionObserver(
@@ -46,7 +45,6 @@ export default function VividVideo({ src, className, style }: Props) {
       src={src}
       className={className}
       style={style}
-      muted
       playsInline
       loop
       preload="auto"
