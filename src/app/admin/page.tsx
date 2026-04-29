@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
 import TradingChart from '@/components/TradingChart';
 
-type Tab = 'overview' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents';
+type Tab = 'overview' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions';
 
 async function adminFetch(path: string, options: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -260,41 +260,64 @@ export default function AdminDashboard() {
               <div className={styles.sectionCard}>
                 <table className={styles.table}>
                   <thead>
-                    <tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
+                    <tr><th>User</th><th>Role & Permissions</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {filterBy(users, ['name', 'email']).map(u => (
                       <tr key={u.id}>
-                        <td>{u.name || '—'}</td>
-                        <td>{u.email}</td>
-                        <td><span className={`badge badge-${u.role}`}>{u.role}</span></td>
+                        <td>
+                          <div style={{ fontWeight: 600 }}>{u.name || '—'}</div>
+                          <div className={styles.subText}>{u.email}</div>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                             <select 
+                               className="input input-sm" 
+                               style={{ width: '120px', fontSize: '0.75rem' }}
+                               value={u.role}
+                               onChange={(e) => adminAction('update_user_role', { userId: u.id, newRole: e.target.value })}
+                               disabled={actionLoading === 'update_user_role' + u.id}
+                             >
+                               <option value="customer">Customer</option>
+                               <option value="vendor">Vendor</option>
+                               <option value="delivery">Delivery</option>
+                               <option value="admin">Admin</option>
+                               <option value="sub_admin">Sub-Admin</option>
+                             </select>
+                             
+                             {u.role === 'sub_admin' && (
+                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
+                                 {[
+                                   { id: 'payouts', label: '💸', title: 'Payouts' },
+                                   { id: 'customer_service', label: '🎧', title: 'Support' },
+                                   { id: 'delivery', label: '🚚', title: 'Fleet' },
+                                   { id: 'promotions', label: '📢', title: 'Adverts' },
+                                   { id: 'orders', label: '📦', title: 'Orders' },
+                                   { id: 'verification', label: '🛡️', title: 'Verify' },
+                                   { id: 'reviews', label: '⭐', title: 'Reviews' }
+                                 ].map(p => (
+                                   <button 
+                                     key={p.id}
+                                     title={p.title}
+                                     className={`btn btn-sm ${(u.admin_permissions || []).includes(p.id) ? 'btn-primary' : 'btn-ghost'}`}
+                                     style={{ padding: '2px 4px', fontSize: '10px', height: '24px', minWidth: '24px' }}
+                                     onClick={() => {
+                                       const current = u.admin_permissions || [];
+                                       const next = current.includes(p.id) ? current.filter((x: string) => x !== p.id) : [...current, p.id];
+                                       adminAction('update_sub_admin_permissions', { userId: u.id, permissions: next });
+                                     }}
+                                   >
+                                     {p.label}
+                                   </button>
+                                 ))}
+                               </div>
+                             )}
+                          </div>
+                        </td>
                         <td><span className={`badge badge-${u.status || 'active'}`}>{u.status || 'active'}</span></td>
                         <td>{new Date(u.created_at).toLocaleDateString()}</td>
                         <td>
                           <div className={styles.actionRow}>
-                            <select 
-                              className="input input-sm" 
-                              style={{ width: '120px', fontSize: '0.75rem' }}
-                              value={u.role}
-                              onChange={(e) => adminAction('update_user_role', { userId: u.id, newRole: e.target.value })}
-                              disabled={actionLoading === 'update_user_role' + u.id}
-                            >
-                              <option value="customer">Customer</option>
-                              <option value="vendor">Vendor</option>
-                              <option value="delivery">Delivery</option>
-                              <option value="admin">Admin</option>
-                            </select>
-                            <button
-                               className="btn btn-ghost btn-sm"
-                               onClick={() => {
-                                 const p = prompt('Enter permissions JSON:', JSON.stringify(u.admin_permissions || {}));
-                                 if (p) adminAction('update_admin_permissions', { userId: u.id, permissions: JSON.parse(p) });
-                               }}
-                               title="Edit Permissions"
-                             >
-                               <ShieldCheck size={14} />
-                             </button>
-
                              {u.role !== 'admin' && (
                                <button 
                                  className="btn btn-ghost btn-sm" 
@@ -393,6 +416,55 @@ export default function AdminDashboard() {
               </div>
             )}
             
+            {activeTab === 'promotions' && (
+              <div className={styles.sectionCard}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                  <div>
+                    <h2>Live Promotions & Spotlights</h2>
+                    <p className={styles.subText}>Monitor active billboards and flash sale campaigns across the hub.</p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                   <div className={styles.promoSubSection}>
+                      <h3>🏠 Active Billboards</h3>
+                      <table className={styles.table}>
+                         <thead><tr><th>Brand</th><th>Expires</th></tr></thead>
+                         <tbody>
+                            {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at) > new Date()).map(v => (
+                               <tr key={v.id}>
+                                  <td>{v.name}</td>
+                                  <td>{new Date(v.billboard_boost_expires_at).toLocaleDateString()}</td>
+                               </tr>
+                            ))}
+                            {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at) > new Date()).length === 0 && (
+                               <tr><td colSpan={2} style={{ textAlign: 'center' }} className={styles.subText}>No active billboards</td></tr>
+                            )}
+                         </tbody>
+                      </table>
+                   </div>
+                   <div className={styles.promoSubSection}>
+                      <h3>⚡ Active Flash Sales</h3>
+                      <table className={styles.table}>
+                         <thead><tr><th>Product</th><th>Price</th><th>Brand</th></tr></thead>
+                         <tbody>
+                            {products.filter(p => p.is_flash_sale).map(p => (
+                               <tr key={p.id}>
+                                  <td>{p.title}</td>
+                                  <td style={{ color: 'var(--primary)', fontWeight: 700 }}>₦{Number(p.flash_sale_price || p.price).toLocaleString()}</td>
+                                  <td>{p.brands?.name}</td>
+                               </tr>
+                            ))}
+                            {products.filter(p => p.is_flash_sale).length === 0 && (
+                               <tr><td colSpan={3} style={{ textAlign: 'center' }} className={styles.subText}>No active flash sales</td></tr>
+                            )}
+                         </tbody>
+                      </table>
+                   </div>
+                </div>
+              </div>
+            )}
+
             {activeTab === 'delivery_agents' && (
               <div className={styles.sectionCard}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -538,56 +610,126 @@ export default function AdminDashboard() {
                </div>
              )}
 
-             {activeTab === 'settings' && (
-               <div className={styles.sectionCard}>
-                 <h2>Platform Configuration</h2>
-                 <div style={{ marginTop: '2rem' }}>
-                   <h3>Subscription Tiers (monthly)</h3>
-                   <div className={styles.settingsGrid}>
-                     {platformSettings?.subscription_rates?.map((tier: any, i: number) => (
-                       <div key={tier.id} className={styles.settingsBox}>
-                         <label>{tier.name} Price (₦)</label>
-                         <input 
-                           type="number" 
-                           value={tier.price} 
-                           onChange={(e) => {
-                             const updated = [...platformSettings.subscription_rates];
-                             updated[i].price = Number(e.target.value);
-                             setPlatformSettings({ ...platformSettings, subscription_rates: updated });
-                           }}
-                           className="input mb-2"
-                         />
-                         <label>Features (comma separated)</label>
-                         <textarea
-                           rows={2}
-                           className="input mb-2"
-                           placeholder="e.g. Campus Billboard, 10 Products"
-                           value={(tier.features || []).join(', ')}
-                           onChange={(e) => {
-                             const updated = [...platformSettings.subscription_rates];
-                             updated[i].features = e.target.value.split(',').map((f: string) => f.trim()).filter(Boolean);
-                             setPlatformSettings({ ...platformSettings, subscription_rates: updated });
-                           }}
-                         />
-                         <button className="btn btn-primary btn-sm mt-2" onClick={() => adminAction('update_settings', { key: 'subscription_rates', value: platformSettings.subscription_rates })}>Save</button>
-                       </div>
-                     ))}
-                   </div>
-                 </div>
-                 <div style={{ marginTop: '3rem' }}>
-                   <h3>Free Tier Configuration</h3>
-                   <div className={styles.settingsBox} style={{ maxWidth: '300px' }}>
-                      <label>Max Products (Free)</label>
-                      <input 
-                        type="number" 
-                        value={platformSettings?.free_tier_config?.max_products || 10} 
-                        onChange={(e) => setPlatformSettings({ ...platformSettings, free_tier_config: { ...platformSettings.free_tier_config, max_products: Number(e.target.value) } })}
-                      />
-                      <button className="btn btn-primary btn-sm mt-2" onClick={() => adminAction('update_settings', { key: 'free_tier_config', value: platformSettings.free_tier_config })}>Save</button>
-                   </div>
-                 </div>
-               </div>
-             )}
+              {activeTab === 'settings' && (
+                <div className={styles.sectionCard}>
+                  <h2>Platform Configuration</h2>
+                  
+                  <div style={{ marginTop: '2rem' }}>
+                    <h3>Power Plans & Feature Toggles</h3>
+                    <p className={styles.subText}>Tick the features to activate them for each plan. Vendors will only see activated features.</p>
+                    
+                    <div className={styles.settingsGrid} style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
+                      {['free', 'quarter', 'half', 'full'].map((tierId) => {
+                        const tier = platformSettings?.subscription_rates?.find((t: any) => t.id === tierId) || { id: tierId, name: tierId.toUpperCase(), price: 0, features: [] };
+                        const isFree = tierId === 'free';
+                        const currentFeatures = platformSettings?.plan_features?.[tierId] || [];
+                        const maxProducts = isFree ? (platformSettings?.free_tier_config?.max_products || 10) : (tier.max_products || 50);
+
+                        return (
+                          <div key={tierId} className={styles.settingsBox} style={{ border: isFree ? '2px solid var(--primary)' : '1px solid var(--border)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                               <h4 style={{ margin: 0, color: 'var(--primary)' }}>{tier.name} {isFree && '(Default)'}</h4>
+                               {!isFree && (
+                                 <input 
+                                   type="number" 
+                                   className="input-sm" 
+                                   style={{ width: '100px' }} 
+                                   value={tier.price} 
+                                   onChange={(e) => {
+                                      const rates = [...platformSettings.subscription_rates];
+                                      const idx = rates.findIndex(r => r.id === tierId);
+                                      rates[idx].price = Number(e.target.value);
+                                      setPlatformSettings({ ...platformSettings, subscription_rates: rates });
+                                   }}
+                                 />
+                               )}
+                            </div>
+                            
+                            <div style={{ marginTop: '1rem' }}>
+                               <label className={styles.subText}>Listing Credits (Max Products)</label>
+                               <input 
+                                 type="number" 
+                                 className="input" 
+                                 value={maxProducts}
+                                 onChange={(e) => {
+                                    const val = Number(e.target.value);
+                                    if (isFree) {
+                                       setPlatformSettings({ ...platformSettings, free_tier_config: { ...platformSettings.free_tier_config, max_products: val } });
+                                    } else {
+                                       const rates = [...platformSettings.subscription_rates];
+                                       const idx = rates.findIndex(r => r.id === tierId);
+                                       rates[idx].max_products = val;
+                                       setPlatformSettings({ ...platformSettings, subscription_rates: rates });
+                                    }
+                                 }}
+                               />
+                            </div>
+
+                            <div style={{ marginTop: '1rem' }}>
+                               <label className={styles.subText}>Active Features</label>
+                               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                  {[
+                                    { id: 'whatsapp_chat', label: 'WhatsApp Chat' },
+                                    { id: 'verified_badge', label: 'Verified Badge' },
+                                    { id: 'promo_codes', label: 'Promo Codes' },
+                                    { id: 'campus_nudges', label: 'Campus Nudges' },
+                                    { id: 'billboard_access', label: 'Billboard Boost' },
+                                    { id: 'advanced_analytics', label: 'Adv. Analytics' },
+                                    { id: 'priority_support', label: 'Priority Support' },
+                                    { id: 'reels_unlimited', label: 'Unlimited Reels' }
+                                  ].map(feat => (
+                                    <label key={feat.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                                       <input 
+                                         type="checkbox" 
+                                         checked={currentFeatures.includes(feat.id)}
+                                         onChange={(e) => {
+                                            const updatedFeatures = e.target.checked 
+                                              ? [...currentFeatures, feat.id] 
+                                              : currentFeatures.filter((f: string) => f !== feat.id);
+                                            setPlatformSettings({
+                                               ...platformSettings,
+                                               plan_features: {
+                                                  ...platformSettings.plan_features,
+                                                  [tierId]: updatedFeatures
+                                               }
+                                            });
+                                         }}
+                                       />
+                                       {feat.label}
+                                    </label>
+                                  ))}
+                               </div>
+                            </div>
+                            <button className="btn btn-primary btn-sm w-full mt-3" onClick={() => {
+                               adminAction('update_settings', { key: 'subscription_rates', value: platformSettings.subscription_rates });
+                               adminAction('update_settings', { key: 'plan_features', value: platformSettings.plan_features });
+                               if (isFree) adminAction('update_settings', { key: 'free_tier_config', value: platformSettings.free_tier_config });
+                            }}>Save Plan Config</button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '3rem' }}>
+                    <h3>Visibility Booster Plans</h3>
+                    <p className={styles.subText}>Separate from monthly plans, these allow vendors to buy temporary visibility spikes.</p>
+                    <div className={styles.settingsGrid}>
+                       {['visibility_week', 'visibility_month'].map(vid => (
+                         <div key={vid} className={styles.settingsBox}>
+                            <label>{vid === 'visibility_week' ? '7-Day Boost' : '30-Day Boost'} Price (₦)</label>
+                            <input 
+                              type="number" 
+                              className="input" 
+                              defaultValue={vid === 'visibility_week' ? 1500 : 5000} 
+                              onBlur={(e) => adminAction('update_visibility_price', { id: vid, price: Number(e.target.value) })}
+                            />
+                         </div>
+                       ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
              {activeTab === 'reviews' && (
                <div className={styles.sectionCard}>
@@ -682,9 +824,14 @@ export default function AdminDashboard() {
                     </h2>
                     <p className={styles.subText}>Monitor live sales velocity, product price effects, and vendor performance trends.</p>
                   </div>
-                  <button className="btn btn-primary btn-sm" onClick={() => adminAction('recalculate_ratings', {})}>
-                    <RefreshCw size={14} /> Recalculate All Vendor Ratings
-                  </button>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                     <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => confirm('⚠️ DANGER: Reset all market reviews and product ratings to 0?') && adminAction('reset_all_reviews', {})}>
+                       <Trash2 size={14} /> Reset Market Reviews to 0
+                     </button>
+                     <button className="btn btn-primary btn-sm" onClick={() => adminAction('recalculate_ratings', {})}>
+                       <RefreshCw size={14} /> Recalculate All Vendor Ratings
+                     </button>
+                  </div>
                 </div>
 
                 <div className={styles.chartsGrid}>
@@ -696,15 +843,15 @@ export default function AdminDashboard() {
                   />
                   <div className={styles.marketInsights}>
                     <h3>Market Trends</h3>
-                    <div className={styles.insightCard}>
+                    <div className={insightCardStyles}>
                       <div className={styles.insightValue}>₦{(marketData.reduce((acc, curr) => acc + curr.value, 0) / (marketData.length || 1)).toFixed(2)}</div>
                       <div className={styles.insightLabel}>Avg. Daily Revenue</div>
                     </div>
-                    <div className={styles.insightCard}>
+                    <div className={insightCardStyles}>
                       <div className={styles.insightValue}>{vendors.length}</div>
                       <div className={styles.insightLabel}>Active Competing Brands</div>
                     </div>
-                    <div className={styles.insightCard}>
+                    <div className={insightCardStyles}>
                       <div className={styles.insightValue}>₦{(products.reduce((acc, curr) => acc + Number(curr.price), 0) / (products.length || 1)).toFixed(2)}</div>
                       <div className={styles.insightLabel}>Avg. Market Price Point</div>
                     </div>
@@ -942,3 +1089,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+const insightCardStyles = styles.insightCard || '';

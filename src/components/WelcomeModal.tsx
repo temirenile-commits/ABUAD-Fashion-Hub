@@ -60,10 +60,10 @@ export default function WelcomeModal() {
           <div className={styles.policySummary}>
             <h4>Terms at a Glance:</h4>
             <ul>
-              <li>? <strong>Escrow Protected</strong>: Payments held until delivery is confirmed.</li>
-              <li>? <strong>24h Release</strong>: Funds released to vendors after 24 hours.</li>
-              <li>? <strong>Vendor Rule</strong>: Profile must be completed in 48 hours.</li>
-              <li>? <strong>Sponsored By</strong>: MIGHTY SEEDS EXCEL INVESTMENT LTD.</li>
+              <li>✅ <strong>Escrow Protected</strong>: Payments held until delivery is confirmed.</li>
+              <li>✅ <strong>24h Release</strong>: Funds released to vendors after 24 hours.</li>
+              <li>✅ <strong>Vendor Rule</strong>: Profile must be completed in 48 hours.</li>
+              <li>✅ <strong>Sponsored By</strong>: MIGHTY SEEDS EXCEL INVESTMENT LTD.</li>
             </ul>
             <p>By using the platform, you agree to our <Link href="/terms" onClick={handleClose}>Full Terms of Service</Link>.</p>
           </div>

@@ -14,11 +14,14 @@ async function verifyAdmin(req: NextRequest) {
 
   const { data: profile } = await supabaseAdmin
     .from('users')
-    .select('role')
+    .select('role, admin_permissions')
     .eq('id', user.id)
     .single();
 
-  return profile?.role === 'admin' ? user : null;
+  if (profile?.role === 'admin') return { ...user, isFullAdmin: true, permissions: ['all'] };
+  if (profile?.role === 'sub_admin') return { ...user, isFullAdmin: false, permissions: profile.admin_permissions || [] };
+  
+  return null;
 }
 
 // ─── GET Handler ───────────────────────────────────────────────────────────
@@ -507,7 +510,7 @@ export async function POST(req: NextRequest) {
       const { data: targetUsers } = await query;
       
       if (targetUsers && targetUsers.length > 0) {
-        const rows = targetUsers.map((u: any) => ({ user_id: u.id, title, content, is_read: false }));
+        const rows = targetUsers.map((u: any) => ({ user_id: u.id, title, content, is_read: false, type: 'broadcast' }));
         const { error } = await supabaseAdmin.from('notifications').insert(rows);
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       }
@@ -520,6 +523,7 @@ export async function POST(req: NextRequest) {
         title,
         content,
         is_read: false,
+        type: 'direct'
       });
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json({ success: true, sent: 1 });

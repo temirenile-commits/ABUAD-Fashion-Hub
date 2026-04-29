@@ -68,11 +68,19 @@ export default function TermsPage() {
         content: 'Vendors can request a withdrawal from their wallet once funds are cleared from Escrow. Payouts are processed via Paystack to any Nigerian bank account. A standard platform commission (currently 10%) is deducted from each sale to cover operational costs, payment processing, and server maintenance.'
       },
       {
-        title: '9. Marketing & Promotions',
-        content: 'Vendors may use "Billboard Boosts" or "Flash Sales" to increase visibility. These are premium features that place your brand in the homepage spotlight. Content for these promotions must be high-fidelity and professional (Vivid) to maintain the platform aesthetics.'
+        title: '9. Data Privacy & Account Security',
+        content: 'We take data security seriously. Your login credentials, phone numbers, and location data are stored securely and never sold to third parties. Users are responsible for maintaining the confidentiality of their passwords. Any suspected breach should be reported to AFH Support immediately.'
       },
       {
-        title: '10. Disputes & Resolutions',
+        title: '10. Cookie & Tracking Policy',
+        content: 'AFH uses local storage and cookies to maintain your login session and store your marketplace preferences (such as your wishlist). By using the platform, you consent to this essential tracking required for system functionality.'
+      },
+      {
+        title: '11. Marketing & Billboard Boosts',
+        content: 'Vendors may use "Billboard Boosts" or "Flash Sales" to increase visibility. These are premium features that place your brand in the homepage spotlight. Content for these promotions must be high-fidelity and professional to maintain the platform aesthetics.'
+      },
+      {
+        title: '12. Disputes & Final Arbitration',
         content: 'In the event of a dispute, the AFH Admin team acts as the final arbitrator. We will review chat logs, order history, and delivery timestamps. Decisions made by the Admin team regarding refunds or fund releases are final.'
       }
     ]

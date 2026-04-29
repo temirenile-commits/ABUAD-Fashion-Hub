@@ -18,6 +18,7 @@ import { formatPrice, getDiscount } from '@/lib/utils';
 import ProductEnquiry from '@/components/ProductEnquiry';
 import WishlistButton from '@/components/WishlistButton';
 import ReviewSection from '@/components/ReviewSection';
+import VendorActions from '@/app/vendor/[slug]/VendorActions';
 import styles from './product.module.css';
 
 interface Props {
@@ -193,11 +194,20 @@ export default async function ProductPage({ params }: Props) {
           {/* Info Panel */}
           <div className={styles.infoPanel}>
             {/* Brand */}
-            <div className={styles.brandRow}>
-              <Link href={`/vendor/${vendor.name.toLowerCase().replace(/\s+/g, '-')}?id=${vendor.id}`} className={styles.brandLink}>
-                {vendor.name}
-              </Link>
-              {vendor.verified && <CheckCircle size={14} className="verified-icon" />}
+            <div className={styles.brandRow} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Link href={`/vendor/${vendor.name.toLowerCase().replace(/\s+/g, '-')}?id=${vendor.id}`} className={styles.brandLink}>
+                  {vendor.name}
+                </Link>
+                {vendor.verified && <CheckCircle size={14} className="verified-icon" />}
+              </div>
+              <VendorActions 
+                vendorId={vendor.id} 
+                vendorName={vendor.name} 
+                whatsappNumber={vendor.whatsapp_number}
+                initialFollowers={0}
+                minimal
+              />
             </div>
 
             <h1 className={styles.productTitle}>{product.title}</h1>
