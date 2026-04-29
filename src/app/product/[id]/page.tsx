@@ -28,14 +28,35 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   const { data: product } = await supabaseAdmin
     .from('products')
-    .select('title, description')
+    .select('title, description, image_url, media_urls')
     .eq('id', id)
     .single();
 
   if (!product) return { title: 'Product Not Found' };
+  
+  const ogImage = product.image_url || product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500';
+
   return {
     title: product.title,
     description: product.description,
+    openGraph: {
+      title: product.title,
+      description: product.description,
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: product.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: product.title,
+      description: product.description,
+      images: [ogImage],
+    },
   };
 }
 

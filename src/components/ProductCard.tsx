@@ -75,19 +75,18 @@ export default function ProductCard({ product }: Props) {
   return (
     <Link href={`/product/${product.id}`} className={`${styles.card} ${isVideo ? styles.videoCard : ''}`}>
       <div className={styles.imageWrap}>
-        {isVideo && (
-          <a 
-            href={detectedVideo!} 
-            download 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className={styles.downloadBtn}
-            onClick={(e) => e.stopPropagation()}
-            title="Download Video"
-          >
-            <Download size={14} />
-          </a>
-        )}
+        <a 
+          href={isVideo ? detectedVideo! : displayUrl} 
+          download 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className={styles.downloadBtn}
+          onClick={(e) => e.stopPropagation()}
+          title={isVideo ? "Download Video" : "Download Image"}
+        >
+          <Download size={14} />
+        </a>
+        
         {isVideo ? (
           <>
             <VividVideo 

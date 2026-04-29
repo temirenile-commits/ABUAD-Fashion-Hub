@@ -19,12 +19,36 @@ export async function generateMetadata({ params, searchParams }: Props) {
 
   const { data: vendor } = await supabaseAdmin
     .from('brands')
-    .select('name, description')
+    .select('name, description, logo_url')
     .eq('id', id)
     .single();
 
   if (!vendor) return { title: 'Vendor Not Found' };
-  return { title: `${vendor.name} – Campus Brand`, description: vendor.description };
+  
+  const ogImage = vendor.logo_url || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070';
+
+  return { 
+    title: `${vendor.name} – Campus Brand`, 
+    description: vendor.description,
+    openGraph: {
+      title: vendor.name,
+      description: vendor.description,
+      images: [
+        {
+          url: ogImage,
+          width: 800,
+          height: 800,
+          alt: vendor.name,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary',
+      title: vendor.name,
+      description: vendor.description,
+      images: [ogImage],
+    },
+  };
 }
 
 import VendorActions from './VendorActions';
