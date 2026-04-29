@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Star, MessageCircle, ShoppingBag, ShieldCheck, Download } from 'lucide-react';
+import { Heart, Star, MessageCircle, ShoppingBag, ShieldCheck, Download, Play } from 'lucide-react';
 import styles from './ProductCard.module.css';
 
 import { formatPrice, getDiscount } from '@/lib/utils';
@@ -89,10 +89,15 @@ export default function ProductCard({ product }: Props) {
           </a>
         )}
         {isVideo ? (
-          <VividVideo 
-            src={detectedVideo!} 
-            className={styles.video} 
-          />
+          <>
+            <VividVideo 
+              src={detectedVideo!} 
+              className={styles.video} 
+            />
+            <div className={styles.playOverlay}>
+              <Play size={24} fill="currentColor" />
+            </div>
+          </>
         ) : (
           <Image
             src={displayUrl}

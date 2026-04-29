@@ -8,7 +8,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
   height: 100%;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15); /* More pronounced YouTube-style shadow */
 }
 
 .videoCard {
@@ -27,10 +27,16 @@
   aspect-ratio: 3/4; /* Portrait feel for images */
   background: #111;
   overflow: hidden;
+  border-radius: 12px; /* YouTube standard thumbnail radius */
+  margin: 0.5rem; /* Slight inward margin to separate from card border */
+  width: calc(100% - 1rem);
 }
 
 .videoCard .imageWrap {
-  aspect-ratio: 16/9; /* YouTube standard ratio as requested */
+  aspect-ratio: 16/9; /* YouTube standard ratio */
+  margin: 0; /* Full width for video cards to feel like YouTube feed */
+  width: 100%;
+  border-radius: 0; /* YouTube feed videos are often sharp or have minimal radius on cards */
 }
 
 .image {
@@ -42,6 +48,33 @@
   height: 100%;
   object-fit: contain;
   background: #000;
+}
+
+.playOverlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.card:hover .playOverlay {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.1);
+  background: var(--primary);
+  color: #000;
 }
 
 .discountBadge {
