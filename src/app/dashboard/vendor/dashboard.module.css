@@ -677,8 +677,8 @@
 
 .invImg {
   position: relative;
-  aspect-ratio: 1;
-  background: var(--bg-300);
+  aspect-ratio: 16/9;
+  background: #000;
 }
 
 .invImg img {
@@ -740,7 +740,7 @@
 
 .reelCard {
   position: relative;
-  aspect-ratio: 9/16;
+  aspect-ratio: 16/9;
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: #000;

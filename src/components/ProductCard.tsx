@@ -91,8 +91,7 @@ export default function ProductCard({ product }: Props) {
         {isVideo ? (
           <VividVideo 
             src={detectedVideo!} 
-            className={styles.image} 
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            className={styles.video} 
           />
         ) : (
           <Image

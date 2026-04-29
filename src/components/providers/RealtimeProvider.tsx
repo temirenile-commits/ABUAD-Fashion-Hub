@@ -20,43 +20,51 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
 
     // --- INITIAL DATA FETCH ---
     const fetchInitialData = async () => {
-      // Products joined with stats
-      const { data: prodData } = await supabase
-        .from('products')
-        .select(`
-          *, 
-          brands(*),
-          product_stats(*)
-        `)
-        .order('created_at', { ascending: false });
+      try {
+        // Products joined with brands (removing non-existent product_stats)
+        const { data: prodData, error: prodError } = await supabase
+          .from('products')
+          .select(`
+            *, 
+            brands(*)
+          `)
+          .order('created_at', { ascending: false });
 
-      if (active && prodData) {
-        // Flatten the stats into the product object
-        const enriched = prodData.map((p: any) => ({
-          ...p,
-          rating: p.product_stats?.avg_rating || 0,
-          reviews: p.product_stats?.review_count || 0,
-          wishlist_count: p.product_stats?.wishlist_count || 0
-        }));
-        setProducts(enriched);
+        if (prodError) throw prodError;
+
+        if (active && prodData) {
+          // Fallback stats since product_stats view is missing
+          const enriched = prodData.map((p: any) => ({
+            ...p,
+            rating: p.rating || 5, // Use column from DB if exists, else fallback
+            reviews: p.reviews_count || 0,
+            wishlist_count: 0
+          }));
+          setProducts(enriched);
+        }
+
+        // Brands (Vendors)
+        const { data: brandData, error: bErr } = await supabase
+          .from('brands')
+          .select('*');
+        if (bErr) throw bErr;
+        if (active && brandData) setVendors(brandData as any);
+
+        // Brand Reels
+        const { data: reelData, error: rErr } = await supabase
+          .from('brand_reels')
+          .select('*, brands(name, logo_url)')
+          .order('created_at', { ascending: false });
+        if (rErr) throw rErr;
+        if (active && reelData) setReels(reelData as any);
+
+        if (active) setInitialized(true);
+      } catch (err) {
+        console.error('RealtimeProvider: Initial fetch failed:', err);
+        // Still set initialized to true to prevent infinite loading, 
+        // even if data is partial
+        if (active) setInitialized(true);
       }
-
-      // Brands (Vendors)
-      const { data: brandData } = await supabase
-        .from('brands')
-        .select('*');
-
-      if (active && brandData) setVendors(brandData as any);
-
-      // Brand Reels
-      const { data: reelData } = await supabase
-        .from('brand_reels')
-        .select('*, brands(name, logo_url)')
-        .order('created_at', { ascending: false });
-
-      if (active && reelData) setReels(reelData as any);
-
-      if (active) setInitialized(true);
     };
 
     // Always re-fetch reels (they update frequently and must always be fresh)
