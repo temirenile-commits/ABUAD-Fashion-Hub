@@ -200,7 +200,7 @@ export default function OnboardingPage() {
     <main className="container">
       <div className={styles.page}>
         <div className={styles.header}>
-          <h1>Become an ABUAD Brand Owner</h1>
+          <h1>Become an Master Cart Vendor</h1>
           <p>Launch your store vividly. No upfront fees — get 5 free credits to start.</p>
         </div>
 
@@ -374,7 +374,7 @@ export default function OnboardingPage() {
               
               <div style={{ height: '300px', overflowY: 'auto', padding: '1.25rem', background: 'var(--bg-200)', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1.5rem', border: '1px solid var(--border)', lineHeight: '1.6' }}>
                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-100)' }}>1. Identity Verification</h4>
-                <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>All vendors must undergo manual identity verification. Submitting false academic (Matriculation/Room number) or business credentials will lead to an immediate and permanent ban from the ABUAD Fashion Hub platform.</p>
+                <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>All vendors must undergo manual identity verification. Submitting false academic (Matriculation/Room number) or business credentials will lead to an immediate and permanent ban from the Master Cart platform.</p>
                 
                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-100)' }}>2. Financial Escrow & Payouts</h4>
                 <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>To protect our customers, all funds from completed orders are held in a secure Escrow system for a mandatory 24-hour period post-delivery. Once the hold clears, you may request a manual payout to your registered bank account. Minimum withdrawal is ₦1,000.</p>

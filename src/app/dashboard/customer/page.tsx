@@ -76,7 +76,7 @@ export default function CustomerDashboard() {
           .eq('customer_id', user.id)
           .order('created_at', { ascending: false });
         setOrders(updatedOrders || []);
-        alert('Payment released! Thank you for shopping with ABUAD Fashion Hub.');
+        alert('Payment released! Thank you for shopping with Master Cart.');
       } else {
         alert(data.error || 'Failed to confirm delivery.');
       }

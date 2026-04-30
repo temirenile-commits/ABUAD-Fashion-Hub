@@ -167,7 +167,7 @@ export async function POST(req: Request) {
       if (customer?.email) {
         sendEmail({
           to: customer.email,
-          subject: 'Payment Secured! 🎉 ABUAD Fashion Hub',
+          subject: 'Payment Secured! 🎉 Master Cart',
           html: emailTemplates.paymentSuccess(customer.name || '', reference.slice(-8), `₦${paidAmount.toLocaleString()}`)
         });
       }

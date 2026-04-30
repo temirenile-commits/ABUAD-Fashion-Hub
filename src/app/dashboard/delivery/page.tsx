@@ -367,7 +367,7 @@ export default function DeliveryDashboard() {
                     <div className={styles.infoBlock}>
                       <h5><MapPin size={14} /> Pickup From</h5>
                       <p><strong>{delivery.orders?.brands?.name}</strong></p>
-                      <p style={{ fontSize: '0.85rem' }}>{delivery.orders?.brands?.location_name || 'ABUAD Campus'}</p>
+                      <p style={{ fontSize: '0.85rem' }}>{delivery.orders?.brands?.location_name || 'Campus'}</p>
                       <Link href={`https://wa.me/${delivery.orders?.brands?.whatsapp_number}`} className={styles.contactLink} target="_blank">
                         <Phone size={12} /> Contact Vendor
                       </Link>

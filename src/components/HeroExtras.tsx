@@ -32,7 +32,7 @@ export default function HeroExtras() {
           <span>Express</span>
         </div>
         <h3>Free Delivery</h3>
-        <p>Across ABUAD Campus</p>
+        <p>Across Campus</p>
       </div>
 
       <div className={styles.promo}>

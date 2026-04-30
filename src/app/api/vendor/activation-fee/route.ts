@@ -29,11 +29,11 @@ export async function POST(req: Request) {
 
     const amount = 2000; // NGN
     const reference = `VNDR-FEE-${brand.id}-${Date.now()}`;
-    const origin = req.headers.get('origin') || 'https://abuad-fashion-hub.vercel.app';
+    const origin = req.headers.get('origin') || 'https://mastercart.vercel.app';
 
     // 2. Initialize Paystack
     const paystackParams = {
-      email: userProfile?.email || 'vendor@abuadfashionhub.com',
+      email: userProfile?.email || 'vendor@mastercart.com',
       amount: amount,
       reference: reference,
       callback_url: `${origin}/dashboard/vendor`,

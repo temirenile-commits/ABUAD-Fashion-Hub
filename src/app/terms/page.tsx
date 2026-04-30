@@ -37,15 +37,15 @@ export default function TermsPage() {
     sections: [
       {
         title: '1. Platform Identity & Mission',
-        content: 'ABUAD Fashion Hub (AFH) is a digital marketplace designed exclusively for Afe Babalola University student entrepreneurs. Our mission is to provide a "Vivid" commercial experience that empowers students to build brands while maintaining academic integrity. All operations are sponsored and governed by MIGHTY SEEDS EXCEL INVESTMENT LTD.'
+        content: 'Master Cart is a digital marketplace designed exclusively for university student entrepreneurs. Our mission is to provide a "Vivid" commercial experience that empowers students to build brands while maintaining academic integrity. All operations are sponsored and governed by MIGHTY SEEDS EXCEL INVESTMENT LTD.'
       },
       {
         title: '2. User Eligibility & Verification',
-        content: 'Access to AFH is restricted to verified students, alumni, and staff of Afe Babalola University. Registration requires a valid university email or matriculation details. We reserve the right to suspend any account that cannot provide proof of campus affiliation upon request.'
+        content: 'Access to Master Cart is restricted to verified students, alumni, and staff of the University. Registration requires a valid university email or matriculation details. We reserve the right to suspend any account that cannot provide proof of campus affiliation upon request.'
       },
       {
         title: '3. The Escrow Payment System',
-        content: 'To protect both buyers and sellers, AFH utilizes a mandatory Escrow system. When a customer pays for an item, the funds are securely held by the platform. Funds are ONLY released to the vendor wallet 24 hours after the customer confirms receipt of the goods via the unique delivery code system. This 24-hour window allows for dispute filing in case of "item not as described".'
+        content: 'To protect both buyers and sellers, master cart utilizes a mandatory Escrow system. When a customer pays for an item, the funds are securely held by the platform. Funds are ONLY released to the vendor wallet 24 hours after the customer confirms receipt of the goods via the unique delivery code system. This 24-hour window allows for dispute filing in case of "item not as described".'
       },
       {
         title: '4. Vendor Listing Credits & Tiers',
@@ -57,11 +57,11 @@ export default function TermsPage() {
       },
       {
         title: '6. Logistics & Delivery Agent Protocol',
-        content: 'Deliveries within the ABUAD campus are handled by verified Student Delivery Agents. Each order generates a unique 6-digit Delivery Code. Customers must ONLY provide this code to the agent once they have physically inspected and received their item. Handing over the code is the legal confirmation of delivery.'
+        content: 'Deliveries within the Campus are handled by verified Student Delivery Agents. Each order generates a unique 6-digit Delivery Code. Customers must ONLY provide this code to the agent once they have physically inspected and received their item. Handing over the code is the legal confirmation of delivery.'
       },
       {
         title: '7. Prohibited Items & Conduct',
-        content: 'The sale of illegal substances, weapons, offensive materials, or items that violate the ABUAD University Handbook is strictly prohibited. Vendors found selling counterfeit or stolen goods will be permanently banned from the platform and reported to the Dean of Student Affairs.'
+        content: 'The sale of illegal substances, weapons, offensive materials, or items that violate the University Handbook is strictly prohibited. Vendors found selling counterfeit or stolen goods will be permanently banned from the platform and reported to the Dean of Student Affairs.'
       },
       {
         title: '8. Withdrawals & Payouts',
@@ -104,14 +104,14 @@ export default function TermsPage() {
           </h1>
         </div>
         <p style={{ color: 'var(--text-300)', maxWidth: '600px', margin: '0 auto 1.5rem', lineHeight: 1.7 }}>
-          Welcome to ABUAD Fashion Hub. By accessing or using this platform, you agree to these terms. These policies are updated in real-time to reflect platform operations.
+          Welcome to Master Cart. By accessing or using this platform, you agree to these terms. These policies are updated in real-time to reflect platform operations.
         </p>
         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <span style={{ background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '999px', padding: '0.3rem 1rem', fontSize: '0.8rem', color: 'var(--text-400)' }}>
             Last Updated: {activePolicy.last_updated}
           </span>
           <span style={{ background: 'var(--bg-300)', border: '1px solid var(--accent-gold)', borderRadius: '999px', padding: '0.3rem 1rem', fontSize: '0.8rem', color: 'var(--accent-gold)' }}>
-            Official ABUAD Fashion Hub Policy
+            Official Master Cart Policy
           </span>
         </div>
       </div>

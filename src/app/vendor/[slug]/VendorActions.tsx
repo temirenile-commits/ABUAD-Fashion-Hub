@@ -81,7 +81,7 @@ export default function VendorActions({ vendorId, vendorName, whatsappNumber, in
     );
   }
 
-  const waMessage = `Hi ${vendorName}! I found you on ABUAD Fashion Hub. I'd love to know more about your products.`;
+  const waMessage = `Hi ${vendorName}! I found you on Master Cart. I'd love to know more about your products.`;
   // Normalize to Nigerian format: strip +, leading 0, then prepend 234
   const normalizeNgPhone = (num: string) => {
     const digits = (num || '').replace(/\D/g, '');

@@ -129,7 +129,7 @@ export default function RegisterPage() {
           </div>
           <div className="form-group">
             <label className="form-label">Email Address</label>
-            <input className="form-input" type="email" placeholder="john@abuad.edu.ng" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} />
+            <input className="form-input" type="email" placeholder="john@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} />
           </div>
           <div className="form-group">
             <label className="form-label">Password</label>

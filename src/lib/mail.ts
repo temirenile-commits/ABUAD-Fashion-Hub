@@ -1,5 +1,5 @@
 /**
- * ABUAD Fashion Hub Email Utility
+ * Master Cart Email Utility
  * Powered by Resend (https://resend.com)
  */
 
@@ -22,7 +22,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'ABUAD Fashion Hub <onboarding@resend.dev>',
+        from: 'Master Cart <onboarding@resend.dev>',
         to: [to],
         subject,
         html,
@@ -55,10 +55,10 @@ export const emailTemplates = {
           <p style="margin: 5px 0;">Status: Paid (Escrow)</p>
         </div>
         <p>Remember: Do not release the payment until you have received and inspected your items.</p>
-        <a href="https://abuadfashionhub.com/dashboard/customer" style="display: inline-block; background: #c9a14a; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">View Order Status</a>
+        <a href="https://mastercart.com/dashboard/customer" style="display: inline-block; background: #c9a14a; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">View Order Status</a>
       </div>
       <div style="background: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
-        &copy; 2026 ABUAD Fashion Hub. All rights reserved.
+        &copy; 2026 Master Cart. All rights reserved.
       </div>
     </div>
   `,
@@ -69,13 +69,13 @@ export const emailTemplates = {
       </div>
       <div style="padding: 30px;">
         <p>Hi ${name || 'Customer'},</p>
-        <p>There was an issue with your recent transaction on ABUAD Fashion Hub.</p>
+        <p>There was an issue with your recent transaction on Master Cart.</p>
         <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0;">
           <p style="margin: 0; color: #b91c1c;"><strong>Reason:</strong> ${reason || 'Transaction could not be completed.'}</p>
         </div>
         <p>As a result, your items are still in your cart and have not been locked for shipping.</p>
         <p>Please try again or contact support if you have already been debited.</p>
-        <a href="https://abuadfashionhub.com/checkout" style="display: inline-block; background: #1e1b4b; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">Try Again</a>
+        <a href="https://mastercart.com/checkout" style="display: inline-block; background: #1e1b4b; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">Try Again</a>
       </div>
     </div>
   `

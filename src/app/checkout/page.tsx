@@ -273,7 +273,7 @@ function CheckoutContent() {
                   <label className="form-label">Hostel / Campus Address *</label>
                   <div className={styles.inputWrap}>
                     <MapPin size={16} className={styles.inputIcon} />
-                    <input className="form-input" placeholder="e.g. Afe Babalola Hall, Block A, Room 12" value={address} onChange={e => setAddress(e.target.value)} required />
+                    <input className="form-input" placeholder="e.g. University Hall, Block A, Room 12" value={address} onChange={e => setAddress(e.target.value)} required />
                   </div>
                 </div>
                 <div className="form-group">
@@ -296,7 +296,7 @@ function CheckoutContent() {
                 </div>
                 <p className={styles.deliveryNote}>
                   {deliveryFee > 0 
-                    ? "Logistics are managed by ABUAD Fashion Hub for safety and speed."
+                    ? "Logistics are managed by Master Cart for safety and speed."
                     : "The vendor will contact you directly to arrange delivery."
                   }
                 </p>
@@ -308,7 +308,7 @@ function CheckoutContent() {
               <div className={styles.escrowNotice}>
                 <Lock size={16} />
                 <p>
-                  <strong>Escrow Protection:</strong> Your payment is held securely by ABUAD Fashion Hub. 
+                  <strong>Escrow Protection:</strong> Your payment is held securely by Master Cart. 
                   Vendors do not receive funds until you confirm delivery.
                 </p>
               </div>
@@ -353,7 +353,7 @@ function CheckoutContent() {
                 )}
               </button>
               <p className={styles.termsNote}>
-                By clicking "Pay", you agree to the ABUAD Fashion Hub <Link href="/terms">Terms of Service</Link> and recognize that funds will be held in escrow until delivery is confirmed.
+                By clicking "Pay", you agree to the Master Cart <Link href="/terms">Terms of Service</Link> and recognize that funds will be held in escrow until delivery is confirmed.
               </p>
             </section>
           </div>

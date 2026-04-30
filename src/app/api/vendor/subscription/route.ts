@@ -20,13 +20,13 @@ export async function POST(req: Request) {
       .single();
 
     const reference = `SUB-${tierId.toUpperCase()}-${brandId}-${Date.now()}`;
-    const host = req.headers.get('host') || 'abuadfashionhub.com';
+    const host = req.headers.get('host') || 'mastercart.com';
     const protocol = req.headers.get('x-forwarded-proto') || 'https';
-    const baseDomain = host.includes('localhost') ? `${protocol}://${host}` : 'https://abuadfashionhub.com';
+    const baseDomain = host.includes('localhost') ? `${protocol}://${host}` : 'https://mastercart.com';
 
     // 2. Initialize Paystack
     const paystackParams = {
-      email: userProfile?.email || 'vendor@abuadfashionhub.com',
+      email: userProfile?.email || 'vendor@mastercart.com',
       amount: amount, 
       reference: reference,
       callback_url: `${baseDomain}/dashboard/vendor`,

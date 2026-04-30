@@ -18,7 +18,7 @@ export default function SplashScreen() {
   return (
     <div className={styles.splashContainer}>
       <div className={styles.logoWrapper}>
-        <img src="/logo.png" alt="ABUAD Fashion Hub" className={styles.logo} />
+        <img src="/logo.png" alt="Master Cart" className={styles.logo} />
       </div>
     </div>
   );

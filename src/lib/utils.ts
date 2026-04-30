@@ -1,4 +1,4 @@
-// Shared utility functions for ABUAD Fashion Hub
+// Shared utility functions for Master Cart
 // These are server-compatible (no 'use client' directive)
 
 /**

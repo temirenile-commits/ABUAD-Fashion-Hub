@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
     const activeTabContext = tabContext[currentTab] || 'The vendor is browsing their dashboard.';
 
-    const systemPrompt = `You are the ABUAD Fashion Hub Vendor Copilot — a smart, friendly, and expert AI assistant built directly into the vendor dashboard.
+    const systemPrompt = `You are the Master Cart Vendor Copilot — a smart, friendly, and expert AI assistant built directly into the vendor dashboard.
 
 Your primary roles are:
 1. **Dashboard Guide**: Walk the vendor through every part of their dashboard, step by step, based on what tab they are currently on.
@@ -100,7 +100,7 @@ ${settings?.custom_instructions || 'None. Use professional, friendly tone.'}
 
 ---
 HOW TO ANSWER:
-- If asked "how do I...": Give step-by-step instructions specific to ABUAD Fashion Hub.
+- If asked "how do I...": Give step-by-step instructions specific to Master Cart.
 - If asked about earnings/wallet: Reference the exact live numbers above.
 - If asked about pricing: Compare their average price (₦${avgPrice}) to typical campus market prices and give strategic advice.
 - If asked generally: Give a short contextual overview of the current tab, then offer 2-3 quick tips.`;

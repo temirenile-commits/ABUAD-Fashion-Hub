@@ -64,7 +64,7 @@ export default function ServicesPage() {
           <div className={styles.grid}>
             {filtered.map((svc) => {
               const brand = svc.brands;
-              const waMessage = `Hi ${brand.name}! I found you on ABUAD Fashion Hub and I'm interested in your service: *${svc.title}*. Please share more details.`;
+              const waMessage = `Hi ${brand.name}! I found you on Master Cart and I'm interested in your service: *${svc.title}*. Please share more details.`;
               const normalizeNgPhone = (num: string) => {
                 const digits = (num || '').replace(/\D/g, '');
                 if (digits.startsWith('234')) return digits;
@@ -147,7 +147,7 @@ export default function ServicesPage() {
         {/* CTA for Service Providers */}
         <div className={styles.providerCta}>
           <h2>Are you a Campus Creative?</h2>
-          <p>List your makeup, photography, tailoring, or styling service on ABUAD Fashion Hub for free.</p>
+          <p>List your makeup, photography, tailoring, or styling service on Master Cart for free.</p>
           <Link href="/onboarding" className="btn btn-primary btn-lg">
             List Your Service Free
           </Link>

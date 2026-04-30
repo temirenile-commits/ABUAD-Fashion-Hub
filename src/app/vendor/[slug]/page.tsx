@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { CheckCircle, MessageCircle, Star, Package, Users, Calendar } from 'lucide-react';
+import { CheckCircle, MessageCircle, Star, Package, Users, Calendar, Eye } from 'lucide-react';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
 import VividVideo from '@/components/VividVideo';
@@ -149,8 +149,8 @@ export default async function VendorPage({ params, searchParams }: Props) {
              { icon: <Star size={16} />, value: Number(vendor.rating || 0).toFixed(1), label: 'Rating' },
              { icon: <Package size={16} />, value: vendorProducts.length, label: 'Products' },
              { icon: <Users size={16} />, value: (vendor.followers_count || 0) > 1000 ? `${((vendor.followers_count || 0)/1000).toFixed(1)}k` : (vendor.followers_count || 0), label: 'Followers' },
+             { icon: <Eye size={16} />, value: vendor.profile_views || 0, label: 'Profile Views' },
              { icon: <Calendar size={16} />, value: new Date(vendor.created_at).getFullYear(), label: 'Member Since' },
-             { icon: <Package size={16} />, value: reelsData?.length || 0, label: 'Reels' },
           ].map(({ icon, value, label }) => (
             <div key={label} className={styles.statItem}>
               {icon}

@@ -9,11 +9,14 @@ import {
   ShieldCheck,
   Package,
   CheckCircle,
+  Eye,
 } from 'lucide-react';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
 import ProductInteraction from '@/components/ProductInteraction';
 import ViewTracker from '@/components/ViewTracker';
+import ProductViewTracker from '@/components/ProductViewTracker';
+import ProfileViewTracker from '@/components/ProfileViewTracker';
 import { formatPrice, getDiscount } from '@/lib/utils';
 import ProductEnquiry from '@/components/ProductEnquiry';
 import WishlistButton from '@/components/WishlistButton';
@@ -111,7 +114,7 @@ export default async function ProductPage({ params }: Props) {
 
   const relatedProducts = (relatedData || []) as unknown as LiveProduct[];
 
-  const waMessage = `Hi! I'm interested in: *${product.title}* priced at *${formatPrice(product.price)}* from ABUAD Fashion Hub. Is it available?`;
+  const waMessage = `Hi! I'm interested in: *${product.title}* priced at *${formatPrice(product.price)}* from Master Cart. Is it available?`;
   const normalizeNgPhone = (num: string) => {
     const digits = (num || '').replace(/\D/g, '');
     if (digits.startsWith('234')) return digits;
@@ -127,6 +130,8 @@ export default async function ProductPage({ params }: Props) {
   return (
     <main className="container">
       <ViewTracker category={product.category || 'Clothing'} />
+      <ProductViewTracker productId={product.id} />
+      <ProfileViewTracker brandId={vendor.id} />
       <div className={styles.page}>
         {/* Breadcrumb */}
         <nav className={styles.breadcrumb}>
@@ -227,6 +232,9 @@ export default async function ProductPage({ params }: Props) {
               <span className={styles.ratingNum}>{stats.avg_rating || '0.0'}</span>
               <span className={styles.ratingCount}>{stats.review_count} reviews</span>
               <span className={styles.sold}>{product.sales_count || 0} sold</span>
+              <span className={styles.views} style={{ display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.6 }}>
+                <Eye size={14} /> {product.views_count || 0} views
+              </span>
             </div>
 
             {/* Price */}

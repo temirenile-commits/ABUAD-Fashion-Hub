@@ -132,12 +132,12 @@ export async function POST(req: Request) {
 
     // 4. FAST REDIRECT: Initialize Paystack
     const protocol = req.headers.get('x-forwarded-proto') || 'https';
-    const host = req.headers.get('host') || 'abuadfashionhub.com';
-    const baseDomain = host.includes('localhost') ? `${protocol}://${host}` : 'https://abuadfashionhub.com';
+    const host = req.headers.get('host') || 'mastercart.com';
+    const baseDomain = host.includes('localhost') ? `${protocol}://${host}` : 'https://mastercart.com';
     const callbackUrl = `${baseDomain}/checkout/success?ref=${batchReference}`;
 
     const paystackData = await initializeTransaction({
-      email: userProfile?.email || 'customer@abuadfashionhub.com',
+      email: userProfile?.email || 'customer@mastercart.com',
       amount: finalChargeAmount,
       reference: batchReference,
       callback_url: callbackUrl,

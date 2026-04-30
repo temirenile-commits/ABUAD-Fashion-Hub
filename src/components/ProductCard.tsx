@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Star, MessageCircle, ShoppingBag, ShieldCheck, Download, Play, MoreVertical, Share2 } from 'lucide-react';
+import { Heart, Star, MessageCircle, ShoppingBag, ShieldCheck, Download, Play, MoreVertical, Share2, Eye } from 'lucide-react';
 import styles from './ProductCard.module.css';
 
 import { formatPrice, getDiscount } from '@/lib/utils';
@@ -77,7 +77,7 @@ export default function ProductCard({ product }: Props) {
     e.stopPropagation();
     
     const shareUrl = `${window.location.origin}/product/${product.id}`;
-    const shareText = `Check out this ${product.title} on ABUAD Fashion Hub! ??`;
+    const shareText = `Check out this ${product.title} on Master Cart! ??`;
     
     if (navigator.share) {
       navigator.share({
@@ -179,9 +179,15 @@ export default function ProductCard({ product }: Props) {
               <span>•</span>
               <span>{formatPrice(product.price)}</span>
               <span>•</span>
-              <div className={styles.rating} style={{ display: 'inline-flex' }}>
-                <Star size={10} fill="currentColor" color="#EAB308" />
-                <span>{product.rating ? Number(product.rating).toFixed(1) : '5.0'}</span>
+              <div className={styles.rating} style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                  <Star size={10} fill="currentColor" color="#EAB308" />
+                  <span>{product.rating ? Number(product.rating).toFixed(1) : '5.0'}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '2px', opacity: 0.7 }}>
+                  <Eye size={10} />
+                  <span>{product.views_count || 0}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -213,6 +219,10 @@ export default function ProductCard({ product }: Props) {
             <div className={styles.rating}>
               <Star size={12} fill="currentColor" color="#EAB308" />
               <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{product.rating ? Number(product.rating).toFixed(1) : '5.0'}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '8px', opacity: 0.6 }}>
+                <Eye size={12} />
+                <span style={{ fontSize: '0.75rem' }}>{product.views_count || 0}</span>
+              </div>
             </div>
             {product.stock_count > 0 ? (
               <button

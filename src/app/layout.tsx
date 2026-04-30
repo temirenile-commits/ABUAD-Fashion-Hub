@@ -8,12 +8,12 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'ABUAD Fashion Hub – Campus Fashion Marketplace',
-    template: '%s | ABUAD Fashion Hub',
+    default: 'Master Cart – Campus Fashion Marketplace',
+    template: '%s | Master Cart',
   },
   description:
-    'The premier digital fashion marketplace for students and entrepreneurs at Afe Babalola University. Discover trending styles, verified vendors, and campus fashion services.',
-  keywords: ['ABUAD', 'fashion', 'campus', 'marketplace', 'clothing', 'style'],
+    'The premier digital fashion marketplace for students and entrepreneurs at your University. Discover trending styles, verified vendors, and campus fashion services.',
+  keywords: ['Master Cart', 'fashion', 'campus', 'marketplace', 'clothing', 'style'],
   icons: {
     icon: [
       { url: '/logo.png', type: 'image/png' },
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
   manifest: '/manifest.json',
   openGraph: {
-    title: 'ABUAD Fashion Hub',
+    title: 'Master Cart',
     description: 'Discover. Connect. Slay. The #1 campus fashion marketplace.',
     type: 'website',
     images: [{ url: '/logo.png' }],

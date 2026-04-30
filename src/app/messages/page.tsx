@@ -125,8 +125,10 @@ function MessagesContent() {
     setInput('');
 
     const { error } = await supabase.from('messages').insert(newMsg);
-    if (error) console.error(error);
-    else {
+    if (error) {
+      console.error(error);
+      alert('Error sending message: ' + (error.message.includes('permission') ? 'Unauthorized (Check RLS)' : error.message));
+    } else {
       if (activePartner.role === 'vendor') {
         fetch('/api/ai/auto-reply', {
           method: 'POST',

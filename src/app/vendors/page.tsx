@@ -32,7 +32,7 @@ export default function VendorsPage() {
           <div>
             <h1>Campus Brand Directory</h1>
             <p className={styles.subtitle}>
-              Discover {LIVE_VENDORS.length} fashion brands on the ABUAD campus
+              Discover {LIVE_VENDORS.length} fashion brands on the Campus
             </p>
           </div>
           <div className={styles.headerStats}>

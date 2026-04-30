@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { CheckCircle, Star, Package, Users } from 'lucide-react';
+import { CheckCircle, Star, Package, Users, Eye } from 'lucide-react';
 import styles from './VendorCard.module.css';
 
 export interface LiveVendor {
@@ -21,6 +21,7 @@ export interface LiveVendor {
   verification_status?: 'pending' | 'verified' | 'rejected' | 'suspended';
   wallet_balance?: number;
   sales_count?: number; // For Trendy ranking
+  profile_views?: number;
 }
 
 interface Props {
@@ -91,6 +92,10 @@ export default function VendorCard({ vendor, layout = 'grid' }: Props) {
           <div className={styles.stat}>
             <Users size={12} />
             <span>{(vendor.followers_count || 0) > 1000 ? `${((vendor.followers_count || 0)/1000).toFixed(1)}k` : (vendor.followers_count || 0)} followers</span>
+          </div>
+          <div className={styles.stat}>
+            <Eye size={12} />
+            <span>{vendor.profile_views || 0} views</span>
           </div>
         </div>
 
