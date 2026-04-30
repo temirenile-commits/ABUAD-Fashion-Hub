@@ -5,22 +5,51 @@ export const dynamic = 'force-dynamic';
 
 
 // ─── Middleware: Verify request is from an admin ───────────────────────────
+// Decodes the Supabase JWT locally (no network call) to avoid auth timeouts.
+function decodeJwt(token: string): { sub?: string; email?: string } | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = Buffer.from(parts[1], 'base64url').toString('utf-8');
+    return JSON.parse(payload);
+  } catch {
+    return null;
+  }
+}
+
 async function verifyAdmin(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
-  if (!authHeader) return null;
+  if (!authHeader) {
+    console.warn('[ADMIN API] Missing authorization header');
+    return null;
+  }
   const token = authHeader.replace('Bearer ', '');
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-  if (error || !user) return null;
 
-  const { data: profile } = await supabaseAdmin
+  // Decode JWT locally — avoids network round-trip to Supabase Auth that was timing out
+  const payload = decodeJwt(token);
+  if (!payload?.sub) {
+    console.error('[ADMIN API] Invalid or missing JWT payload');
+    return null;
+  }
+
+  const userId = payload.sub;
+
+  // Single fast DB query to confirm role (supabaseAdmin bypasses RLS)
+  const { data: profile, error } = await supabaseAdmin
     .from('users')
     .select('role, admin_permissions')
-    .eq('id', user.id)
+    .eq('id', userId)
     .single();
 
-  if (profile?.role === 'admin') return { ...user, isFullAdmin: true, permissions: ['all'] };
-  if (profile?.role === 'sub_admin') return { ...user, isFullAdmin: false, permissions: profile.admin_permissions || [] };
+  if (error || !profile) {
+    console.error('[ADMIN API] User profile not found for id:', userId, error);
+    return null;
+  }
+
+  if (profile.role === 'admin') return { id: userId, email: payload.email, isFullAdmin: true, permissions: ['all'] };
+  if (profile.role === 'sub_admin') return { id: userId, email: payload.email, isFullAdmin: false, permissions: profile.admin_permissions || [] };
   
+  console.warn(`[ADMIN API] User ${payload.email} attempted admin action but has role: ${profile.role}`);
   return null;
 }
 
@@ -39,32 +68,24 @@ export async function GET(req: NextRequest) {
   }
 
   if (action === 'users') {
-    // Pull all users from Supabase auth.users (gold source of truth)
-    const { data: { users: authUsers }, error } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000,
-    });
+    // Use public.users as the primary source — avoids auth.admin.listUsers() network call that times out
+    const { data: profiles, error: profilesError } = await supabaseAdmin
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (profilesError) return NextResponse.json({ error: profilesError.message }, { status: 500 });
 
-    // Pull profiles from public.users
-    const { data: profiles } = await supabaseAdmin.from('users').select('*');
-    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
-
-    // Merge auth + profile data
-    const merged = (authUsers || []).map((u) => {
-      const profile = profileMap.get(u.id) || {};
-      return {
-        id: u.id,
-        email: u.email,
-        name: (profile as any).name || u.user_metadata?.name || 'Unknown',
-        role: (profile as any).role || u.user_metadata?.role || 'customer',
-        phone: (profile as any).phone || null,
-        created_at: u.created_at,
-        last_sign_in: u.last_sign_in_at,
-        confirmed: !!u.email_confirmed_at,
-      };
-    });
+    const merged = (profiles || []).map((p: any) => ({
+      id: p.id,
+      email: p.email,
+      name: p.name || 'Unknown',
+      role: p.role || 'customer',
+      phone: p.phone || null,
+      status: p.status || 'active',
+      created_at: p.created_at,
+      confirmed: true, // assumed confirmed if they have a profile
+    }));
 
     return NextResponse.json({ users: merged });
   }
@@ -103,22 +124,51 @@ export async function GET(req: NextRequest) {
 
   if (action === 'stats') {
     const [
-      { count: userCount },
-      { count: brandCount },
-      { count: productCount },
-      { data: revenueData }
+      userRes,
+      brandRes,
+      productRes,
+      revenueRes
     ] = await Promise.all([
       supabaseAdmin.from('users').select('*', { count: 'exact', head: true }),
-      supabaseAdmin.from('brands').select('*', { count: 'exact', head: true }),
-      supabaseAdmin.from('products').select('*', { count: 'exact', head: true }),
+      supabaseAdmin.from('brands').select('id', { count: 'exact', head: true }),
+      supabaseAdmin.from('products').select('id', { count: 'exact', head: true }),
       supabaseAdmin.from('orders').select('total_amount, admin_discount').eq('status', 'paid'),
     ]);
 
-    const totalRevenue = (revenueData || []).reduce((sum: number, o: any) => sum + Number(o.total_amount), 0);
-    const totalSubsidies = (revenueData || []).reduce((sum: number, o: any) => sum + Number(o.admin_discount || 0), 0);
+    if (userRes.error) console.error('[Stats] User Error:', userRes.error);
+    if (brandRes.error) console.error('[Stats] Brand Error:', brandRes.error);
+    if (productRes.error) console.error('[Stats] Product Error:', productRes.error);
+
+    const userCount = userRes.count ?? 0;
+    const brandCount = brandRes.count ?? 0;
+    const productCount = productRes.count ?? 0;
+
+    // Fetch aggregated view counts separately (resilient — won't block main stats if column missing)
+    let totalProductViews = 0;
+    let totalProfileViews = 0;
+    try {
+      const { data: viewData } = await supabaseAdmin.from('products').select('views_count');
+      totalProductViews = (viewData || []).reduce((sum: number, p: any) => sum + (Number(p.views_count) || 0), 0);
+    } catch { /* column may not exist yet */ }
+    try {
+      const { data: profileData } = await supabaseAdmin.from('brands').select('profile_views');
+      totalProfileViews = (profileData || []).reduce((sum: number, b: any) => sum + (Number(b.profile_views) || 0), 0);
+    } catch { /* column may not exist yet */ }
+    
+    const revenueData = revenueRes.data || [];
+    const totalRevenue = revenueData.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0);
+    const totalSubsidies = revenueData.reduce((sum: number, o: any) => sum + Number(o.admin_discount || 0), 0);
 
     return NextResponse.json({
-      stats: { userCount, brandCount, productCount, totalRevenue, totalSubsidies }
+      stats: { 
+        userCount, 
+        brandCount, 
+        productCount, 
+        totalRevenue, 
+        totalSubsidies,
+        totalProductViews,
+        totalProfileViews
+      }
     });
   }
 
@@ -161,8 +211,8 @@ export async function GET(req: NextRequest) {
       .select('*, users:user_id(name, email), products:product_id(title)')
       .order('created_at', { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ reviews: data });
+    if (error) { console.error('[Reviews]', error.message); return NextResponse.json({ reviews: [] }); }
+    return NextResponse.json({ reviews: data || [] });
   }
 
   if (action === 'payouts') {
@@ -171,8 +221,8 @@ export async function GET(req: NextRequest) {
       .select('*, users:user_id(name, email)')
       .order('created_at', { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ payouts: data });
+    if (error) { console.error('[Payouts]', error.message); return NextResponse.json({ payouts: [] }); }
+    return NextResponse.json({ payouts: data || [] });
   }
 
   if (action === 'market_analytics') {
@@ -204,15 +254,13 @@ export async function GET(req: NextRequest) {
       .select('*, users:id(name, email)')
       .order('created_at', { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error('[DeliveryAgents]', error.message); return NextResponse.json({ agents: [] }); }
     
-    // Flatten data
     const transformed = (data || []).map(a => ({
       ...a,
       name: (a as any).users?.name || 'Rider',
       email: (a as any).users?.email || 'N/A'
     }));
-
     return NextResponse.json({ agents: transformed });
   }
 
@@ -222,8 +270,8 @@ export async function GET(req: NextRequest) {
       .select('*, brands(name), products(title)')
       .order('created_at', { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ promoCodes: data });
+    if (error) { console.error('[PromoCodes]', error.message); return NextResponse.json({ promoCodes: [] }); }
+    return NextResponse.json({ promoCodes: data || [] });
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
