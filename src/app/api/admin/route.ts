@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
     // Use public.users as the primary source — avoids auth.admin.listUsers() network call that times out
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('users')
-      .select('*')
+      .select('*, universities(name, abbreviation)')
       .order('created_at', { ascending: false });
 
     if (profilesError) return NextResponse.json({ error: profilesError.message }, { status: 500 });
@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
   if (action === 'products') {
     const { data, error } = await supabaseAdmin
       .from('products')
-      .select('*, brands(name, logo_url)')
+      .select('*, brands(name, logo_url), universities(name, abbreviation)')
       .order('created_at', { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

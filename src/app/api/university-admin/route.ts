@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireUniversityAdmin, requireSuperAdmin, getUniversityScope } from '@/lib/rbac';
 
@@ -191,6 +191,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ team: data || [] });
   }
 
+  // â”€â”€ Products (Catalog) in university â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (action === 'products') {
+    const { data, error } = await supabaseAdmin
+      .from('products')
+      .select('*, brands(name)')
+      .eq('university_id', universityId)
+      .order('created_at', { ascending: false });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ products: data || [] });
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }
 
@@ -319,6 +331,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  // â”€â”€ Manage Products (Toggle Visibility/Feature) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (action === 'update_product') {
+    const { productId, isVisible, isFeatured } = body;
+    if (!(await ensureScope('products', productId))) {
+      return NextResponse.json({ error: 'Forbidden: Product not in your university.' }, { status: 403 });
+    }
+    const update: any = {};
+    if (isVisible !== undefined) update.is_visible = isVisible;
+    if (isFeatured !== undefined) update.is_featured = isFeatured;
+
+    const { error } = await supabaseAdmin.from('products').update(update).eq('id', productId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
   // â”€â”€ Manage university staff (university_admin only) â”€â”€â”€â”€â”€â”€â”€â”€
   if (action === 'add_staff') {
     // Only university_admin or super_admin can add staff
@@ -362,6 +389,17 @@ export async function POST(req: NextRequest) {
       admin_permissions: [],
     }).eq('id', userId);
 
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // â”€â”€ Toggle User Status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (action === 'toggle_user_status') {
+    const { userId, status } = body;
+    if (!(await ensureScope('users', userId))) {
+      return NextResponse.json({ error: 'Forbidden: User not in your university.' }, { status: 403 });
+    }
+    const { error } = await supabaseAdmin.from('users').update({ status }).eq('id', userId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }

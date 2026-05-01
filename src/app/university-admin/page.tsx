@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,7 +10,7 @@ import {
   CheckCircle, XCircle, Loader2, AlertTriangle, Plus, UserPlus, Trash2
 } from "lucide-react";
 
-type Tab = "overview"|"vendors"|"customers"|"orders"|"reviews"|"notices"|"analytics"|"insights"|"fleet"|"team";
+type Tab = "overview"|"vendors"|"customers"|"orders"|"reviews"|"notices"|"analytics"|"insights"|"fleet"|"team"|"catalog";
 
 async function uaFetch(path: string, opts: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -39,6 +39,7 @@ export default function UniversityAdminPage() {
   const [chartData, setChartData] = useState<any[]>([]);
   const [insights, setInsights] = useState<any[]>([]);
   const [team, setTeam] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
 
   const [notifForm, setNotifForm] = useState({ title:"", content:"", target:"all" });
   const [notifSending, setNotifSending] = useState(false);
@@ -63,7 +64,7 @@ export default function UniversityAdminPage() {
   const fetchAll = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const actions = ["stats","vendors","customers","orders","reviews","riders","analytics","cross_university_insights","team"];
+      const actions = ["stats","vendors","customers","orders","reviews","riders","analytics","cross_university_insights","team","products"];
       const results = await Promise.allSettled(actions.map(a => uaFetch(`/api/university-admin?action=${a}`)));
       const jsons = await Promise.allSettled(results.map((r,i) => r.status==="fulfilled"&&r.value.ok ? r.value.json() : Promise.resolve({})));
       const g = (i: number) => jsons[i].status==="fulfilled" ? (jsons[i] as any).value : {};
@@ -76,6 +77,7 @@ export default function UniversityAdminPage() {
       setChartData(g(6).chartData||[]);
       setInsights(g(7).insights||[]);
       setTeam(g(8).team||[]);
+      setProducts(g(9).products||[]);
     } catch { setError("Failed to load dashboard data."); }
     setLoading(false);
   }, []);
@@ -101,7 +103,7 @@ export default function UniversityAdminPage() {
   const pendingVendors = vendors.filter(v => v.verification_status==="pending");
 
   const TABS: [Tab, string, any][] = [
-    ["overview","Overview",LayoutDashboard],["vendors","Vendors",Store],["customers","Customers",Users],
+    ["overview","Overview",LayoutDashboard],["vendors","Vendors",Store],["catalog","Catalog",ShoppingCart],["customers","Customers",Users],
     ["orders","Orders",ShoppingCart],["reviews","Reviews",Star],["notices","Notices",Bell],
     ["analytics","Analytics",BarChart3],["insights","Insights",Globe],["fleet","Fleet",Truck],["team","My Team",Shield],
   ];
@@ -231,14 +233,19 @@ export default function UniversityAdminPage() {
                   <div className={styles.sectionHeader}><div><h2>Customers</h2><p>All users enrolled in your university</p></div></div>
                   <div className={styles.tableWrap}>
                     <table className={styles.table}>
-                      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+                      <thead><tr><th>Customer</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
                       <tbody>
-                        {filter(customers,["name","email"]).map((u:any)=>(
-                          <tr key={u.id}>
-                            <td style={{fontWeight:600}}>{u.name||"—"}</td>
-                            <td className={styles.subText}>{u.email}</td>
-                            <td><span className={`${styles.badge} ${styles.badgeLocal}`}>{u.role}</span></td>
-                            <td className={styles.subText}>{new Date(u.created_at).toLocaleDateString()}</td>
+                        {filter(customers,["name","email"]).map((c:any)=>(
+                          <tr key={c.id}>
+                            <td><div style={{fontWeight:600}}>{c.name}</div><div className={styles.subText}>{c.email}</div></td>
+                            <td><span className={styles.badge}>{c.role}</span></td>
+                            <td><span className={c.status==="active"?styles.badgeActive:styles.badgeOffline}>{c.status||"active"}</span></td>
+                            <td>{new Date(c.created_at).toLocaleDateString()}</td>
+                            <td>
+                              <button className={styles.btnSm} onClick={()=>action("toggle_user_status",{userId:c.id,status:c.status==="active"?"suspended":"active"})}>
+                                {c.status==="active"?"Suspend":"Activate"}
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -418,6 +425,38 @@ export default function UniversityAdminPage() {
                       </div>
                     ))}
                     {team.length===0&&<div style={{padding:"2rem",color:"#4a5568"}}>No staff added yet. Use Add Staff to grow your team.</div>}
+                  </div>
+                </div>
+              )}
+
+              {tab==="catalog"&&(
+                <div className={styles.sectionCard}>
+                  <div className={styles.sectionHeader}><div><h2>University Catalog</h2><p>Monitor and control all products listed in your university</p></div></div>
+                  <div className={styles.tableWrap}>
+                    <table className={styles.table}>
+                      <thead><tr><th>Product</th><th>Brand</th><th>Status</th><th>Stats</th><th>Actions</th></tr></thead>
+                      <tbody>
+                        {filter(products,["title"]).map((p:any)=>(
+                          <tr key={p.id}>
+                            <td>
+                              <div className={styles.avatarCell}>
+                                <img src={p.image_url||"/placeholder.png"} className={styles.prodThumb} />
+                                <div><div style={{fontWeight:600}}>{p.title}</div><div className={styles.subText}>₦{p.price.toLocaleString()}</div></div>
+                              </div>
+                            </td>
+                            <td>{p.brands?.name}</td>
+                            <td><span className={p.is_visible?styles.badgeActive:styles.badgeOffline}>{p.is_visible?"Visible":"Hidden"}</span></td>
+                            <td className={styles.subText}>{p.sales_count} Sales / {p.views_count} Views</td>
+                            <td>
+                              <div className={styles.actionRow}>
+                                <button className={styles.btnSm} onClick={()=>action("update_product",{productId:p.id,isVisible:!p.is_visible})}>{p.is_visible?"Hide":"Show"}</button>
+                                <button className={`${styles.btnSm} ${p.is_featured?styles.btnApprove:""}`} onClick={()=>action("update_product",{productId:p.id,isFeatured:!p.is_featured})}>{p.is_featured?"Unfeature":"Feature"}</button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}

@@ -146,7 +146,7 @@ export default function AdminDashboard() {
       setError('Connection error: Could not reach the administration server.');
     }
     setLoading(false);
-  }, [stats]);
+  }, []);
 
   const fetchUniData = async (uniId: string) => {
     setUniLoading(true);
@@ -308,7 +308,7 @@ export default function AdminDashboard() {
               <div className={styles.sectionCard}>
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                   <thead>
-                    <tr><th>Brand</th><th>Academic Details</th><th>Tier</th><th>Status</th><th>Actions</th></tr>
+                    <tr><th>Brand</th><th>University</th><th>Academic Details</th><th>Tier</th><th>Status</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {filterBy(vendors, ['name', 'matric_number']).map(v => (
@@ -318,6 +318,13 @@ export default function AdminDashboard() {
                             {v.logo_url ? <img src={v.logo_url} alt="" className={styles.tableLogo} /> : <div className={styles.logoPlaceholder}>{v.name?.substring(0, 2).toUpperCase()}</div>}
                             <div><div>{v.name}</div><div className={styles.subText}>{v.users?.email}</div></div>
                           </div>
+                        </td>
+                        <td>
+                          {v.university_id ? (
+                            <span className="badge badge-primary" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>🎓 {universities.find(u => u.id === v.university_id)?.abbreviation || 'Campus'}</span>
+                          ) : (
+                            <span className={styles.subText}>General Vendor</span>
+                          )}
                         </td>
                         <td>
                           <div className={styles.academicInfo}>
@@ -967,7 +974,7 @@ export default function AdminDashboard() {
             )}
 
             {activeTab === 'universities' && (
-              <div className={styles.content}>
+              <div className={styles.content} style={{ padding: selectedUniId ? '0' : '1.5rem' }}>
                 {!selectedUniId ? (
                   <>
                     <div className={styles.header}>
@@ -1007,7 +1014,7 @@ export default function AdminDashboard() {
                                         e.stopPropagation();
                                         if (!confirm(`Delete ${u.name}? This will affect all associated vendors.`)) return;
                                         const res = await adminFetch('/api/universities', { method: 'DELETE', body: JSON.stringify({ id: u.id }) });
-                                        if (res.ok) fetchAll();
+                                        if (res.ok) { fetchAll(); addToast('University deleted', 'success'); }
                                       }}
                                     >
                                       <Trash2 size={16} />
@@ -1151,6 +1158,7 @@ export default function AdminDashboard() {
                                           <XCircle size={12} style={{ cursor: 'pointer' }} onClick={async () => {
                                             await adminFetch('/api/admin', { method: 'POST', body: JSON.stringify({ action: 'remove_team_member', teamId: m.id }) });
                                             fetchAll();
+                                            addToast('Team member removed', 'success');
                                           }} />
                                         </div>
                                       ))}
@@ -1163,6 +1171,7 @@ export default function AdminDashboard() {
                                         if (!confirm(`Revoke admin status for ${admin.name}?`)) return;
                                         await adminFetch('/api/universities', { method: 'POST', body: JSON.stringify({ action: 'revoke_admin', userId: admin.id }) });
                                         fetchAll();
+                                        addToast('Admin status revoked', 'success');
                                       }}
                                     >
                                       Revoke Admin
@@ -1177,146 +1186,154 @@ export default function AdminDashboard() {
                     </div>
                   </>
                 ) : (
-                  <div className={styles.content}>
-                    <div className={styles.header}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <button className="btn btn-ghost" onClick={() => setSelectedUniId(null)}><ArrowLeft size={16} /> Back</button>
-                        <div>
-                          <h1>{universities.find(u => u.id === selectedUniId)?.name} Details</h1>
-                          <p className={styles.subText}>Full management for this campus ecosystem</p>
+                  <div style={{ background: 'var(--bg-100)', minHeight: '80vh', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                    <div className={styles.header} style={{ padding: '1.5rem', background: 'var(--bg-200)', borderBottom: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                          <button className="btn btn-icon" onClick={() => setSelectedUniId(null)}><ArrowLeft size={18} /></button>
+                          <div>
+                            <h2 style={{ margin: 0 }}>{universities.find(u => u.id === selectedUniId)?.name}</h2>
+                            <p className={styles.subText}>Full Campus Management & Staff Hierarchy</p>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                           <span className="badge badge-verified">Active Ecosystem</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className={styles.sectionsGrid}>
-                      <div className={styles.sectionCard}>
-                        <h3>Users Registered Under This University</h3>
-                        <div className={styles.tableWrap} style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                          <table className={styles.table}>
-                            <thead>
-                              <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Joined</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {uniUsers.map(u => (
-                                <tr key={u.id}>
-                                  <td>{u.name}</td>
-                                  <td>{u.email}</td>
-                                  <td><span className="badge badge-secondary">{u.role}</span></td>
-                                  <td>{new Date(u.created_at).toLocaleDateString()}</td>
+                    <div style={{ padding: '2rem', display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        <div className={styles.sectionCard} style={{ margin: 0 }}>
+                          <div className={styles.sectionHeader}>
+                            <h3>Enrolled Students & Staff</h3>
+                            <div className={styles.liveBadge}><span className={styles.liveDot} /> {uniUsers.length} Users</div>
+                          </div>
+                          <div className={styles.tableWrap} style={{ maxHeight: '500px' }}>
+                            <table className={styles.table}>
+                              <thead>
+                                <tr>
+                                  <th>Identity</th>
+                                  <th>Board Role</th>
+                                  <th>Status</th>
+                                  <th>Joined</th>
+                                  <th>Actions</th>
                                 </tr>
-                              ))}
-                              {uniUsers.length === 0 && <tr><td colSpan={4} style={{ textAlign: 'center' }}>No users found</td></tr>}
-                            </tbody>
-                          </table>
+                              </thead>
+                              <tbody>
+                                {filterBy(users, ['name', 'email']).map((u: any) => (
+                                  <tr key={u.id}>
+                                    <td>
+                                      <div style={{ fontWeight: 600 }}>{u.name}</div>
+                                      <div className={styles.subText}>{u.email}</div>
+                                    </td>
+                                    <td>
+                                      {u.universities ? (
+                                        <span className="badge badge-primary" style={{ background: 'rgba(124,58,237,0.1)' }}>📍 {u.universities.abbreviation || u.universities.name}</span>
+                                      ) : (
+                                        <span className={styles.subText}>Global User</span>
+                                      )}
+                                    </td>
+                                    <td><span className={`badge ${u.role === 'admin' ? 'badge-verified' : u.role === 'vendor' ? 'badge-gold' : 'badge-ghost'}`}>{u.role}</span></td>
+                                    <td><span className={u.status === 'active' ? 'text-green' : 'text-red'}>{u.status}</span></td>
+                                    <td className={styles.subText}>{new Date(u.created_at).toLocaleDateString()}</td>
+                                    <td>
+                                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button className="btn btn-ghost btn-sm" onClick={() => { adminAction('toggle_user_status', { userId: u.id, status: u.status === 'active' ? 'suspended' : 'active' }); addToast('Saved', 'success'); }}>
+                                          {u.status === 'active' ? 'Suspend' : 'Activate'}
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       </div>
 
-                      <div className={styles.sectionCard}>
-                        <h3>Campus Management Team</h3>
-                        <p className={styles.subText} style={{ marginBottom: '1rem' }}>Assign roles and board permissions for this university</p>
-                        
-                        <div className={styles.settingsBox} style={{ marginBottom: '1.5rem' }}>
-                          <h4>Add Team Member</h4>
-                          <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
-                            <input 
-                              className="form-input" 
-                              placeholder="Search user..." 
-                              value={adminSearch}
-                              onChange={e => setAdminSearch(e.target.value)}
-                            />
-                            {adminSearch && (
-                              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-100)', border: '1px solid var(--border)', borderRadius: '8px', zIndex: 20, maxHeight: '200px', overflowY: 'auto' }}>
-                                {users.filter(u => u.name?.toLowerCase().includes(adminSearch.toLowerCase()) || u.email?.toLowerCase().includes(adminSearch.toLowerCase())).slice(0, 5).map(u => (
-                                  <div 
-                                    key={u.id} 
-                                    style={{ padding: '0.75rem', cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
-                                    onClick={() => {
-                                      setSelectedAdminId(u.id);
-                                      setAdminSearch(`${u.name} (${u.email})`);
-                                    }}
-                                  >
-                                    <strong>{u.name}</strong>
-                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-400)' }}>{u.email}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div className={styles.settingsBox} style={{ background: 'var(--bg-200)', border: '1px solid var(--primary)' }}>
+                          <h4 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Add to Management Team</h4>
+                          <p className={styles.subText} style={{ marginBottom: '1rem' }}>Assign delegated permissions for this university's sub-dashboards.</p>
                           
-                          <div style={{ marginBottom: '0.75rem' }}>
-                            <label className={styles.subText} style={{ display: 'block', marginBottom: '0.5rem' }}>Grant Board Access:</label>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                              {['overview', 'vendors', 'catalog', 'users'].map(p => (
-                                <label key={p} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', cursor: 'pointer' }}>
-                                  <input type="checkbox" id={`perm-${p}`} style={{ accentColor: 'var(--primary)' }} />
-                                  {p.charAt(0).toUpperCase() + p.slice(1)} Access
+                          <div className="mb-3">
+                            <label className={styles.subText}>Selected Member</label>
+                            <input className="form-input" readOnly value={adminSearch || 'Select a user from the list'} />
+                          </div>
+
+                          <div className="mb-4">
+                            <label className={styles.subText} style={{ display: 'block', marginBottom: '0.75rem' }}>Permissions Access</label>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.6rem' }}>
+                              {[
+                                { id: 'overview', label: 'Overview & Stats' },
+                                { id: 'vendors', label: 'Vendors & Verification' },
+                                { id: 'catalog', label: 'Catalog (Products)' },
+                                { id: 'users', label: 'User Management' }
+                              ].map(p => (
+                                <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.85rem', cursor: 'pointer', padding: '0.5rem', background: 'var(--bg-300)', borderRadius: '6px' }}>
+                                  <input type="checkbox" id={`perm-${p.id}`} style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }} />
+                                  {p.label}
                                 </label>
                               ))}
                             </div>
                           </div>
 
-                          <button className="btn btn-primary w-full" onClick={async () => {
-                            const perms = ['overview', 'vendors', 'catalog', 'users'].filter(p => (document.getElementById(`perm-${p}`) as HTMLInputElement)?.checked);
-                            if (!selectedAdminId) return addToast('Please select a user', 'error');
-                            const res = await adminFetch('/api/admin', { 
-                              method: 'POST', 
-                              body: JSON.stringify({ 
-                                action: 'add_team_member', 
-                                universityId: selectedUniId,
-                                memberId: selectedAdminId,
-                                role: 'campus_staff',
-                                permissions: perms
-                              }) 
-                            });
-                            if (res.ok) {
-                              addToast('Member added to campus team', 'success');
-                              setAdminSearch('');
-                              setSelectedAdminId('');
-                              fetchUniData(selectedUniId!);
-                            }
-                          }}>
-                            Add to Campus Team
+                          <button 
+                            className="btn btn-primary w-full"
+                            style={{ height: '48px', fontWeight: 700 }}
+                            onClick={async () => {
+                              const perms = ['overview', 'vendors', 'catalog', 'users'].filter(p => (document.getElementById(`perm-${p}`) as HTMLInputElement)?.checked);
+                              if (!selectedAdminId) return addToast('Please select a user first', 'error');
+                              
+                              const res = await adminFetch('/api/admin', { 
+                                method: 'POST', 
+                                body: JSON.stringify({ 
+                                  action: 'add_team_member', 
+                                  universityId: selectedUniId,
+                                  memberId: selectedAdminId,
+                                  role: 'campus_staff',
+                                  permissions: perms
+                                }) 
+                              });
+                              if (res.ok) {
+                                addToast('Team updated successfully!', 'success');
+                                setAdminSearch('');
+                                setSelectedAdminId('');
+                                fetchUniData(selectedUniId!);
+                              }
+                            }}
+                          >
+                            Save Team Changes
                           </button>
                         </div>
 
-                        <div className={styles.tableWrap}>
-                          <table className={styles.table}>
-                            <thead>
-                              <tr>
-                                <th>Name</th>
-                                <th>Permissions</th>
-                                <th>Action</th>
-                              </tr>
-                            </thead>
-                            <tbody>
+                        <div className={styles.sectionCard} style={{ margin: 0, padding: '1.25rem' }}>
+                          <h4 style={{ marginBottom: '1rem' }}>Active Team Members</h4>
+                          {uniTeams.length === 0 ? (
+                            <p className={styles.subText}>No staff assigned yet.</p>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                               {uniTeams.map(m => (
-                                <tr key={m.id}>
-                                  <td>
-                                    <div style={{ fontWeight: 600 }}>{m.member?.name}</div>
-                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-400)' }}>{m.member?.email}</div>
-                                  </td>
-                                  <td>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                                      {m.permissions?.map((p: string) => (
-                                        <span key={p} className="badge badge-primary" style={{ fontSize: '0.65rem' }}>{p}</span>
-                                      ))}
-                                    </div>
-                                  </td>
-                                  <td>
-                                    <button className="btn btn-icon text-red" onClick={async () => {
+                                <div key={m.id} style={{ padding: '0.75rem', background: 'var(--bg-200)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                    <strong style={{ fontSize: '0.85rem' }}>{m.member?.name}</strong>
+                                    <Trash2 size={14} style={{ color: '#ef4444', cursor: 'pointer' }} onClick={async () => {
+                                      if(!confirm('Remove this member?')) return;
                                       await adminFetch('/api/admin', { method: 'POST', body: JSON.stringify({ action: 'remove_team_member', teamId: m.id }) });
                                       fetchUniData(selectedUniId!);
-                                    }}><Trash2 size={14} /></button>
-                                  </td>
-                                </tr>
+                                      addToast('Member removed', 'success');
+                                    }} />
+                                  </div>
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                                    {m.permissions?.map((p: string) => (
+                                      <span key={p} className="badge badge-primary" style={{ fontSize: '0.6rem', padding: '0.1rem 0.4rem' }}>{p}</span>
+                                    ))}
+                                  </div>
+                                </div>
                               ))}
-                            </tbody>
-                          </table>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
