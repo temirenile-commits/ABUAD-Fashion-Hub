@@ -2463,7 +2463,7 @@ export default function VendorDashboard() {
 
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
                         <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--text-100)' }}>
-                          Ã¢â€šÂ¦{tier.price.toLocaleString()}
+                          ₦{tier.price.toLocaleString()}
                         </span>
                         <span style={{ color: 'var(--text-400)', fontSize: '0.9rem' }}>{tier.period}</span>
                       </div>
@@ -2488,8 +2488,8 @@ export default function VendorDashboard() {
                           fontWeight: 700,
                         }}
                       >
-                        {paying === tier.id ? <><Loader2 size={16} className="spin" /> ProcessingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦</> :
-                          isActive ? '? Current Plan' : `Subscribe ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ?${tier.price.toLocaleString()}/mo`}
+                        {paying === tier.id ? <><Loader2 size={16} className="spin" /> Processing...</> :
+                          isActive ? '✅ Current Plan' : `Subscribe — ₦${tier.price.toLocaleString()}/mo`}
                       </button>
                     </div>
                   );
@@ -2511,8 +2511,8 @@ export default function VendorDashboard() {
                   <h3 style={{ fontSize: '1rem', color: 'var(--accent-gold)' }}>Campus Billboard</h3>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Get featured on the main homepage "The Gold Collection" billboard for 7 days.</p>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 900, color: '#fff' }}>Ã¢â€šÂ¦500 <small>/week</small></span>
-                    <button className="btn btn-primary btn-sm" onClick={() => handleSubscribe({ id: 'billboard_boost', price: 500 })}>Activate ?</button>
+                    <span style={{ fontWeight: 900, color: '#fff' }}>₦500 <small>/week</small></span>
+                    <button className="btn btn-primary btn-sm" onClick={() => handleSubscribe({ id: 'billboard_boost', price: 500 })}>Activate 🚀</button>
                   </div>
                 </div>
 
@@ -2526,14 +2526,14 @@ export default function VendorDashboard() {
                     <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.5rem' }}>{boost.desc}</div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-500)', marginBottom: '1.25rem' }}>Duration: {boost.duration}</div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-                      <span style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--primary)' }}>Ã¢â€šÂ¦{boost.price.toLocaleString()}</span>
+                      <span style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--primary)' }}>₦{boost.price.toLocaleString()}</span>
                       <button
                         className="btn btn-primary btn-sm"
                         disabled={paying === boost.id}
                         onClick={() => handleSubscribe({ id: boost.id, price: boost.price })}
                         style={{ fontWeight: 700 }}
                       >
-                        {paying === boost.id ? <><Loader2 size={14} className="spin" /> PayingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦</> : 'Boost Now ?'}
+                        {paying === boost.id ? <><Loader2 size={14} className="spin" /> Paying...</> : 'Boost Now 🚀'}
                       </button>
                     </div>
                   </div>
