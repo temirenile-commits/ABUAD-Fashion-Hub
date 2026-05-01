@@ -298,12 +298,25 @@ export async function GET(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     
     // Transform to include admin count
-    const transformed = (data || []).map(u => {
-      const admins = (u as any).users?.filter((usr: any) => usr.role === 'university_admin') || [];
-      return { ...u, adminCount: admins.length };
-    });
+    const transformed = (data || []).map(u => ({
+      ...u,
+      adminCount: (u as any).users?.filter((usr: any) => usr.role === 'admin' || usr.role === 'university_admin').length || 0
+    }));
 
     return NextResponse.json({ universities: transformed });
+  }
+
+  if (action === 'university_config') {
+    const uniId = searchParams.get('uniId');
+    if (!uniId) return NextResponse.json({ error: 'UniId required' }, { status: 400 });
+    
+    const { data: config } = await supabaseAdmin
+      .from('platform_settings')
+      .select('value')
+      .eq('key', `uni_config_${uniId}`)
+      .single();
+    
+    return NextResponse.json({ config: config?.value || {} });
   }
 
   if (action === 'university_admins') {

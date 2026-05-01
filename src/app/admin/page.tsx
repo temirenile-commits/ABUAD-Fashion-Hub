@@ -66,7 +66,8 @@ export default function AdminDashboard() {
   
   const [selectedUniId, setSelectedUniId] = useState<string | null>(null);
   const [uniUsers, setUniUsers] = useState<any[]>([]);
-  const [uniTeams, setUniTeams] = useState<any[]>([]);
+  const [uniStats, setUniStats] = useState<any>(null);
+  const [uniConfig, setUniConfig] = useState<any>({});
   const [uniLoading, setUniLoading] = useState(false);
   
   const { addToast } = useToast();
@@ -149,25 +150,26 @@ export default function AdminDashboard() {
     setLoading(false);
   }, []);
 
-  const [uniStats, setUniStats] = useState<any>(null);
 
   const fetchUniData = async (uniId: string) => {
     setUniLoading(true);
     setUniUsers([]); // Clear to avoid mix-up
     setUniTeams([]);
     setUniStats(null);
+    setUniConfig({});
     try {
-      const [uRes, tRes, sRes] = await Promise.all([
+      const [uRes, tRes, sRes, cRes] = await Promise.all([
         adminFetch(`/api/admin?action=university_users&uniId=${uniId}`),
         adminFetch(`/api/admin?action=university_teams&uniId=${uniId}`),
-        adminFetch(`/api/admin?action=stats&uniId=${uniId}`)
+        adminFetch(`/api/admin?action=stats&uniId=${uniId}`),
+        adminFetch(`/api/admin?action=university_config&uniId=${uniId}`)
       ]);
-      const [uData, tData, sData] = await Promise.all([uRes.json(), tRes.json(), sRes.json()]);
+      const [uData, tData, sData, cData] = await Promise.all([uRes.json(), tRes.json(), sRes.json(), cRes.json()]);
       
-      // Safety filter: ensure no super admin appears in campus lists
       setUniUsers((uData.users || []).filter((u: any) => u.role !== 'admin'));
       setUniTeams(tData.teams || []);
       setUniStats(sData.stats || null);
+      setUniConfig(cData.config || {});
     } catch { addToast('Failed to load university details', 'error'); }
     setUniLoading(false);
   };
@@ -1400,28 +1402,105 @@ export default function AdminDashboard() {
                           )}
                         </div>
 
+                        <div className={styles.settingsBox} style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid #3b82f6' }}>
+                          <h4 style={{ color: '#3b82f6', marginBottom: '1rem' }}>Campus Subscription & Credit Rates</h4>
+                          <p className={styles.subText} style={{ marginBottom: '1rem' }}>Adjust plans and credit pricing specifically for this university.</p>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                            <div>
+                              <label className={styles.subText}>Credit Listing Price (₦)</label>
+                              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
+                                <input 
+                                  type="number" 
+                                  className="form-input" 
+                                  style={{ height: '36px' }}
+                                  value={uniConfig.credit_price || ''}
+                                  placeholder="e.g. 50"
+                                  onChange={(e) => setUniConfig({ ...uniConfig, credit_price: e.target.value })}
+                                />
+                                <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'credit_price', value: uniConfig.credit_price })}>Save</button>
+                              </div>
+                            </div>
+
+                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+                              <label className={styles.subText} style={{ marginBottom: '0.75rem', display: 'block' }}>Campus Specific Plans</label>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+                                {['quarter', 'half', 'full'].map(tierId => {
+                                  const planConfig = uniConfig.plans?.[tierId] || {};
+                                  return (
+                                    <div key={tierId} style={{ background: 'var(--bg-300)', padding: '0.75rem', borderRadius: '8px' }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                        <strong style={{ fontSize: '0.8rem', textTransform: 'capitalize' }}>{tierId} Plan</strong>
+                                        <input 
+                                          type="number" 
+                                          className="form-input" 
+                                          style={{ width: '80px', height: '28px', fontSize: '0.7rem' }}
+                                          value={planConfig.price || ''}
+                                          placeholder="Price (₦)"
+                                          onChange={(e) => {
+                                            const next = { ...uniConfig, plans: { ...uniConfig.plans, [tierId]: { ...planConfig, price: e.target.value } } };
+                                            setUniConfig(next);
+                                          }}
+                                        />
+                                      </div>
+                                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                                        {['listing_unlimited', 'reels_unlimited', 'priority_support', 'analytics_pro'].map(feat => (
+                                          <label key={feat} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.65rem', cursor: 'pointer' }}>
+                                            <input 
+                                              type="checkbox" 
+                                              checked={(planConfig.features || []).includes(feat)}
+                                              onChange={(e) => {
+                                                const currentFeats = planConfig.features || [];
+                                                const nextFeats = e.target.checked ? [...currentFeats, feat] : currentFeats.filter((f: string) => f !== feat);
+                                                const next = { ...uniConfig, plans: { ...uniConfig.plans, [tierId]: { ...planConfig, features: nextFeats } } };
+                                                setUniConfig(next);
+                                              }}
+                                            />
+                                            {feat.replace('_', ' ')}
+                                          </label>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'plans', value: uniConfig.plans })}>Update Campus Plans</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
                         <div className={styles.settingsBox} style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid #f59e0b' }}>
                           <h4 style={{ color: '#f59e0b', marginBottom: '1rem' }}>Campus Rate Overrides</h4>
                           <p className={styles.subText} style={{ marginBottom: '1rem' }}>Set custom booster and subscription rates specifically for this campus.</p>
                           
                           <div className="mb-3">
                             <label className={styles.subText}>Sub. Discount Rate (%)</label>
-                            <input 
-                              type="number" 
-                              className="form-input" 
-                              placeholder="e.g. 10" 
-                              onChange={(e) => adminAction('update_uni_config', { universityId: selectedUniId, key: 'sub_discount', value: e.target.value })}
-                            />
+                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
+                              <input 
+                                type="number" 
+                                className="form-input" 
+                                style={{ height: '36px' }}
+                                placeholder="e.g. 10" 
+                                value={uniConfig.sub_discount || ''}
+                                onChange={(e) => setUniConfig({ ...uniConfig, sub_discount: e.target.value })}
+                              />
+                              <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'sub_discount', value: uniConfig.sub_discount })}>Save</button>
+                            </div>
                           </div>
                           
                           <div className="mb-3">
-                            <label className={styles.subText}>Booster Premium Multiplier</label>
-                            <input 
-                              type="number" 
-                              className="form-input" 
-                              placeholder="e.g. 1.5" 
-                              onChange={(e) => adminAction('update_uni_config', { universityId: selectedUniId, key: 'boost_multiplier', value: e.target.value })}
-                            />
+                            <label className={styles.subText}>Booster Multiplier</label>
+                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
+                              <input 
+                                type="number" 
+                                className="form-input" 
+                                style={{ height: '36px' }}
+                                placeholder="e.g. 1.5" 
+                                value={uniConfig.boost_multiplier || ''}
+                                onChange={(e) => setUniConfig({ ...uniConfig, boost_multiplier: e.target.value })}
+                              />
+                              <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'boost_multiplier', value: uniConfig.boost_multiplier })}>Save</button>
+                            </div>
                           </div>
                           
                           <p className={styles.subText} style={{ fontSize: '0.7rem', fontStyle: 'italic' }}>* Overrides take effect immediately for new transactions on this campus.</p>

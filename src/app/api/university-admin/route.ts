@@ -191,7 +191,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ team: data || [] });
   }
 
-  // â”€â”€ Products (Catalog) in university â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // — Products (Catalog) in university ——————————————————————————————————————
   if (action === 'products') {
     const { data, error } = await supabaseAdmin
       .from('products')
@@ -206,7 +206,8 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }
 
-// â”€â”€â”€ POST Handler — University-scoped admin actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ————————————————————————————————————————————————————
+// — POST Handler — University-scoped admin actions —————————————————————
 export async function POST(req: NextRequest) {
   let ctx;
   try {
@@ -263,6 +264,17 @@ export async function POST(req: NextRequest) {
       .from('brands')
       .update({ verification_status: 'suspended', verified: false })
       .eq('id', brandId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // â”€â”€ Delete vendor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (action === 'delete_vendor') {
+    const { brandId } = body;
+    if (!(await ensureScope('brands', brandId))) {
+      return NextResponse.json({ error: 'Forbidden: Vendor not in your university.' }, { status: 403 });
+    }
+    const { error } = await supabaseAdmin.from('brands').delete().eq('id', brandId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }
@@ -331,6 +343,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  // â”€â”€ Verify rider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (action === 'verify_rider') {
+    const { userId } = body;
+    if (!(await ensureScope('delivery_agents', userId, 'university_id'))) {
+      return NextResponse.json({ error: 'Forbidden: Rider not in your university.' }, { status: 403 });
+    }
+    const { error } = await supabaseAdmin.from('delivery_agents').update({ is_active: true }).eq('id', userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
   // â”€â”€ Manage Products (Toggle Visibility/Feature) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (action === 'update_product') {
     const { productId, isVisible, isFeatured } = body;
@@ -342,6 +365,39 @@ export async function POST(req: NextRequest) {
     if (isFeatured !== undefined) update.is_featured = isFeatured;
 
     const { error } = await supabaseAdmin.from('products').update(update).eq('id', productId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // â”€â”€ Delete product â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (action === 'delete_product') {
+    const { productId } = body;
+    if (!(await ensureScope('products', productId))) {
+      return NextResponse.json({ error: 'Forbidden: Product not in your university.' }, { status: 403 });
+    }
+    const { error } = await supabaseAdmin.from('products').delete().eq('id', productId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // â”€â”€ Update University Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (action === 'update_uni_config') {
+    const { config } = body;
+    const targetUniId = ctx.universityId || body.university_id;
+    
+    if (!targetUniId) return NextResponse.json({ error: 'University ID required' }, { status: 400 });
+    
+    // Ensure university admin can only update their own university
+    if (!ctx.isFullAdmin && targetUniId !== ctx.universityId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { error } = await supabaseAdmin.from('platform_settings').upsert({
+      key: `uni_config_${targetUniId}`,
+      value: config,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'key' });
+
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }
@@ -404,16 +460,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
-  // â”€â”€ BLOCK: Prevent financial/pricing actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â”€â”€ BLOCK: Prevent global financial actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const FORBIDDEN_ACTIONS = [
-    'update_settings', 'confirm_payout', 'reject_payout',
+    'confirm_payout', 'reject_payout',
     'activate_plan', 'activate_boost', 'update_visibility_price',
     'create_promo_code', 'delete_promo_code'
   ];
 
   if (FORBIDDEN_ACTIONS.includes(action) && !ctx.isFullAdmin) {
     return NextResponse.json({
-      error: 'Forbidden: University admins cannot access financial or pricing controls.',
+      error: 'Forbidden: University admins cannot access global financial or promo controls.',
     }, { status: 403 });
   }
 

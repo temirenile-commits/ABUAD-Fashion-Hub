@@ -455,6 +455,15 @@
   object-fit: cover;
 }
 
+.prodThumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--bg-200);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
 /* ─── Badges ──────────────────────────────────────────────── */
 .badge {
   display: inline-flex;
@@ -511,6 +520,9 @@
 
 .btnReject { color: #ef4444 !important; border-color: rgba(239,68,68,0.25) !important; }
 .btnReject:hover { background: rgba(239,68,68,0.1) !important; }
+
+.btnDelete { color: #ef4444 !important; border: 1px solid rgba(239,68,68,0.15) !important; background: rgba(239,68,68,0.05) !important; }
+.btnDelete:hover { background: #ef4444 !important; color: #fff !important; }
 
 .btnPrimary {
   padding: 0.5rem 1.1rem;

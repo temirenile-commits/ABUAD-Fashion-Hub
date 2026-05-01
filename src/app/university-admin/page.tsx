@@ -41,6 +41,7 @@ export default function UniversityAdminPage() {
   const [insights, setInsights] = useState<any[]>([]);
   const [team, setTeam] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [staffSearch, setStaffSearch] = useState("");
 
   const [notifForm, setNotifForm] = useState({ title:"", content:"", target:"all" });
   const [notifSending, setNotifSending] = useState(false);
@@ -181,7 +182,7 @@ export default function UniversityAdminPage() {
                       {label:"Customers",val:stats.totalUsers||0,color:"#3b82f6",bg:"rgba(59,130,246,0.1)"},
                       {label:"Total Orders",val:stats.totalOrders||0,color:"#f59e0b",bg:"rgba(245,158,11,0.1)"},
                       {label:"Paid Orders",val:stats.paidOrders||0,color:"#10b981",bg:"rgba(16,185,129,0.1)"},
-                      {label:"Revenue (₦)",val:`₦${(stats.totalRevenue||0).toLocaleString()}`,color:"#ec4899",bg:"rgba(236,72,153,0.1)"},
+                      {label:"Revenue",val:`₦${(stats.totalRevenue||0).toLocaleString()}`,color:"#ec4899",bg:"rgba(236,72,153,0.1)"},
                       {label:"Riders",val:stats.totalRiders||0,color:"#06b6d4",bg:"rgba(6,182,212,0.1)"},
                     ].map(({label,val,color,bg})=>(
                       <div key={label} className={styles.statCard}>
@@ -221,8 +222,9 @@ export default function UniversityAdminPage() {
                             <td><span style={{fontSize:"0.75rem",color:"#a78bfa"}}>{v.subscription_tier||"free"}</span></td>
                             <td>
                               <div className={styles.actionRow}>
-                                {v.verification_status!=="verified"&&<button className={`${styles.btnSm} ${styles.btnApprove}`} onClick={()=>action("verify_vendor",{brandId:v.id})} disabled={!!actionLoading}><CheckCircle size={13}/>Verify</button>}
-                                {v.verification_status!=="rejected"&&<button className={`${styles.btnSm} ${styles.btnReject}`} onClick={()=>{const r=prompt("Rejection reason:");if(r)action("reject_vendor",{brandId:v.id,reason:r});}} disabled={!!actionLoading}><XCircle size={13}/>Reject</button>}
+                                {v.verification_status!=="verified"&&<button className={`${styles.btnSm} ${styles.btnApprove}`} onClick={()=>action("verify_vendor",{brandId:v.id})} disabled={!!actionLoading} title="Verify Vendor"><CheckCircle size={13}/></button>}
+                                {v.verification_status!=="rejected"&&<button className={`${styles.btnSm} ${styles.btnReject}`} onClick={()=>{const r=prompt("Rejection reason:");if(r)action("reject_vendor",{brandId:v.id,reason:r});}} disabled={!!actionLoading} title="Reject Vendor"><XCircle size={13}/></button>}
+                                <button className={`${styles.btnSm} ${styles.btnDelete}`} onClick={()=>{if(confirm("Delete vendor? This is permanent.")) action("delete_vendor",{brandId:v.id});}} title="Delete Vendor"><Trash2 size={13}/></button>
                               </div>
                             </td>
                           </tr>
@@ -242,7 +244,7 @@ export default function UniversityAdminPage() {
                       <tbody>
                         {filter(customers,["name","email"]).map((c:any)=>(
                           <tr key={c.id}>
-                            <td><div style={{fontWeight:600}}>{c.name}</div><div className={styles.subText}>{c.email}</div></td>
+                            <td><div style={{fontWeight:600}}>{c.name || c.email.split('@')[0]}</div><div className={styles.subText}>{c.email}</div></td>
                             <td><span className={styles.badge}>{c.role}</span></td>
                             <td><span className={c.status==="active"?styles.badgeActive:styles.badgeOffline}>{c.status||"active"}</span></td>
                             <td>{new Date(c.created_at).toLocaleDateString()}</td>
@@ -296,8 +298,11 @@ export default function UniversityAdminPage() {
                       <tbody>
                         {filter(reviews,["comment"]).map((r:any)=>(
                           <tr key={r.id}>
-                            <td>{r.users?.name||"—"}</td>
-                            <td className={styles.subText}>{r.products?.title||r.brands?.name||"—"}</td>
+                            <td>{r.users?.name || r.users?.email?.split('@')[0] || "—"}</td>
+                             <td className={styles.subText}>
+                               <div style={{fontWeight:600}}>{r.products?.title || r.brands?.name || "—"}</div>
+                               {r.products?.description && <div className={styles.subText} style={{fontSize:'0.7rem', maxWidth:'200px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{r.products.description}</div>}
+                             </td>
                             <td style={{color:"#f59e0b",fontWeight:700}}>{"★".repeat(r.rating)}</td>
                             <td>{r.comment||"—"}</td>
                             <td className={styles.subText}>{new Date(r.created_at).toLocaleDateString()}</td>
@@ -390,14 +395,19 @@ export default function UniversityAdminPage() {
                       <thead><tr><th>Rider</th><th>Status</th><th>Deliveries</th><th>Balance</th></tr></thead>
                       <tbody>
                         {riders.map((r:any)=>(
-                          <tr key={r.id}>
-                            <td><div style={{fontWeight:600}}>{r.name}</div><div className={styles.subText}>{r.email}</div></td>
-                            <td><span className={`${styles.badge} ${r.is_active?styles.badgeActive:styles.badgeOffline}`}>{r.is_active?"Online":"Offline"}</span></td>
-                            <td>{r.completed_orders_count||0}</td>
-                            <td style={{color:"#f59e0b",fontWeight:700}}>₦{Number(r.wallet_balance||0).toLocaleString()}</td>
-                          </tr>
-                        ))}
-                        {riders.length===0&&<tr><td colSpan={4} style={{textAlign:"center",color:"#4a5568",padding:"2rem"}}>No riders assigned yet</td></tr>}
+                           <tr key={r.id}>
+                             <td><div style={{fontWeight:600}}>{r.name || r.email.split('@')[0]}</div><div className={styles.subText}>{r.email}</div></td>
+                             <td>
+                               <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                                 <span className={`${styles.badge} ${r.is_active?styles.badgeActive:styles.badgeOffline}`}>{r.is_active?"Active":"Inactive"}</span>
+                                 {!r.is_active && <button className={styles.btnSm} onClick={()=>action("verify_rider",{userId:r.id})}><CheckCircle size={12}/> Verify</button>}
+                               </div>
+                             </td>
+                             <td>{r.completed_orders_count||0} Deliveries</td>
+                             <td style={{color:"#f59e0b",fontWeight:700}}>₦{Number(r.wallet_balance||0).toLocaleString()}</td>
+                           </tr>
+                         ))}
+                        {riders.length===0&&<tr><td colSpan={4} style={{textAlign:"center",color:"#4a5568",padding:"2rem"}}>No riders assigned yet. <button className={styles.btnSm} onClick={()=>setTab("customers")}>Find riders in Users</button></td></tr>}
                       </tbody>
                     </table>
                   </div>
@@ -414,9 +424,9 @@ export default function UniversityAdminPage() {
                     {team.map((m:any)=>(
                       <div key={m.id} className={styles.teamCard}>
                         <div className={styles.teamCardHeader}>
-                          <div className={styles.teamAvatar}>{m.name?.charAt(0)?.toUpperCase()}</div>
+                          <div className={styles.teamAvatar}>{m.name?.charAt(0)?.toUpperCase() || "S"}</div>
                           <div>
-                            <div style={{fontWeight:700}}>{m.name}</div>
+                            <div style={{fontWeight:700}}>{m.name || m.email?.split('@')[0]}</div>
                             <div className={styles.subText}>{m.email}</div>
                           </div>
                         </div>
@@ -453,11 +463,13 @@ export default function UniversityAdminPage() {
                             <td><span className={p.is_visible?styles.badgeActive:styles.badgeOffline}>{p.is_visible?"Visible":"Hidden"}</span></td>
                             <td className={styles.subText}>{p.sales_count} Sales / {p.views_count} Views</td>
                             <td>
-                              <div className={styles.actionRow}>
-                                <button className={styles.btnSm} onClick={()=>action("update_product",{productId:p.id,isVisible:!p.is_visible})}>{p.is_visible?"Hide":"Show"}</button>
-                                <button className={`${styles.btnSm} ${p.is_featured?styles.btnApprove:""}`} onClick={()=>action("update_product",{productId:p.id,isFeatured:!p.is_featured})}>{p.is_featured?"Unfeature":"Feature"}</button>
-                              </div>
-                            </td>
+                               <div className={styles.actionRow}>
+                                 <button className={styles.btnSm} onClick={()=>action("update_product",{productId:p.id,isVisible:!p.is_visible})} title={p.is_visible?"Hide":"Show"}>{p.is_visible?<XCircle size={13}/>:<CheckCircle size={13}/>}</button>
+                                 <button className={`${styles.btnSm} ${p.is_featured?styles.btnApprove:""}`} onClick={()=>action("update_product",{productId:p.id,isFeatured:!p.is_featured})} title={p.is_featured?"Unfeature":"Feature"}><Star size={13}/></button>
+                                 <button className={`${styles.btnSm} ${styles.btnDelete}`} onClick={()=>{if(confirm("Delete product?")) action("delete_product",{productId:p.id});}} title="Delete Product"><Trash2 size={13}/></button>
+                                 <button className={styles.btnSm} onClick={()=>{alert(`Properties: ${JSON.stringify(p.properties||{}, null, 2)}\n\nDescription: ${p.description||"No description"}`);}} title="View Details"><BarChart3 size={13}/></button>
+                               </div>
+                             </td>
                           </tr>
                         ))}
                       </tbody>
@@ -475,9 +487,35 @@ export default function UniversityAdminPage() {
           <div className={styles.modal} onClick={e=>e.stopPropagation()}>
             <h3>Add Staff Member</h3>
             <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
-              <div>
-                <label className={styles.formLabel}>User ID or Email</label>
-                <input className={styles.formInput} placeholder="Paste user UUID..." value={staffForm.userId} onChange={e=>setStaffForm({...staffForm,userId:e.target.value})}/>
+              <div style={{position:"relative"}}>
+                <label className={styles.formLabel}>Search University User</label>
+                <div className={styles.searchBar} style={{background:"var(--bg-200)", padding:"0 0.75rem"}}>
+                  <Search size={14}/>
+                  <input 
+                    className={styles.formInput} 
+                    style={{border:"none", background:"none"}}
+                    placeholder="Type name or email..." 
+                    value={staffSearch} 
+                    onChange={e=>setStaffSearch(e.target.value)}
+                  />
+                </div>
+                {staffSearch.length > 1 && (
+                  <div style={{position:"absolute", top:"100%", left:0, right:0, background:"#1a1a2e", border:"1px solid var(--primary)", borderRadius:"8px", marginTop:"4px", zIndex:200, maxHeight:"200px", overflowY:"auto"}}>
+                    {customers.filter(u => u.name?.toLowerCase().includes(staffSearch.toLowerCase()) || u.email.toLowerCase().includes(staffSearch.toLowerCase())).map(u => (
+                      <div 
+                        key={u.id} 
+                        style={{padding:"0.75rem", cursor:"pointer", borderBottom:"1px solid rgba(255,255,255,0.05)"}}
+                        onClick={()=>{
+                          setStaffForm({...staffForm, userId:u.id});
+                          setStaffSearch(u.name || u.email);
+                        }}
+                      >
+                        <div style={{fontWeight:600, fontSize:"0.85rem"}}>{u.name || u.email.split('@')[0]}</div>
+                        <div style={{fontSize:"0.7rem", color:"var(--text-400)"}}>{u.email}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <label className={styles.formLabel}>Role</label>
