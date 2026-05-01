@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import styles from '../auth.module.css';
 import { supabase } from '@/lib/supabase';
@@ -17,6 +17,14 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [universities, setUniversities] = useState<any[]>([]);
+  const [universityId, setUniversityId] = useState('');
+
+  useEffect(() => {
+    supabase.from('universities').select('id, name').eq('is_active', true).then(({ data }) => {
+      if (data) setUniversities(data);
+    });
+  }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +40,12 @@ export default function RegisterPage() {
 
     if (!isLongEnough || !hasUpperCase || !hasLowerCase || !hasNumbers || !hasSymbols) {
       setErrorMsg('Password must be at least 6 characters and include uppercase, lowercase, numbers, and symbols.');
+      setLoading(false);
+      return;
+    }
+
+    if (role === 'customer' && !universityId) {
+      setErrorMsg('Please select your university.');
       setLoading(false);
       return;
     }
@@ -62,6 +76,7 @@ export default function RegisterPage() {
           name: name,
           role: role,
           phone: null,
+          university_id: universityId || null,
         }, { onConflict: 'id' });
 
         // Give a small hint if email confirmation is likely on
@@ -130,6 +145,14 @@ export default function RegisterPage() {
           <div className="form-group">
             <label className="form-label">Email Address</label>
             <input className="form-input" type="email" placeholder="john@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">{role === 'vendor' ? 'University Base (Optional for General Vendors)' : 'Your University'}</label>
+            <select className="form-input" value={universityId} onChange={(e) => setUniversityId(e.target.value)} required={role === 'customer'} disabled={loading}>
+              <option value="">{role === 'vendor' ? '-- Select Campus or leave blank for General --' : 'Select your university...'}</option>
+              {role === 'vendor' && <option value="">🌍 General / Multi-Campus Vendor</option>}
+              {universities.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
           </div>
           <div className="form-group">
             <label className="form-label">Password</label>

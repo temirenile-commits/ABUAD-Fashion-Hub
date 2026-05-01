@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -270,14 +270,15 @@ export default function OnboardingPage() {
                   <label className="form-label">Brand Description *</label>
                   <textarea className="form-input" placeholder="What do you sell?" value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
                 </div>
-                                <div className="form-group">
-                  <label className="form-label">Your University *</label>
+                <div className="form-group">
+                  <label className="form-label">University Base (Optional for General Vendors)</label>
                   <select
                     className="form-input"
                     value={form.universityId}
                     onChange={e => setForm({...form, universityId: e.target.value})}
                   >
-                    <option value="">-- Select your university --</option>
+                    <option value="">-- Select Campus or leave blank for General --</option>
+                    <option value="">🌍 General / Multi-Campus Vendor</option>
                     {universities.map((u: any) => (
                       <option key={u.id} value={u.id}>{u.name}</option>
                     ))}

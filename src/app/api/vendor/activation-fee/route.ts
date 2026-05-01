@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
     const { data: brand } = await supabaseAdmin
       .from('brands')
-      .select('id, name')
+      .select('id, name, university_id')
       .eq('owner_id', userId)
       .single();
 
@@ -27,7 +27,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Brand profile not found' }, { status: 404 });
     }
 
-    const amount = 2000; // NGN
+    let amount = 2000; // default university vendor fee
+    const { data: settingsData } = await supabaseAdmin.from('platform_settings').select('key, value').in('key', ['activation_fee']);
+    const globalFeeSetting = settingsData?.find(s => s.key === 'activation_fee')?.value;
+    if (globalFeeSetting?.amount) {
+        amount = globalFeeSetting.amount;
+    }
+
+    if (!brand.university_id) {
+        // General Vendor
+        amount = 15000;
+    }
+
     const reference = `VNDR-FEE-${brand.id}-${Date.now()}`;
     const origin = req.headers.get('origin') || 'https://mastercart.vercel.app';
 

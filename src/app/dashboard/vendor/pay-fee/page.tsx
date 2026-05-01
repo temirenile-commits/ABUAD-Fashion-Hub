@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CreditCard, CheckCircle, ShieldCheck, Loader2, ArrowLeft } from 'lucide-react';
@@ -100,8 +100,8 @@ export default function PayFeePage() {
 
           <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', border: '1px solid rgba(255,255,255,0.05)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <span>Activation Fee</span>
-              <span style={{ fontWeight: 600 }}>₦2,000.00</span>
+              <span>Activation Fee {brand.university_id ? '(University Vendor)' : '(General Nationwide Vendor)'}</span>
+              <span style={{ fontWeight: 600 }}>₦{brand.university_id ? '2,000' : '15,000'}.00</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)', fontSize: '0.9rem' }}>
               <span>Status</span>
@@ -123,7 +123,7 @@ export default function PayFeePage() {
             ) : (
               <>
                 <CreditCard size={20} style={{ marginRight: '0.5rem' }} /> 
-                Pay ₦2,000 & Go Live
+                Pay ₦{brand.university_id ? '2,000' : '15,000'} & Go Live
               </>
             )}
           </button>

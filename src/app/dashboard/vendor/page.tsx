@@ -274,9 +274,46 @@ export default function VendorDashboard() {
       // Fetch Platform Settings
       const { data: settingsData } = await supabase.from('platform_settings').select('*');
       if (settingsData) {
-        setSubscriptionRates(settingsData.find(s => s.key === 'subscription_rates')?.value || []);
-        setBoostRates(settingsData.find(s => s.key === 'boost_rates')?.value || []);
-        setActivationFee(settingsData.find(s => s.key === 'activation_fee')?.value?.amount || 2000);
+        let finalSubRates = settingsData.find(s => s.key === 'subscription_rates')?.value || [];
+        let finalBoostRates = settingsData.find(s => s.key === 'boost_rates')?.value || [
+            { id: 'visibility_week', name: '7-Day Flash Boost', price: 1500, duration: '7 Days' },
+            { id: 'visibility_month', name: '30-Day Market Domination', price: 5000, duration: '30 Days', popular: true }
+        ];
+        let finalActivationFee = settingsData.find(s => s.key === 'activation_fee')?.value?.amount || 2000;
+
+        if (brandData.university_id) {
+            // University Vendor Settings Overlay
+            const uniConfig = settingsData.find(s => s.key === `uni_config_${brandData.university_id}`)?.value || {};
+            
+            finalSubRates = finalSubRates.map((rate: any) => {
+               if (uniConfig.plans?.[rate.id]?.price) {
+                 return { ...rate, price: Number(uniConfig.plans[rate.id].price) };
+               }
+               return rate;
+            });
+
+            if (uniConfig.boost_multiplier) {
+                finalBoostRates = finalBoostRates.map((boost: any) => ({
+                    ...boost,
+                    price: boost.price * Number(uniConfig.boost_multiplier)
+                }));
+            }
+        } else {
+            // General Vendor - Completely different premium fees
+            finalActivationFee = 15000; // Premium nationwide activation
+            finalSubRates = finalSubRates.map((rate: any) => ({
+                ...rate,
+                price: rate.price === 0 ? 0 : rate.price * 5 // 5x multiplier for nationwide access
+            }));
+            finalBoostRates = finalBoostRates.map((boost: any) => ({
+                ...boost,
+                price: boost.price * 5
+            }));
+        }
+
+        setSubscriptionRates(finalSubRates);
+        setBoostRates(finalBoostRates);
+        setActivationFee(finalActivationFee);
       }
 
       // Fetch Wallet

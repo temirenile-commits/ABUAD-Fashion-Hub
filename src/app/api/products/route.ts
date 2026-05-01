@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
@@ -26,18 +26,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // 0. Credit Check (Only for live products)
+    // 0. Fetch Brand & Credit Check
+    const { data: brand, error: brandError } = await supabaseAdmin
+      .from('brands')
+      .select('free_listings_count, university_id')
+      .eq('id', brandId)
+      .single();
+
+    if (brandError || !brand) {
+      return NextResponse.json({ error: 'Brand not found' }, { status: 404 });
+    }
+
     if (!isDraft) {
-      const { data: brand, error: brandError } = await supabaseAdmin
-        .from('brands')
-        .select('free_listings_count')
-        .eq('id', brandId)
-        .single();
-
-      if (brandError || !brand) {
-        return NextResponse.json({ error: 'Brand not found' }, { status: 404 });
-      }
-
       if (brand.free_listings_count <= 0) {
         return NextResponse.json({ 
           error: 'Insufficient listing credits. Please upgrade your plan to upload more products.',
@@ -61,6 +61,8 @@ export async function POST(req: Request) {
         video_url: videoUrl || null,
         brand_id: brandId,
         owner_id: ownerId,
+        university_id: brand.university_id,
+        visibility_type: brand.university_id ? 'university' : 'global',
         variants: variants || [],
         is_draft: isDraft || false,
         is_featured: false,
