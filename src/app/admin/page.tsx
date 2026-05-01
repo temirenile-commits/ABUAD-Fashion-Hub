@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
 import TradingChart from '@/components/TradingChart';
 
-type Tab = 'overview' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions';
+type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions';
 
 async function adminFetch(path: string, options: RequestInit = {}) {
   return fetch(path, {
@@ -53,6 +53,9 @@ export default function AdminDashboard() {
   const [marketData, setMarketData] = useState<any[]>([]);
   const [deliveryAgents, setDeliveryAgents] = useState<any[]>([]);
   const [promoCodes, setPromoCodes] = useState<any[]>([]);
+  const [universities, setUniversities] = useState<any[]>([]);
+  const [uniForm, setUniForm] = useState({ name: '', location: '', abbreviation: '' });
+  const [uniCreating, setUniCreating] = useState(false);
   const [promoForm, setPromoForm] = useState({ code: '', type: 'percentage', value: 10, max_uses: 100, product_id: '' });
 
   const safeJson = async (res: Response) => {
@@ -64,7 +67,7 @@ export default function AdminDashboard() {
     setError(null);
     try {
       // Step 1: Fire all requests simultaneously
-      const keys = ['stats','vendors','products','users','transactions','orders','reviews','payouts','settings','market_analytics','delivery_agents','promo_codes'] as const;
+      const keys = ['stats','vendors','products','users','transactions','orders','reviews','payouts','settings','market_analytics','delivery_agents','promo_codes', 'universities_list'] as const;
       const fetchResults = await Promise.allSettled(
         keys.map(k => adminFetch(`/api/admin?action=${k}`))
       );
@@ -117,6 +120,8 @@ export default function AdminDashboard() {
       if (Array.isArray(marketD.chartData)) setMarketData(marketD.chartData);
       if (Array.isArray(agentsD.agents)) setDeliveryAgents(agentsD.agents);
       if (Array.isArray(promoD.promoCodes)) setPromoCodes(promoD.promoCodes);
+      const univD = getData(12);
+      if (Array.isArray(univD?.universities)) setUniversities(univD.universities);
 
     } catch (e: any) {
       console.error('Admin fetch error:', e);
@@ -199,6 +204,7 @@ export default function AdminDashboard() {
             ['notices', 'Notices ', Bell],
             ['market', 'Market ', BarChart3],
             ['delivery_agents', 'Fleet ', Activity],
+            ['universities', 'Universities', MapPin],
           ] as [Tab, string, any][]).map(([id, label, Icon]) => (
             <button
               key={id}
@@ -212,7 +218,7 @@ export default function AdminDashboard() {
         </nav>
         <div className={styles.sidebarFooter}>
           <Link href="/dashboard/vendor" className={styles.exitLink}>My Vendor Store</Link>
-          <Link href="/" className={styles.exitLink}>← Public Site</Link>
+          <Link href="/" className={styles.exitLink}>â† Public Site</Link>
         </div>
       </aside>
 
@@ -252,8 +258,8 @@ export default function AdminDashboard() {
                   { label: 'Users', val: stats.userCount, color: '#3b82f6', Icon: Users },
                   { label: 'Brands', val: stats.brandCount, color: '#10b981', Icon: Store },
                   { label: 'Products', val: stats.productCount, color: '#c9a14a', Icon: ShoppingBag },
-                  { label: 'Revenue', val: `₦${stats.totalRevenue.toLocaleString()}`, color: '#eb0c7a', Icon: TrendingUp },
-                  { label: 'Subsidies', val: `₦${(stats.totalSubsidies || 0).toLocaleString()}`, color: '#f59e0b', Icon: Tag },
+                  { label: 'Revenue', val: `â‚¦${stats.totalRevenue.toLocaleString()}`, color: '#eb0c7a', Icon: TrendingUp },
+                  { label: 'Subsidies', val: `â‚¦${(stats.totalSubsidies || 0).toLocaleString()}`, color: '#f59e0b', Icon: Tag },
                   { label: 'Product Views', val: (stats.totalProductViews || 0).toLocaleString(), color: '#8b5cf6', Icon: Eye },
                   { label: 'Profile Visits', val: (stats.totalProfileViews || 0).toLocaleString(), color: '#ec4899', Icon: Users },
                 ].map(({ label, val, color, Icon }) => (
@@ -282,9 +288,9 @@ export default function AdminDashboard() {
                         </td>
                         <td>
                           <div className={styles.academicInfo}>
-                            <div>Matric: {v.matric_number || '—'}</div>
-                            <div>Room: {v.room_number || '—'}</div>
-                            <div>College: {v.college || '—'}</div>
+                            <div>Matric: {v.matric_number || 'â€”'}</div>
+                            <div>Room: {v.room_number || 'â€”'}</div>
+                            <div>College: {v.college || 'â€”'}</div>
                           </div>
                         </td>
                         <td><span className={`badge badge-${v.subscription_tier || 'free'}`} style={{ textTransform: 'uppercase', fontVariant: 'small-caps' }}>{v.subscription_tier || 'free'}</span></td>
@@ -313,7 +319,7 @@ export default function AdminDashboard() {
                     {filterBy(users, ['name', 'email']).map(u => (
                       <tr key={u.id}>
                         <td>
-                          <div style={{ fontWeight: 600 }}>{u.name || '—'}</div>
+                          <div style={{ fontWeight: 600 }}>{u.name || 'â€”'}</div>
                           <div className={styles.subText}>{u.email}</div>
                         </td>
                         <td>
@@ -335,13 +341,13 @@ export default function AdminDashboard() {
                              {u.role === 'sub_admin' && (
                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
                                  {[
-                                   { id: 'payouts', label: '💸', title: 'Payouts' },
-                                   { id: 'customer_service', label: '🎧', title: 'Support' },
-                                   { id: 'delivery', label: '🚚', title: 'Fleet' },
-                                   { id: 'promotions', label: '📢', title: 'Adverts' },
-                                   { id: 'orders', label: '📦', title: 'Orders' },
-                                   { id: 'verification', label: '🛡️', title: 'Verify' },
-                                   { id: 'reviews', label: '⭐', title: 'Reviews' }
+                                   { id: 'payouts', label: 'ðŸ’¸', title: 'Payouts' },
+                                   { id: 'customer_service', label: 'ðŸŽ§', title: 'Support' },
+                                   { id: 'delivery', label: 'ðŸšš', title: 'Fleet' },
+                                   { id: 'promotions', label: 'ðŸ“¢', title: 'Adverts' },
+                                   { id: 'orders', label: 'ðŸ“¦', title: 'Orders' },
+                                   { id: 'verification', label: 'ðŸ›¡ï¸', title: 'Verify' },
+                                   { id: 'reviews', label: 'â­', title: 'Reviews' }
                                  ].map(p => (
                                    <button 
                                      key={p.id}
@@ -408,8 +414,8 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td>{p.brands?.name || 'Unknown'}</td>
-                        <td>₦{Number(p.price).toLocaleString()}</td>
-                        <td>{p.stock_count === -1 ? '∞' : p.stock_count}</td>
+                        <td>â‚¦{Number(p.price).toLocaleString()}</td>
+                        <td>{p.stock_count === -1 ? 'âˆž' : p.stock_count}</td>
                         <td>
                           <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => confirm('Delete this product?') && adminAction('delete_product', { productId: p.id })}>
                             <Trash2 size={14} />
@@ -431,7 +437,7 @@ export default function AdminDashboard() {
                       <div className="flex gap-2 mb-2">
                         <select className="input" value={promoForm.type} onChange={e => setPromoForm({ ...promoForm, type: e.target.value })}>
                            <option value="percentage">Percentage (%)</option>
-                           <option value="fixed">Fixed Amount (₦)</option>
+                           <option value="fixed">Fixed Amount (â‚¦)</option>
                         </select>
                         <input type="number" className="input" value={promoForm.value} onChange={e => setPromoForm({ ...promoForm, value: Number(e.target.value) })} />
                       </div>
@@ -450,7 +456,7 @@ export default function AdminDashboard() {
                             <div style={{ fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                <Tag size={12} /> {pc.code}
                             </div>
-                            <div className={styles.subText} style={{ fontSize: '0.8rem' }}>{pc.type === 'percentage' ? `${pc.value}% off` : `₦${pc.value} off`}</div>
+                            <div className={styles.subText} style={{ fontSize: '0.8rem' }}>{pc.type === 'percentage' ? `${pc.value}% off` : `â‚¦${pc.value} off`}</div>
                             <div style={{ fontSize: '0.7rem', marginTop: '4px' }}>Uses: <strong>{pc.current_uses || 0}</strong> / {pc.max_uses}</div>
                             {pc.products && <div style={{ fontSize: '0.7rem', color: 'var(--primary)' }}>Target: {pc.products.title.substring(0, 20)}...</div>}
                           </div>
@@ -474,7 +480,7 @@ export default function AdminDashboard() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
                    <div className={styles.promoSubSection}>
-                      <h3>🏠 Active Billboards</h3>
+                      <h3>ðŸ  Active Billboards</h3>
                       <table className={styles.table}>
                          <thead><tr><th>Brand</th><th>Expires</th></tr></thead>
                          <tbody>
@@ -491,14 +497,14 @@ export default function AdminDashboard() {
                       </table>
                    </div>
                    <div className={styles.promoSubSection}>
-                      <h3>⚡ Active Flash Sales</h3>
+                      <h3>âš¡ Active Flash Sales</h3>
                       <table className={styles.table}>
                          <thead><tr><th>Product</th><th>Price</th><th>Brand</th></tr></thead>
                          <tbody>
                             {products.filter(p => p.is_flash_sale).map(p => (
                                <tr key={p.id}>
                                   <td>{p.title}</td>
-                                  <td style={{ color: 'var(--primary)', fontWeight: 700 }}>₦{Number(p.flash_sale_price || p.price).toLocaleString()}</td>
+                                  <td style={{ color: 'var(--primary)', fontWeight: 700 }}>â‚¦{Number(p.flash_sale_price || p.price).toLocaleString()}</td>
                                   <td>{p.brands?.name}</td>
                                </tr>
                             ))}
@@ -541,7 +547,7 @@ export default function AdminDashboard() {
                           <div className={styles.subText}>Orders: {agent.completed_orders_count || 0}</div>
                         </td>
                         <td>
-                          <div style={{ fontWeight: 700, color: 'var(--primary)' }}>₦{Number(agent.wallet_balance || 0).toLocaleString()}</div>
+                          <div style={{ fontWeight: 700, color: 'var(--primary)' }}>â‚¦{Number(agent.wallet_balance || 0).toLocaleString()}</div>
                           <div className={styles.subText} style={{ fontSize: '0.7rem' }}>Pending payout</div>
                         </td>
                         <td>
@@ -599,7 +605,7 @@ export default function AdminDashboard() {
                           <div className={styles.subText}>{o.users?.email}</div>
                         </td>
                         <td>{o.brands?.name}</td>
-                        <td>₦{Number(o.total_amount).toLocaleString()}</td>
+                        <td>â‚¦{Number(o.total_amount).toLocaleString()}</td>
                         <td>
                           {o.status === 'pending' && o.expires_at && new Date(o.expires_at) < new Date() ? (
                             <span className="badge badge-cancelled" style={{ background: '#ef4444' }}>EXPIRED</span>
@@ -624,7 +630,7 @@ export default function AdminDashboard() {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div className={styles.subText}>Admin Promo Subsidies</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b' }}>₦{(stats.totalSubsidies || 0).toLocaleString()}</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b' }}>â‚¦{(stats.totalSubsidies || 0).toLocaleString()}</div>
                     </div>
                   </div>
                  <table className={styles.table} style={{ marginTop: '1rem' }}>
@@ -640,7 +646,7 @@ export default function AdminDashboard() {
                            <div className={styles.subText}>{req.users?.email}</div>
                          </td>
                          <td><span className={`badge badge-${req.role}`}>{req.role}</span></td>
-                         <td style={{ color: '#f59e0b', fontWeight: 'bold' }}>₦{Number(req.amount_requested).toLocaleString()}</td>
+                         <td style={{ color: '#f59e0b', fontWeight: 'bold' }}>â‚¦{Number(req.amount_requested).toLocaleString()}</td>
                          <td><span className={`badge badge-${req.status}`}>{req.status}</span></td>
                          <td className={styles.subText}>{new Date(req.created_at).toLocaleDateString()}</td>
                          <td>
@@ -648,7 +654,7 @@ export default function AdminDashboard() {
                              <button className="btn btn-primary btn-sm" onClick={() => setConfirmPayoutModal(req)}>Confirm</button>
                            ) : req.proof_url ? (
                              <a href={req.proof_url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">View Proof</a>
-                           ) : '—'}
+                           ) : 'â€”'}
                          </td>
                        </tr>
                      ))}
@@ -764,7 +770,7 @@ export default function AdminDashboard() {
                     <div className={styles.settingsGrid}>
                        {['visibility_week', 'visibility_month'].map(vid => (
                          <div key={vid} className={styles.settingsBox}>
-                            <label>{vid === 'visibility_week' ? '7-Day Boost' : '30-Day Boost'} Price (₦)</label>
+                            <label>{vid === 'visibility_week' ? '7-Day Boost' : '30-Day Boost'} Price (â‚¦)</label>
                             <input 
                               type="number" 
                               className="input" 
@@ -792,7 +798,7 @@ export default function AdminDashboard() {
                            <div className={styles.subText}>{r.users?.email}</div>
                          </td>
                          <td>{r.products?.title || 'Unknown Product'}</td>
-                         <td>{r.rating} ⭐</td>
+                         <td>{r.rating} â­</td>
                          <td>{r.comment}</td>
                          <td>{new Date(r.created_at).toLocaleDateString()}</td>
                          <td>
@@ -818,11 +824,11 @@ export default function AdminDashboard() {
                     onChange={e => setNotifForm(f => ({ ...f, target: e.target.value }))}
                     className="input"
                   >
-                    <option value="all">📢 All Users (Broadcast)</option>
-                    <option value="all_vendors">🏪 All Vendors</option>
-                    <option value="all_delivery">🚚 All Delivery Agents</option>
-                    <option value="all_customers">👤 All Customers</option>
-                    <option value="specific">🎯 Specific User ID</option>
+                    <option value="all">ðŸ“¢ All Users (Broadcast)</option>
+                    <option value="all_vendors">ðŸª All Vendors</option>
+                    <option value="all_delivery">ðŸšš All Delivery Agents</option>
+                    <option value="all_customers">ðŸ‘¤ All Customers</option>
+                    <option value="specific">ðŸŽ¯ Specific User ID</option>
                   </select>
                   {notifForm.target === 'specific' && (
                     <input 
@@ -855,7 +861,7 @@ export default function AdminDashboard() {
                       setNotifSending(false);
                     }}
                   >
-                    {notifSending ? 'Sending...' : '📣 Send Notification'}
+                    {notifSending ? 'Sending...' : 'ðŸ“£ Send Notification'}
                   </button>
                 </div>
               </div>
@@ -872,7 +878,7 @@ export default function AdminDashboard() {
                     <p className={styles.subText}>Monitor live sales velocity, product price effects, and vendor performance trends.</p>
                   </div>
                   <div style={{ display: 'flex', gap: '1rem' }}>
-                     <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => confirm('⚠️ DANGER: Reset all market reviews and product ratings to 0?') && adminAction('reset_all_reviews', {})}>
+                     <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => confirm('âš ï¸ DANGER: Reset all market reviews and product ratings to 0?') && adminAction('reset_all_reviews', {})}>
                        <Trash2 size={14} /> Reset Market Reviews to 0
                      </button>
                      <button className="btn btn-primary btn-sm" onClick={() => adminAction('recalculate_ratings', {})}>
@@ -891,7 +897,7 @@ export default function AdminDashboard() {
                   <div className={styles.marketInsights}>
                     <h3>Market Trends</h3>
                     <div className={insightCardStyles}>
-                      <div className={styles.insightValue}>₦{(marketData.reduce((acc, curr) => acc + curr.value, 0) / (marketData.length || 1)).toFixed(2)}</div>
+                      <div className={styles.insightValue}>â‚¦{(marketData.reduce((acc, curr) => acc + curr.value, 0) / (marketData.length || 1)).toFixed(2)}</div>
                       <div className={styles.insightLabel}>Avg. Daily Revenue</div>
                     </div>
                     <div className={insightCardStyles}>
@@ -899,7 +905,7 @@ export default function AdminDashboard() {
                       <div className={styles.insightLabel}>Active Competing Brands</div>
                     </div>
                     <div className={insightCardStyles}>
-                      <div className={styles.insightValue}>₦{(products.reduce((acc, curr) => acc + Number(curr.price), 0) / (products.length || 1)).toFixed(2)}</div>
+                      <div className={styles.insightValue}>â‚¦{(products.reduce((acc, curr) => acc + Number(curr.price), 0) / (products.length || 1)).toFixed(2)}</div>
                       <div className={styles.insightLabel}>Avg. Market Price Point</div>
                     </div>
                   </div>
@@ -916,7 +922,7 @@ export default function AdminDashboard() {
                         <tr key={v.id}>
                           <td>{v.name}</td>
                           <td>Clothing</td>
-                          <td>₦{Number(v.avg_price || 0).toLocaleString()}</td>
+                          <td>â‚¦{Number(v.avg_price || 0).toLocaleString()}</td>
                           <td>{v.total_sales || 0}</td>
                           <td style={{ color: '#10b981' }}>+12.5%</td>
                         </tr>
@@ -941,24 +947,24 @@ export default function AdminDashboard() {
               {selectedVendor.verification_type === 'business' ? (
                 <div className={styles.modalSection}>
                   <h3>Business Profile</h3>
-                  <p><strong>Business Name:</strong> {selectedVendor.business_name || '—'}</p>
-                  <p><strong>Registration No (CAC):</strong> {selectedVendor.business_registration_number || '—'}</p>
-                  <p><strong>Address:</strong> {selectedVendor.business_address || '—'}</p>
+                  <p><strong>Business Name:</strong> {selectedVendor.business_name || 'â€”'}</p>
+                  <p><strong>Registration No (CAC):</strong> {selectedVendor.business_registration_number || 'â€”'}</p>
+                  <p><strong>Address:</strong> {selectedVendor.business_address || 'â€”'}</p>
                 </div>
               ) : (
                 <div className={styles.modalSection}>
                   <h3>Academic Profile</h3>
-                  <p><strong>Matric No:</strong> {selectedVendor.matric_number || '—'}</p>
-                  <p><strong>Room No:</strong> {selectedVendor.room_number || '—'}</p>
-                  <p><strong>College:</strong> {selectedVendor.college || '—'}</p>
-                  <p><strong>Department:</strong> {selectedVendor.department || '—'}</p>
+                  <p><strong>Matric No:</strong> {selectedVendor.matric_number || 'â€”'}</p>
+                  <p><strong>Room No:</strong> {selectedVendor.room_number || 'â€”'}</p>
+                  <p><strong>College:</strong> {selectedVendor.college || 'â€”'}</p>
+                  <p><strong>Department:</strong> {selectedVendor.department || 'â€”'}</p>
                 </div>
               )}
               <div className={styles.modalSection}>
                 <h3>Bank Details for Payouts</h3>
-                <p><strong>Bank Name:</strong> {selectedVendor.bank_name || '—'}</p>
-                <p><strong>Account Name:</strong> {selectedVendor.bank_account_name || '—'}</p>
-                <p><strong>Account Number:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedVendor.bank_account_number || '—'}</span></p>
+                <p><strong>Bank Name:</strong> {selectedVendor.bank_name || 'â€”'}</p>
+                <p><strong>Account Name:</strong> {selectedVendor.bank_account_name || 'â€”'}</p>
+                <p><strong>Account Number:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedVendor.bank_account_number || 'â€”'}</span></p>
               </div>
               <div className={styles.modalSection}>
                 <h3>Contact</h3>
@@ -1072,7 +1078,7 @@ export default function AdminDashboard() {
             </div>
             <div className={styles.modalBody}>
               <div style={{ padding: '1rem', background: 'var(--bg-300)', borderRadius: '8px', marginBottom: '1.5rem' }}>
-                <p>Transfer <strong>₦{Number(confirmPayoutModal.amount_requested).toLocaleString()}</strong> to:</p>
+                <p>Transfer <strong>â‚¦{Number(confirmPayoutModal.amount_requested).toLocaleString()}</strong> to:</p>
                 <p><strong>{confirmPayoutModal.bank_details?.accountName}</strong></p>
                 <p><strong>{confirmPayoutModal.bank_details?.bankName}</strong> - {confirmPayoutModal.bank_details?.accountNumber}</p>
               </div>
@@ -1110,6 +1116,119 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+            {activeTab === 'universities' && (
+              <div className={styles.sectionCard}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                  <div>
+                    <h2>Universities</h2>
+                    <p className={styles.subText}>Manage all universities and assign their admin teams</p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                  <div className={styles.settingsBox}>
+                    <h3 style={{ marginBottom: '1rem' }}>Add New University</h3>
+                    <input
+                      className="input mb-2"
+                      placeholder="Full University Name *"
+                      value={uniForm.name}
+                      onChange={e => setUniForm({ ...uniForm, name: e.target.value })}
+                    />
+                    <input
+                      className="input mb-2"
+                      placeholder="Abbreviation (e.g. ABUAD)"
+                      value={uniForm.abbreviation}
+                      onChange={e => setUniForm({ ...uniForm, abbreviation: e.target.value })}
+                    />
+                    <input
+                      className="input mb-2"
+                      placeholder="Location (City, State)"
+                      value={uniForm.location}
+                      onChange={e => setUniForm({ ...uniForm, location: e.target.value })}
+                    />
+                    <button
+                      className="btn btn-primary w-full"
+                      disabled={uniCreating || !uniForm.name}
+                      onClick={async () => {
+                        setUniCreating(true);
+                        try {
+                          const res = await adminFetch('/api/universities', { method: 'POST', body: JSON.stringify({ action: 'create', ...uniForm }) });
+                          const d = await res.json();
+                          if (d.success) { await fetchAll(); setUniForm({ name: '', location: '', abbreviation: '' }); }
+                          else alert(d.error || 'Failed');
+                        } catch { alert('Network error'); }
+                        setUniCreating(false);
+                      }}
+                    >
+                      {uniCreating ? 'Creating...' : '+ Create University'}
+                    </button>
+                  </div>
+
+                  <div className={styles.settingsBox}>
+                    <h3 style={{ marginBottom: '1rem' }}>Assign University Admin</h3>
+                    <p className={styles.subText} style={{ marginBottom: '1rem' }}>
+                      Find a user in the Users tab, copy their ID, then assign them as University Admin here.
+                    </p>
+                    <input id="assign-user-id" className="input mb-2" placeholder="User UUID" />
+                    <select id="assign-uni-id" className="input mb-2">
+                      <option value="">-- Select University --</option>
+                      {universities.map((u: any) => (
+                        <option key={u.id} value={u.id}>{u.name} ({u.abbreviation})</option>
+                      ))}
+                    </select>
+                    <button
+                      className="btn btn-primary w-full"
+                      onClick={async () => {
+                        const userId = (document.getElementById('assign-user-id') as HTMLInputElement)?.value;
+                        const universityId = (document.getElementById('assign-uni-id') as HTMLSelectElement)?.value;
+                        if (!userId || !universityId) return alert('Both fields required');
+                        const res = await adminFetch('/api/universities', { method: 'POST', body: JSON.stringify({ action: 'assign_admin', userId, universityId }) });
+                        const d = await res.json();
+                        if (d.success) { alert('University Admin assigned successfully!'); await fetchAll(); }
+                        else alert(d.error || 'Failed');
+                      }}
+                    >
+                      Assign as University Admin
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '2rem' }}>
+                  <h3 style={{ marginBottom: '1rem' }}>All Universities</h3>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr><th>Name</th><th>Abbreviation</th><th>Location</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                      {universities.map((u: any) => (
+                        <tr key={u.id}>
+                          <td style={{ fontWeight: 600 }}>{u.name}</td>
+                          <td><span style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>{u.abbreviation || '—'}</span></td>
+                          <td className={styles.subText}>{u.location || '—'}</td>
+                          <td><span className={u.is_active ? 'badge badge-verified' : 'badge badge-pending'}>{u.is_active ? 'Active' : 'Inactive'}</span></td>
+                          <td>
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              onClick={async () => {
+                                const res = await adminFetch('/api/universities', { method: 'POST', body: JSON.stringify({ action: 'update', id: u.id, isActive: !u.is_active }) });
+                                const d = await res.json();
+                                if (d.success) fetchAll();
+                              }}
+                            >
+                              {u.is_active ? 'Deactivate' : 'Activate'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {universities.length === 0 && (
+                        <tr><td colSpan={5} style={{ textAlign: 'center', color: '#64748b' }}>No universities yet</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
 
       {/* Image Lightbox */}
       {enlargedImg && (
@@ -1138,3 +1257,6 @@ export default function AdminDashboard() {
 }
 
 const insightCardStyles = styles.insightCard || '';
+
+
+

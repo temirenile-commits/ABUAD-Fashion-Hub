@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera, MapPin, Navigation, Eye, ShoppingBag } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera, MapPin, Navigation, Eye, ShoppingBag , Globe } from 'lucide-react';
 import Papa from 'papaparse';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
@@ -116,8 +116,7 @@ export default function VendorDashboard() {
     imageUrl: '',
     videoUrl: '',
     variants: [] as any[],
-    isDraft: false
-  });
+    isDraft: false, visibility_type: 'university' });
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
@@ -407,6 +406,7 @@ export default function VendorDashboard() {
         .from('brand_reels')
         .insert({
           brand_id: brand.id,
+            visibility_type: newProduct.visibility_type,
           video_url: url,
         });
 
@@ -496,7 +496,7 @@ export default function VendorDashboard() {
           setEditingProduct(null);
           setNewProduct({
             title: '', description: '', price: '', originalPrice: '', category: 'Clothing',
-            stockCount: '10', mediaUrls: [], imageUrl: '', videoUrl: '', variants: [], isDraft: false
+            stockCount: '10', mediaUrls: [], imageUrl: '', videoUrl: '', variants: [], isDraft: false, visibility_type: 'university'
           });
           alert('Product updated successfully!');
         } else {
@@ -533,7 +533,8 @@ export default function VendorDashboard() {
             imageUrl: '',
             videoUrl: '',
             variants: [],
-            isDraft: false
+            isDraft: false,
+            visibility_type: 'university'
           });
           alert('Product listed successfully!');
         } else {
@@ -859,6 +860,7 @@ export default function VendorDashboard() {
     const form = e.target as any;
     const body = {
       brand_id: brand.id,
+            visibility_type: newProduct.visibility_type,
       product_id: form.product_id?.value || null,
       code: form.code.value.toUpperCase(),
       type: form.type.value,
@@ -901,6 +903,7 @@ export default function VendorDashboard() {
           if (!row.title || !row.price) continue;
           await supabase.from('products').insert({
             brand_id: brand.id,
+            visibility_type: newProduct.visibility_type,
             title: row.title,
             description: row.description || '',
             price: Number(row.price),
@@ -1130,7 +1133,7 @@ export default function VendorDashboard() {
           <div className={styles.activationNotice}>
             <Clock size={48} color="var(--primary)" />
             <h2>Application Under Review</h2>
-            <p>Your brand registration is being reviewed by our admin team. This usually takes 24-48 hours. You will be notified once you are approved to pay the ₦2,000 activation fee.</p>
+            <p>Your brand registration is being reviewed by our admin team. This usually takes 24-48 hours. You will be notified once you are approved to pay the â‚¦2,000 activation fee.</p>
             <Link href="/" className="btn btn-primary">Back to Hub</Link>
           </div>
         )}
@@ -1546,7 +1549,7 @@ export default function VendorDashboard() {
                         {getIcon(tier.id)}
                         <div>
                           <h4>{tier.name}</h4>
-                          <span className={styles.tierPrice}>₦{tier.price.toLocaleString()}/mo</span>
+                          <span className={styles.tierPrice}>â‚¦{tier.price.toLocaleString()}/mo</span>
                         </div>
                       </div>
                       <ul className={styles.tierFeaturesMini}>
@@ -1569,7 +1572,7 @@ export default function VendorDashboard() {
                     <Zap size={20} color="#f59e0b" />
                     <div>
                       <h4>Need a temporary Boost?</h4>
-                      <p>Get priority placement in searches and discovery for ₦1,000/week.</p>
+                      <p>Get priority placement in searches and discovery for â‚¦1,000/week.</p>
                     </div>
                   </div>
                   <button className="btn btn-secondary btn-sm" onClick={() => alert('Boost system integration coming in next update!')}>Boost Now</button>
@@ -2169,7 +2172,7 @@ export default function VendorDashboard() {
                   </button>
                 </div>
                 {!brand.bank_account_number && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.5rem' }}>Update your bank details in Settings to withdraw.</p>}
-                <p className={styles.minWithdrawal}>Minimum withdrawal: ₦1,000</p>
+                <p className={styles.minWithdrawal}>Minimum withdrawal: â‚¦1,000</p>
               </div>
 
               <div className={styles.walletEscrow} style={{ width: '100%', maxWidth: 'none', flexDirection: 'row', gap: '2rem', padding: '1.5rem', justifyContent: 'space-around' }}>
@@ -2277,7 +2280,7 @@ export default function VendorDashboard() {
                       
                       if (!error) {
                         setBrand((prev: any) => ({ ...prev, billboard_boost_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() }));
-                        alert('🚀 Brand Boosted! You are now on the Billboard.');
+                        alert('ðŸš€ Brand Boosted! You are now on the Billboard.');
                       }
                     }}
                   >
@@ -2365,7 +2368,7 @@ export default function VendorDashboard() {
         )}
 
         {/* --------------------------------------------------
-            PLANS & UPGRADE TAB â€” Credit Rate Checkout
+            PLANS & UPGRADE TAB Ã¢â‚¬â€ Credit Rate Checkout
         -------------------------------------------------- */}
         {activeTab === 'plans' && (
           !brand ? (
@@ -2391,8 +2394,8 @@ export default function VendorDashboard() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, color: 'var(--primary)', marginBottom: '0.25rem' }}>
-                    {userRole === 'admin' ? 'Admin â€” Unlimited Access (No Fees)' :
-                      isTrialActive ? `Free Trial Active â€” ${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining` :
+                    {userRole === 'admin' ? 'Admin Ã¢â‚¬â€ Unlimited Access (No Fees)' :
+                      isTrialActive ? `Free Trial Active Ã¢â‚¬â€ ${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining` :
                         isSubActive ? `Current Plan: ${currentTier.charAt(0).toUpperCase() + currentTier.slice(1)} Power` :
                           'Upgrade your power level to list more products!'}
                   </div>
@@ -2458,7 +2461,7 @@ export default function VendorDashboard() {
 
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
                         <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--text-100)' }}>
-                          ₦{tier.price.toLocaleString()}
+                          â‚¦{tier.price.toLocaleString()}
                         </span>
                         <span style={{ color: 'var(--text-400)', fontSize: '0.9rem' }}>{tier.period}</span>
                       </div>
@@ -2483,8 +2486,8 @@ export default function VendorDashboard() {
                           fontWeight: 700,
                         }}
                       >
-                        {paying === tier.id ? <><Loader2 size={16} className="spin" /> Processingâ€¦</> :
-                          isActive ? '? Current Plan' : `Subscribe â€” ?${tier.price.toLocaleString()}/mo`}
+                        {paying === tier.id ? <><Loader2 size={16} className="spin" /> ProcessingÃ¢â‚¬Â¦</> :
+                          isActive ? '? Current Plan' : `Subscribe Ã¢â‚¬â€ ?${tier.price.toLocaleString()}/mo`}
                       </button>
                     </div>
                   );
@@ -2506,7 +2509,7 @@ export default function VendorDashboard() {
                   <h3 style={{ fontSize: '1rem', color: 'var(--accent-gold)' }}>Campus Billboard</h3>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Get featured on the main homepage "The Gold Collection" billboard for 7 days.</p>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 900, color: '#fff' }}>₦500 <small>/week</small></span>
+                    <span style={{ fontWeight: 900, color: '#fff' }}>â‚¦500 <small>/week</small></span>
                     <button className="btn btn-primary btn-sm" onClick={() => handleSubscribe({ id: 'billboard_boost', price: 500 })}>Activate ?</button>
                   </div>
                 </div>
@@ -2521,14 +2524,14 @@ export default function VendorDashboard() {
                     <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.5rem' }}>{boost.desc}</div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-500)', marginBottom: '1.25rem' }}>Duration: {boost.duration}</div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-                      <span style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--primary)' }}>₦{boost.price.toLocaleString()}</span>
+                      <span style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--primary)' }}>â‚¦{boost.price.toLocaleString()}</span>
                       <button
                         className="btn btn-primary btn-sm"
                         disabled={paying === boost.id}
                         onClick={() => handleSubscribe({ id: boost.id, price: boost.price })}
                         style={{ fontWeight: 700 }}
                       >
-                        {paying === boost.id ? <><Loader2 size={14} className="spin" /> Payingâ€¦</> : 'Boost Now ?'}
+                        {paying === boost.id ? <><Loader2 size={14} className="spin" /> PayingÃ¢â‚¬Â¦</> : 'Boost Now ?'}
                       </button>
                     </div>
                   </div>
@@ -2578,7 +2581,7 @@ export default function VendorDashboard() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>?? Auto-Reply to Customers</div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-400)' }}>When enabled, the AI automatically answers customer messages about your products â€” even when you're offline. Replies show a ? AI badge.</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-400)' }}>When enabled, the AI automatically answers customer messages about your products Ã¢â‚¬â€ even when you're offline. Replies show a ? AI badge.</div>
                 </div>
                 <button
                   onClick={() => handleUpdateAiSettings({ auto_reply_enabled: !aiSettings?.auto_reply_enabled })}
@@ -2722,4 +2725,10 @@ export default function VendorDashboard() {
     </div>
   );
 }
+
+
+
+
+
+
 

@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 export const dynamic = 'force-dynamic';
 
 
-// ─── Middleware: Verify request is from an admin ───────────────────────────
+// â”€â”€â”€ Middleware: Verify request is from an admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Decodes the Supabase JWT locally (no network call) to avoid auth timeouts.
 function decodeJwt(token: string): { sub?: string; email?: string } | null {
   try {
@@ -25,7 +25,7 @@ async function verifyAdmin(req: NextRequest) {
   }
   const token = authHeader.replace('Bearer ', '');
 
-  // Decode JWT locally — avoids network round-trip to Supabase Auth that was timing out
+  // Decode JWT locally â€” avoids network round-trip to Supabase Auth that was timing out
   const payload = decodeJwt(token);
   if (!payload?.sub) {
     console.error('[ADMIN API] Invalid or missing JWT payload');
@@ -53,7 +53,7 @@ async function verifyAdmin(req: NextRequest) {
   return null;
 }
 
-// ─── GET Handler ───────────────────────────────────────────────────────────
+// â”€â”€â”€ GET Handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const action = searchParams.get('action');
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (action === 'users') {
-    // Use public.users as the primary source — avoids auth.admin.listUsers() network call that times out
+    // Use public.users as the primary source â€” avoids auth.admin.listUsers() network call that times out
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('users')
       .select('*')
@@ -143,7 +143,7 @@ export async function GET(req: NextRequest) {
     const brandCount = brandRes.count ?? 0;
     const productCount = productRes.count ?? 0;
 
-    // Fetch aggregated view counts separately (resilient — won't block main stats if column missing)
+    // Fetch aggregated view counts separately (resilient â€” won't block main stats if column missing)
     let totalProductViews = 0;
     let totalProfileViews = 0;
     try {
@@ -274,10 +274,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ promoCodes: data || [] });
   }
 
+  if (action === 'universities_list') {
+    const { data, error } = await supabaseAdmin
+      .from('universities')
+      .select('*')
+      .order('name', { ascending: true });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ universities: data || [] });
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }
 
-// ─── POST Handler ──────────────────────────────────────────────────────────
+// ─── POST Handler ──────────────────────────────────────────────────────────â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export async function POST(req: NextRequest) {
   const secret = req.headers.get('x-admin-secret');
   const isSecretValid = secret === process.env.ADMIN_SECRET_KEY;
@@ -315,7 +324,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'mark_verified') {
-    // Final verified status — after fee is paid
+    // Final verified status â€” after fee is paid
     const { brandId } = body;
     const { error } = await supabaseAdmin
       .from('brands')
@@ -699,6 +708,16 @@ export async function POST(req: NextRequest) {
   if (action === 'delete_promo_code') {
     const { codeId } = body;
     const { error } = await supabaseAdmin.from('promo_codes').delete().eq('id', codeId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'update_sub_admin_permissions') {
+    const { userId, permissions } = body;
+    const { error } = await supabaseAdmin
+      .from('users')
+      .update({ admin_permissions: permissions })
+      .eq('id', userId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }

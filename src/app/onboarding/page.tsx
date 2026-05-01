@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -37,9 +37,11 @@ export default function OnboardingPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [banks, setBanks] = useState<any[]>([]);
+  const [universities, setUniversities] = useState<any[]>([]);
   const [verifyingBank, setVerifyingBank] = useState(false);
 
   const [form, setForm] = useState({
+    universityId: '',
     brandName: '',
     description: '',
     category: 'Clothing',
@@ -73,6 +75,15 @@ export default function OnboardingPage() {
       }
     };
     checkUser();
+
+    const fetchUniversities = async () => {
+      try {
+        const res = await fetch('/api/universities');
+        const d = await res.json();
+        if (d.universities) setUniversities(d.universities);
+      } catch {}
+    };
+    fetchUniversities();
 
     const fetchBanks = async () => {
       try {
@@ -124,6 +135,7 @@ export default function OnboardingPage() {
         .insert({
           owner_id: user.id,
           name: form.brandName,
+          university_id: form.universityId || null,
           description: form.description,
           whatsapp_number: form.whatsapp,
           verification_type: form.verificationType,
@@ -153,7 +165,7 @@ export default function OnboardingPage() {
       if (brandError) throw brandError;
 
       // 2. Update user role 
-      await supabase.from('users').update({ role: 'vendor' }).eq('id', user.id);
+      await supabase.from('users').update({ role: 'vendor', university_id: form.universityId || null }).eq('id', user.id);
 
       setIsSubmitted(true);
       
@@ -179,7 +191,7 @@ export default function OnboardingPage() {
             Verification is manual to maintain campus integrity.
           </p>
           <div style={{ background: 'var(--bg-200)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', border: '1px solid var(--primary)' }}>
-            <p style={{ marginBottom: '1rem', fontWeight: 600, color: 'var(--primary)' }}>⚠️ MANDATORY NEXT STEP:</p>
+            <p style={{ marginBottom: '1rem', fontWeight: 600, color: 'var(--primary)' }}>âš ï¸ MANDATORY NEXT STEP:</p>
             <p style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}>Contact the Global Admin on WhatsApp to finalize your verification and unlock your store capabilities.</p>
             <a 
               href={`https://wa.me/${ADMIN_WHATSAPP}?text=Hi Admin, I just submitted my vendor application for "${form.brandName}". My Matric No is ${form.matricNo}. I'm ready to finalize my registration.`} 
@@ -201,7 +213,7 @@ export default function OnboardingPage() {
       <div className={styles.page}>
         <div className={styles.header}>
           <h1>Become an Master Cart Vendor</h1>
-          <p>Launch your store vividly. No upfront fees — get 5 free credits to start.</p>
+          <p>Launch your store vividly. No upfront fees â€” get 5 free credits to start.</p>
         </div>
 
         {errorMsg && (
@@ -237,7 +249,7 @@ export default function OnboardingPage() {
                     className={`${styles.typeCard} ${vendorType === label ? styles.typeSelected : ''}`}
                     onClick={() => setVendorType(label)}
                   >
-                    <span className={styles.typeEmoji}>{i === 0 ? '🛍️' : i === 1 ? '✨' : '🌟'}</span>
+                    <span className={styles.typeEmoji}>{i === 0 ? 'ðŸ›ï¸' : i === 1 ? 'âœ¨' : 'ðŸŒŸ'}</span>
                     <h3>{label}</h3>
                     {vendorType === label && <div className={styles.typeCheck}><CheckCircle size={18} /></div>}
                   </button>
@@ -258,6 +270,19 @@ export default function OnboardingPage() {
                   <label className="form-label">Brand Description *</label>
                   <textarea className="form-input" placeholder="What do you sell?" value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
                 </div>
+                                <div className="form-group">
+                  <label className="form-label">Your University *</label>
+                  <select
+                    className="form-input"
+                    value={form.universityId}
+                    onChange={e => setForm({...form, universityId: e.target.value})}
+                  >
+                    <option value="">-- Select your university --</option>
+                    {universities.map((u: any) => (
+                      <option key={u.id} value={u.id}>{u.name}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="form-group">
                   <label className="form-label">WhatsApp Contact *</label>
                   <input className="form-input" placeholder="+234..." value={form.whatsapp} onChange={e => setForm({...form, whatsapp: e.target.value})} />
@@ -276,14 +301,14 @@ export default function OnboardingPage() {
                   className={`${styles.typeCard} ${form.verificationType === 'academic' ? styles.typeSelected : ''}`}
                   onClick={() => setForm({...form, verificationType: 'academic'})}
                 >
-                  <span className={styles.typeEmoji}>🎓</span>
+                  <span className={styles.typeEmoji}>ðŸŽ“</span>
                   <h3>Student</h3>
                 </button>
                 <button
                   className={`${styles.typeCard} ${form.verificationType === 'business' ? styles.typeSelected : ''}`}
                   onClick={() => setForm({...form, verificationType: 'business'})}
                 >
-                  <span className={styles.typeEmoji}>🏢</span>
+                  <span className={styles.typeEmoji}>ðŸ¢</span>
                   <h3>Registered Business</h3>
                 </button>
               </div>
@@ -377,7 +402,7 @@ export default function OnboardingPage() {
                 <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>All vendors must undergo manual identity verification. Submitting false academic (Matriculation/Room number) or business credentials will lead to an immediate and permanent ban from the Master Cart platform.</p>
                 
                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-100)' }}>2. Financial Escrow & Payouts</h4>
-                <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>To protect our customers, all funds from completed orders are held in a secure Escrow system for a mandatory 24-hour period post-delivery. Once the hold clears, you may request a manual payout to your registered bank account. Minimum withdrawal is ₦1,000.</p>
+                <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>To protect our customers, all funds from completed orders are held in a secure Escrow system for a mandatory 24-hour period post-delivery. Once the hold clears, you may request a manual payout to your registered bank account. Minimum withdrawal is â‚¦1,000.</p>
                 
                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-100)' }}>3. Fees & Subscriptions (Subject to Change)</h4>
                 <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>The platform operates on a subscription and commission model. By proceeding, you agree to pay the current subscription rates required to keep your store active. <strong>Please note: All platform fees, commissions, and subscription prices are subject to change.</strong> However, you will be notified via in-app alerts and email prior to any pricing adjustments.</p>
@@ -421,3 +446,5 @@ export default function OnboardingPage() {
     </main>
   );
 }
+
+

@@ -15,7 +15,7 @@ export default function TermsPage() {
         .select('value')
         .eq('key', 'platform_policy')
         .single();
-      
+
       if (data?.value) {
         setPolicy(typeof data.value === 'string' ? JSON.parse(data.value) : data.value);
       }
@@ -120,13 +120,13 @@ export default function TermsPage() {
         {activePolicy.sections.map((section: any, idx: number) => (
           <div key={idx} style={{ marginBottom: '3rem' }}>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-100)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-               <div style={{ width: '8px', height: '24px', background: 'var(--primary)', borderRadius: '4px' }} />
-               {section.title}
+              <div style={{ width: '8px', height: '24px', background: 'var(--primary)', borderRadius: '4px' }} />
+              {section.title}
             </h2>
             <div style={{ color: 'var(--text-200)', lineHeight: 1.8, fontSize: '1.05rem' }}>
-               {section.content.split('\n').map((line: string, lidx: number) => (
-                 <p key={lidx} style={{ marginBottom: '1rem' }}>{line}</p>
-               ))}
+              {section.content.split('\n').map((line: string, lidx: number) => (
+                <p key={lidx} style={{ marginBottom: '1rem' }}>{line}</p>
+              ))}
             </div>
           </div>
         ))}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { SlidersHorizontal, Grid3X3, LayoutList, Search, X, Store, ShoppingBag, Sparkles, Shirt, Gem, Scissors, Footprints, Watch, Briefcase } from 'lucide-react';
@@ -33,7 +33,7 @@ export default function ExplorePage() {
   const allProducts = useMarketplaceStore(s => s.products);
   const loading = !useMarketplaceStore(s => s.isInitialized);
 
-  // ── Derive vendors list from products ──────────────────────────────────────
+  // â”€â”€ Derive vendors list from products â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const allVendors = useMemo(() => {
     const map = new Map<string, any>();
     allProducts.forEach(p => {
@@ -42,7 +42,7 @@ export default function ExplorePage() {
     return Array.from(map.values());
   }, [allProducts]);
 
-  // ── Main filtered products ─────────────────────────────────────────────────
+  // â”€â”€ Main filtered products â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const filtered = useMemo(() => {
     let result = [...allProducts].filter(p => !(p as any).is_draft);
 
@@ -73,7 +73,7 @@ export default function ExplorePage() {
     return result;
   }, [allProducts, selectedCategory, search, sort]);
 
-  // ── Similar products when search has no exact match ────────────────────────
+  // â”€â”€ Similar products when search has no exact match â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const similarProducts = useMemo(() => {
     if (!search.trim() || filtered.length > 0) return [];
     const words = search.toLowerCase().split(' ').filter(w => w.length > 2);
@@ -85,7 +85,7 @@ export default function ExplorePage() {
       .slice(0, 8);
   }, [allProducts, filtered, search]);
 
-  // ── Recommended (top selling, always show at bottom) ───────────────────────
+  // â”€â”€ Recommended (top selling, always show at bottom) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const recommended = useMemo(() => {
     return [...allProducts]
       .filter(p => !(p as any).is_draft)
@@ -93,7 +93,7 @@ export default function ExplorePage() {
       .slice(0, 8);
   }, [allProducts]);
 
-  // ── Vendor search results ──────────────────────────────────────────────────
+  // â”€â”€ Vendor search results â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const vendorResults = useMemo(() => {
     if (!search.trim()) return [];
     const q = search.toLowerCase();
@@ -159,7 +159,7 @@ export default function ExplorePage() {
         {/* Vendor search results */}
         {vendorResults.length > 0 && (
           <div style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ marginBottom: '0.75rem', color: 'var(--text-300)', fontSize: '0.9rem', fontWeight: 600 }}>🏪 Matching Vendors</h3>
+            <h3 style={{ marginBottom: '0.75rem', color: 'var(--text-300)', fontSize: '0.9rem', fontWeight: 600 }}>ðŸª Matching Vendors</h3>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               {vendorResults.map(v => (
                 <Link key={v.id} href={`/vendor/${v.id}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: 12, textDecoration: 'none', color: 'var(--text-100)' }}>
@@ -169,7 +169,7 @@ export default function ExplorePage() {
                   }
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{v.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-400)' }}>View store →</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-400)' }}>View store â†’</div>
                   </div>
                 </Link>
               ))}
@@ -207,10 +207,10 @@ export default function ExplorePage() {
           </div>
         )}
 
-        {/* Recommended Section — always shown */}
+        {/* Recommended Section â€” always shown */}
         {!loading && recommended.length > 0 && (
           <div style={{ marginTop: '3rem', borderTop: '1px solid var(--border)', paddingTop: '2rem' }}>
-            <h2 style={{ marginBottom: '1.25rem', fontSize: '1.2rem' }}>⚡ Recommended For You</h2>
+            <h2 style={{ marginBottom: '1.25rem', fontSize: '1.2rem' }}>âš¡ Recommended For You</h2>
             <div className={styles.productGrid}>
               {recommended.map((product) => <ProductCard key={product.id} product={product} />)}
             </div>
@@ -220,3 +220,4 @@ export default function ExplorePage() {
     </main>
   );
 }
+
