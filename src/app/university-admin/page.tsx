@@ -418,7 +418,9 @@ export default function UniversityAdminPage() {
                 <div className={styles.sectionCard}>
                   <div className={styles.sectionHeader}>
                     <div><h2>My Team</h2><p>Staff members helping administer your university</p></div>
-                    <button className={styles.btnPrimary} onClick={()=>setShowAddStaff(true)}><UserPlus size={15}/>Add Staff</button>
+                    {(userCtx?.role === "university_admin" || userCtx?.role === "admin") && (
+                      <button className={styles.btnPrimary} onClick={()=>setShowAddStaff(true)}><UserPlus size={15}/>Add Staff</button>
+                    )}
                   </div>
                   <div className={styles.teamGrid}>
                     {team.map((m:any)=>(

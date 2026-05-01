@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -22,6 +22,8 @@ function firePushNotification(title: string, body: string, url?: string) {
     badge: '/logo.png',
     tag: title,
     requireInteraction: false,
+    silent: false, // Ensure it's not silent to use device sound
+    vibrate: [200, 100, 200],
   });
 
   if (url) {
@@ -35,7 +37,6 @@ function firePushNotification(title: string, body: string, url?: string) {
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [permission, setPermission] = useState<NotificationPermission>('default');
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const userIdRef = useRef<string | null>(null);
 
   // â”€â”€ Auto-request permission once the user is logged in â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -49,21 +50,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const handleIncoming = useCallback((title: string, body: string, url?: string) => {
     setUnreadCount(c => c + 1);
-    // Sound
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
-    }
-    // Native push
+    // Native push (this will trigger the device's native notification sound)
     firePushNotification(title, body, url);
   }, []);
 
   const markAllRead = useCallback(() => setUnreadCount(0), []);
 
   useEffect(() => {
-    // Init audio
-    audioRef.current = new Audio('/notification.mp3');
-
     // Read current permission state
     if (typeof window !== 'undefined' && 'Notification' in window) {
       setPermission(Notification.permission);
