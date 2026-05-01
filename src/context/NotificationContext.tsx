@@ -186,7 +186,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           const oldTier = payload.old.subscription_tier;
           const newTier = payload.new.subscription_tier;
           if (oldTier !== newTier) {
-            handleIncoming('âš¡ Account Tier Upgraded', `Your store is now on the ${newTier.toUpperCase()} power level!`, '/dashboard/vendor');
+            handleIncoming('⚡ Account Tier Upgraded', `Your store is now on the ${newTier.toUpperCase()} power level!`, '/dashboard/vendor');
           }
           
           if (payload.new.free_listings_count < 2 && payload.old.free_listings_count >= 2) {

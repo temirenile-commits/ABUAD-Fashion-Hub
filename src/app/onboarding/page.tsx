@@ -249,7 +249,7 @@ export default function OnboardingPage() {
                     className={`${styles.typeCard} ${vendorType === label ? styles.typeSelected : ''}`}
                     onClick={() => setVendorType(label)}
                   >
-                    <span className={styles.typeEmoji}>{i === 0 ? 'ðŸ›ï¸' : i === 1 ? 'âœ¨' : 'ðŸŒŸ'}</span>
+                    <span className={styles.typeEmoji}>{i === 0 ? 'ðŸ›ï¸' : i === 1 ? '✨' : '🌟'}</span>
                     <h3>{label}</h3>
                     {vendorType === label && <div className={styles.typeCheck}><CheckCircle size={18} /></div>}
                   </button>
@@ -301,7 +301,7 @@ export default function OnboardingPage() {
                   className={`${styles.typeCard} ${form.verificationType === 'academic' ? styles.typeSelected : ''}`}
                   onClick={() => setForm({...form, verificationType: 'academic'})}
                 >
-                  <span className={styles.typeEmoji}>ðŸŽ“</span>
+                  <span className={styles.typeEmoji}>🎓</span>
                   <h3>Student</h3>
                 </button>
                 <button

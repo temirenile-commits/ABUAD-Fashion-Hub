@@ -277,10 +277,35 @@ export async function GET(req: NextRequest) {
   if (action === 'universities_list') {
     const { data, error } = await supabaseAdmin
       .from('universities')
-      .select('*')
+      .select('*, users!university_id(id, role)')
       .order('name', { ascending: true });
+    
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ universities: data || [] });
+    
+    // Transform to include admin count
+    const transformed = (data || []).map(u => {
+      const admins = (u as any).users?.filter((usr: any) => usr.role === 'university_admin') || [];
+      return { ...u, adminCount: admins.length };
+    });
+
+    return NextResponse.json({ universities: transformed });
+  }
+
+  if (action === 'university_admins') {
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('id, name, email, university_id, universities(name)')
+      .eq('role', 'university_admin');
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ admins: data });
+  }
+
+  if (action === 'university_teams') {
+    const { data, error } = await supabaseAdmin
+      .from('university_teams')
+      .select('*, member:member_id(name, email), admin:admin_id(name), university:university_id(name)');
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ teams: data });
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
@@ -718,6 +743,29 @@ export async function POST(req: NextRequest) {
       .from('users')
       .update({ admin_permissions: permissions })
       .eq('id', userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'add_team_member') {
+    const { universityId, adminId, memberId, role } = body;
+    const { error } = await supabaseAdmin.from('university_teams').insert({
+      university_id: universityId,
+      admin_id: adminId,
+      member_id: memberId,
+      role: role || 'member'
+    });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Also update member role if they are just customers
+    await supabaseAdmin.from('users').update({ role: 'sub_admin' }).eq('id', memberId).eq('role', 'customer');
+
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'remove_team_member') {
+    const { teamId } = body;
+    const { error } = await supabaseAdmin.from('university_teams').delete().eq('id', teamId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }

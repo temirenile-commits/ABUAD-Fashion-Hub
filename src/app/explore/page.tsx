@@ -210,7 +210,7 @@ export default function ExplorePage() {
         {/* Recommended Section — always shown */}
         {!loading && recommended.length > 0 && (
           <div style={{ marginTop: '3rem', borderTop: '1px solid var(--border)', paddingTop: '2rem' }}>
-            <h2 style={{ marginBottom: '1.25rem', fontSize: '1.2rem' }}>âš¡ Recommended For You</h2>
+            <h2 style={{ marginBottom: '1.25rem', fontSize: '1.2rem' }}>⚡ Recommended For You</h2>
             <div className={styles.productGrid}>
               {recommended.map((product) => <ProductCard key={product.id} product={product} />)}
             </div>
