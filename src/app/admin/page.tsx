@@ -4,7 +4,7 @@ import Link from 'next/link';
 import {
   Users, Store, ShoppingBag, TrendingUp, CheckCircle, XCircle,
   Search, RefreshCw, Trash2, Star, Eye, ShieldCheck, ShoppingCart, Loader2, CreditCard, AlertTriangle, Settings, Bell,
-  BarChart3, PieChart, Activity, ExternalLink, MapPin, Tag
+  BarChart3, PieChart, Activity, ExternalLink, MapPin, Tag, ArrowLeft
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
@@ -63,6 +63,11 @@ export default function AdminDashboard() {
   const [universityAdmins, setUniversityAdmins] = useState<any[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
   const [selectedAdminId, setSelectedAdminId] = useState('');
+  
+  const [selectedUniId, setSelectedUniId] = useState<string | null>(null);
+  const [uniUsers, setUniUsers] = useState<any[]>([]);
+  const [uniTeams, setUniTeams] = useState<any[]>([]);
+  const [uniLoading, setUniLoading] = useState(false);
   
   const { addToast } = useToast();
 
@@ -136,18 +141,26 @@ export default function AdminDashboard() {
       setUniversityAdmins(uniJson[0].admins || []);
       setTeams(uniJson[1].teams || []);
 
-      console.log('[Admin] Stats:', statsD.stats);
-      console.log('[Admin] Users count:', usersD.users?.length);
-      console.log('[Admin] Vendors count:', vendorsD.vendors?.length);
-      console.log('[Admin] Products count:', productsD.products?.length);
-
     } catch (e: any) {
       console.error('Admin fetch error:', e);
       setError('Connection error: Could not reach the administration server.');
     }
     setLoading(false);
-  }, []);
+  }, [stats]);
 
+  const fetchUniData = async (uniId: string) => {
+    setUniLoading(true);
+    try {
+      const [uRes, tRes] = await Promise.all([
+        adminFetch(`/api/admin?action=university_users&uniId=${uniId}`),
+        adminFetch(`/api/admin?action=university_teams&uniId=${uniId}`)
+      ]);
+      const [uData, tData] = await Promise.all([uRes.json(), tRes.json()]);
+      setUniUsers(uData.users || []);
+      setUniTeams(tData.teams || []);
+    } catch { addToast('Failed to load university details', 'error'); }
+    setUniLoading(false);
+  };
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -955,232 +968,360 @@ export default function AdminDashboard() {
 
             {activeTab === 'universities' && (
               <div className={styles.content}>
-                <div className={styles.header}>
-                  <div>
-                    <h1>Universities & Campus Teams</h1>
-                    <p className={styles.subText}>Manage all universities and assign their administrative hierarchies</p>
-                  </div>
-                  <button className="btn btn-ghost" onClick={fetchAll}><RefreshCw size={16} /> Sync</button>
-                </div>
-
-                <div className={styles.sectionsGrid}>
-                  <div className={styles.sectionCard}>
-                    <h3 style={{ marginBottom: '1.5rem' }}>University List</h3>
-                    <div className={styles.tableWrap}>
-                      <table className={styles.table}>
-                        <thead>
-                          <tr>
-                            <th>University</th>
-                            <th>Location</th>
-                            <th>Admins</th>
-                            <th>Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {universities.map(u => (
-                            <tr key={u.id}>
-                              <td>
-                                <div style={{ fontWeight: 700 }}>{u.abbreviation}</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-400)' }}>{u.name}</div>
-                              </td>
-                              <td>{u.location}</td>
-                              <td><span className="badge badge-primary">{u.adminCount || 0}</span></td>
-                              <td>
-                                <button 
-                                  className="btn btn-icon text-red" 
-                                  onClick={async () => {
-                                    if (!confirm(`Delete ${u.name}? This will affect all associated vendors.`)) return;
-                                    const res = await adminFetch('/api/universities', { method: 'DELETE', body: JSON.stringify({ id: u.id }) });
-                                    if (res.ok) fetchAll();
-                                  }}
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div className={styles.settingsBox}>
-                      <h3 style={{ marginBottom: '1rem' }}>Add New University</h3>
-                      <input
-                        className="form-input mb-2"
-                        placeholder="Full University Name *"
-                        value={uniForm.name}
-                        onChange={e => setUniForm({ ...uniForm, name: e.target.value })}
-                      />
-                      <input
-                        className="form-input mb-2"
-                        placeholder="Abbreviation (e.g. ABUAD)"
-                        value={uniForm.abbreviation}
-                        onChange={e => setUniForm({ ...uniForm, abbreviation: e.target.value })}
-                      />
-                      <input
-                        className="form-input mb-2"
-                        placeholder="Location (City, State)"
-                        value={uniForm.location}
-                        onChange={e => setUniForm({ ...uniForm, location: e.target.value })}
-                      />
-                      <button
-                        className="btn btn-primary w-full"
-                        disabled={uniCreating || !uniForm.name}
-                        onClick={async () => {
-                          setUniCreating(true);
-                          try {
-                            const res = await adminFetch('/api/universities', { method: 'POST', body: JSON.stringify({ action: 'create', ...uniForm }) });
-                            const d = await res.json();
-                            if (d.success) { 
-                              await fetchAll(); 
-                              setUniForm({ name: '', location: '', abbreviation: '' }); 
-                              addToast('University created successfully!', 'success');
-                            }
-                            else addToast(d.error || 'Failed', 'error');
-                          } catch { addToast('Network error', 'error'); }
-                          setUniCreating(false);
-                        }}
-                      >
-                        {uniCreating ? 'Creating...' : '+ Create University'}
-                      </button>
-                    </div>
-
-                    <div className={styles.settingsBox}>
-                      <h3 style={{ marginBottom: '1rem' }}>Assign University Admin</h3>
-                      <div className="mb-2" style={{ position: 'relative' }}>
-                        <input 
-                          className="form-input" 
-                          placeholder="Search user by name or email..." 
-                          value={adminSearch}
-                          onChange={e => setAdminSearch(e.target.value)}
-                        />
-                        {adminSearch && (
-                          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-100)', border: '1px solid var(--border)', borderRadius: '8px', zIndex: 10, maxHeight: '200px', overflowY: 'auto' }}>
-                            {users.filter(u => u.name?.toLowerCase().includes(adminSearch.toLowerCase()) || u.email?.toLowerCase().includes(adminSearch.toLowerCase())).slice(0, 5).map(u => (
-                              <div 
-                                key={u.id} 
-                                style={{ padding: '0.75rem', cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
-                                onClick={() => {
-                                  setSelectedAdminId(u.id);
-                                  setAdminSearch(`${u.name} (${u.email})`);
-                                }}
-                              >
-                                <strong>{u.name}</strong>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-400)' }}>{u.email}</div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                {!selectedUniId ? (
+                  <>
+                    <div className={styles.header}>
+                      <div>
+                        <h1>Universities & Campus Teams</h1>
+                        <p className={styles.subText}>Manage all universities and assign their administrative hierarchies</p>
                       </div>
-                      
-                      <select id="assign-uni-id" className="form-input mb-2">
-                        <option value="">-- Select University --</option>
-                        {universities.map((u: any) => (
-                          <option key={u.id} value={u.id}>{u.name} ({u.abbreviation})</option>
-                        ))}
-                      </select>
-                      <button
-                        className="btn btn-primary w-full"
-                        onClick={async () => {
-                          const universityId = (document.getElementById('assign-uni-id') as HTMLSelectElement)?.value;
-                          if (!selectedAdminId || !universityId) return addToast('User and University required', 'error');
-                          const res = await adminFetch('/api/universities', { method: 'POST', body: JSON.stringify({ action: 'assign_admin', userId: selectedAdminId, universityId }) });
-                          const d = await res.json();
-                          if (d.success) { 
-                            addToast('University Admin assigned successfully!', 'success'); 
-                            setAdminSearch('');
-                            setSelectedAdminId('');
-                            await fetchAll(); 
-                          }
-                          else addToast(d.error || 'Failed', 'error');
-                        }}
-                      >
-                        Assign as University Admin
-                      </button>
+                      <button className="btn btn-ghost" onClick={fetchAll}><RefreshCw size={16} /> Sync</button>
                     </div>
-                  </div>
-                </div>
 
-                <div className={styles.sectionCard} style={{ marginTop: '1.5rem' }}>
-                  <h3>University Admin Teams</h3>
-                  <p className={styles.subText} style={{ marginBottom: '1.5rem' }}>Management hierarchy for each university</p>
-                  
-                  <div className={styles.tableWrap}>
-                    <table className={styles.table}>
-                      <thead>
-                        <tr>
-                          <th>Lead Admin</th>
-                          <th>University</th>
-                          <th>Team Members</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {universityAdmins.map(admin => {
-                          const adminTeam = teams.filter(t => t.admin_id === admin.id);
-                          return (
-                            <tr key={admin.id}>
-                              <td>
-                                <div style={{ fontWeight: 700 }}>{admin.name}</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-400)' }}>{admin.email}</div>
-                              </td>
-                              <td>{admin.universities?.name || 'Unknown'}</td>
-                              <td>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                  {adminTeam.map(m => (
-                                    <div key={m.id} className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                      {m.member?.name} ({m.role})
-                                      <XCircle size={12} style={{ cursor: 'pointer' }} onClick={async () => {
-                                        await adminFetch('/api/admin', { method: 'POST', body: JSON.stringify({ action: 'remove_team_member', teamId: m.id }) });
-                                        fetchAll();
-                                      }} />
-                                    </div>
-                                  ))}
-                                  <button 
-                                    className="btn btn-ghost btn-sm" 
-                                    style={{ fontSize: '0.7rem', height: '24px', padding: '0 8px' }}
+                    <div className={styles.sectionsGrid}>
+                      <div className={styles.sectionCard}>
+                        <h3 style={{ marginBottom: '1.5rem' }}>University List</h3>
+                        <div className={styles.tableWrap}>
+                          <table className={styles.table}>
+                            <thead>
+                              <tr>
+                                <th>University</th>
+                                <th>Location</th>
+                                <th>Admins</th>
+                                <th>Action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {universities.map(u => (
+                                <tr key={u.id}>
+                                  <td style={{ cursor: 'pointer' }} onClick={() => { setSelectedUniId(u.id); fetchUniData(u.id); }}>
+                                    <div style={{ fontWeight: 700, color: 'var(--primary)' }}>{u.abbreviation}</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-400)' }}>{u.name}</div>
+                                  </td>
+                                  <td>{u.location}</td>
+                                  <td><span className="badge badge-primary">{u.adminCount || 0}</span></td>
+                                  <td>
+                                    <button 
+                                      className="btn btn-icon text-red" 
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        if (!confirm(`Delete ${u.name}? This will affect all associated vendors.`)) return;
+                                        const res = await adminFetch('/api/universities', { method: 'DELETE', body: JSON.stringify({ id: u.id }) });
+                                        if (res.ok) fetchAll();
+                                      }}
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div className={styles.settingsBox}>
+                          <h3 style={{ marginBottom: '1rem' }}>Add New University</h3>
+                          <input
+                            className="form-input mb-2"
+                            placeholder="Full University Name *"
+                            value={uniForm.name}
+                            onChange={e => setUniForm({ ...uniForm, name: e.target.value })}
+                          />
+                          <input
+                            className="form-input mb-2"
+                            placeholder="Abbreviation (e.g. ABUAD)"
+                            value={uniForm.abbreviation}
+                            onChange={e => setUniForm({ ...uniForm, abbreviation: e.target.value })}
+                          />
+                          <input
+                            className="form-input mb-2"
+                            placeholder="Location (City, State)"
+                            value={uniForm.location}
+                            onChange={e => setUniForm({ ...uniForm, location: e.target.value })}
+                          />
+                          <button
+                            className="btn btn-primary w-full"
+                            disabled={uniCreating || !uniForm.name}
+                            onClick={async () => {
+                              setUniCreating(true);
+                              try {
+                                const res = await adminFetch('/api/universities', { method: 'POST', body: JSON.stringify({ action: 'create', ...uniForm }) });
+                                const d = await res.json();
+                                if (d.success) { 
+                                  await fetchAll(); 
+                                  setUniForm({ name: '', location: '', abbreviation: '' }); 
+                                  addToast('University created successfully!', 'success');
+                                }
+                                else addToast(d.error || 'Failed', 'error');
+                              } catch { addToast('Network error', 'error'); }
+                              setUniCreating(false);
+                            }}
+                          >
+                            {uniCreating ? 'Creating...' : '+ Create University'}
+                          </button>
+                        </div>
+
+                        <div className={styles.settingsBox}>
+                          <h3 style={{ marginBottom: '1rem' }}>Assign University Admin</h3>
+                          <div className="mb-2" style={{ position: 'relative' }}>
+                            <input 
+                              className="form-input" 
+                              placeholder="Search user by name or email..." 
+                              value={adminSearch}
+                              onChange={e => setAdminSearch(e.target.value)}
+                            />
+                            {adminSearch && (
+                              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-100)', border: '1px solid var(--border)', borderRadius: '8px', zIndex: 10, maxHeight: '200px', overflowY: 'auto' }}>
+                                {users.filter(u => u.name?.toLowerCase().includes(adminSearch.toLowerCase()) || u.email?.toLowerCase().includes(adminSearch.toLowerCase())).slice(0, 5).map(u => (
+                                  <div 
+                                    key={u.id} 
+                                    style={{ padding: '0.75rem', cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
                                     onClick={() => {
-                                      const memberEmail = prompt('Enter user email to add to team:');
-                                      if (!memberEmail) return;
-                                      const userFound = users.find(u => u.email === memberEmail);
-                                      if (!userFound) return alert('User not found');
-                                      adminFetch('/api/admin', { 
-                                        method: 'POST', 
-                                        body: JSON.stringify({ 
-                                          action: 'add_team_member', 
-                                          universityId: admin.university_id,
-                                          adminId: admin.id,
-                                          memberId: userFound.id,
-                                          role: 'moderator'
-                                        }) 
-                                      }).then(() => fetchAll());
+                                      setSelectedAdminId(u.id);
+                                      setAdminSearch(`${u.name} (${u.email})`);
                                     }}
                                   >
-                                    + Add Member
-                                  </button>
-                                </div>
-                              </td>
-                              <td>
-                                <button 
-                                  className="btn btn-ghost text-red"
-                                  onClick={async () => {
-                                    if (!confirm(`Revoke admin status for ${admin.name}?`)) return;
-                                    await adminFetch('/api/universities', { method: 'POST', body: JSON.stringify({ action: 'revoke_admin', userId: admin.id }) });
-                                    fetchAll();
-                                  }}
-                                >
-                                  Revoke Admin
-                                </button>
-                              </td>
+                                    <strong>{u.name}</strong>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-400)' }}>{u.email}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <select id="assign-uni-id" className="form-input mb-2">
+                            <option value="">-- Select University --</option>
+                            {universities.map((u: any) => (
+                              <option key={u.id} value={u.id}>{u.name} ({u.abbreviation})</option>
+                            ))}
+                          </select>
+                          <button
+                            className="btn btn-primary w-full"
+                            onClick={async () => {
+                              const universityId = (document.getElementById('assign-uni-id') as HTMLSelectElement)?.value;
+                              if (!selectedAdminId || !universityId) return addToast('User and University required', 'error');
+                              const res = await adminFetch('/api/universities', { method: 'POST', body: JSON.stringify({ action: 'assign_admin', userId: selectedAdminId, universityId }) });
+                              const d = await res.json();
+                              if (d.success) { 
+                                addToast('University Admin assigned successfully!', 'success'); 
+                                setAdminSearch('');
+                                setSelectedAdminId('');
+                                await fetchAll(); 
+                              }
+                              else addToast(d.error || 'Failed', 'error');
+                            }}
+                          >
+                            Assign as University Admin
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={styles.sectionCard} style={{ marginTop: '1.5rem' }}>
+                      <h3>University Admin Teams</h3>
+                      <p className={styles.subText} style={{ marginBottom: '1.5rem' }}>Management hierarchy for each university</p>
+                      
+                      <div className={styles.tableWrap}>
+                        <table className={styles.table}>
+                          <thead>
+                            <tr>
+                              <th>Lead Admin</th>
+                              <th>University</th>
+                              <th>Team Members</th>
+                              <th>Actions</th>
                             </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                          </thead>
+                          <tbody>
+                            {universityAdmins.map(admin => {
+                              const adminTeam = teams.filter(t => t.admin_id === admin.id);
+                              return (
+                                <tr key={admin.id}>
+                                  <td>
+                                    <div style={{ fontWeight: 700 }}>{admin.name}</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-400)' }}>{admin.email}</div>
+                                  </td>
+                                  <td>{admin.universities?.name || 'Unknown'}</td>
+                                  <td>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                      {adminTeam.map(m => (
+                                        <div key={m.id} className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                          {m.member?.name} ({m.role})
+                                          <XCircle size={12} style={{ cursor: 'pointer' }} onClick={async () => {
+                                            await adminFetch('/api/admin', { method: 'POST', body: JSON.stringify({ action: 'remove_team_member', teamId: m.id }) });
+                                            fetchAll();
+                                          }} />
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <button 
+                                      className="btn btn-ghost text-red"
+                                      onClick={async () => {
+                                        if (!confirm(`Revoke admin status for ${admin.name}?`)) return;
+                                        await adminFetch('/api/universities', { method: 'POST', body: JSON.stringify({ action: 'revoke_admin', userId: admin.id }) });
+                                        fetchAll();
+                                      }}
+                                    >
+                                      Revoke Admin
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className={styles.content}>
+                    <div className={styles.header}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <button className="btn btn-ghost" onClick={() => setSelectedUniId(null)}><ArrowLeft size={16} /> Back</button>
+                        <div>
+                          <h1>{universities.find(u => u.id === selectedUniId)?.name} Details</h1>
+                          <p className={styles.subText}>Full management for this campus ecosystem</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={styles.sectionsGrid}>
+                      <div className={styles.sectionCard}>
+                        <h3>Users Registered Under This University</h3>
+                        <div className={styles.tableWrap} style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                          <table className={styles.table}>
+                            <thead>
+                              <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Joined</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {uniUsers.map(u => (
+                                <tr key={u.id}>
+                                  <td>{u.name}</td>
+                                  <td>{u.email}</td>
+                                  <td><span className="badge badge-secondary">{u.role}</span></td>
+                                  <td>{new Date(u.created_at).toLocaleDateString()}</td>
+                                </tr>
+                              ))}
+                              {uniUsers.length === 0 && <tr><td colSpan={4} style={{ textAlign: 'center' }}>No users found</td></tr>}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <div className={styles.sectionCard}>
+                        <h3>Campus Management Team</h3>
+                        <p className={styles.subText} style={{ marginBottom: '1rem' }}>Assign roles and board permissions for this university</p>
+                        
+                        <div className={styles.settingsBox} style={{ marginBottom: '1.5rem' }}>
+                          <h4>Add Team Member</h4>
+                          <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
+                            <input 
+                              className="form-input" 
+                              placeholder="Search user..." 
+                              value={adminSearch}
+                              onChange={e => setAdminSearch(e.target.value)}
+                            />
+                            {adminSearch && (
+                              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-100)', border: '1px solid var(--border)', borderRadius: '8px', zIndex: 20, maxHeight: '200px', overflowY: 'auto' }}>
+                                {users.filter(u => u.name?.toLowerCase().includes(adminSearch.toLowerCase()) || u.email?.toLowerCase().includes(adminSearch.toLowerCase())).slice(0, 5).map(u => (
+                                  <div 
+                                    key={u.id} 
+                                    style={{ padding: '0.75rem', cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
+                                    onClick={() => {
+                                      setSelectedAdminId(u.id);
+                                      setAdminSearch(`${u.name} (${u.email})`);
+                                    }}
+                                  >
+                                    <strong>{u.name}</strong>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-400)' }}>{u.email}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div style={{ marginBottom: '0.75rem' }}>
+                            <label className={styles.subText} style={{ display: 'block', marginBottom: '0.5rem' }}>Grant Board Access:</label>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                              {['overview', 'vendors', 'catalog', 'users'].map(p => (
+                                <label key={p} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                                  <input type="checkbox" id={`perm-${p}`} style={{ accentColor: 'var(--primary)' }} />
+                                  {p.charAt(0).toUpperCase() + p.slice(1)} Access
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+
+                          <button className="btn btn-primary w-full" onClick={async () => {
+                            const perms = ['overview', 'vendors', 'catalog', 'users'].filter(p => (document.getElementById(`perm-${p}`) as HTMLInputElement)?.checked);
+                            if (!selectedAdminId) return addToast('Please select a user', 'error');
+                            const res = await adminFetch('/api/admin', { 
+                              method: 'POST', 
+                              body: JSON.stringify({ 
+                                action: 'add_team_member', 
+                                universityId: selectedUniId,
+                                memberId: selectedAdminId,
+                                role: 'campus_staff',
+                                permissions: perms
+                              }) 
+                            });
+                            if (res.ok) {
+                              addToast('Member added to campus team', 'success');
+                              setAdminSearch('');
+                              setSelectedAdminId('');
+                              fetchUniData(selectedUniId!);
+                            }
+                          }}>
+                            Add to Campus Team
+                          </button>
+                        </div>
+
+                        <div className={styles.tableWrap}>
+                          <table className={styles.table}>
+                            <thead>
+                              <tr>
+                                <th>Name</th>
+                                <th>Permissions</th>
+                                <th>Action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {uniTeams.map(m => (
+                                <tr key={m.id}>
+                                  <td>
+                                    <div style={{ fontWeight: 600 }}>{m.member?.name}</div>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-400)' }}>{m.member?.email}</div>
+                                  </td>
+                                  <td>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                                      {m.permissions?.map((p: string) => (
+                                        <span key={p} className="badge badge-primary" style={{ fontSize: '0.65rem' }}>{p}</span>
+                                      ))}
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <button className="btn btn-icon text-red" onClick={async () => {
+                                      await adminFetch('/api/admin', { method: 'POST', body: JSON.stringify({ action: 'remove_team_member', teamId: m.id }) });
+                                      fetchUniData(selectedUniId!);
+                                    }}><Trash2 size={14} /></button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>

@@ -308,7 +308,7 @@ export default function OnboardingPage() {
                   className={`${styles.typeCard} ${form.verificationType === 'business' ? styles.typeSelected : ''}`}
                   onClick={() => setForm({...form, verificationType: 'business'})}
                 >
-                  <span className={styles.typeEmoji}>ðŸ¢</span>
+                  <span className={styles.typeEmoji}>🏢</span>
                   <h3>Registered Business</h3>
                 </button>
               </div>

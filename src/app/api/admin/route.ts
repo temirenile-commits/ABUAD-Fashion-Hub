@@ -300,10 +300,27 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ admins: data });
   }
 
-  if (action === 'university_teams') {
+  if (action === 'university_users') {
+    const uniId = searchParams.get('uniId');
+    if (!uniId) return NextResponse.json({ error: 'uniId required' }, { status: 400 });
     const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('id, name, email, role, created_at')
+      .eq('university_id', uniId)
+      .order('created_at', { ascending: false });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ users: data });
+  }
+
+  if (action === 'university_teams') {
+    const uniId = searchParams.get('uniId');
+    let query = supabaseAdmin
       .from('university_teams')
       .select('*, member:member_id(name, email), admin:admin_id(name), university:university_id(name)');
+    
+    if (uniId) query = query.eq('university_id', uniId);
+    
+    const { data, error } = await query;
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ teams: data });
   }
@@ -748,13 +765,15 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'add_team_member') {
-    const { universityId, adminId, memberId, role } = body;
-    const { error } = await supabaseAdmin.from('university_teams').insert({
+    const { universityId, adminId, memberId, role, permissions } = body;
+    const { error } = await supabaseAdmin.from('university_teams').upsert({
       university_id: universityId,
-      admin_id: adminId,
+      admin_id: adminId || null,
       member_id: memberId,
-      role: role || 'member'
-    });
+      role: role || 'member',
+      permissions: permissions || []
+    }, { onConflict: 'university_id,member_id' });
+    
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     // Also update member role if they are just customers

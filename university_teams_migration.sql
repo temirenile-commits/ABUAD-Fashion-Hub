@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS public.university_teams (
   admin_id UUID REFERENCES public.users(id) ON DELETE CASCADE, -- The main University Admin
   member_id UUID REFERENCES public.users(id) ON DELETE CASCADE, -- Team member
   role TEXT DEFAULT 'member', -- member, moderator, support
+  permissions JSONB DEFAULT '[]'::jsonb, -- Array of strings: ['overview', 'vendors', 'catalog', 'users']
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   UNIQUE(university_id, member_id)
 );
