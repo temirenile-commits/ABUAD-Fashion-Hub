@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 /**
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     await supabaseAdmin.from('notifications').insert({
       user_id: order.brand_owner_id || order.brand_id,
       type: 'payment_received',
-      title: 'Funds Released! 💰',
+      title: 'Funds Released! ðŸ’°',
       content: `Customer confirmed delivery for order #${order.id.slice(0, 8)}. ₦${order.vendor_earning.toLocaleString()} has been added to your balance.`,
       link: '/dashboard/vendor',
       is_read: false
@@ -84,3 +84,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
+

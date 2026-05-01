@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CreditCard, CheckCircle, ShieldCheck, Loader2, ArrowLeft } from 'lucide-react';
@@ -105,7 +105,7 @@ export default function PayFeePage() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)', fontSize: '0.9rem' }}>
               <span>Status</span>
-              <span>Approved (✅)</span>
+              <span>Approved (âœ…)</span>
             </div>
           </div>
 
@@ -136,3 +136,4 @@ export default function PayFeePage() {
     </div>
   );
 }
+

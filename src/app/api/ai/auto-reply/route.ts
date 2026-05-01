@@ -1,4 +1,4 @@
-import { generateText } from 'ai';
+﻿import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { NextResponse } from 'next/server';
@@ -66,3 +66,4 @@ RULES:
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
@@ -9,6 +9,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
 import TradingChart from '@/components/TradingChart';
+import { useToast } from '@/context/ToastContext';
 
 type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions';
 
@@ -57,6 +58,7 @@ export default function AdminDashboard() {
   const [uniForm, setUniForm] = useState({ name: '', location: '', abbreviation: '' });
   const [uniCreating, setUniCreating] = useState(false);
   const [promoForm, setPromoForm] = useState({ code: '', type: 'percentage', value: 10, max_uses: 100, product_id: '' });
+  const { addToast } = useToast();
 
   const safeJson = async (res: Response) => {
     try { return await res.json(); } catch { return {}; }
@@ -145,17 +147,18 @@ export default function AdminDashboard() {
       if (data.success) {
         await fetchAll();
         if (selectedVendor && payload.brandId === selectedVendor.id) setSelectedVendor(null);
+        addToast('Action completed successfully!', 'success');
       } else {
-        alert(data.error || 'Action failed');
+        addToast(data.error || 'Action failed', 'error');
       }
     } catch {
-      alert('Network error');
+      addToast('Network error', 'error');
     }
     setActionLoading('');
   };
 
   const handleConfirmPayout = async () => {
-    if (!proofFile || !transferRef) return alert('Please attach proof and enter reference');
+    if (!proofFile || !transferRef) return addToast('Please attach proof and enter reference', 'error');
     setUploadingProof(true);
     try {
       const fileExt = proofFile.name.split('.').pop();
@@ -168,8 +171,9 @@ export default function AdminDashboard() {
       setConfirmPayoutModal(null);
       setProofFile(null);
       setTransferRef('');
+      addToast('Payout confirmed successfully!', 'success');
     } catch (e: any) {
-      alert(e.message || 'Upload failed');
+      addToast(e.message || 'Upload failed', 'error');
     }
     setUploadingProof(false);
   };
@@ -273,7 +277,7 @@ export default function AdminDashboard() {
 
             {activeTab === 'vendors' && (
               <div className={styles.sectionCard}>
-                <table className={styles.table}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                   <thead>
                     <tr><th>Brand</th><th>Academic Details</th><th>Tier</th><th>Status</th><th>Actions</th></tr>
                   </thead>
@@ -305,13 +309,13 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               </div>
             )}
 
             {activeTab === 'users' && (
               <div className={styles.sectionCard}>
-                <table className={styles.table}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                   <thead>
                     <tr><th>User</th><th>Role & Permissions</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
                   </thead>
@@ -386,13 +390,13 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               </div>
             )}
 
             {activeTab === 'products' && (
               <div className={styles.sectionCard}>
-                <table className={styles.table}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                   <thead>
                     <tr><th>Product</th><th>Brand</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
                   </thead>
@@ -424,7 +428,7 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
 
                 <div style={{ marginTop: '3rem' }}>
                   <h3>Promo Codes (Subsidized by Admin)</h3>
@@ -478,10 +482,10 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
                    <div className={styles.promoSubSection}>
                       <h3>ðŸ  Active Billboards</h3>
-                      <table className={styles.table}>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                          <thead><tr><th>Brand</th><th>Expires</th></tr></thead>
                          <tbody>
                             {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at) > new Date()).map(v => (
@@ -494,11 +498,11 @@ export default function AdminDashboard() {
                                <tr><td colSpan={2} style={{ textAlign: 'center' }} className={styles.subText}>No active billboards</td></tr>
                             )}
                          </tbody>
-                      </table>
+                      </table></div>
                    </div>
                    <div className={styles.promoSubSection}>
                       <h3>âš¡ Active Flash Sales</h3>
-                      <table className={styles.table}>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                          <thead><tr><th>Product</th><th>Price</th><th>Brand</th></tr></thead>
                          <tbody>
                             {products.filter(p => p.is_flash_sale).map(p => (
@@ -512,7 +516,7 @@ export default function AdminDashboard() {
                                <tr><td colSpan={3} style={{ textAlign: 'center' }} className={styles.subText}>No active flash sales</td></tr>
                             )}
                          </tbody>
-                      </table>
+                      </table></div>
                    </div>
                 </div>
               </div>
@@ -527,7 +531,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <table className={styles.table}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                   <thead>
                     <tr><th>Rider</th><th>Status</th><th>Performance</th><th>Earnings</th><th>Location</th><th>Actions</th></tr>
                   </thead>
@@ -575,7 +579,7 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               </div>
             )}
 
@@ -592,7 +596,7 @@ export default function AdminDashboard() {
                      </button>
                    ))}
                  </div>
-                <table className={styles.table}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                   <thead>
                     <tr><th>Order ID</th><th>Customer</th><th>Brand</th><th>Amount</th><th>Status</th><th>Date</th></tr>
                   </thead>
@@ -617,7 +621,7 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               </div>
             )}
 
@@ -633,7 +637,7 @@ export default function AdminDashboard() {
                       <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b' }}>â‚¦{(stats.totalSubsidies || 0).toLocaleString()}</div>
                     </div>
                   </div>
-                 <table className={styles.table} style={{ marginTop: '1rem' }}>
+                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table} style={{ marginTop: '1rem' }}>
                    <thead>
                      <tr><th>ID</th><th>User</th><th>Role</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr>
                    </thead>
@@ -659,7 +663,7 @@ export default function AdminDashboard() {
                        </tr>
                      ))}
                    </tbody>
-                 </table>
+                 </table></div>
                </div>
              )}
 
@@ -786,7 +790,7 @@ export default function AdminDashboard() {
 
              {activeTab === 'reviews' && (
                <div className={styles.sectionCard}>
-                 <table className={styles.table}>
+                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                    <thead>
                      <tr><th>User</th><th>Product</th><th>Rating</th><th>Comment</th><th>Date</th><th>Actions</th></tr>
                    </thead>
@@ -809,7 +813,7 @@ export default function AdminDashboard() {
                        </tr>
                      ))}
                    </tbody>
-                 </table>
+                 </table></div>
                </div>
              )}
 
@@ -850,13 +854,13 @@ export default function AdminDashboard() {
                         });
                         const data = await res.json();
                         if (data.success) {
-                          alert('Notification sent successfully!');
+                          addToast('Notification sent successfully!', 'success');
                           setNotifForm({ title: '', content: '', target: 'all', userId: '' });
                         } else {
-                          alert(data.error || 'Failed to send notification');
+                          addToast(data.error || 'Failed to send notification', 'error');
                         }
                       } catch (e) {
-                        alert('Connection error');
+                        addToast('Connection error', 'error');
                       }
                       setNotifSending(false);
                     }}
@@ -913,7 +917,7 @@ export default function AdminDashboard() {
 
                 <div className={styles.sectionCard} style={{ marginTop: '2rem' }}>
                   <h3>Competition Heatmap</h3>
-                  <table className={styles.table}>
+                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                     <thead>
                       <tr><th>Brand</th><th>Category</th><th>Avg. Price</th><th>Sales</th><th>Growth</th></tr>
                     </thead>
@@ -928,7 +932,7 @@ export default function AdminDashboard() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div>
                 </div>
               </div>
             )}
@@ -1125,7 +1129,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
                   <div className={styles.settingsBox}>
                     <h3 style={{ marginBottom: '1rem' }}>Add New University</h3>
                     <input
@@ -1154,9 +1158,13 @@ export default function AdminDashboard() {
                         try {
                           const res = await adminFetch('/api/universities', { method: 'POST', body: JSON.stringify({ action: 'create', ...uniForm }) });
                           const d = await res.json();
-                          if (d.success) { await fetchAll(); setUniForm({ name: '', location: '', abbreviation: '' }); }
-                          else alert(d.error || 'Failed');
-                        } catch { alert('Network error'); }
+                          if (d.success) { 
+                            await fetchAll(); 
+                            setUniForm({ name: '', location: '', abbreviation: '' }); 
+                            addToast('University created successfully!', 'success');
+                          }
+                          else addToast(d.error || 'Failed', 'error');
+                        } catch { addToast('Network error', 'error'); }
                         setUniCreating(false);
                       }}
                     >
@@ -1181,11 +1189,14 @@ export default function AdminDashboard() {
                       onClick={async () => {
                         const userId = (document.getElementById('assign-user-id') as HTMLInputElement)?.value;
                         const universityId = (document.getElementById('assign-uni-id') as HTMLSelectElement)?.value;
-                        if (!userId || !universityId) return alert('Both fields required');
+                        if (!userId || !universityId) return addToast('Both fields required', 'error');
                         const res = await adminFetch('/api/universities', { method: 'POST', body: JSON.stringify({ action: 'assign_admin', userId, universityId }) });
                         const d = await res.json();
-                        if (d.success) { alert('University Admin assigned successfully!'); await fetchAll(); }
-                        else alert(d.error || 'Failed');
+                        if (d.success) { 
+                          addToast('University Admin assigned successfully!', 'success'); 
+                          await fetchAll(); 
+                        }
+                        else addToast(d.error || 'Failed', 'error');
                       }}
                     >
                       Assign as University Admin
@@ -1195,7 +1206,7 @@ export default function AdminDashboard() {
 
                 <div style={{ marginTop: '2rem' }}>
                   <h3 style={{ marginBottom: '1rem' }}>All Universities</h3>
-                  <table className={styles.table}>
+                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                     <thead>
                       <tr><th>Name</th><th>Abbreviation</th><th>Location</th><th>Status</th><th>Actions</th></tr>
                     </thead>
@@ -1224,7 +1235,7 @@ export default function AdminDashboard() {
                         <tr><td colSpan={5} style={{ textAlign: 'center', color: '#64748b' }}>No universities yet</td></tr>
                       )}
                     </tbody>
-                  </table>
+                  </table></div>
                 </div>
               </div>
             )}

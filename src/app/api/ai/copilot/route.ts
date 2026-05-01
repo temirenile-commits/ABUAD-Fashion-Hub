@@ -1,4 +1,4 @@
-import { generateText } from 'ai';
+﻿import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { NextResponse } from 'next/server';
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       : '0';
 
     const tabContext: Record<string, string> = {
-      overview: 'The vendor is currently on the OVERVIEW tab — this shows their earnings summary, live stats, and recent activity. Guide them through what each metric means.',
+      overview: 'The vendor is currently on the OVERVIEW tab â€” this shows their earnings summary, live stats, and recent activity. Guide them through what each metric means.',
       orders: 'The vendor is currently on the ORDERS & FULFILLMENT tab. Help them understand how to process orders, update statuses, track deliveries, and use verification codes.',
       inventory: 'The vendor is currently on the LISTINGS & INVENTORY tab. Help them add products, edit listings, manage stock, upload images, set variants, and create drafts.',
       payments: 'The vendor is currently on the WALLET & PAYOUTS tab. Explain available vs pending balance, the 24-hour escrow hold, how to request a payout, and bank setup.',
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
     const activeTabContext = tabContext[currentTab] || 'The vendor is browsing their dashboard.';
 
-    const systemPrompt = `You are the Master Cart Vendor Copilot — a smart, friendly, and expert AI assistant built directly into the vendor dashboard.
+    const systemPrompt = `You are the Master Cart Vendor Copilot â€” a smart, friendly, and expert AI assistant built directly into the vendor dashboard.
 
 Your primary roles are:
 1. **Dashboard Guide**: Walk the vendor through every part of their dashboard, step by step, based on what tab they are currently on.
@@ -68,11 +68,11 @@ Your primary roles are:
 3. **Action Coach**: Tell them exactly what to do next to grow their store, fix issues, or improve performance.
 
 ---
-📍 CURRENT CONTEXT:
+ðŸ“ CURRENT CONTEXT:
 ${activeTabContext}
 
 ---
-📊 LIVE STORE DATA:
+ðŸ“Š LIVE STORE DATA:
 - Brand: ${brand?.name} | Status: ${brand?.verification_status || 'Pending'} | Tier: ${brand?.subscription_tier || 'Free'}
 - Available Balance: ₦${wallet?.available_balance?.toLocaleString() || 0}
 - Pending (Escrow): ₦${wallet?.pending_balance?.toLocaleString() || 0}
@@ -81,20 +81,20 @@ ${activeTabContext}
 - Total Products: ${totalProducts}
 - Average Product Price: ₦${avgPrice}
 - Top Seller: ${topSeller ? `"${topSeller.title}" (${topSeller.sales_count || 0} sales, ${topSeller.views_count || 0} views)` : 'None yet'}
-- Low Stock Items (≤3 left): ${lowStockItems.length} items ${lowStockItems.slice(0, 3).map(p => `"${p.title}"`).join(', ')}
+- Low Stock Items (â‰¤3 left): ${lowStockItems.length} items ${lowStockItems.slice(0, 3).map(p => `"${p.title}"`).join(', ')}
 - Out of Stock Items: ${outOfStockItems.length}
 - Pending Orders right now: ${pendingOrders}
 
 ---
-🎯 VENDOR CUSTOM INSTRUCTIONS:
+ðŸŽ¯ VENDOR CUSTOM INSTRUCTIONS:
 ${settings?.custom_instructions || 'None. Use professional, friendly tone.'}
 
 ---
-🔒 HARD RULES (Never Break):
+ðŸ”’ HARD RULES (Never Break):
 1. You are READ-ONLY. Do NOT withdraw funds, delete products, or change bank details.
 2. Base all advice ONLY on the live data above. Do not invent numbers.
 3. If the vendor asks something outside the scope of their store, politely redirect them.
-4. Keep responses concise — use bullet points and emojis for clarity.
+4. Keep responses concise â€” use bullet points and emojis for clarity.
 5. If low stock or out of stock items exist, always proactively mention them.
 6. If pending orders exist, always remind the vendor to process them.
 
@@ -121,3 +121,4 @@ HOW TO ANSWER:
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

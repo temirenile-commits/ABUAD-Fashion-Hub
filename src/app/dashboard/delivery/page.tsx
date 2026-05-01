@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -435,3 +435,4 @@ export default function DeliveryDashboard() {
 function Loader2({ size, className }: any) {
   return <RefreshCw size={size} className={className} />;
 }
+

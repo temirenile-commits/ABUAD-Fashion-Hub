@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { CartProvider } from '@/context/CartContext';
 import { NotificationProvider } from '@/context/NotificationContext';
+import { ToastProvider } from '@/context/ToastContext';
 import RealtimeProvider from '@/components/providers/RealtimeProvider';
 import LayoutWrapper from '@/components/LayoutWrapper';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -45,15 +46,17 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ThemeProvider>
-          <RealtimeProvider>
-            <CartProvider>
-              <NotificationProvider>
-                <LayoutWrapper>
-                  {children}
-                </LayoutWrapper>
-              </NotificationProvider>
-            </CartProvider>
-          </RealtimeProvider>
+          <ToastProvider>
+            <RealtimeProvider>
+              <CartProvider>
+                <NotificationProvider>
+                  <LayoutWrapper>
+                    {children}
+                  </LayoutWrapper>
+                </NotificationProvider>
+              </CartProvider>
+            </RealtimeProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

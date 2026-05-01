@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -38,7 +38,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const userIdRef = useRef<string | null>(null);
 
-  // ── Auto-request permission once the user is logged in ──────────────────────
+  // â”€â”€ Auto-request permission once the user is logged in â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const requestPermission = useCallback(async () => {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
     if (Notification.permission === 'granted') { setPermission('granted'); return; }
@@ -77,12 +77,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const userId = session.user.id;
       userIdRef.current = userId;
 
-      // ── Auto-prompt permission for logged-in users ─────────────────────────
+      // â”€â”€ Auto-prompt permission for logged-in users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       if (Notification.permission === 'default') {
         await requestPermission();
       }
 
-      // ── Fetch existing unread count from DB ────────────────────────────────
+      // â”€â”€ Fetch existing unread count from DB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const { count } = await supabase
         .from('notifications')
         .select('id', { count: 'exact', head: true })
@@ -90,7 +90,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         .eq('is_read', false);
       if (count) setUnreadCount(count);
 
-      // ── Subscribe: personal notifications table ────────────────────────────
+      // â”€â”€ Subscribe: personal notifications table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const notifyChannel = supabase
         .channel(`notify-${userId}`)
         .on('postgres_changes', {
@@ -107,7 +107,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         })
         .subscribe();
 
-      // ── Subscribe: broadcast notifications (no user_id filter = admin blasts) ──
+      // â”€â”€ Subscribe: broadcast notifications (no user_id filter = admin blasts) â”€â”€
       const broadcastChannel = supabase
         .channel('notify-broadcast')
         .on('postgres_changes', {
@@ -123,7 +123,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         })
         .subscribe();
 
-      // ── Subscribe: incoming messages ────────────────────────────────────────
+      // â”€â”€ Subscribe: incoming messages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const msgChannel = supabase
         .channel(`msg-${userId}`)
         .on('postgres_changes', {
@@ -132,11 +132,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           table: 'messages',
           filter: `receiver_id=eq.${userId}`,
         }, (payload) => {
-          handleIncoming('📩 New Enquiry', payload.new.content?.substring(0, 80) ?? '', '/notifications');
+          handleIncoming('ðŸ“© New Enquiry', payload.new.content?.substring(0, 80) ?? '', '/notifications');
         })
         .subscribe();
 
-      // ── Subscribe: my orders status change (Customer side) ─────────────────
+      // â”€â”€ Subscribe: my orders status change (Customer side) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const orderChannel = supabase
         .channel(`orders-${userId}`)
         .on('postgres_changes', {
@@ -147,10 +147,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }, (payload) => {
           const status: string = payload.new.status ?? '';
           const labels: Record<string, string> = {
-            paid: '💰 Payment Secured! The vendor has been notified.',
-            in_transit: '🚚 Your order is on the way!',
-            delivered: '📦 Your order has been delivered! Confirm receipt to release payment.',
-            confirmed: '✅ Delivery confirmed. Thank you!',
+            paid: 'ðŸ’° Payment Secured! The vendor has been notified.',
+            in_transit: 'ðŸšš Your order is on the way!',
+            delivered: 'ðŸ“¦ Your order has been delivered! Confirm receipt to release payment.',
+            confirmed: 'âœ… Delivery confirmed. Thank you!',
           };
           if (labels[status]) {
             handleIncoming(labels[status], `Order #${String(payload.new.id).slice(0, 8).toUpperCase()}`, '/dashboard/customer');
@@ -158,7 +158,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         })
         .subscribe();
 
-      // ── Subscribe: New orders received (Vendor side) ────────────────────────
+      // â”€â”€ Subscribe: New orders received (Vendor side) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const vendorOrderChannel = supabase
         .channel(`vendor-orders-${userId}`)
         .on('postgres_changes', {
@@ -169,12 +169,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           // Check if this order belongs to the user's brand
           const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', userId).single();
           if (brand && payload.new.brand_id === brand.id) {
-            handleIncoming('🛒 New Order Received!', `You have a new order for ₦${Number(payload.new.total_amount).toLocaleString()}`, '/dashboard/vendor');
+            handleIncoming('ðŸ›’ New Order Received!', `You have a new order for ₦${Number(payload.new.total_amount).toLocaleString()}`, '/dashboard/vendor');
           }
         })
         .subscribe();
 
-      // ── Subscribe: Brand Trends & Account Events ───────────────────────────
+      // â”€â”€ Subscribe: Brand Trends & Account Events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const brandChannel = supabase
         .channel(`brand-events-${userId}`)
         .on('postgres_changes', {
@@ -186,11 +186,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           const oldTier = payload.old.subscription_tier;
           const newTier = payload.new.subscription_tier;
           if (oldTier !== newTier) {
-            handleIncoming('⚡ Account Tier Upgraded', `Your store is now on the ${newTier.toUpperCase()} power level!`, '/dashboard/vendor');
+            handleIncoming('âš¡ Account Tier Upgraded', `Your store is now on the ${newTier.toUpperCase()} power level!`, '/dashboard/vendor');
           }
           
           if (payload.new.free_listings_count < 2 && payload.old.free_listings_count >= 2) {
-            handleIncoming('⚠️ Low Credits', 'Your product upload credits are almost exhausted.', '/dashboard/vendor/plans');
+            handleIncoming('âš ï¸ Low Credits', 'Your product upload credits are almost exhausted.', '/dashboard/vendor/plans');
           }
         })
         .subscribe();
@@ -221,3 +221,4 @@ export const useNotifications = () => {
   if (!ctx) throw new Error('useNotifications must be used within NotificationProvider');
   return ctx;
 };
+

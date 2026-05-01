@@ -402,7 +402,7 @@ export default function OnboardingPage() {
                 <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>All vendors must undergo manual identity verification. Submitting false academic (Matriculation/Room number) or business credentials will lead to an immediate and permanent ban from the Master Cart platform.</p>
                 
                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-100)' }}>2. Financial Escrow & Payouts</h4>
-                <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>To protect our customers, all funds from completed orders are held in a secure Escrow system for a mandatory 24-hour period post-delivery. Once the hold clears, you may request a manual payout to your registered bank account. Minimum withdrawal is â‚¦1,000.</p>
+                <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>To protect our customers, all funds from completed orders are held in a secure Escrow system for a mandatory 24-hour period post-delivery. Once the hold clears, you may request a manual payout to your registered bank account. Minimum withdrawal is ₦1,000.</p>
                 
                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-100)' }}>3. Fees & Subscriptions (Subject to Change)</h4>
                 <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>The platform operates on a subscription and commission model. By proceeding, you agree to pay the current subscription rates required to keep your store active. <strong>Please note: All platform fees, commissions, and subscription prices are subject to change.</strong> However, you will be notified via in-app alerts and email prior to any pricing adjustments.</p>
@@ -446,5 +446,6 @@ export default function OnboardingPage() {
     </main>
   );
 }
+
 
 

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { verifyTransaction } from '@/lib/paystack';
@@ -167,7 +167,7 @@ export async function POST(req: Request) {
       if (customer?.email) {
         sendEmail({
           to: customer.email,
-          subject: 'Payment Secured! 🎉 Master Cart',
+          subject: 'Payment Secured! ðŸŽ‰ Master Cart',
           html: emailTemplates.paymentSuccess(customer.name || '', reference.slice(-8), `₦${paidAmount.toLocaleString()}`)
         });
       }
@@ -209,7 +209,7 @@ export async function POST(req: Request) {
           {
             user_id: order.customer_id,
             type: 'order_update',
-            title: 'Order Confirmed! 🎉',
+            title: 'Order Confirmed! ðŸŽ‰',
             content: `Your payment has been secured. The vendor is now preparing your order #${order.id.slice(0, 8)}.`,
             link: '/dashboard/customer',
           }
@@ -219,7 +219,7 @@ export async function POST(req: Request) {
           notifs.push({
             user_id: vendorUserId,
             type: 'new_order',
-            title: 'You have a new order! 💸',
+            title: 'You have a new order! ðŸ’¸',
             content: `A customer just purchased an item. Start processing order #${order.id.slice(0, 8)} to release your funds.`,
             link: '/dashboard/vendor',
           });
@@ -259,3 +259,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
   }
 }
+
