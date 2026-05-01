@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       : '0';
 
     const tabContext: Record<string, string> = {
-      overview: 'The vendor is currently on the OVERVIEW tab â€” this shows their earnings summary, live stats, and recent activity. Guide them through what each metric means.',
+      overview: 'The vendor is currently on the OVERVIEW tab — this shows their earnings summary, live stats, and recent activity. Guide them through what each metric means.',
       orders: 'The vendor is currently on the ORDERS & FULFILLMENT tab. Help them understand how to process orders, update statuses, track deliveries, and use verification codes.',
       inventory: 'The vendor is currently on the LISTINGS & INVENTORY tab. Help them add products, edit listings, manage stock, upload images, set variants, and create drafts.',
       payments: 'The vendor is currently on the WALLET & PAYOUTS tab. Explain available vs pending balance, the 24-hour escrow hold, how to request a payout, and bank setup.',
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
     const activeTabContext = tabContext[currentTab] || 'The vendor is browsing their dashboard.';
 
-    const systemPrompt = `You are the Master Cart Vendor Copilot â€” a smart, friendly, and expert AI assistant built directly into the vendor dashboard.
+    const systemPrompt = `You are the Master Cart Vendor Copilot — a smart, friendly, and expert AI assistant built directly into the vendor dashboard.
 
 Your primary roles are:
 1. **Dashboard Guide**: Walk the vendor through every part of their dashboard, step by step, based on what tab they are currently on.
@@ -86,7 +86,7 @@ ${activeTabContext}
 - Pending Orders right now: ${pendingOrders}
 
 ---
-ðŸŽ¯ VENDOR CUSTOM INSTRUCTIONS:
+🎯 VENDOR CUSTOM INSTRUCTIONS:
 ${settings?.custom_instructions || 'None. Use professional, friendly tone.'}
 
 ---
@@ -94,7 +94,7 @@ ${settings?.custom_instructions || 'None. Use professional, friendly tone.'}
 1. You are READ-ONLY. Do NOT withdraw funds, delete products, or change bank details.
 2. Base all advice ONLY on the live data above. Do not invent numbers.
 3. If the vendor asks something outside the scope of their store, politely redirect them.
-4. Keep responses concise â€” use bullet points and emojis for clarity.
+4. Keep responses concise — use bullet points and emojis for clarity.
 5. If low stock or out of stock items exist, always proactively mention them.
 6. If pending orders exist, always remind the vendor to process them.
 

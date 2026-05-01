@@ -4,7 +4,7 @@ import { requireUniversityAdmin, requireSuperAdmin, getUniversityScope } from '@
 
 export const dynamic = 'force-dynamic';
 
-// â”€â”€â”€ GET Handler â€” Scoped data fetching â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€ GET Handler — Scoped data fetching â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export async function GET(req: NextRequest) {
   let ctx;
   try {
@@ -129,7 +129,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ riders: transformed });
   }
 
-  // â”€â”€ Analytics â€” trend data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â”€â”€ Analytics — trend data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (action === 'analytics') {
     const { data: ordersData } = await supabaseAdmin
       .from('orders')
@@ -155,7 +155,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ chartData });
   }
 
-  // â”€â”€ Cross-university insights (AGGREGATED ONLY â€” no raw data) â”€
+  // â”€â”€ Cross-university insights (AGGREGATED ONLY — no raw data) â”€
   if (action === 'cross_university_insights') {
     // Only university admins+ can see this
     const { data, error } = await supabaseAdmin
@@ -194,7 +194,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }
 
-// â”€â”€â”€ POST Handler â€” University-scoped admin actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€ POST Handler — University-scoped admin actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export async function POST(req: NextRequest) {
   let ctx;
   try {
@@ -267,7 +267,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'University scope required.' }, { status: 400 });
     }
 
-    // Resolve target users â€” ONLY within this university
+    // Resolve target users — ONLY within this university
     let query = supabaseAdmin.from('users').select('id').eq('university_id', universityId);
     if (target === 'vendors') query = query.eq('role', 'vendor');
     else if (target === 'customers') query = query.eq('role', 'customer');

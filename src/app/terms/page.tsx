@@ -69,11 +69,11 @@ export default function TermsPage() {
       },
       {
         title: '9. Data Privacy & Account Security',
-        content: 'We take data security seriously. Your login credentials, phone numbers, and location data are stored securely and never sold to third parties. Users are responsible for maintaining the confidentiality of their passwords. Any suspected breach should be reported to AFH Support immediately.'
+        content: 'We take data security seriously. Your login credentials, phone numbers, and location data are stored securely and never sold to third parties. Users are responsible for maintaining the confidentiality of their passwords. Any suspected breach should be reported to Master Cart Support immediately.'
       },
       {
         title: '10. Cookie & Tracking Policy',
-        content: 'AFH uses local storage and cookies to maintain your login session and store your marketplace preferences (such as your wishlist). By using the platform, you consent to this essential tracking required for system functionality.'
+        content: 'Master Cart uses local storage and cookies to maintain your login session and store your marketplace preferences (such as your wishlist). By using the platform, you consent to this essential tracking required for system functionality.'
       },
       {
         title: '11. Marketing & Billboard Boosts',
@@ -81,7 +81,7 @@ export default function TermsPage() {
       },
       {
         title: '12. Disputes & Final Arbitration',
-        content: 'In the event of a dispute, the AFH Admin team acts as the final arbitrator. We will review chat logs, order history, and delivery timestamps. Decisions made by the Admin team regarding refunds or fund releases are final.'
+        content: 'In the event of a dispute, the Master Cart Admin team acts as the final arbitrator. We will review chat logs, order history, and delivery timestamps. Decisions made by the Admin team regarding refunds or fund releases are final.'
       }
     ]
   };

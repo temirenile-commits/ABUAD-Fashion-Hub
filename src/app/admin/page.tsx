@@ -191,7 +191,7 @@ export default function AdminDashboard() {
     <div className={styles.container}>
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
-          <div className={styles.logo}>AF ADMIN</div>
+          <div className={styles.logo}>MASTER CART ADMIN</div>
           <p>Campus Marketplace Admin</p>
         </div>
         <nav className={styles.nav}>
@@ -262,8 +262,8 @@ export default function AdminDashboard() {
                   { label: 'Users', val: stats.userCount, color: '#3b82f6', Icon: Users },
                   { label: 'Brands', val: stats.brandCount, color: '#10b981', Icon: Store },
                   { label: 'Products', val: stats.productCount, color: '#c9a14a', Icon: ShoppingBag },
-                  { label: 'Revenue', val: `â‚¦${stats.totalRevenue.toLocaleString()}`, color: '#eb0c7a', Icon: TrendingUp },
-                  { label: 'Subsidies', val: `â‚¦${(stats.totalSubsidies || 0).toLocaleString()}`, color: '#f59e0b', Icon: Tag },
+                  { label: 'Revenue', val: `₦${stats.totalRevenue.toLocaleString()}`, color: '#eb0c7a', Icon: TrendingUp },
+                  { label: 'Subsidies', val: `₦${(stats.totalSubsidies || 0).toLocaleString()}`, color: '#f59e0b', Icon: Tag },
                   { label: 'Product Views', val: (stats.totalProductViews || 0).toLocaleString(), color: '#8b5cf6', Icon: Eye },
                   { label: 'Profile Visits', val: (stats.totalProfileViews || 0).toLocaleString(), color: '#ec4899', Icon: Users },
                 ].map(({ label, val, color, Icon }) => (
@@ -292,9 +292,9 @@ export default function AdminDashboard() {
                         </td>
                         <td>
                           <div className={styles.academicInfo}>
-                            <div>Matric: {v.matric_number || 'â€”'}</div>
-                            <div>Room: {v.room_number || 'â€”'}</div>
-                            <div>College: {v.college || 'â€”'}</div>
+                            <div>Matric: {v.matric_number || '—'}</div>
+                            <div>Room: {v.room_number || '—'}</div>
+                            <div>College: {v.college || '—'}</div>
                           </div>
                         </td>
                         <td><span className={`badge badge-${v.subscription_tier || 'free'}`} style={{ textTransform: 'uppercase', fontVariant: 'small-caps' }}>{v.subscription_tier || 'free'}</span></td>
@@ -323,7 +323,7 @@ export default function AdminDashboard() {
                     {filterBy(users, ['name', 'email']).map(u => (
                       <tr key={u.id}>
                         <td>
-                          <div style={{ fontWeight: 600 }}>{u.name || 'â€”'}</div>
+                          <div style={{ fontWeight: 600 }}>{u.name || '—'}</div>
                           <div className={styles.subText}>{u.email}</div>
                         </td>
                         <td>
@@ -347,9 +347,9 @@ export default function AdminDashboard() {
                                  {[
                                    { id: 'payouts', label: 'ðŸ’¸', title: 'Payouts' },
                                    { id: 'customer_service', label: 'ðŸŽ§', title: 'Support' },
-                                   { id: 'delivery', label: 'ðŸšš', title: 'Fleet' },
-                                   { id: 'promotions', label: 'ðŸ“¢', title: 'Adverts' },
-                                   { id: 'orders', label: 'ðŸ“¦', title: 'Orders' },
+                                   { id: 'delivery', label: '🚚', title: 'Fleet' },
+                                   { id: 'promotions', label: '📢', title: 'Adverts' },
+                                   { id: 'orders', label: '📦', title: 'Orders' },
                                    { id: 'verification', label: 'ðŸ›¡ï¸', title: 'Verify' },
                                    { id: 'reviews', label: 'â­', title: 'Reviews' }
                                  ].map(p => (
@@ -418,7 +418,7 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td>{p.brands?.name || 'Unknown'}</td>
-                        <td>â‚¦{Number(p.price).toLocaleString()}</td>
+                        <td>₦{Number(p.price).toLocaleString()}</td>
                         <td>{p.stock_count === -1 ? 'âˆž' : p.stock_count}</td>
                         <td>
                           <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => confirm('Delete this product?') && adminAction('delete_product', { productId: p.id })}>
@@ -441,7 +441,7 @@ export default function AdminDashboard() {
                       <div className="flex gap-2 mb-2">
                         <select className="input" value={promoForm.type} onChange={e => setPromoForm({ ...promoForm, type: e.target.value })}>
                            <option value="percentage">Percentage (%)</option>
-                           <option value="fixed">Fixed Amount (â‚¦)</option>
+                           <option value="fixed">Fixed Amount (₦)</option>
                         </select>
                         <input type="number" className="input" value={promoForm.value} onChange={e => setPromoForm({ ...promoForm, value: Number(e.target.value) })} />
                       </div>
@@ -460,7 +460,7 @@ export default function AdminDashboard() {
                             <div style={{ fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                <Tag size={12} /> {pc.code}
                             </div>
-                            <div className={styles.subText} style={{ fontSize: '0.8rem' }}>{pc.type === 'percentage' ? `${pc.value}% off` : `â‚¦${pc.value} off`}</div>
+                            <div className={styles.subText} style={{ fontSize: '0.8rem' }}>{pc.type === 'percentage' ? `${pc.value}% off` : `₦${pc.value} off`}</div>
                             <div style={{ fontSize: '0.7rem', marginTop: '4px' }}>Uses: <strong>{pc.current_uses || 0}</strong> / {pc.max_uses}</div>
                             {pc.products && <div style={{ fontSize: '0.7rem', color: 'var(--primary)' }}>Target: {pc.products.title.substring(0, 20)}...</div>}
                           </div>
@@ -508,7 +508,7 @@ export default function AdminDashboard() {
                             {products.filter(p => p.is_flash_sale).map(p => (
                                <tr key={p.id}>
                                   <td>{p.title}</td>
-                                  <td style={{ color: 'var(--primary)', fontWeight: 700 }}>â‚¦{Number(p.flash_sale_price || p.price).toLocaleString()}</td>
+                                  <td style={{ color: 'var(--primary)', fontWeight: 700 }}>₦{Number(p.flash_sale_price || p.price).toLocaleString()}</td>
                                   <td>{p.brands?.name}</td>
                                </tr>
                             ))}
@@ -551,7 +551,7 @@ export default function AdminDashboard() {
                           <div className={styles.subText}>Orders: {agent.completed_orders_count || 0}</div>
                         </td>
                         <td>
-                          <div style={{ fontWeight: 700, color: 'var(--primary)' }}>â‚¦{Number(agent.wallet_balance || 0).toLocaleString()}</div>
+                          <div style={{ fontWeight: 700, color: 'var(--primary)' }}>₦{Number(agent.wallet_balance || 0).toLocaleString()}</div>
                           <div className={styles.subText} style={{ fontSize: '0.7rem' }}>Pending payout</div>
                         </td>
                         <td>
@@ -609,7 +609,7 @@ export default function AdminDashboard() {
                           <div className={styles.subText}>{o.users?.email}</div>
                         </td>
                         <td>{o.brands?.name}</td>
-                        <td>â‚¦{Number(o.total_amount).toLocaleString()}</td>
+                        <td>₦{Number(o.total_amount).toLocaleString()}</td>
                         <td>
                           {o.status === 'pending' && o.expires_at && new Date(o.expires_at) < new Date() ? (
                             <span className="badge badge-cancelled" style={{ background: '#ef4444' }}>EXPIRED</span>
@@ -634,7 +634,7 @@ export default function AdminDashboard() {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div className={styles.subText}>Admin Promo Subsidies</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b' }}>â‚¦{(stats.totalSubsidies || 0).toLocaleString()}</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b' }}>₦{(stats.totalSubsidies || 0).toLocaleString()}</div>
                     </div>
                   </div>
                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table} style={{ marginTop: '1rem' }}>
@@ -650,7 +650,7 @@ export default function AdminDashboard() {
                            <div className={styles.subText}>{req.users?.email}</div>
                          </td>
                          <td><span className={`badge badge-${req.role}`}>{req.role}</span></td>
-                         <td style={{ color: '#f59e0b', fontWeight: 'bold' }}>â‚¦{Number(req.amount_requested).toLocaleString()}</td>
+                         <td style={{ color: '#f59e0b', fontWeight: 'bold' }}>₦{Number(req.amount_requested).toLocaleString()}</td>
                          <td><span className={`badge badge-${req.status}`}>{req.status}</span></td>
                          <td className={styles.subText}>{new Date(req.created_at).toLocaleDateString()}</td>
                          <td>
@@ -658,7 +658,7 @@ export default function AdminDashboard() {
                              <button className="btn btn-primary btn-sm" onClick={() => setConfirmPayoutModal(req)}>Confirm</button>
                            ) : req.proof_url ? (
                              <a href={req.proof_url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">View Proof</a>
-                           ) : 'â€”'}
+                           ) : '—'}
                          </td>
                        </tr>
                      ))}
@@ -774,7 +774,7 @@ export default function AdminDashboard() {
                     <div className={styles.settingsGrid}>
                        {['visibility_week', 'visibility_month'].map(vid => (
                          <div key={vid} className={styles.settingsBox}>
-                            <label>{vid === 'visibility_week' ? '7-Day Boost' : '30-Day Boost'} Price (â‚¦)</label>
+                            <label>{vid === 'visibility_week' ? '7-Day Boost' : '30-Day Boost'} Price (₦)</label>
                             <input 
                               type="number" 
                               className="input" 
@@ -828,11 +828,11 @@ export default function AdminDashboard() {
                     onChange={e => setNotifForm(f => ({ ...f, target: e.target.value }))}
                     className="input"
                   >
-                    <option value="all">ðŸ“¢ All Users (Broadcast)</option>
+                    <option value="all">📢 All Users (Broadcast)</option>
                     <option value="all_vendors">ðŸª All Vendors</option>
-                    <option value="all_delivery">ðŸšš All Delivery Agents</option>
-                    <option value="all_customers">ðŸ‘¤ All Customers</option>
-                    <option value="specific">ðŸŽ¯ Specific User ID</option>
+                    <option value="all_delivery">🚚 All Delivery Agents</option>
+                    <option value="all_customers">👤 All Customers</option>
+                    <option value="specific">🎯 Specific User ID</option>
                   </select>
                   {notifForm.target === 'specific' && (
                     <input 
@@ -865,7 +865,7 @@ export default function AdminDashboard() {
                       setNotifSending(false);
                     }}
                   >
-                    {notifSending ? 'Sending...' : 'ðŸ“£ Send Notification'}
+                    {notifSending ? 'Sending...' : '📣 Send Notification'}
                   </button>
                 </div>
               </div>
@@ -901,7 +901,7 @@ export default function AdminDashboard() {
                   <div className={styles.marketInsights}>
                     <h3>Market Trends</h3>
                     <div className={insightCardStyles}>
-                      <div className={styles.insightValue}>â‚¦{(marketData.reduce((acc, curr) => acc + curr.value, 0) / (marketData.length || 1)).toFixed(2)}</div>
+                      <div className={styles.insightValue}>₦{(marketData.reduce((acc, curr) => acc + curr.value, 0) / (marketData.length || 1)).toFixed(2)}</div>
                       <div className={styles.insightLabel}>Avg. Daily Revenue</div>
                     </div>
                     <div className={insightCardStyles}>
@@ -909,7 +909,7 @@ export default function AdminDashboard() {
                       <div className={styles.insightLabel}>Active Competing Brands</div>
                     </div>
                     <div className={insightCardStyles}>
-                      <div className={styles.insightValue}>â‚¦{(products.reduce((acc, curr) => acc + Number(curr.price), 0) / (products.length || 1)).toFixed(2)}</div>
+                      <div className={styles.insightValue}>₦{(products.reduce((acc, curr) => acc + Number(curr.price), 0) / (products.length || 1)).toFixed(2)}</div>
                       <div className={styles.insightLabel}>Avg. Market Price Point</div>
                     </div>
                   </div>
@@ -926,7 +926,7 @@ export default function AdminDashboard() {
                         <tr key={v.id}>
                           <td>{v.name}</td>
                           <td>Clothing</td>
-                          <td>â‚¦{Number(v.avg_price || 0).toLocaleString()}</td>
+                          <td>₦{Number(v.avg_price || 0).toLocaleString()}</td>
                           <td>{v.total_sales || 0}</td>
                           <td style={{ color: '#10b981' }}>+12.5%</td>
                         </tr>
@@ -951,24 +951,24 @@ export default function AdminDashboard() {
               {selectedVendor.verification_type === 'business' ? (
                 <div className={styles.modalSection}>
                   <h3>Business Profile</h3>
-                  <p><strong>Business Name:</strong> {selectedVendor.business_name || 'â€”'}</p>
-                  <p><strong>Registration No (CAC):</strong> {selectedVendor.business_registration_number || 'â€”'}</p>
-                  <p><strong>Address:</strong> {selectedVendor.business_address || 'â€”'}</p>
+                  <p><strong>Business Name:</strong> {selectedVendor.business_name || '—'}</p>
+                  <p><strong>Registration No (CAC):</strong> {selectedVendor.business_registration_number || '—'}</p>
+                  <p><strong>Address:</strong> {selectedVendor.business_address || '—'}</p>
                 </div>
               ) : (
                 <div className={styles.modalSection}>
                   <h3>Academic Profile</h3>
-                  <p><strong>Matric No:</strong> {selectedVendor.matric_number || 'â€”'}</p>
-                  <p><strong>Room No:</strong> {selectedVendor.room_number || 'â€”'}</p>
-                  <p><strong>College:</strong> {selectedVendor.college || 'â€”'}</p>
-                  <p><strong>Department:</strong> {selectedVendor.department || 'â€”'}</p>
+                  <p><strong>Matric No:</strong> {selectedVendor.matric_number || '—'}</p>
+                  <p><strong>Room No:</strong> {selectedVendor.room_number || '—'}</p>
+                  <p><strong>College:</strong> {selectedVendor.college || '—'}</p>
+                  <p><strong>Department:</strong> {selectedVendor.department || '—'}</p>
                 </div>
               )}
               <div className={styles.modalSection}>
                 <h3>Bank Details for Payouts</h3>
-                <p><strong>Bank Name:</strong> {selectedVendor.bank_name || 'â€”'}</p>
-                <p><strong>Account Name:</strong> {selectedVendor.bank_account_name || 'â€”'}</p>
-                <p><strong>Account Number:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedVendor.bank_account_number || 'â€”'}</span></p>
+                <p><strong>Bank Name:</strong> {selectedVendor.bank_name || '—'}</p>
+                <p><strong>Account Name:</strong> {selectedVendor.bank_account_name || '—'}</p>
+                <p><strong>Account Number:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedVendor.bank_account_number || '—'}</span></p>
               </div>
               <div className={styles.modalSection}>
                 <h3>Contact</h3>
@@ -1082,7 +1082,7 @@ export default function AdminDashboard() {
             </div>
             <div className={styles.modalBody}>
               <div style={{ padding: '1rem', background: 'var(--bg-300)', borderRadius: '8px', marginBottom: '1.5rem' }}>
-                <p>Transfer <strong>â‚¦{Number(confirmPayoutModal.amount_requested).toLocaleString()}</strong> to:</p>
+                <p>Transfer <strong>₦{Number(confirmPayoutModal.amount_requested).toLocaleString()}</strong> to:</p>
                 <p><strong>{confirmPayoutModal.bank_details?.accountName}</strong></p>
                 <p><strong>{confirmPayoutModal.bank_details?.bankName}</strong> - {confirmPayoutModal.bank_details?.accountNumber}</p>
               </div>

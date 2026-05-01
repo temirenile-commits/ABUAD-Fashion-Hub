@@ -132,7 +132,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           table: 'messages',
           filter: `receiver_id=eq.${userId}`,
         }, (payload) => {
-          handleIncoming('ðŸ“© New Enquiry', payload.new.content?.substring(0, 80) ?? '', '/notifications');
+          handleIncoming('📩 New Enquiry', payload.new.content?.substring(0, 80) ?? '', '/notifications');
         })
         .subscribe();
 
@@ -147,10 +147,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }, (payload) => {
           const status: string = payload.new.status ?? '';
           const labels: Record<string, string> = {
-            paid: 'ðŸ’° Payment Secured! The vendor has been notified.',
-            in_transit: 'ðŸšš Your order is on the way!',
-            delivered: 'ðŸ“¦ Your order has been delivered! Confirm receipt to release payment.',
-            confirmed: 'âœ… Delivery confirmed. Thank you!',
+            paid: '💰 Payment Secured! The vendor has been notified.',
+            in_transit: '🚚 Your order is on the way!',
+            delivered: '📦 Your order has been delivered! Confirm receipt to release payment.',
+            confirmed: '✅ Delivery confirmed. Thank you!',
           };
           if (labels[status]) {
             handleIncoming(labels[status], `Order #${String(payload.new.id).slice(0, 8).toUpperCase()}`, '/dashboard/customer');
@@ -169,7 +169,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           // Check if this order belongs to the user's brand
           const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', userId).single();
           if (brand && payload.new.brand_id === brand.id) {
-            handleIncoming('ðŸ›’ New Order Received!', `You have a new order for ₦${Number(payload.new.total_amount).toLocaleString()}`, '/dashboard/vendor');
+            handleIncoming('🛒 New Order Received!', `You have a new order for ₦${Number(payload.new.total_amount).toLocaleString()}`, '/dashboard/vendor');
           }
         })
         .subscribe();

@@ -105,7 +105,7 @@ export default function PayFeePage() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)', fontSize: '0.9rem' }}>
               <span>Status</span>
-              <span>Approved (âœ…)</span>
+              <span>Approved (✅)</span>
             </div>
           </div>
 

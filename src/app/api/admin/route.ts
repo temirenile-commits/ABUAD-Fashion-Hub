@@ -25,7 +25,7 @@ async function verifyAdmin(req: NextRequest) {
   }
   const token = authHeader.replace('Bearer ', '');
 
-  // Decode JWT locally â€” avoids network round-trip to Supabase Auth that was timing out
+  // Decode JWT locally — avoids network round-trip to Supabase Auth that was timing out
   const payload = decodeJwt(token);
   if (!payload?.sub) {
     console.error('[ADMIN API] Invalid or missing JWT payload');
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (action === 'users') {
-    // Use public.users as the primary source â€” avoids auth.admin.listUsers() network call that times out
+    // Use public.users as the primary source — avoids auth.admin.listUsers() network call that times out
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('users')
       .select('*')
@@ -143,7 +143,7 @@ export async function GET(req: NextRequest) {
     const brandCount = brandRes.count ?? 0;
     const productCount = productRes.count ?? 0;
 
-    // Fetch aggregated view counts separately (resilient â€” won't block main stats if column missing)
+    // Fetch aggregated view counts separately (resilient — won't block main stats if column missing)
     let totalProductViews = 0;
     let totalProfileViews = 0;
     try {
@@ -324,7 +324,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'mark_verified') {
-    // Final verified status â€” after fee is paid
+    // Final verified status — after fee is paid
     const { brandId } = body;
     const { error } = await supabaseAdmin
       .from('brands')

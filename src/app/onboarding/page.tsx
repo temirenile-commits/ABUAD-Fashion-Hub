@@ -213,7 +213,7 @@ export default function OnboardingPage() {
       <div className={styles.page}>
         <div className={styles.header}>
           <h1>Become an Master Cart Vendor</h1>
-          <p>Launch your store vividly. No upfront fees â€” get 5 free credits to start.</p>
+          <p>Launch your store vividly. No upfront fees — get 5 free credits to start.</p>
         </div>
 
         {errorMsg && (

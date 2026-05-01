@@ -207,7 +207,7 @@ export default function ExplorePage() {
           </div>
         )}
 
-        {/* Recommended Section â€” always shown */}
+        {/* Recommended Section — always shown */}
         {!loading && recommended.length > 0 && (
           <div style={{ marginTop: '3rem', borderTop: '1px solid var(--border)', paddingTop: '2rem' }}>
             <h2 style={{ marginBottom: '1.25rem', fontSize: '1.2rem' }}>âš¡ Recommended For You</h2>
