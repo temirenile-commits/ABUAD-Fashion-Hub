@@ -1367,40 +1367,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
-                    <thead>
-                      <tr><th>Name</th><th>Abbreviation</th><th>Location</th><th>Status</th><th>Actions</th></tr>
-                    </thead>
-                    <tbody>
-                      {universities.map((u: any) => (
-                        <tr key={u.id}>
-                          <td style={{ fontWeight: 600 }}>{u.name}</td>
-                          <td><span style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>{u.abbreviation || '—'}</span></td>
-                          <td className={styles.subText}>{u.location || '—'}</td>
-                          <td><span className={u.is_active ? 'badge badge-verified' : 'badge badge-pending'}>{u.is_active ? 'Active' : 'Inactive'}</span></td>
-                          <td>
-                            <button
-                              className="btn btn-ghost btn-sm"
-                              onClick={async () => {
-                                const res = await adminFetch('/api/universities', { method: 'POST', body: JSON.stringify({ action: 'update', id: u.id, isActive: !u.is_active }) });
-                                const d = await res.json();
-                                if (d.success) fetchAll();
-                              }}
-                            >
-                              {u.is_active ? 'Deactivate' : 'Activate'}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                      {universities.length === 0 && (
-                        <tr><td colSpan={5} style={{ textAlign: 'center', color: '#64748b' }}>No universities yet</td></tr>
-                      )}
-                    </tbody>
-                  </table></div>
-                </div>
-              </div>
-            )}
-
 
       {/* Image Lightbox */}
       {enlargedImg && (
