@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
   if (action === 'vendors') {
     const { data, error } = await supabaseAdmin
       .from('brands')
-      .select('*, users!owner_id(name, email)')
+      .select('*, users!owner_id(name, email), universities(name, abbreviation)')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
   if (action === 'products') {
     const { data, error } = await supabaseAdmin
       .from('products')
-      .select('*, brands(name, logo_url), universities(name, abbreviation)')
+      .select('*, brands(name, logo_url, university_id), universities(name, abbreviation)')
       .order('created_at', { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -123,37 +123,49 @@ export async function GET(req: NextRequest) {
   }
 
   if (action === 'stats') {
+    const uniId = searchParams.get('uniId');
+    let userQuery = supabaseAdmin.from('users').select('*', { count: 'exact', head: true });
+    let brandQuery = supabaseAdmin.from('brands').select('id', { count: 'exact', head: true });
+    let productQuery = supabaseAdmin.from('products').select('id', { count: 'exact', head: true });
+    let orderQuery = supabaseAdmin.from('orders').select('total_amount, admin_discount').eq('status', 'paid');
+
+    if (uniId) {
+      userQuery = userQuery.eq('university_id', uniId);
+      brandQuery = brandQuery.eq('university_id', uniId);
+      productQuery = productQuery.eq('university_id', uniId);
+      orderQuery = orderQuery.eq('university_id', uniId);
+    }
+
     const [
       userRes,
       brandRes,
       productRes,
       revenueRes
     ] = await Promise.all([
-      supabaseAdmin.from('users').select('*', { count: 'exact', head: true }),
-      supabaseAdmin.from('brands').select('id', { count: 'exact', head: true }),
-      supabaseAdmin.from('products').select('id', { count: 'exact', head: true }),
-      supabaseAdmin.from('orders').select('total_amount, admin_discount').eq('status', 'paid'),
+      userQuery,
+      brandQuery,
+      productQuery,
+      orderQuery
     ]);
-
-    if (userRes.error) console.error('[Stats] User Error:', userRes.error);
-    if (brandRes.error) console.error('[Stats] Brand Error:', brandRes.error);
-    if (productRes.error) console.error('[Stats] Product Error:', productRes.error);
 
     const userCount = userRes.count ?? 0;
     const brandCount = brandRes.count ?? 0;
     const productCount = productRes.count ?? 0;
 
-    // Fetch aggregated view counts separately (resilient — won't block main stats if column missing)
     let totalProductViews = 0;
     let totalProfileViews = 0;
     try {
-      const { data: viewData } = await supabaseAdmin.from('products').select('views_count');
+      let vQuery = supabaseAdmin.from('products').select('views_count');
+      if (uniId) vQuery = vQuery.eq('university_id', uniId);
+      const { data: viewData } = await vQuery;
       totalProductViews = (viewData || []).reduce((sum: number, p: any) => sum + (Number(p.views_count) || 0), 0);
-    } catch { /* column may not exist yet */ }
+    } catch { }
     try {
-      const { data: profileData } = await supabaseAdmin.from('brands').select('profile_views');
+      let pQuery = supabaseAdmin.from('brands').select('profile_views');
+      if (uniId) pQuery = pQuery.eq('university_id', uniId);
+      const { data: profileData } = await pQuery;
       totalProfileViews = (profileData || []).reduce((sum: number, b: any) => sum + (Number(b.profile_views) || 0), 0);
-    } catch { /* column may not exist yet */ }
+    } catch { }
     
     const revenueData = revenueRes.data || [];
     const totalRevenue = revenueData.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0);
@@ -175,7 +187,7 @@ export async function GET(req: NextRequest) {
   if (action === 'transactions') {
     const { data, error } = await supabaseAdmin
       .from('transactions')
-      .select('*, brands(name), users:user_id(name, email)')
+      .select('*, brands(name, university_id), users:user_id(name, email)')
       .order('created_at', { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -185,7 +197,7 @@ export async function GET(req: NextRequest) {
   if (action === 'orders') {
     const { data, error } = await supabaseAdmin
       .from('orders')
-      .select('*, products(title), brands(name), users:customer_id(name, email)')
+      .select('*, products(title), brands(name, university_id), users:customer_id(name, email), universities(name, abbreviation)')
       .order('created_at', { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -193,14 +205,17 @@ export async function GET(req: NextRequest) {
   }
 
   if (action === 'settings') {
+    const uniId = searchParams.get('uniId');
     const { data: settings, error } = await supabaseAdmin.from('platform_settings').select('*');
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     
-    // Transform array to key-value object
     const settingsMap = (settings || []).reduce((acc: any, s: any) => {
       acc[s.key] = s.value;
       return acc;
     }, {});
+
+    // If uniId is provided, we could potentially overlay university-specific settings here
+    // For now, returning global settings.
 
     return NextResponse.json({ settings: settingsMap });
   }
@@ -208,7 +223,7 @@ export async function GET(req: NextRequest) {
   if (action === 'reviews') {
     const { data, error } = await supabaseAdmin
       .from('reviews')
-      .select('*, users:user_id(name, email), products:product_id(title)')
+      .select('*, users:user_id(name, email), products:product_id(title, university_id)')
       .order('created_at', { ascending: false });
 
     if (error) { console.error('[Reviews]', error.message); return NextResponse.json({ reviews: [] }); }
@@ -218,7 +233,7 @@ export async function GET(req: NextRequest) {
   if (action === 'payouts') {
     const { data, error } = await supabaseAdmin
       .from('payout_requests')
-      .select('*, users:user_id(name, email)')
+      .select('*, users:user_id(name, email, university_id), universities(name, abbreviation)')
       .order('created_at', { ascending: false });
 
     if (error) { console.error('[Payouts]', error.message); return NextResponse.json({ payouts: [] }); }
@@ -305,8 +320,9 @@ export async function GET(req: NextRequest) {
     if (!uniId) return NextResponse.json({ error: 'uniId required' }, { status: 400 });
     const { data, error } = await supabaseAdmin
       .from('users')
-      .select('id, name, email, role, created_at')
+      .select('id, name, email, role, created_at, status')
       .eq('university_id', uniId)
+      .neq('role', 'admin') // Exclude Universal Super Admins
       .order('created_at', { ascending: false });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ users: data });
@@ -316,7 +332,7 @@ export async function GET(req: NextRequest) {
     const uniId = searchParams.get('uniId');
     let query = supabaseAdmin
       .from('university_teams')
-      .select('*, member:member_id(name, email), admin:admin_id(name), university:university_id(name)');
+      .select('*, member:member_id(name, email, role), admin:admin_id(name), university:university_id(name, abbreviation)');
     
     if (uniId) query = query.eq('university_id', uniId);
     
@@ -593,18 +609,26 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'send_notification') {
-    const { title, content, target, userId: targetUserId } = body;
+    const { title, content, target, userId: targetUserId, universityId } = body;
 
     if (!title || !content) {
       return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
     }
 
-    if (target === 'all' || target === 'all_vendors' || target === 'all_delivery' || target === 'all_customers') {
+    if (target === 'all' || target === 'all_vendors' || target === 'all_delivery' || target === 'all_customers' || target === 'university_all' || target === 'university_vendors') {
       let query = supabaseAdmin.from('users').select('id');
       
       if (target === 'all_vendors') query = query.eq('role', 'vendor');
       if (target === 'all_delivery') query = query.eq('role', 'delivery');
       if (target === 'all_customers') query = query.eq('role', 'customer');
+      
+      if (universityId) {
+        query = query.eq('university_id', universityId);
+      } else if (target === 'university_all' || target === 'university_vendors') {
+         return NextResponse.json({ error: 'universityId required for campus targets' }, { status: 400 });
+      }
+
+      if (target === 'university_vendors') query = query.eq('role', 'vendor');
 
       const { data: targetUsers } = await query;
       
@@ -628,7 +652,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, sent: 1 });
     }
 
-    return NextResponse.json({ error: 'Invalid target. Use "all" or "specific" with a userId.' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid target configuration.' }, { status: 400 });
   }
 
   if (action === 'confirm_payout') {
@@ -776,8 +800,11 @@ export async function POST(req: NextRequest) {
     
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Also update member role if they are just customers
-    await supabaseAdmin.from('users').update({ role: 'sub_admin' }).eq('id', memberId).eq('role', 'customer');
+    // Also update member role and university association
+    await supabaseAdmin.from('users').update({ 
+      role: 'university_admin',
+      university_id: universityId
+    }).eq('id', memberId);
 
     return NextResponse.json({ success: true });
   }
@@ -785,6 +812,24 @@ export async function POST(req: NextRequest) {
   if (action === 'remove_team_member') {
     const { teamId } = body;
     const { error } = await supabaseAdmin.from('university_teams').delete().eq('id', teamId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'update_uni_config') {
+    const { universityId, key, value } = body;
+    const configKey = `uni_config_${universityId}`;
+    
+    const { data: existing } = await supabaseAdmin.from('platform_settings').select('value').eq('key', configKey).single();
+    const config = (existing?.value as any) || {};
+    config[key] = value;
+
+    const { error } = await supabaseAdmin.from('platform_settings').upsert({
+      key: configKey,
+      value: config,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'key' });
+
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }

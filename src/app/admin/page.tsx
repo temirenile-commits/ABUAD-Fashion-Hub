@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   Users, Store, ShoppingBag, TrendingUp, CheckCircle, XCircle,
@@ -32,7 +32,7 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState('');
   const [selectedVendor, setSelectedVendor] = useState<any>(null);
   const [enlargedImg, setEnlargedImg] = useState<string | null>(null);
-  const [notifForm, setNotifForm] = useState({ title: '', content: '', target: 'all', userId: '' });
+  const [notifForm, setNotifForm] = useState({ title: '', content: '', target: 'all', userId: '', universityId: '' });
   const [notifSending, setNotifSending] = useState(false);
   
   const [confirmPayoutModal, setConfirmPayoutModal] = useState<any>(null);
@@ -70,6 +70,7 @@ export default function AdminDashboard() {
   const [uniLoading, setUniLoading] = useState(false);
   
   const { addToast } = useToast();
+  const fetchedRef = useRef(false);
 
   const safeJson = async (res: Response) => {
     try { return await res.json(); } catch { return {}; }
@@ -124,7 +125,7 @@ export default function AdminDashboard() {
       const promosD = getData(11);
       const unisD = getData(12);
 
-      setStats(statsD.stats || stats);
+      setStats(prev => statsD.stats || prev);
       setVendors(vendorsD.vendors || []);
       setProducts(productsD.products || []);
       setUsers(usersD.users || []);
@@ -148,21 +149,34 @@ export default function AdminDashboard() {
     setLoading(false);
   }, []);
 
+  const [uniStats, setUniStats] = useState<any>(null);
+
   const fetchUniData = async (uniId: string) => {
     setUniLoading(true);
+    setUniUsers([]); // Clear to avoid mix-up
+    setUniTeams([]);
+    setUniStats(null);
     try {
-      const [uRes, tRes] = await Promise.all([
+      const [uRes, tRes, sRes] = await Promise.all([
         adminFetch(`/api/admin?action=university_users&uniId=${uniId}`),
-        adminFetch(`/api/admin?action=university_teams&uniId=${uniId}`)
+        adminFetch(`/api/admin?action=university_teams&uniId=${uniId}`),
+        adminFetch(`/api/admin?action=stats&uniId=${uniId}`)
       ]);
-      const [uData, tData] = await Promise.all([uRes.json(), tRes.json()]);
-      setUniUsers(uData.users || []);
+      const [uData, tData, sData] = await Promise.all([uRes.json(), tRes.json(), sRes.json()]);
+      
+      // Safety filter: ensure no super admin appears in campus lists
+      setUniUsers((uData.users || []).filter((u: any) => u.role !== 'admin'));
       setUniTeams(tData.teams || []);
+      setUniStats(sData.stats || null);
     } catch { addToast('Failed to load university details', 'error'); }
     setUniLoading(false);
   };
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => { 
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+    fetchAll(); 
+  }, [fetchAll]);
 
   const adminAction = async (action: string, payload: Record<string, any>) => {
     const key = action + (payload.brandId || payload.productId || payload.userId || '');
@@ -320,10 +334,13 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td>
-                          {v.university_id ? (
-                            <span className="badge badge-primary" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>🎓 {universities.find(u => u.id === v.university_id)?.abbreviation || 'Campus'}</span>
+                          {v.universities ? (
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span className="badge badge-primary" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', width: 'fit-content' }}>🎓 {v.universities.abbreviation}</span>
+                              <span className={styles.subText} style={{ fontSize: '0.65rem' }}>{v.universities.name}</span>
+                            </div>
                           ) : (
-                            <span className={styles.subText}>General Vendor</span>
+                            <span className={styles.subText}>General Marketplace</span>
                           )}
                         </td>
                         <td>
@@ -434,7 +451,7 @@ export default function AdminDashboard() {
               <div className={styles.sectionCard}>
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                   <thead>
-                    <tr><th>Product</th><th>Brand</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
+                    <tr><th>Product</th><th>Brand & Campus</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {filterBy(products, ['title']).map(p => (
@@ -453,7 +470,10 @@ export default function AdminDashboard() {
                             <div>{p.title}</div>
                           </div>
                         </td>
-                        <td>{p.brands?.name || 'Unknown'}</td>
+                        <td>
+                          <div style={{ fontWeight: 600 }}>{p.brands?.name || 'Unknown'}</div>
+                          <div className={styles.subText} style={{ fontSize: '0.7rem' }}>📍 {p.universities?.abbreviation || 'General'}</div>
+                        </td>
                         <td>₦{Number(p.price).toLocaleString()}</td>
                         <td>{p.stock_count === -1 ? '∞' : p.stock_count}</td>
                         <td>
@@ -644,7 +664,10 @@ export default function AdminDashboard() {
                           <div>{o.users?.name || 'Customer'}</div>
                           <div className={styles.subText}>{o.users?.email}</div>
                         </td>
-                        <td>{o.brands?.name}</td>
+                        <td>
+                          <div style={{ fontWeight: 600 }}>{o.brands?.name}</div>
+                          <div className={styles.subText} style={{ fontSize: '0.7rem' }}>📍 {o.universities?.abbreviation || 'General'}</div>
+                        </td>
                         <td>₦{Number(o.total_amount).toLocaleString()}</td>
                         <td>
                           {o.status === 'pending' && o.expires_at && new Date(o.expires_at) < new Date() ? (
@@ -685,7 +708,12 @@ export default function AdminDashboard() {
                            <div>{req.users?.name || 'Unknown'}</div>
                            <div className={styles.subText}>{req.users?.email}</div>
                          </td>
-                         <td><span className={`badge badge-${req.role}`}>{req.role}</span></td>
+                         <td>
+                           <div style={{ display: 'flex', flexDirection: 'column' }}>
+                             <span className={`badge badge-${req.role}`}>{req.role}</span>
+                             <span className={styles.subText} style={{ fontSize: '0.65rem' }}>📍 {req.universities?.abbreviation || 'General'}</span>
+                           </div>
+                         </td>
                          <td style={{ color: '#f59e0b', fontWeight: 'bold' }}>₦{Number(req.amount_requested).toLocaleString()}</td>
                          <td><span className={`badge badge-${req.status}`}>{req.status}</span></td>
                          <td className={styles.subText}>{new Date(req.created_at).toLocaleDateString()}</td>
@@ -868,8 +896,19 @@ export default function AdminDashboard() {
                     <option value="all_vendors">🏪 All Vendors</option>
                     <option value="all_delivery">🚚 All Delivery Agents</option>
                     <option value="all_customers">👤 All Customers</option>
+                    <option value="university_all">🎓 Specific University (All)</option>
+                    <option value="university_vendors">🏪 Specific University (Vendors)</option>
                     <option value="specific">🎯 Specific User ID</option>
                   </select>
+                  {(notifForm.target === 'university_all' || notifForm.target === 'university_vendors') && (
+                    <select 
+                      className="input"
+                      onChange={e => setNotifForm(f => ({ ...f, universityId: e.target.value }))}
+                    >
+                      <option value="">Select University...</option>
+                      {universities.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                    </select>
+                  )}
                   {notifForm.target === 'specific' && (
                     <input 
                       value={notifForm.userId} 
@@ -891,7 +930,7 @@ export default function AdminDashboard() {
                         const data = await res.json();
                         if (data.success) {
                           addToast('Notification sent successfully!', 'success');
-                          setNotifForm({ title: '', content: '', target: 'all', userId: '' });
+                          setNotifForm({ title: '', content: '', target: 'all', userId: '', universityId: '' });
                         } else {
                           addToast(data.error || 'Failed to send notification', 'error');
                         }
@@ -936,15 +975,15 @@ export default function AdminDashboard() {
                   />
                   <div className={styles.marketInsights}>
                     <h3>Market Trends</h3>
-                    <div className={insightCardStyles}>
+                    <div className={styles.insightCard}>
                       <div className={styles.insightValue}>₦{(marketData.reduce((acc, curr) => acc + curr.value, 0) / (marketData.length || 1)).toFixed(2)}</div>
                       <div className={styles.insightLabel}>Avg. Daily Revenue</div>
                     </div>
-                    <div className={insightCardStyles}>
+                    <div className={styles.insightCard}>
                       <div className={styles.insightValue}>{vendors.length}</div>
                       <div className={styles.insightLabel}>Active Competing Brands</div>
                     </div>
-                    <div className={insightCardStyles}>
+                    <div className={styles.insightCard}>
                       <div className={styles.insightValue}>₦{(products.reduce((acc, curr) => acc + Number(curr.price), 0) / (products.length || 1)).toFixed(2)}</div>
                       <div className={styles.insightLabel}>Avg. Market Price Point</div>
                     </div>
@@ -1202,6 +1241,22 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
+                    {uniStats && (
+                      <div className={styles.statsGrid} style={{ padding: '2rem 2rem 0 2rem', marginBottom: 0 }}>
+                        {[
+                          { label: 'Campus Users', val: uniStats.userCount, color: '#3b82f6', Icon: Users },
+                          { label: 'Local Vendors', val: uniStats.brandCount, color: '#10b981', Icon: Store },
+                          { label: 'Uni Revenue', val: `â‚¦${Number(uniStats.totalRevenue || 0).toLocaleString()}`, color: '#f59e0b', Icon: ShoppingCart },
+                          { label: 'Live Products', val: uniStats.productCount, color: '#8b5cf6', Icon: ShoppingBag },
+                        ].map(({ label, val, color, Icon }) => (
+                          <div className={styles.statCard} key={label} style={{ background: 'var(--bg-200)' }}>
+                            <div className={styles.statInfo}><p>{label}</p><h3>{val}</h3></div>
+                            <div className={styles.statIcon} style={{ color }}><Icon size={20} /></div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     <div style={{ padding: '2rem', display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                         <div className={styles.sectionCard} style={{ margin: 0 }}>
@@ -1221,25 +1276,20 @@ export default function AdminDashboard() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {filterBy(users, ['name', 'email']).map((u: any) => (
-                                  <tr key={u.id}>
+                                {filterBy(uniUsers, ['name', 'email']).map((u: any) => (
+                                  <tr key={u.id} style={{ cursor: 'pointer' }} onClick={() => { setAdminSearch(u.name); setSelectedAdminId(u.id); }}>
                                     <td>
                                       <div style={{ fontWeight: 600 }}>{u.name}</div>
                                       <div className={styles.subText}>{u.email}</div>
                                     </td>
                                     <td>
-                                      {u.universities ? (
-                                        <span className="badge badge-primary" style={{ background: 'rgba(124,58,237,0.1)' }}>📍 {u.universities.abbreviation || u.universities.name}</span>
-                                      ) : (
-                                        <span className={styles.subText}>Global User</span>
-                                      )}
+                                      <span className={`badge ${u.role === 'admin' ? 'badge-verified' : u.role === 'vendor' ? 'badge-gold' : 'badge-ghost'}`}>{u.role}</span>
                                     </td>
-                                    <td><span className={`badge ${u.role === 'admin' ? 'badge-verified' : u.role === 'vendor' ? 'badge-gold' : 'badge-ghost'}`}>{u.role}</span></td>
                                     <td><span className={u.status === 'active' ? 'text-green' : 'text-red'}>{u.status}</span></td>
                                     <td className={styles.subText}>{new Date(u.created_at).toLocaleDateString()}</td>
                                     <td>
                                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button className="btn btn-ghost btn-sm" onClick={() => { adminAction('toggle_user_status', { userId: u.id, status: u.status === 'active' ? 'suspended' : 'active' }); addToast('Saved', 'success'); }}>
+                                        <button className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); adminAction('toggle_user_status', { userId: u.id, status: u.status === 'active' ? 'suspended' : 'active' }); }}>
                                           {u.status === 'active' ? 'Suspend' : 'Activate'}
                                         </button>
                                       </div>
@@ -1259,7 +1309,18 @@ export default function AdminDashboard() {
                           
                           <div className="mb-3">
                             <label className={styles.subText}>Selected Member</label>
-                            <input className="form-input" readOnly value={adminSearch || 'Select a user from the list'} />
+                            <input className="form-input" readOnly value={adminSearch || 'Click a user from the list'} />
+                          </div>
+
+                          <div className="mb-3">
+                            <label className={styles.subText}>Staff Role</label>
+                            <select id="staff-role" className="form-input">
+                              <option value="Campus Admin">Campus Admin</option>
+                              <option value="Finance Lead">Finance Lead</option>
+                              <option value="Catalog Manager">Catalog Manager</option>
+                              <option value="User Support">User Support</option>
+                              <option value="Logistics Head">Logistics Head</option>
+                            </select>
                           </div>
 
                           <div className="mb-4">
@@ -1292,7 +1353,7 @@ export default function AdminDashboard() {
                                   action: 'add_team_member', 
                                   universityId: selectedUniId,
                                   memberId: selectedAdminId,
-                                  role: 'campus_staff',
+                                  role: (document.getElementById('staff-role') as HTMLSelectElement)?.value || 'campus_staff',
                                   permissions: perms
                                 }) 
                               });
@@ -1317,7 +1378,10 @@ export default function AdminDashboard() {
                               {uniTeams.map(m => (
                                 <div key={m.id} style={{ padding: '0.75rem', background: 'var(--bg-200)', borderRadius: '8px', border: '1px solid var(--border)' }}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                    <strong style={{ fontSize: '0.85rem' }}>{m.member?.name}</strong>
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                      <strong style={{ fontSize: '0.85rem' }}>{m.member?.name}</strong>
+                                      <span className="badge badge-primary" style={{ fontSize: '0.65rem', width: 'fit-content', marginTop: '4px' }}>{m.role || 'Campus Staff'}</span>
+                                    </div>
                                     <Trash2 size={14} style={{ color: '#ef4444', cursor: 'pointer' }} onClick={async () => {
                                       if(!confirm('Remove this member?')) return;
                                       await adminFetch('/api/admin', { method: 'POST', body: JSON.stringify({ action: 'remove_team_member', teamId: m.id }) });
@@ -1325,15 +1389,42 @@ export default function AdminDashboard() {
                                       addToast('Member removed', 'success');
                                     }} />
                                   </div>
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.5rem' }}>
                                     {m.permissions?.map((p: string) => (
-                                      <span key={p} className="badge badge-primary" style={{ fontSize: '0.6rem', padding: '0.1rem 0.4rem' }}>{p}</span>
+                                      <span key={p} className="badge badge-ghost" style={{ fontSize: '0.6rem', padding: '0.1rem 0.4rem', background: 'rgba(255,255,255,0.05)' }}>{p}</span>
                                     ))}
                                   </div>
                                 </div>
                               ))}
                             </div>
                           )}
+                        </div>
+
+                        <div className={styles.settingsBox} style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid #f59e0b' }}>
+                          <h4 style={{ color: '#f59e0b', marginBottom: '1rem' }}>Campus Rate Overrides</h4>
+                          <p className={styles.subText} style={{ marginBottom: '1rem' }}>Set custom booster and subscription rates specifically for this campus.</p>
+                          
+                          <div className="mb-3">
+                            <label className={styles.subText}>Sub. Discount Rate (%)</label>
+                            <input 
+                              type="number" 
+                              className="form-input" 
+                              placeholder="e.g. 10" 
+                              onChange={(e) => adminAction('update_uni_config', { universityId: selectedUniId, key: 'sub_discount', value: e.target.value })}
+                            />
+                          </div>
+                          
+                          <div className="mb-3">
+                            <label className={styles.subText}>Booster Premium Multiplier</label>
+                            <input 
+                              type="number" 
+                              className="form-input" 
+                              placeholder="e.g. 1.5" 
+                              onChange={(e) => adminAction('update_uni_config', { universityId: selectedUniId, key: 'boost_multiplier', value: e.target.value })}
+                            />
+                          </div>
+                          
+                          <p className={styles.subText} style={{ fontSize: '0.7rem', fontStyle: 'italic' }}>* Overrides take effect immediately for new transactions on this campus.</p>
                         </div>
                       </div>
                     </div>
@@ -1551,8 +1642,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
-const insightCardStyles = styles.insightCard || '';
-
-
-

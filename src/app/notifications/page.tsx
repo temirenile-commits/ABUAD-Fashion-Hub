@@ -36,74 +36,113 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     async function fetchData() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setLoading(false);
-        return;
-      }
-      setUser(session.user);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setLoading(false);
+          return;
+        }
+        setUser(session.user);
 
-      // 1. Fetch Enquiries from existing messages table
-      const { data: enquiryData } = await supabase
-        .from('messages')
-        .select('*, sender:sender_id(name), receiver:receiver_id(name)')
-        .or(`sender_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`)
-        .order('created_at', { ascending: false });
+        // 1. Fetch Enquiries
+        const { data: enquiryData } = await supabase
+          .from('messages')
+          .select('*, sender:sender_id(name), receiver:receiver_id(name)')
+          .or(`sender_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`)
+          .order('created_at', { ascending: false });
 
-      setEnquiries(enquiryData || []);
+        setEnquiries(enquiryData || []);
 
-      // 2. SMART LOGIC: Generate recommendations based on enquiries
-      const enquiredTitles = enquiryData?.map(e => {
-        const match = e.content.match(/\[Enquiry about (.*?)\]/);
-        return match ? match[1] : null;
-      }).filter(Boolean) || [];
+        // 2. Recommendations based on enquiries
+        const enquiredTitles = enquiryData?.map(e => {
+          const match = e.content.match(/\[Enquiry about (.*?)\]/);
+          return match ? match[1] : null;
+        }).filter(Boolean) || [];
 
-      if (enquiredTitles.length > 0) {
-        // Find categories for these titles
-        const { data: prodData } = await supabase
-          .from('products')
-          .select('category')
-          .in('title', enquiredTitles);
-        
-        const categories = [...new Set(prodData?.map(p => p.category))];
-        
-        if (categories.length > 0) {
-          // Fetch recommendations
-          const { data: recs } = await supabase
+        if (enquiredTitles.length > 0) {
+          const { data: prodData } = await supabase
             .from('products')
-            .select('*')
-            .in('category', categories)
-            .limit(3);
+            .select('category')
+            .in('title', enquiredTitles);
           
-          if (recs && recs.length > 0) {
-             const recNotifs = recs.map(r => ({
-               id: r.id,
-               type: 'recommendation' as const,
-               title: 'Recommended for You',
-               content: `We found a new "${r.title}" in ${r.category} you might like!`,
-               link: `/product/${r.id}`,
-               is_read: false,
-               created_at: new Date().toISOString()
-             }));
-             setNotifications(prev => [...recNotifs, ...prev]);
+          const categories = [...new Set(prodData?.map(p => p.category))];
+          if (categories.length > 0) {
+            const { data: recs } = await supabase
+              .from('products')
+              .select('*')
+              .in('category', categories)
+              .limit(3);
+            
+            if (recs && recs.length > 0) {
+               const recNotifs = recs.map(r => ({
+                 id: r.id,
+                 type: 'recommendation' as const,
+                 title: 'Recommended for You',
+                 content: `We found a new "${r.title}" in ${r.category} you might like!`,
+                 link: `/product/${r.id}`,
+                 is_read: false,
+                 created_at: new Date().toISOString()
+               }));
+               setNotifications(prev => [...recNotifs, ...prev]);
+            }
           }
         }
-      }
 
-      // 3. Fetch notifications from new notifications table
-      const { data: notifyData } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
+        // 3. Fetch personal notifications
+        const { data: notifyData } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false });
 
-      if (notifyData && notifyData.length > 0) {
-        setNotifications(prev => [...notifyData, ...prev]);
+        if (notifyData && notifyData.length > 0) {
+          setNotifications(prev => {
+            const existingIds = new Set(prev.map(p => p.id));
+            const newNotifs = notifyData.filter(n => !existingIds.has(n.id));
+            return [...newNotifs, ...prev];
+          });
+        }
+        
+        // 4. Mark all as read in DB
+        await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('user_id', session.user.id)
+          .eq('is_read', false);
+
+      } catch (err) {
+        console.error('Failed to load notifications:', err);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     }
     fetchData();
+
+    // 5. Realtime Subscription
+    let channel: any;
+    const subscribeRealtime = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      channel = supabase
+        .channel(`notifications-page-${session.user.id}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${session.user.id}`
+        }, (payload) => {
+          setNotifications(prev => [payload.new as ProductNotification, ...prev]);
+          // Mark this new one as read since user is on the page
+          supabase.from('notifications').update({ is_read: true }).eq('id', payload.new.id);
+        })
+        .subscribe();
+    };
+    subscribeRealtime();
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   if (loading) return <div className="container" style={{padding: '4rem', textAlign: 'center'}}><h2>Loading your hub...</h2></div>;
@@ -136,7 +175,7 @@ export default function NotificationsPage() {
             ) : (
               <div className={styles.list}>
                 {notifications.map((n) => (
-                  <Link key={n.id} href={n.link} className={`${styles.item} ${!n.is_read ? styles.unread : ''}`}>
+                  <Link key={`notif-${n.id}`} href={n.link || '#'} className={`${styles.item} ${!n.is_read ? styles.unread : ''}`}>
                     <div className={styles.iconBox}>
                       {n.type === 'price_drop' && <Tag size={18} />}
                       {n.type === 'vendor_update' && <User size={18} />}
@@ -144,6 +183,7 @@ export default function NotificationsPage() {
                       {n.type === 'wishlist' && <Heart size={18} color="var(--primary)" />}
                       {n.type === 'order_update' && <ShoppingBag size={18} />}
                       {n.type === 'new_order' && <Tag size={18} />}
+                      {!['price_drop', 'vendor_update', 'recommendation', 'wishlist', 'order_update', 'new_order'].includes(n.type) && <Bell size={18} />}
                     </div>
                     <div className={styles.content}>
                       <div className={styles.itemHeader}>
@@ -157,7 +197,7 @@ export default function NotificationsPage() {
                 ))}
 
                 {enquiries.map((e) => (
-                  <Link key={e.id} href={`/messages`} className={styles.item}>
+                  <Link key={`enq-${e.id}`} href={`/messages`} className={styles.item}>
                     <div className={styles.iconBoxEnquiry}>
                       <MessageCircle size={18} />
                     </div>

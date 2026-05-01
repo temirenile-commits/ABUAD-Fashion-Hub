@@ -8,7 +8,7 @@ import WelcomeModal from '@/components/WelcomeModal';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith('/admin');
+  const isAdmin = pathname?.startsWith('/admin') || pathname?.startsWith('/university-admin');
 
   if (isAdmin) {
     return <>{children}</>;

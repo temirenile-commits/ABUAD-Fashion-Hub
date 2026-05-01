@@ -5,6 +5,7 @@ import { ToastProvider } from '@/context/ToastContext';
 import RealtimeProvider from '@/components/providers/RealtimeProvider';
 import LayoutWrapper from '@/components/LayoutWrapper';
 import { ThemeProvider } from '@/context/ThemeContext';
+import UpdatePrompt from '@/components/UpdatePrompt';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -50,6 +51,7 @@ export default function RootLayout({
             <RealtimeProvider>
               <CartProvider>
                 <NotificationProvider>
+                  <UpdatePrompt />
                   <LayoutWrapper>
                     {children}
                   </LayoutWrapper>

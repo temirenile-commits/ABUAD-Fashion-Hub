@@ -18,6 +18,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
+  const [isVendorOwner, setIsVendorOwner] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -39,6 +40,9 @@ export default function Navbar() {
             setUser((prev: any) => ({ ...prev, avatar_url: userData.avatar_url }));
           }
         }
+        // Fallback: Check if they own a brand even if role isn't 'vendor'
+        const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', session.user.id).single();
+        if (brand) setIsVendorOwner(true);
       }
     };
     checkSession();
@@ -58,9 +62,12 @@ export default function Navbar() {
              setUser((prev: any) => ({ ...prev, avatar_url: userData.avatar_url }));
           }
         }
+        const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', session.user.id).single();
+        setIsVendorOwner(!!brand);
       } else {
         setUser(null);
         setRole(null);
+        setIsVendorOwner(false);
       }
     });
 
@@ -79,7 +86,7 @@ export default function Navbar() {
     { href: '/services', label: 'Services', icon: <Layers size={16} /> },
   ];
 
-  const dashboardLink = role === 'vendor' ? '/dashboard/vendor' : role === 'delivery' ? '/dashboard/delivery' : '/dashboard/customer';
+  const dashboardLink = isVendorOwner ? '/dashboard/vendor' : role === 'university_admin' ? '/university-admin' : role === 'delivery' ? '/dashboard/delivery' : '/dashboard/customer';
 
   return (
     <header className={styles.header}>
@@ -176,10 +183,16 @@ export default function Navbar() {
                 {role === 'admin' && (
                   <Link href="/admin" className={`${styles.moduleItem} ${styles.adminModuleLink}`}>
                     <ShieldCheck size={18} />
-                    <span>Admin Panel</span>
+                    <span>Universal Admin Panel</span>
                   </Link>
                 )}
-                {(role === 'vendor' || role === 'admin') && (
+                {(role === 'university_admin' || role === 'admin') && (
+                  <Link href="/university-admin" className={styles.moduleItem} style={{ borderLeft: '3px solid #3b82f6', background: 'rgba(59,130,246,0.05)' }}>
+                    <ShieldCheck size={18} style={{ color: '#3b82f6' }} />
+                    <span style={{ color: '#3b82f6', fontWeight: 600 }}>University Admin Dashboard</span>
+                  </Link>
+                )}
+                {(role === 'vendor' || role === 'admin' || isVendorOwner) && (
                   <Link href="/dashboard/vendor" className={styles.moduleItem}>
                     <Store size={18} />
                     <span>Vendor Dashboard</span>

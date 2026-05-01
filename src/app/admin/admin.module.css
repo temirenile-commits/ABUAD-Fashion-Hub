@@ -88,8 +88,9 @@
 .main {
   flex: 1;
   padding: 2rem;
-  max-width: 1080px;
+  max-width: 1400px; /* Increased from 1080px */
   margin: 0 auto;
+  width: 100%;
 }
 
 .header {

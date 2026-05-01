@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -29,6 +29,7 @@ export default function UniversityAdminPage() {
   const [error, setError] = useState<string|null>(null);
   const [myUniversity, setMyUniversity] = useState<any>(null);
   const [userCtx, setUserCtx] = useState<any>(null);
+  const fetchedRef = useRef(false);
 
   const [stats, setStats] = useState<any>({});
   const [vendors, setVendors] = useState<any[]>([]);
@@ -82,7 +83,11 @@ export default function UniversityAdminPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => { 
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+    fetchAll(); 
+  }, [fetchAll]);
 
   const action = async (act: string, payload: any) => {
     setActionLoading(act+(payload.brandId||payload.userId||""));
