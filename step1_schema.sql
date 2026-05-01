@@ -1,6 +1,7 @@
 -- ============================================================
--- MULTI-UNIVERSITY MARKETPLACE MIGRATION
--- Master Cart Platform — Run in Supabase SQL Editor
+-- STEP 1: SCHEMA CHANGES (DDL)
+-- Run this script FIRST
+-- NOTE: ALL INDEX CREATION HAS BEEN MOVED TO STEP 2
 -- ============================================================
 
 -- ─── 1. UNIVERSITIES TABLE ──────────────────────────────────
@@ -16,11 +17,9 @@ CREATE TABLE IF NOT EXISTS public.universities (
 
 ALTER TABLE public.universities ENABLE ROW LEVEL SECURITY;
 
--- Anyone can read universities (for dropdowns)
 CREATE POLICY "Universities are publicly readable." 
   ON public.universities FOR SELECT USING (true);
 
--- Only service role (admin API) can modify
 CREATE POLICY "Only service role can modify universities."
   ON public.universities FOR ALL 
   USING (false) WITH CHECK (false);
@@ -39,7 +38,6 @@ ON CONFLICT (name) DO UPDATE SET
   location = EXCLUDED.location;
 
 -- ─── 3. EXPAND ROLES IN USERS TABLE ─────────────────────────
--- Drop existing CHECK constraint to expand roles
 ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_role_check;
 
 ALTER TABLE public.users 
@@ -47,33 +45,13 @@ ALTER TABLE public.users
   ADD COLUMN IF NOT EXISTS admin_permissions TEXT[] DEFAULT '{}',
   ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
 
--- Re-add role constraint with new roles
 ALTER TABLE public.users
   ADD CONSTRAINT users_role_check CHECK (
     role IN (
-      'super_admin',
-      'university_admin',
-      'university_staff',
-      'vendor',
-      'customer',
-      'rider',
-      'admin',       -- legacy compat
-      'sub_admin',   -- legacy compat
-      'delivery'     -- legacy compat
+      'super_admin', 'university_admin', 'university_staff',
+      'vendor', 'customer', 'rider', 'admin', 'sub_admin', 'delivery'
     )
   );
-
--- Bulk-assign all existing users to ABUAD
-UPDATE public.users 
-SET university_id = '00000000-0000-0000-0000-000000000001'
-WHERE university_id IS NULL;
-
--- Promote existing 'admin' role to 'super_admin' conceptually
--- (We keep 'admin' role for backward compat but treat it as super_admin in code)
-
--- Index for fast filtering
-CREATE INDEX IF NOT EXISTS idx_users_university_id ON public.users(university_id);
-CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
 
 -- ─── 4. BRANDS TABLE — ADD UNIVERSITY_ID ────────────────────
 ALTER TABLE public.brands 
@@ -90,13 +68,6 @@ ALTER TABLE public.brands
   ADD COLUMN IF NOT EXISTS delivery_scope TEXT DEFAULT 'campus',
   ADD COLUMN IF NOT EXISTS assigned_delivery_system TEXT;
 
--- Bulk-assign all existing brands to ABUAD
-UPDATE public.brands 
-SET university_id = '00000000-0000-0000-0000-000000000001'
-WHERE university_id IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_brands_university_id ON public.brands(university_id);
-CREATE INDEX IF NOT EXISTS idx_brands_verification_status ON public.brands(verification_status);
 
 -- ─── 5. PRODUCTS TABLE — ADD UNIVERSITY_ID + VISIBILITY ─────
 ALTER TABLE public.products
@@ -108,16 +79,6 @@ ALTER TABLE public.products
   ADD COLUMN IF NOT EXISTS flash_sale_price DECIMAL,
   ADD COLUMN IF NOT EXISTS image_url TEXT;
 
--- Bulk-assign existing products to ABUAD as local visibility
-UPDATE public.products 
-SET 
-  university_id = '00000000-0000-0000-0000-000000000001',
-  visibility_type = 'university'
-WHERE university_id IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_products_university_id ON public.products(university_id);
-CREATE INDEX IF NOT EXISTS idx_products_visibility_type ON public.products(visibility_type);
-CREATE INDEX IF NOT EXISTS idx_products_brand_id ON public.products(brand_id);
 
 -- ─── 6. ORDERS TABLE — ADD UNIVERSITY_ID ────────────────────
 ALTER TABLE public.orders
@@ -125,35 +86,12 @@ ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS admin_discount DECIMAL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE;
 
--- Backfill orders from customer's university
-UPDATE public.orders o
-SET university_id = u.university_id
-FROM public.users u
-WHERE o.customer_id = u.id AND o.university_id IS NULL;
-
--- Fallback for any orders still without university
-UPDATE public.orders
-SET university_id = '00000000-0000-0000-0000-000000000001'
-WHERE university_id IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_orders_university_id ON public.orders(university_id);
-CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
 
 -- ─── 7. DELIVERIES TABLE — ADD UNIVERSITY_ID ────────────────
 ALTER TABLE public.deliveries
   ADD COLUMN IF NOT EXISTS university_id UUID REFERENCES public.universities(id),
   ADD COLUMN IF NOT EXISTS assigned_agent_id UUID;
 
-UPDATE public.deliveries d
-SET university_id = o.university_id
-FROM public.orders o
-WHERE d.order_id = o.id AND d.university_id IS NULL;
-
-UPDATE public.deliveries
-SET university_id = '00000000-0000-0000-0000-000000000001'
-WHERE university_id IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_deliveries_university_id ON public.deliveries(university_id);
 
 -- ─── 8. DELIVERY AGENTS TABLE — ADD UNIVERSITY_ID ───────────
 CREATE TABLE IF NOT EXISTS public.delivery_agents (
@@ -174,12 +112,6 @@ CREATE POLICY "Service role manages agents." ON public.delivery_agents FOR ALL U
 ALTER TABLE public.delivery_agents
   ADD COLUMN IF NOT EXISTS university_id UUID REFERENCES public.universities(id);
 
-UPDATE public.delivery_agents da
-SET university_id = u.university_id
-FROM public.users u
-WHERE da.id = u.id AND da.university_id IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_delivery_agents_university_id ON public.delivery_agents(university_id);
 
 -- ─── 9. PLATFORM SETTINGS TABLE ─────────────────────────────
 CREATE TABLE IF NOT EXISTS public.platform_settings (
@@ -209,8 +141,6 @@ ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users view own notifications." ON public.notifications FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Service role manages notifications." ON public.notifications FOR ALL USING (false) WITH CHECK (false);
 
-CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_university_id ON public.notifications(university_id);
 
 -- ─── 11. REVIEWS TABLE ──────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.reviews (
@@ -232,12 +162,6 @@ CREATE POLICY "Service role manages reviews." ON public.reviews FOR ALL USING (f
 ALTER TABLE public.reviews
   ADD COLUMN IF NOT EXISTS university_id UUID REFERENCES public.universities(id);
 
-UPDATE public.reviews r
-SET university_id = u.university_id
-FROM public.users u
-WHERE r.user_id = u.id AND r.university_id IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_reviews_university_id ON public.reviews(university_id);
 
 -- ─── 12. PAYOUT REQUESTS TABLE ──────────────────────────────
 CREATE TABLE IF NOT EXISTS public.payout_requests (
@@ -276,80 +200,6 @@ ALTER TABLE public.promo_codes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Promo codes are publicly readable." ON public.promo_codes FOR SELECT USING (is_active = true);
 CREATE POLICY "Service role manages promo codes." ON public.promo_codes FOR ALL USING (false) WITH CHECK (false);
 
--- ─── 14. UPDATED RLS POLICIES — PRODUCTS ────────────────────
--- Drop old blanket policy
-DROP POLICY IF EXISTS "Products are viewable by everyone." ON public.products;
-
--- New: Customer marketplace visibility
--- Shows products that are global OR from the customer's own university
-CREATE POLICY "Marketplace product visibility" ON public.products FOR SELECT
-USING (
-  visibility_type = 'global'
-  OR (
-    university_id IS NOT NULL
-    AND university_id = (
-      SELECT university_id FROM public.users WHERE id = auth.uid()
-    )
-  )
-  OR auth.uid() IS NULL  -- anon users see global products only (handled by frontend)
-);
-
--- Vendors can still see their own products regardless
-CREATE POLICY "Vendors see own products" ON public.products FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM public.brands 
-    WHERE brands.id = products.brand_id AND brands.owner_id = auth.uid()
-  )
-);
-
--- ─── 15. UPDATED RLS — ORDERS ────────────────────────────────
-DROP POLICY IF EXISTS "Customers view own orders." ON public.orders;
-DROP POLICY IF EXISTS "Vendors view own orders." ON public.orders;
-
-CREATE POLICY "Customers view own orders." ON public.orders FOR SELECT 
-USING (auth.uid() = customer_id);
-
-CREATE POLICY "Vendors view own orders." ON public.orders FOR SELECT 
-USING (
-  EXISTS (
-    SELECT 1 FROM public.brands WHERE id = brand_id AND owner_id = auth.uid()
-  )
-);
-
--- University admins/staff can view orders in their university
-CREATE POLICY "University staff view scoped orders." ON public.orders FOR SELECT
-USING (
-  university_id = (
-    SELECT university_id FROM public.users 
-    WHERE id = auth.uid() 
-    AND role IN ('university_admin', 'university_staff')
-  )
-);
-
--- ─── 16. CROSS-UNIVERSITY ANALYTICS VIEW (READ-ONLY) ────────
-CREATE OR REPLACE VIEW public.university_analytics AS
-SELECT
-  u.id AS university_id,
-  u.name AS university_name,
-  u.abbreviation,
-  COUNT(DISTINCT us.id) AS total_users,
-  COUNT(DISTINCT b.id) AS total_vendors,
-  COUNT(DISTINCT b.id) FILTER (WHERE b.verification_status = 'verified') AS verified_vendors,
-  COUNT(DISTINCT p.id) AS total_products,
-  COUNT(DISTINCT o.id) AS total_orders,
-  COUNT(DISTINCT o.id) FILTER (WHERE o.status = 'paid') AS paid_orders,
-  COALESCE(SUM(o.total_amount) FILTER (WHERE o.status = 'paid'), 0) AS total_revenue
-FROM public.universities u
-LEFT JOIN public.users us ON us.university_id = u.id
-LEFT JOIN public.brands b ON b.university_id = u.id
-LEFT JOIN public.products p ON p.university_id = u.id
-LEFT JOIN public.orders o ON o.university_id = u.id
-GROUP BY u.id, u.name, u.abbreviation;
-
--- Grant read access to authenticated users (university admins see aggregated data)
-GRANT SELECT ON public.university_analytics TO authenticated;
-
 -- ─── 17. STORAGE BUCKETS ────────────────────────────────────
 INSERT INTO storage.buckets (id, name, public) 
 VALUES 
@@ -383,6 +233,4 @@ INSERT INTO public.platform_settings (key, value) VALUES
   }')
 ON CONFLICT (key) DO NOTHING;
 
--- Done! ✅
--- Run this file in the Supabase SQL Editor.
--- After running, assign university_id to users in the Super Admin dashboard.
+-- Schema setup complete. Run step2_data.sql next.
