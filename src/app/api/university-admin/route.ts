@@ -240,7 +240,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
-  // â”€â”€ Reject vendor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // — Reject vendor ——————————————————————————————————————
   if (action === 'reject_vendor') {
     const { brandId, reason } = body;
     if (!(await ensureScope('brands', brandId))) {
@@ -250,6 +250,17 @@ export async function POST(req: NextRequest) {
       .from('brands')
       .update({ verification_status: 'rejected', rejection_reason: reason || 'Did not meet requirements.' })
       .eq('id', brandId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // — Delete vendor ——————————————————————————————————————
+  if (action === 'delete_vendor') {
+    const { brandId } = body;
+    if (!(await ensureScope('brands', brandId))) {
+      return NextResponse.json({ error: 'Forbidden: Vendor not in your university.' }, { status: 403 });
+    }
+    const { error } = await supabaseAdmin.from('brands').delete().eq('id', brandId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }

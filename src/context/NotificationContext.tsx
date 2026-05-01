@@ -22,8 +22,7 @@ function firePushNotification(title: string, body: string, url?: string) {
     badge: '/logo.png',
     tag: title,
     requireInteraction: false,
-    silent: false, // Ensure it's not silent to use device sound
-    vibrate: [200, 100, 200],
+    silent: false, // Use device's default notification sound
   });
 
   if (url) {

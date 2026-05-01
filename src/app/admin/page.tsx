@@ -66,6 +66,7 @@ export default function AdminDashboard() {
   
   const [selectedUniId, setSelectedUniId] = useState<string | null>(null);
   const [uniUsers, setUniUsers] = useState<any[]>([]);
+  const [uniTeams, setUniTeams] = useState<any[]>([]);
   const [uniStats, setUniStats] = useState<any>(null);
   const [uniConfig, setUniConfig] = useState<any>({});
   const [uniLoading, setUniLoading] = useState(false);
@@ -1377,7 +1378,7 @@ export default function AdminDashboard() {
                             <p className={styles.subText}>No staff assigned yet.</p>
                           ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                              {uniTeams.map(m => (
+                              {uniTeams.map((m: any) => (
                                 <div key={m.id} style={{ padding: '0.75rem', background: 'var(--bg-200)', borderRadius: '8px', border: '1px solid var(--border)' }}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
