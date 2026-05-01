@@ -217,7 +217,7 @@ export default function UniversityAdminPage() {
                         {filter(vendors,["name","matric_number"]).map((v:any)=>(
                           <tr key={v.id}>
                             <td><div className={styles.avatarCell}><div className={styles.avatar}>{v.name?.substring(0,2).toUpperCase()}</div><div><div style={{fontWeight:600}}>{v.name}</div></div></div></td>
-                            <td><div>{v.users?.name}</div><div className={styles.subText}>{v.users?.email}</div></td>
+                             <td><div>{v.users?.name || 'N/A'}</div><div className={styles.subText}>{v.users?.email}</div></td>
                             <td><span className={`${styles.badge} ${styles["badge"+v.verification_status?.charAt(0).toUpperCase()+v.verification_status?.slice(1)]||styles.badgePending}`}>{v.verification_status}</span></td>
                             <td><span style={{fontSize:"0.75rem",color:"#a78bfa"}}>{v.subscription_tier||"free"}</span></td>
                             <td>
@@ -242,9 +242,9 @@ export default function UniversityAdminPage() {
                     <table className={styles.table}>
                       <thead><tr><th>Customer</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
                       <tbody>
-                        {filter(customers,["name","email"]).map((c:any)=>(
+                        {filter(customers,["name","email","display_name"]).map((c:any)=>(
                           <tr key={c.id}>
-                            <td><div style={{fontWeight:600}}>{c.name || c.email.split('@')[0]}</div><div className={styles.subText}>{c.email}</div></td>
+                            <td><div style={{fontWeight:600}}>{c.display_name || c.name || c.email?.split('@')[0]}</div><div className={styles.subText}>{c.email}</div></td>
                             <td><span className={styles.badge}>{c.role}</span></td>
                             <td><span className={c.status==="active"?styles.badgeActive:styles.badgeOffline}>{c.status||"active"}</span></td>
                             <td>{new Date(c.created_at).toLocaleDateString()}</td>
@@ -392,22 +392,26 @@ export default function UniversityAdminPage() {
                   <div className={styles.sectionHeader}><div><h2>Delivery Fleet</h2><p>Riders assigned to your university</p></div></div>
                   <div className={styles.tableWrap}>
                     <table className={styles.table}>
-                      <thead><tr><th>Rider</th><th>Status</th><th>Deliveries</th><th>Balance</th></tr></thead>
+                      <thead><tr><th>Rider</th><th>Contact</th><th>Status</th><th>Deliveries</th><th>Balance</th><th>Actions</th></tr></thead>
                       <tbody>
                         {riders.map((r:any)=>(
                            <tr key={r.id}>
-                             <td><div style={{fontWeight:600}}>{r.name || r.email.split('@')[0]}</div><div className={styles.subText}>{r.email}</div></td>
+                             <td><div style={{fontWeight:600}}>{r.name}</div><div className={styles.subText}>{r.email}</div></td>
+                             <td className={styles.subText}>{r.phone||'N/A'}</td>
                              <td>
-                               <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
-                                 <span className={`${styles.badge} ${r.is_active?styles.badgeActive:styles.badgeOffline}`}>{r.is_active?"Active":"Inactive"}</span>
-                                 {!r.is_active && <button className={styles.btnSm} onClick={()=>action("verify_rider",{userId:r.id})}><CheckCircle size={12}/> Verify</button>}
-                               </div>
+                               <span className={`${styles.badge} ${r.is_active?styles.badgeActive:styles.badgeOffline}`}>{r.is_active?"Active":"Inactive"}</span>
                              </td>
                              <td>{r.completed_orders_count||0} Deliveries</td>
                              <td style={{color:"#f59e0b",fontWeight:700}}>₦{Number(r.wallet_balance||0).toLocaleString()}</td>
+                             <td>
+                               <div className={styles.actionRow}>
+                                 {!r.is_active && <button className={`${styles.btnSm} ${styles.btnApprove}`} onClick={()=>action("verify_rider",{userId:r.id})}><CheckCircle size={12}/> Verify</button>}
+                                 {r.is_active && <button className={`${styles.btnSm} ${styles.btnReject}`} onClick={()=>{if(confirm('Revoke rider access?'))action("revoke_rider",{userId:r.id});}}><XCircle size={12}/> Revoke</button>}
+                               </div>
+                             </td>
                            </tr>
                          ))}
-                        {riders.length===0&&<tr><td colSpan={4} style={{textAlign:"center",color:"#4a5568",padding:"2rem"}}>No riders assigned yet. <button className={styles.btnSm} onClick={()=>setTab("customers")}>Find riders in Users</button></td></tr>}
+                        {riders.length===0&&<tr><td colSpan={6} style={{textAlign:"center",color:"#4a5568",padding:"2rem"}}>No riders assigned yet.</td></tr>}
                       </tbody>
                     </table>
                   </div>
@@ -417,10 +421,15 @@ export default function UniversityAdminPage() {
               {tab==="team"&&(
                 <div className={styles.sectionCard}>
                   <div className={styles.sectionHeader}>
-                    <div><h2>My Team</h2><p>Staff members helping administer your university</p></div>
-                    {(userCtx?.role === "university_admin" || userCtx?.role === "admin") && (
+                    <div>
+                      <h2>My Team</h2>
+                      <p>University administrative team &nbsp;<span style={{background:'rgba(99,102,241,0.15)',color:'#818cf8',padding:'2px 8px',borderRadius:'12px',fontSize:'0.7rem',fontWeight:700}}>{team.length}/10 Members</span></p>
+                    </div>
+                    {/* Only HEAD university_admin or super admin can add staff */}
+                    {(userCtx?.role === "university_admin" || userCtx?.role === "admin") && team.length < 10 && (
                       <button className={styles.btnPrimary} onClick={()=>setShowAddStaff(true)}><UserPlus size={15}/>Add Staff</button>
                     )}
+                    {team.length >= 10 && <span style={{color:'#ef4444',fontSize:'0.75rem',fontWeight:600}}>Team Full (10/10)</span>}
                   </div>
                   <div className={styles.teamGrid}>
                     {team.map((m:any)=>(
@@ -432,16 +441,31 @@ export default function UniversityAdminPage() {
                             <div className={styles.subText}>{m.email}</div>
                           </div>
                         </div>
-                        <span className={`${styles.badge} ${m.role==="university_admin"?styles.badgeAdmin:styles.badgeStaff}`}>{m.role}</span>
+                        {/* Role badge */}
+                        <span className={`${styles.badge} ${
+                          m.role==="university_admin"?styles.badgeAdmin:
+                          m.role==="university_staff"?styles.badgeStaff:
+                          styles.badge
+                        }`}>
+                          {m.role==="university_admin"?"Head Admin":
+                           m.role==="university_staff"?"Staff Member":
+                           m.role}
+                        </span>
+                        {/* Permissions */}
                         {m.admin_permissions?.length>0&&(
                           <div className={styles.permsList}>{m.admin_permissions.map((p:string)=><span key={p} className={styles.permBadge}>{p}</span>)}</div>
                         )}
-                        {userCtx?.role==="university_admin"&&m.role!=="university_admin"&&(
-                          <button className={`${styles.btnSm} ${styles.btnReject}`} style={{marginTop:"0.75rem"}} onClick={()=>{if(confirm("Remove staff?"))action("remove_staff",{userId:m.id});}}><Trash2 size={13}/>Remove</button>
+                        {/* Role-based dashboard hint */}
+                        <div style={{marginTop:'0.5rem',fontSize:'0.65rem',color:'var(--text-400)',background:'var(--bg-300)',padding:'0.35rem 0.5rem',borderRadius:'6px'}}>
+                          📊 Dashboard: {m.admin_permissions?.length>0 ? m.admin_permissions.join(', ') : 'Overview & Analytics'}
+                        </div>
+                        {/* Only HEAD admin or super admin can remove staff */}
+                        {(userCtx?.role==="university_admin"||userCtx?.role==="admin")&&m.role!=="university_admin"&&m.id!==userCtx?.id&&(
+                          <button className={`${styles.btnSm} ${styles.btnReject}`} style={{marginTop:"0.75rem"}} onClick={()=>{if(confirm("Remove staff member?"))action("remove_staff",{userId:m.id});}}><Trash2 size={13}/>Remove</button>
                         )}
                       </div>
                     ))}
-                    {team.length===0&&<div style={{padding:"2rem",color:"#4a5568"}}>No staff added yet. Use Add Staff to grow your team.</div>}
+                    {team.length===0&&<div style={{padding:"2rem",color:"#4a5568"}}>No staff added yet. Use Add Staff to build your team (max 10).</div>}
                   </div>
                 </div>
               )}

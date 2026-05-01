@@ -63,14 +63,30 @@ export async function GET(req: NextRequest) {
 
   // â”€â”€ Vendors in university â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (action === 'vendors') {
-    const { data, error } = await supabaseAdmin
+    const { data: brandData, error } = await supabaseAdmin
       .from('brands')
-      .select('*, users!owner_id(name, email, phone)')
+      .select('id, name, description, verification_status, verified, subscription_tier, owner_id, created_at, university_id')
       .eq('university_id', universityId)
       .order('created_at', { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ vendors: data || [] });
+
+    // Fetch owner names separately
+    const ownerIds = (brandData || []).map((b: any) => b.owner_id).filter(Boolean);
+    let ownerMap: Record<string, any> = {};
+    if (ownerIds.length > 0) {
+      const { data: ownerData } = await supabaseAdmin
+        .from('users')
+        .select('id, name, email, phone')
+        .in('id', ownerIds);
+      (ownerData || []).forEach((u: any) => { ownerMap[u.id] = u; });
+    }
+
+    const vendors = (brandData || []).map((b: any) => ({
+      ...b,
+      users: ownerMap[b.owner_id] || null,
+    }));
+    return NextResponse.json({ vendors });
   }
 
   // â”€â”€ Customers (users) in university â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -79,11 +95,16 @@ export async function GET(req: NextRequest) {
       .from('users')
       .select('id, name, email, phone, role, status, created_at')
       .eq('university_id', universityId)
-      .in('role', ['customer', 'vendor'])
+      .not('role', 'eq', 'admin') // exclude super admin only
       .order('created_at', { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ customers: data || [] });
+    // Return customers with a display_name fallback
+    const customers = (data || []).map((u: any) => ({
+      ...u,
+      display_name: u.name || u.email?.split('@')[0] || 'Unknown User',
+    }));
+    return NextResponse.json({ customers });
   }
 
   // â”€â”€ Orders in university â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -112,19 +133,31 @@ export async function GET(req: NextRequest) {
 
   // â”€â”€ Riders in university â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (action === 'riders') {
-    const { data, error } = await supabaseAdmin
+    // Fetch delivery agents and then join user profile data separately
+    const { data: agentData, error } = await supabaseAdmin
       .from('delivery_agents')
-      .select('*, users:id(name, email, phone)')
+      .select('id, is_active, wallet_balance, completed_orders_count, created_at, university_id')
       .eq('university_id', universityId)
       .order('created_at', { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    const transformed = (data || []).map((a: any) => ({
+    // Fetch user details for each agent
+    const agentIds = (agentData || []).map((a: any) => a.id);
+    let userMap: Record<string, any> = {};
+    if (agentIds.length > 0) {
+      const { data: userData } = await supabaseAdmin
+        .from('users')
+        .select('id, name, email, phone')
+        .in('id', agentIds);
+      (userData || []).forEach((u: any) => { userMap[u.id] = u; });
+    }
+
+    const transformed = (agentData || []).map((a: any) => ({
       ...a,
-      name: a.users?.name || 'Rider',
-      email: a.users?.email || 'N/A',
-      phone: a.users?.phone || 'N/A',
+      name: userMap[a.id]?.name || 'Unknown Rider',
+      email: userMap[a.id]?.email || 'N/A',
+      phone: userMap[a.id]?.phone || 'N/A',
     }));
     return NextResponse.json({ riders: transformed });
   }
@@ -365,6 +398,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  // — Revoke rider (deactivate) ————————————————————————————
+  if (action === 'revoke_rider') {
+    const { userId } = body;
+    if (!(await ensureScope('delivery_agents', userId, 'university_id'))) {
+      return NextResponse.json({ error: 'Forbidden: Rider not in your university.' }, { status: 403 });
+    }
+    const { error } = await supabaseAdmin.from('delivery_agents').update({ is_active: false }).eq('id', userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
   // â”€â”€ Manage Products (Toggle Visibility/Feature) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (action === 'update_product') {
     const { productId, isVisible, isFeatured } = body;
@@ -415,17 +459,31 @@ export async function POST(req: NextRequest) {
 
   // â”€â”€ Manage university staff (university_admin only) â”€â”€â”€â”€â”€â”€â”€â”€
   if (action === 'add_staff') {
-    // Only university_admin or super_admin can add staff
+    // ONLY the primary university_admin (head) or super admin can add staff
     if (ctx.role !== 'university_admin' && !ctx.isFullAdmin) {
-      return NextResponse.json({ error: 'Only university admins can add staff.' }, { status: 403 });
+      return NextResponse.json({ error: 'Only the head university admin can manage team members.' }, { status: 403 });
     }
 
     const { userId, staffRole, permissions } = body;
-    const universityId = ctx.universityId || body.university_id;
+    const uniId = ctx.universityId || body.university_id;
+
+    // Enforce 10-member team cap (excluding the head admin themselves)
+    const { count: currentCount } = await supabaseAdmin
+      .from('users')
+      .select('id', { count: 'exact', head: true })
+      .eq('university_id', uniId)
+      .in('role', ['university_admin', 'university_staff']);
+
+    if ((currentCount || 0) >= 10) {
+      return NextResponse.json({ error: 'Team limit reached. Maximum 10 members per university team.' }, { status: 400 });
+    }
+
+    // Prevent assigning admin role (super admin only can do that)
+    const safeRole = (staffRole === 'university_admin' && !ctx.isFullAdmin) ? 'university_staff' : (staffRole || 'university_staff');
 
     const { error } = await supabaseAdmin.from('users').update({
-      role: staffRole || 'university_staff',
-      university_id: universityId,
+      role: safeRole,
+      university_id: uniId,
       admin_permissions: permissions || [],
     }).eq('id', userId);
 
