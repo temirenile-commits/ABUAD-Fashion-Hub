@@ -30,10 +30,10 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
           userUniId = profile?.university_id;
         }
 
-        // Products joined with brands
+        // Products joined with brands and universities
         let query = supabase
           .from('products')
-          .select(`*, brands(*)`)
+          .select(`*, brands(*, universities(*))`)
           .order('created_at', { ascending: false });
 
         if (userUniId) {

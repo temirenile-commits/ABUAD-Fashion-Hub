@@ -19,12 +19,13 @@ WHERE university_id IS NULL;
 -- 4. ASSIGN ALL UNASSIGNED PRODUCTS TO ABUAD
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS university_id UUID REFERENCES public.universities(id);
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS visibility_type TEXT DEFAULT 'university';
--- Also set visibility to 'university' so they don't leak to other campuses as 'global'
+
+-- Strictly classify all current products under ABUAD and hide from other campuses
 UPDATE public.products 
 SET 
   university_id = '00000000-0000-0000-0000-000000000001',
   visibility_type = 'university'
-WHERE university_id IS NULL OR visibility_type = 'global';
+WHERE university_id IS NULL OR (university_id = '00000000-0000-0000-0000-000000000001' AND visibility_type = 'global');
 
 -- 5. ASSIGN ALL REELS TO ABUAD
 CREATE TABLE IF NOT EXISTS public.brand_reels (

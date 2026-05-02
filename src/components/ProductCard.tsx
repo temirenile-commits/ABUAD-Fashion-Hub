@@ -29,6 +29,8 @@ export interface LiveProduct {
   views_count: number;
   sales_count: number;
   boost_level: number;
+  visibility_type?: 'university' | 'global';
+  university_id?: string;
   brands: {
     id: string;
     owner_id: string;
@@ -36,6 +38,10 @@ export interface LiveProduct {
     whatsapp_number: string;
     verified: boolean;
     logo_url?: string;
+    universities?: {
+      name: string;
+      abbreviation: string;
+    }
   };
   rating?: number;
   reviews?: number;
@@ -137,6 +143,18 @@ export default function ProductCard({ product }: Props) {
         {product.brands?.verified && (
           <div className={styles.verifiedBadge}>
             <ShieldCheck size={10} /> Official
+          </div>
+        )}
+
+        {/* University Tagging */}
+        {product.visibility_type === 'university' && (
+          <div className={styles.campusBadge}>
+            {product.brands?.universities?.abbreviation || 'Campus'} Deal
+          </div>
+        )}
+        {product.visibility_type === 'global' && (
+          <div className={styles.globalBadge}>
+            Global Market
           </div>
         )}
 
