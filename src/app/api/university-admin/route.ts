@@ -93,9 +93,9 @@ export async function GET(req: NextRequest) {
   if (action === 'customers') {
     const { data, error } = await supabaseAdmin
       .from('users')
-      .select('id, name, email, phone, role, status, created_at')
+      .select('id, name, email, phone, role, status, created_at, university_id')
       .eq('university_id', universityId)
-      .not('role', 'eq', 'admin') // exclude super admin only
+      .not('role', 'in', '("admin","super_admin")') // exclude global admins
       .order('created_at', { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -434,7 +434,13 @@ export async function POST(req: NextRequest) {
     if (!(await ensureScope('delivery_agents', userId, 'university_id'))) {
       return NextResponse.json({ error: 'Forbidden: Rider not in your university.' }, { status: 403 });
     }
-    const { error } = await supabaseAdmin.from('delivery_agents').update({ is_active: true }).eq('id', userId);
+    
+    // Activate the rider agent record
+    await supabaseAdmin.from('delivery_agents').update({ is_active: true }).eq('id', userId);
+    
+    // CRITICAL: Grant access to delivery dashboard by updating role
+    const { error } = await supabaseAdmin.from('users').update({ role: 'delivery' }).eq('id', userId);
+    
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }

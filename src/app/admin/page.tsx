@@ -1146,17 +1146,36 @@ export default function AdminDashboard() {
                                 </div>
                                 
                                 <div style={{ marginTop: '1rem' }}>
-                                   <label className={styles.subText}>Active Features</label>
+                                   <label className={styles.subText}>Upload Credits (1 credit = 1 product upload)</label>
+                                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                      <input
+                                        type="number"
+                                        className="form-input"
+                                        style={{ width: '120px', height: '32px' }}
+                                        value={planConfig.upload_credits ?? ''}
+                                        placeholder="e.g. 20"
+                                        onChange={(e) => {
+                                           const next = { ...uniConfig, plans: { ...uniConfig.plans, [tierId]: { ...planConfig, upload_credits: Number(e.target.value) } } };
+                                           setUniConfig(next);
+                                        }}
+                                      />
+                                      <span className={styles.subText} style={{ fontSize: '0.75rem' }}>per cycle</span>
+                                   </div>
+                                   <label className={styles.subText} style={{ marginTop: '0.75rem', display: 'block' }}>Additional Features</label>
                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.5rem' }}>
                                       {[
-                                        { id: 'listing_unlimited', label: 'Unlimited Listings' },
-                                        { id: 'reels_unlimited', label: 'Unlimited Reels' },
+                                        { id: 'reels_upload', label: 'Reels Upload' },
                                         { id: 'priority_support', label: 'Priority Support' },
-                                        { id: 'analytics_pro', label: 'Adv. Analytics' }
+                                        { id: 'analytics_pro', label: 'Adv. Analytics' },
+                                        { id: 'verified_badge', label: 'Verified Badge' },
+                                        { id: 'store_customization', label: 'Store Customization' },
+                                        { id: 'featured_placement', label: 'Featured Placement' },
+                                        { id: 'promo_codes', label: 'Promo Codes' },
+                                        { id: 'bulk_upload', label: 'Bulk Upload' }
                                       ].map(feat => (
                                         <label key={feat.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', cursor: 'pointer' }}>
-                                           <input 
-                                             type="checkbox" 
+                                           <input
+                                             type="checkbox"
                                              checked={(planConfig.features || []).includes(feat.id)}
                                              onChange={(e) => {
                                                 const currentFeats = planConfig.features || [];
@@ -1181,50 +1200,52 @@ export default function AdminDashboard() {
 
                       {/* Booster Plans Override */}
                       <div>
-                        <h3>Visibility Booster Plans</h3>
-                        <p className={styles.subText}>Configure multipliers and prices for Vendor boosters (Campus Billboard) on this university.</p>
-                        <div className={styles.settingsGrid} style={{ marginTop: '1.5rem' }}>
-                           <div className={styles.settingsBox}>
-                              <label>Campus Billboard (7-Day Boost) (₦)</label>
-                              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                <input 
-                                  type="number" 
-                                  className="form-input" 
-                                  value={uniConfig.billboard_price || 500} 
-                                  onChange={(e) => setUniConfig({ ...uniConfig, billboard_price: Number(e.target.value) })}
-                                />
-                                <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'billboard_price', value: uniConfig.billboard_price })}>Save</button>
-                              </div>
-                           </div>
-                           
-                           <div className={styles.settingsBox}>
-                             <label>Booster Price Multiplier</label>
-                             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                               <input 
-                                 type="number" 
-                                 className="form-input" 
-                                 placeholder="e.g. 1.5" 
-                                 value={uniConfig.boost_multiplier || ''}
-                                 onChange={(e) => setUniConfig({ ...uniConfig, boost_multiplier: e.target.value })}
-                               />
-                               <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'boost_multiplier', value: uniConfig.boost_multiplier })}>Save</button>
-                             </div>
-                             <p className={styles.subText} style={{ marginTop: '0.5rem', fontSize: '0.7rem' }}>Multiplies base cost of all boosters.</p>
-                           </div>
+                        <h3>Visibility Booster Plans (Product Boosters)</h3>
+                        <p className={styles.subText}>Configure fixed prices for the 3 official booster tiers on this campus.</p>
+                        <div className={styles.settingsGrid} style={{ marginTop: '1.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                           {[
+                             { id: 'rodeo', name: 'RODEO BOOSTER', visibility: 50, color: '#3b82f6' },
+                             { id: 'nitro', name: 'NITRO BOOSTER', visibility: 150, color: '#a855f7' },
+                             { id: 'apex', name: 'APEX BOOSTER', visibility: 500, color: '#ef4444' }
+                           ].map(boost => {
+                             const boostConfig = (uniConfig.boosters || {})[boost.id] || { price: 0 };
+                             return (
+                               <div key={boost.id} className={styles.settingsBox} style={{ borderLeft: `4px solid ${boost.color}` }}>
+                                 <div style={{ fontWeight: 700, fontSize: '0.9rem', color: boost.color }}>{boost.name}</div>
+                                 <div className={styles.subText} style={{ fontSize: '0.75rem', marginBottom: '1rem' }}>Visibility Score: +{boost.visibility}</div>
+                                 
+                                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                   <span style={{ fontWeight: 600 }}>₦</span>
+                                   <input 
+                                     type="number" 
+                                     className="form-input" 
+                                     placeholder="Price" 
+                                     value={boostConfig.price || ''}
+                                     onChange={(e) => {
+                                        const nextBoosters = { ...uniConfig.boosters, [boost.id]: { price: Number(e.target.value), visibility: boost.visibility } };
+                                        setUniConfig({ ...uniConfig, boosters: nextBoosters });
+                                     }}
+                                   />
+                                 </div>
+                                 <button className="btn btn-primary btn-sm w-full mt-3" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'boosters', value: uniConfig.boosters })}>Save Booster</button>
+                               </div>
+                             );
+                           })}
+                        </div>
 
-                           <div className={styles.settingsBox}>
-                             <label>Subscription Discount Rate (%)</label>
-                             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                               <input 
-                                 type="number" 
-                                 className="form-input" 
-                                 placeholder="e.g. 10" 
-                                 value={uniConfig.sub_discount || ''}
-                                 onChange={(e) => setUniConfig({ ...uniConfig, sub_discount: e.target.value })}
-                               />
-                               <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'sub_discount', value: uniConfig.sub_discount })}>Save</button>
-                             </div>
-                           </div>
+                        <div style={{ marginTop: '2rem' }} className={styles.settingsBox}>
+                          <h3>Campus Billboard (Main Slider)</h3>
+                          <p className={styles.subText}>Main homepage promotional banner cost.</p>
+                          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', maxWidth: '300px' }}>
+                            <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center' }}>₦</span>
+                            <input 
+                              type="number" 
+                              className="form-input" 
+                              value={uniConfig.billboard_price || ''} 
+                              onChange={(e) => setUniConfig({ ...uniConfig, billboard_price: Number(e.target.value) })}
+                            />
+                            <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'billboard_price', value: uniConfig.billboard_price })}>Save</button>
+                          </div>
                         </div>
                       </div>
 
