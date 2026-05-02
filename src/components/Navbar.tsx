@@ -8,6 +8,7 @@ import { useCart } from '@/context/CartContext';
 import { useNotifications } from '@/context/NotificationContext';
 import { useTheme } from '@/context/ThemeContext';
 import CartDrawer from './CartDrawer';
+import SupportModal from './SupportModal';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
@@ -16,6 +17,7 @@ export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
   const [isVendorOwner, setIsVendorOwner] = useState(false);
@@ -204,10 +206,13 @@ export default function Navbar() {
                     <span>Agent Dashboard</span>
                   </Link>
                 )}
-                <Link href="https://wa.me/2347045592604" target="_blank" className={styles.moduleItem}>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setSupportOpen(true); setMenuOpen(false); }} 
+                  className={styles.moduleItem}
+                >
                   <MessageCircle size={18} />
                   <span>Help Center</span>
-                </Link>
+                </button>
                 <button 
                   onClick={(e) => { e.stopPropagation(); setCartOpen(true); setMenuOpen(false); }} 
                   className={styles.moduleItem}
@@ -243,6 +248,7 @@ export default function Navbar() {
       </nav>
 
       <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
+      <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
 
       {/* Category Quick Bar */}
       <div className={styles.categoryBar}>
