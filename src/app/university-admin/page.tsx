@@ -111,7 +111,7 @@ export default function UniversityAdminPage() {
     setLoading(true); setError(null);
     try {
       const actions = ["stats","vendors","customers","orders","reviews","riders","analytics","cross_university_insights","team","products", "merchandising"];
-      const results = await Promise.all(actions.map(async a => {
+      const results = await Promise.allSettled(actions.map(async a => {
         const r = await uaFetch(`/api/university-admin?action=${a}`);
         if (!r.ok) {
           const err = await r.json();
@@ -120,17 +120,21 @@ export default function UniversityAdminPage() {
         return r.json();
       }));
       
-      setStats(results[0].stats||{});
-      setVendors(results[1].vendors||[]);
-      setCustomers(results[2].customers||[]);
-      setOrders(results[3].orders||[]);
-      setReviews(results[4].reviews||[]);
-      setRiders(results[5].riders||[]);
-      setChartData(results[6].chartData||[]);
-      setInsights(results[7].insights||[]);
-      setTeam(results[8].team||[]);
-      setProducts(results[9].products||[]);
-      setHomepageSections(results[10].sections||[]);
+      const g = (i: number) => results[i].status === "fulfilled" ? (results[i] as any).value : {};
+      const errs = results.filter(r => r.status === "rejected").map(r => (r as any).reason.message);
+      if (errs.length > 0) setError(`Some data failed to load: ${errs.join(", ")}`);
+
+      setStats(g(0).stats||{});
+      setVendors(g(1).vendors||[]);
+      setCustomers(g(2).customers||[]);
+      setOrders(g(3).orders||[]);
+      setReviews(g(4).reviews||[]);
+      setRiders(g(5).riders||[]);
+      setChartData(g(6).chartData||[]);
+      setInsights(g(7).insights||[]);
+      setTeam(g(8).team||[]);
+      setProducts(g(9).products||[]);
+      setHomepageSections(g(10).sections||[]);
     } catch (e: any) { 
       setError(e.message || "Failed to load dashboard data."); 
     }
