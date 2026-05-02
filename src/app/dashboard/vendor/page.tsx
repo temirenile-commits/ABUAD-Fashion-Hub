@@ -286,17 +286,24 @@ export default function VendorDashboard() {
             const uniConfig = settingsData.find(s => s.key === `uni_config_${brandData.university_id}`)?.value || {};
             
             finalSubRates = finalSubRates.map((rate: any) => {
-               if (uniConfig.plans?.[rate.id]?.price) {
-                 return { ...rate, price: Number(uniConfig.plans[rate.id].price) };
+               if (uniConfig.plans?.[rate.id]) {
+                 return { 
+                   ...rate, 
+                   price: Number(uniConfig.plans[rate.id].price),
+                   features: uniConfig.plans[rate.id].features?.length > 0 ? uniConfig.plans[rate.id].features : rate.features,
+                   upload_credits: uniConfig.plans[rate.id].upload_credits || rate.upload_credits
+                 };
                }
                return rate;
             });
 
-            if (uniConfig.boost_multiplier) {
-                finalBoostRates = finalBoostRates.map((boost: any) => ({
-                    ...boost,
-                    price: boost.price * Number(uniConfig.boost_multiplier)
-                }));
+            if (uniConfig.boosters) {
+                finalBoostRates = [
+                    { id: 'rodeo', name: 'RODEO BOOSTER', price: uniConfig.boosters.rodeo?.price || 1000, features: ['Visibility +50'] },
+                    { id: 'nitro', name: 'NITRO BOOSTER', price: uniConfig.boosters.nitro?.price || 2500, features: ['Visibility +150', 'Priority Search'], popular: true },
+                    { id: 'apex', name: 'APEX BOOSTER', price: uniConfig.boosters.apex?.price || 5000, features: ['Visibility +500', 'Top Carousel Placement'] },
+                    { id: 'billboard', name: 'Campus Billboard (Trendy Board)', price: uniConfig.billboard_price || 10000, features: ['Main Homepage Banner Slider', 'Maximum Brand Exposure'] }
+                ];
             }
         } else {
             // General Vendor - Completely different premium fees
@@ -1606,15 +1613,35 @@ export default function VendorDashboard() {
                   ))}
                 </div>
 
-                <div className={styles.boostBanner} style={{ marginTop: '2rem' }}>
-                  <div className={styles.boostContent}>
-                    <Zap size={20} color="#f59e0b" />
-                    <div>
-                      <h4>Need a temporary Boost?</h4>
-                      <p>Get priority placement in searches and discovery for Ã¢â€šÂ¦1,000/week.</p>
-                    </div>
+                <div style={{ marginTop: '2.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                    <Zap size={24} color="#f59e0b" />
+                    <h3>Product Boosters & Trendy Board</h3>
                   </div>
-                  <button className="btn btn-secondary btn-sm" onClick={() => alert('Boost system integration coming in next update!')}>Boost Now</button>
+                  <div className={styles.compactPricingGrid}>
+                    {boostRates.map((boost) => (
+                      <div key={boost.id} className={styles.compactPricingCard} style={boost.id === 'billboard' ? { border: '2px solid #f59e0b', background: 'rgba(245, 158, 11, 0.05)' } : {}}>
+                        <div className={styles.tierHeader}>
+                          {boost.id === 'billboard' ? <Star size={24} color="#f59e0b" /> : <Zap size={24} color="var(--primary)" />}
+                          <div>
+                            <h4 style={boost.id === 'billboard' ? { color: '#f59e0b' } : {}}>{boost.name}</h4>
+                            <span className={styles.tierPrice}>₦{boost.price.toLocaleString()}</span>
+                          </div>
+                        </div>
+                        <ul className={styles.tierFeaturesMini}>
+                          {(boost.features || []).map((f: string, i: number) => <li key={i}><CheckCircle size={12} /> {f}</li>)}
+                        </ul>
+                        <button
+                          className={`btn ${boost.popular || boost.id === 'billboard' ? 'btn-primary' : 'btn-ghost'} btn-sm`}
+                          style={{ width: '100%', marginTop: 'auto' }}
+                          onClick={() => handleSubscribe(boost)}
+                          disabled={!!paying}
+                        >
+                          {paying === boost.id ? <Loader2 className="anim-spin" size={14} /> : `Activate ${boost.name}`}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
