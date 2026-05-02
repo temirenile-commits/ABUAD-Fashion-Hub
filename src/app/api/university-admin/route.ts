@@ -266,9 +266,15 @@ export async function POST(req: NextRequest) {
 
   // Helper: enforce university scope on a target record
   const ensureScope = async (table: string, id: string, column = 'university_id') => {
-    if (ctx.isFullAdmin) return true; // super admin skips check
+    if (ctx.isFullAdmin) return true; 
     const { data } = await supabaseAdmin.from(table).select(column).eq('id', id).single();
-    return (data as any)?.[column] === ctx.universityId;
+    if (!data) return false;
+    
+    const recordUniId = (data as any)[column];
+    const userUniId = ctx.universityId;
+    
+    if (!recordUniId || !userUniId) return false;
+    return String(recordUniId) === String(userUniId);
   };
 
   // â”€â”€ Verify vendor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

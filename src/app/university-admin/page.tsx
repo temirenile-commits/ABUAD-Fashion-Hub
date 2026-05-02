@@ -95,6 +95,11 @@ export default function UniversityAdminPage() {
       if (!session) { router.replace("/auth/login"); return; }
       const { data: profile } = await supabase.from("users").select("*, universities(*)").eq("id", session.user.id).single();
       if (profile) {
+        // Redirect support agents to their dedicated dashboard
+        if (profile.role === 'customer_support_agent') {
+          router.replace('/dashboard/support');
+          return;
+        }
         setUserCtx(profile);
         setMyUniversity(profile.universities);
       }
@@ -106,21 +111,29 @@ export default function UniversityAdminPage() {
     setLoading(true); setError(null);
     try {
       const actions = ["stats","vendors","customers","orders","reviews","riders","analytics","cross_university_insights","team","products", "merchandising"];
-      const results = await Promise.allSettled(actions.map(a => uaFetch(`/api/university-admin?action=${a}`)));
-      const jsons = await Promise.allSettled(results.map((r,i) => r.status==="fulfilled"&&r.value.ok ? r.value.json() : Promise.resolve({})));
-      const g = (i: number) => jsons[i].status==="fulfilled" ? (jsons[i] as any).value : {};
-      setStats(g(0).stats||{});
-      setVendors(g(1).vendors||[]);
-      setCustomers(g(2).customers||[]);
-      setOrders(g(3).orders||[]);
-      setReviews(g(4).reviews||[]);
-      setRiders(g(5).riders||[]);
-      setChartData(g(6).chartData||[]);
-      setInsights(g(7).insights||[]);
-      setTeam(g(8).team||[]);
-      setProducts(g(9).products||[]);
-      setHomepageSections(g(10).sections||[]);
-    } catch { setError("Failed to load dashboard data."); }
+      const results = await Promise.all(actions.map(async a => {
+        const r = await uaFetch(`/api/university-admin?action=${a}`);
+        if (!r.ok) {
+          const err = await r.json();
+          throw new Error(err.error || `Failed to fetch ${a}`);
+        }
+        return r.json();
+      }));
+      
+      setStats(results[0].stats||{});
+      setVendors(results[1].vendors||[]);
+      setCustomers(results[2].customers||[]);
+      setOrders(results[3].orders||[]);
+      setReviews(results[4].reviews||[]);
+      setRiders(results[5].riders||[]);
+      setChartData(results[6].chartData||[]);
+      setInsights(results[7].insights||[]);
+      setTeam(results[8].team||[]);
+      setProducts(results[9].products||[]);
+      setHomepageSections(results[10].sections||[]);
+    } catch (e: any) { 
+      setError(e.message || "Failed to load dashboard data."); 
+    }
     setLoading(false);
   }, []);
 

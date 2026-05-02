@@ -7,6 +7,7 @@ export type UserRole =
   | 'sub_admin'    // legacy alias for admin-with-permissions
   | 'university_admin'
   | 'university_staff'
+  | 'customer_support_agent'
   | 'vendor'
   | 'customer'
   | 'rider'
@@ -102,7 +103,7 @@ export async function requireSuperAdmin(req: NextRequest): Promise<AuthContext> 
 
 // ─── Require university admin/staff (scoped to their university) ─
 export async function requireUniversityAdmin(req: NextRequest): Promise<AuthContext> {
-  return requireRole(req, ['university_admin', 'university_staff', 'super_admin', 'admin']);
+  return requireRole(req, ['university_admin', 'university_staff', 'customer_support_agent', 'super_admin', 'admin']);
 }
 
 // ─── Enforce university data scoping ────────────────────────
