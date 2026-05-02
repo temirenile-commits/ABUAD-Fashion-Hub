@@ -144,6 +144,9 @@ export default function AdminDashboard() {
       setUniversityAdmins(uniJson[0].admins || []);
       setTeams(uniJson[1].teams || []);
 
+      const manualB = (settingsD.settings?.manual_billboards as any[]) || [];
+      setManualBillboards(manualB);
+
     } catch (e: any) {
       console.error('Admin fetch error:', e);
       setError('Connection error: Could not reach the administration server.');
@@ -163,14 +166,28 @@ export default function AdminDashboard() {
         adminFetch(`/api/admin?action=university_users&uniId=${uniId}`),
         adminFetch(`/api/admin?action=university_teams&uniId=${uniId}`),
         adminFetch(`/api/admin?action=stats&uniId=${uniId}`),
-        adminFetch(`/api/admin?action=university_config&uniId=${uniId}`)
+        uniId === 'global' ? adminFetch(`/api/admin?action=settings`) : adminFetch(`/api/admin?action=university_config&uniId=${uniId}`)
       ]);
       const [uData, tData, sData, cData] = await Promise.all([uRes.json(), tRes.json(), sRes.json(), cRes.json()]);
       
       setUniUsers((uData.users || []).filter((u: any) => u.role !== 'admin'));
       setUniTeams(tData.teams || []);
       setUniStats(sData.stats || null);
-      setUniConfig(cData.config || {});
+      
+      if (uniId === 'global') {
+        // Map global settings to the uniConfig format so the UI works without changes
+        const gConfig = {
+          credit_price: cData.settings?.credit_price || 50,
+          billboard_price: cData.settings?.boost_rates?.find((b:any)=>b.id==='billboard_boost')?.price || 500,
+          plans: (cData.settings?.subscription_rates || []).reduce((acc:any, r:any) => {
+             acc[r.id] = { price: r.price, features: [] }; // global features aren't structured the same but price is what matters
+             return acc;
+          }, {})
+        };
+        setUniConfig(gConfig);
+      } else {
+        setUniConfig(cData.config || {});
+      }
     } catch { addToast('Failed to load university details', 'error'); }
     setUniLoading(false);
   };
@@ -222,6 +239,36 @@ export default function AdminDashboard() {
       addToast(e.message || 'Upload failed', 'error');
     }
     setUploadingProof(false);
+  };
+
+  const [manualBillboards, setManualBillboards] = useState<any[]>([]);
+  const [billboardUpload, setBillboardUpload] = useState({ title: '', sub: '', link: '', file: null as File|null });
+  const [uploadingBillboard, setUploadingBillboard] = useState(false);
+
+  const handleBillboardUpload = async () => {
+    if (!billboardUpload.file || !billboardUpload.title) return addToast('Image and Title required', 'error');
+    setUploadingBillboard(true);
+    try {
+      const ext = billboardUpload.file.name.split('.').pop();
+      const path = `manual_billboards/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('products').upload(path, billboardUpload.file);
+      if (uploadError) throw uploadError;
+      
+      const { data } = supabase.storage.from('products').getPublicUrl(path);
+      
+      await adminAction('add_manual_billboard', {
+         title: billboardUpload.title,
+         description: billboardUpload.sub,
+         link: billboardUpload.link,
+         cover_url: data.publicUrl
+      });
+      
+      const newB = { id: `mb_${Date.now()}`, title: billboardUpload.title, description: billboardUpload.sub, link: billboardUpload.link, cover_url: data.publicUrl };
+      setManualBillboards([...manualBillboards, newB]);
+      setBillboardUpload({ title: '', sub: '', link: '', file: null });
+      addToast('Billboard added successfully!', 'success');
+    } catch(e:any) { addToast(e.message, 'error'); }
+    setUploadingBillboard(false);
   };
 
   const filterBy = (items: any[], fields: string[]) => {
@@ -454,7 +501,7 @@ export default function AdminDashboard() {
               <div className={styles.sectionCard}>
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                   <thead>
-                    <tr><th>Product</th><th>Brand & Campus</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
+                    <tr><th>Product</th><th>Brand & Campus</th><th>Price</th><th>Visibility</th><th>Stock</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {filterBy(products, ['title']).map(p => (
@@ -478,6 +525,11 @@ export default function AdminDashboard() {
                           <div className={styles.subText} style={{ fontSize: '0.7rem' }}>📍 {p.universities?.abbreviation || 'General'}</div>
                         </td>
                         <td>₦{Number(p.price).toLocaleString()}</td>
+                        <td>
+                          <span className={styles.badge} style={{ background: p.visibility_type === 'global' ? 'var(--primary-soft)' : 'rgba(255,255,255,0.1)', color: p.visibility_type === 'global' ? 'var(--primary)' : 'var(--text-100)' }}>
+                            {p.visibility_type === 'global' ? '🌍 Global' : '🎓 Campus'}
+                          </span>
+                        </td>
                         <td>{p.stock_count === -1 ? '∞' : p.stock_count}</td>
                         <td>
                           <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => confirm('Delete this product?') && adminAction('delete_product', { productId: p.id })}>
@@ -577,7 +629,89 @@ export default function AdminDashboard() {
                          </tbody>
                       </table></div>
                    </div>
-                </div>
+                 </div>
+
+                 <div style={{ marginTop: '3rem', padding: '2rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                    <h3>➕ Add Manual Billboard</h3>
+                    <p className={styles.subText} style={{ marginBottom: '1.5rem' }}>Upload a custom promotional banner for the homepage slider.</p>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                       <div>
+                          <label className={styles.subText}>Banner Title</label>
+                          <input 
+                            className="form-input w-full mt-2" 
+                            placeholder="e.g. Summer Mega Sale" 
+                            value={billboardUpload.title}
+                            onChange={e => setBillboardUpload({...billboardUpload, title: e.target.value})}
+                          />
+                       </div>
+                       <div>
+                          <label className={styles.subText}>Description</label>
+                          <input 
+                            className="form-input w-full mt-2" 
+                            placeholder="e.g. Up to 50% off all items" 
+                            value={billboardUpload.sub}
+                            onChange={e => setBillboardUpload({...billboardUpload, sub: e.target.value})}
+                          />
+                       </div>
+                       <div>
+                          <label className={styles.subText}>Click Link (Optional)</label>
+                          <input 
+                            className="form-input w-full mt-2" 
+                            placeholder="e.g. /explore?cat=sale" 
+                            value={billboardUpload.link}
+                            onChange={e => setBillboardUpload({...billboardUpload, link: e.target.value})}
+                          />
+                       </div>
+                       <div>
+                          <label className={styles.subText}>Banner Image</label>
+                          <input 
+                            type="file"
+                            accept="image/*"
+                            className="form-input w-full mt-2" 
+                            onChange={e => setBillboardUpload({...billboardUpload, file: e.target.files?.[0] || null})}
+                          />
+                       </div>
+                    </div>
+                    
+                    <button 
+                      className="btn btn-primary mt-6" 
+                      style={{ minWidth: '200px' }}
+                      disabled={uploadingBillboard}
+                      onClick={handleBillboardUpload}
+                    >
+                       {uploadingBillboard ? <Loader2 size={18} className="spin" /> : 'Upload Billboard 🚀'}
+                    </button>
+                 </div>
+
+                 {manualBillboards.length > 0 && (
+                   <div style={{ marginTop: '3rem' }}>
+                      <h3>📋 Existing Manual Billboards</h3>
+                      <div className={styles.settingsGrid} style={{ marginTop: '1.5rem' }}>
+                         {manualBillboards.map((mb, idx) => (
+                           <div key={mb.id || idx} className={styles.settingsBox} style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                              <img src={mb.cover_url} style={{ width: '80px', height: '45px', objectFit: 'cover', borderRadius: '4px' }} />
+                              <div style={{ flex: 1 }}>
+                                 <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{mb.title}</div>
+                                 <div className={styles.subText} style={{ fontSize: '0.75rem' }}>{mb.university_id ? '🎓 Campus Specific' : '🌍 Global'}</div>
+                              </div>
+                              <button 
+                                className="btn btn-ghost btn-sm" 
+                                style={{ color: '#ef4444' }}
+                                onClick={() => {
+                                  if (!confirm('Remove this billboard?')) return;
+                                  // Logic to remove billboard could be added to API too
+                                  addToast('Delete logic not yet in API, but will be removed from state', 'info');
+                                  setManualBillboards(manualBillboards.filter(b => b.id !== mb.id));
+                                }}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                           </div>
+                         ))}
+                      </div>
+                   </div>
+                 )}
               </div>
             )}
 
@@ -751,6 +885,7 @@ export default function AdminDashboard() {
                       }}
                     >
                       <option value="">-- Select a University --</option>
+                      <option value="global">🌍 Global/General Vendors Platform Config</option>
                       {universities.map(u => (
                         <option key={u.id} value={u.id}>{u.name} ({u.abbreviation})</option>
                       ))}

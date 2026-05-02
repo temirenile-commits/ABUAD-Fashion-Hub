@@ -11,13 +11,27 @@ export default function MainSlider() {
 
   useEffect(() => {
     const fetchBillboard = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      let userUniId = null;
+      if (session) {
+        const { data: userProfile } = await supabase.from('users').select('university_id').eq('id', session.user.id).single();
+        userUniId = userProfile?.university_id;
+      }
+
       // 1. Fetch Organic Brand Boosts
-      const { data: brandData } = await supabase
+      let query = supabase
         .from('brands')
         .select('id, name, description, cover_url, billboard_boost_expires_at, sales_count')
         .or(`billboard_boost_expires_at.gt.${new Date().toISOString()},sales_count.gt.10`)
         .order('sales_count', { ascending: false })
         .limit(5);
+
+      if (userUniId) {
+        // Only show global brands or brands in their university
+        query = query.or(`university_id.is.null,university_id.eq.${userUniId}`);
+      }
+
+      const { data: brandData } = await query;
 
       // 2. Fetch Manual Billboards
       const { data: settingsData } = await supabase
@@ -26,7 +40,8 @@ export default function MainSlider() {
         .eq('key', 'manual_billboards')
         .single();
         
-      const manualBillboards = (settingsData?.value as any[]) || [];
+      const rawManualBillboards = (settingsData?.value as any[]) || [];
+      const manualBillboards = rawManualBillboards.filter(mb => !mb.university_id || mb.university_id === userUniId);
       
       // 3. Merge & Format
       let mergedSlides = [];

@@ -312,7 +312,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
-  // â”€â”€ Delete vendor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Delete vendor ────────────────────────────────────────────────────────────
   if (action === 'delete_vendor') {
     const { brandId } = body;
     if (!(await ensureScope('brands', brandId))) {
@@ -321,6 +321,35 @@ export async function POST(req: NextRequest) {
     const { error } = await supabaseAdmin.from('brands').delete().eq('id', brandId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
+  }
+
+  // ─── Add Manual Billboard ───────────────────────────────────────────────────
+  if (action === 'add_manual_billboard') {
+    const { title, description, link, cover_url } = body;
+    const { data: exist } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'manual_billboards').single();
+    const list = (exist?.value as any[]) || [];
+    list.push({ 
+      id: `mb_${Date.now()}`, 
+      title, 
+      description, 
+      link, 
+      cover_url, 
+      university_id: ctx.universityId 
+    });
+    const { error } = await supabaseAdmin.from('platform_settings').upsert({ key: 'manual_billboards', value: list, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // ─── Toggle User Status (Suspend/Activate Delivery, Customer) ───────────────
+  if (action === 'toggle_user_status') {
+    const { userId, status } = body;
+    if (!(await ensureScope('users', userId))) {
+      return NextResponse.json({ error: 'Forbidden: User not in your university.' }, { status: 403 });
+    }
+    const { error } = await supabaseAdmin.from('users').update({ status }).eq('id', userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: `User status updated to ${status}.` });
   }
 
   // â”€â”€ Send notification to university users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

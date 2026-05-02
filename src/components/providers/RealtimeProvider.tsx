@@ -21,22 +21,35 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
     // --- INITIAL DATA FETCH ---
     const fetchInitialData = async () => {
       try {
-        // Products joined with brands (removing non-existent product_stats)
-        const { data: prodData, error: prodError } = await supabase
+        const { data: { session } } = await supabase.auth.getSession();
+        let userUniId = null;
+        if (session?.user) {
+          const { data: profile } = await supabase.from('users').select('university_id').eq('id', session.user.id).single();
+          userUniId = profile?.university_id;
+        }
+
+        // Products joined with brands
+        let query = supabase
           .from('products')
-          .select(`
-            *, 
-            brands(*)
-          `)
+          .select(`*, brands(*)`)
           .order('created_at', { ascending: false });
+
+        if (userUniId) {
+          // Scoped view: Global products OR products in my university
+          query = query.or(`visibility_type.eq.global,university_id.eq.${userUniId}`);
+        } else {
+          // Public/Unauthenticated: Only Global products
+          query = query.eq('visibility_type', 'global');
+        }
+
+        const { data: prodData, error: prodError } = await query;
 
         if (prodError) throw prodError;
 
         if (active && prodData) {
-          // Fallback stats since product_stats view is missing
           const enriched = prodData.map((p: any) => ({
             ...p,
-            rating: p.rating || 5, // Use column from DB if exists, else fallback
+            rating: p.rating || 5,
             reviews: p.reviews_count || 0,
             wishlist_count: 0
           }));

@@ -441,6 +441,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, message: 'User has been unblocked.' });
   }
 
+  if (action === 'toggle_user_status') {
+    const { userId, status } = body;
+    const { error } = await supabaseAdmin.from('users').update({ status }).eq('id', userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: `User status updated to ${status}.` });
+  }
+
   if (action === 'delete_user') {
     const { userId } = body;
     
@@ -829,8 +836,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  if (action === 'add_manual_billboard') {
+    const { title, description, link, cover_url, university_id } = body;
+    const { data: exist } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'manual_billboards').single();
+    const list = (exist?.value as any[]) || [];
+    list.push({ id: `mb_${Date.now()}`, title, description, link, cover_url, university_id: university_id || null });
+    const { error } = await supabaseAdmin.from('platform_settings').upsert({ key: 'manual_billboards', value: list, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
   if (action === 'update_uni_config') {
     const { universityId, key, value } = body;
+    
+    if (universityId === 'global') {
+       if (key === 'credit_price') {
+          await supabaseAdmin.from('platform_settings').upsert({ key: 'credit_price', value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+       } else if (key === 'plans') {
+          // Map plans dict back to subscription_rates array
+          const { data: existRates } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'subscription_rates').single();
+          const rates = (existRates?.value as any[]) || [];
+          const newRates = rates.map(r => value[r.id] ? { ...r, price: Number(value[r.id].price) } : r);
+          await supabaseAdmin.from('platform_settings').upsert({ key: 'subscription_rates', value: newRates, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+       } else if (key === 'billboard_price') {
+          const { data: existBoosts } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'boost_rates').single();
+          const boosts = (existBoosts?.value as any[]) || [];
+          const newBoosts = boosts.map(b => b.id === 'billboard_boost' ? { ...b, price: Number(value) } : b);
+          await supabaseAdmin.from('platform_settings').upsert({ key: 'boost_rates', value: newBoosts, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+       }
+       return NextResponse.json({ success: true });
+    }
+
     const configKey = `uni_config_${universityId}`;
     
     const { data: existing } = await supabaseAdmin.from('platform_settings').select('value').eq('key', configKey).single();

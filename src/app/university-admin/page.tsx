@@ -50,6 +50,39 @@ export default function UniversityAdminPage() {
   const [addStaffLoading, setAddStaffLoading] = useState(false);
   const [orderFilter, setOrderFilter] = useState("all");
 
+  const [billboardUpload, setBillboardUpload] = useState({ title: '', sub: '', link: '', file: null as File|null });
+  const [uploadingBillboard, setUploadingBillboard] = useState(false);
+
+  const handleBillboardUpload = async () => {
+    if (!billboardUpload.file || !billboardUpload.title) return alert('Image and Title required');
+    setUploadingBillboard(true);
+    try {
+      const ext = billboardUpload.file.name.split('.').pop();
+      const path = `manual_billboards/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('products').upload(path, billboardUpload.file);
+      if (uploadError) throw uploadError;
+      
+      const { data } = supabase.storage.from('products').getPublicUrl(path);
+      
+      const res = await uaFetch("/api/university-admin", { 
+        method: "POST", 
+        body: JSON.stringify({ 
+          action: "add_manual_billboard", 
+          title: billboardUpload.title,
+          description: billboardUpload.sub,
+          link: billboardUpload.link,
+          cover_url: data.publicUrl
+        }) 
+      });
+      const d = await res.json();
+      if (d.success) {
+        setBillboardUpload({ title: '', sub: '', link: '', file: null });
+        alert('Billboard added successfully! It will now show on your students\' homepage.');
+      } else alert(d.error||"Action failed");
+    } catch(e:any) { alert(e.message); }
+    setUploadingBillboard(false);
+  };
+
   useEffect(() => {
     const init = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -114,6 +147,16 @@ export default function UniversityAdminPage() {
     ["analytics","Analytics",BarChart3],["insights","Insights",Globe],["fleet","Fleet",Truck],["team","My Team",Shield],
   ];
 
+  const hasAccess = (tabId: string) => {
+    if (userCtx?.role === "admin" || userCtx?.role === "university_admin") return true;
+    if (["overview", "analytics", "insights"].includes(tabId)) return true;
+    return userCtx?.admin_permissions?.includes(tabId);
+  };
+
+  const visibleManagement = TABS.slice(0,5).filter(t => hasAccess(t[0]));
+  const visibleCommunication = TABS.slice(5,6).filter(t => hasAccess(t[0]));
+  const visibleOps = TABS.slice(6).filter(t => hasAccess(t[0]));
+
   return (
     <div className={styles.container}>
       <aside className={styles.sidebar}>
@@ -126,20 +169,20 @@ export default function UniversityAdminPage() {
         </div>
         <nav className={styles.nav}>
           <div className={styles.navGroup}>Management</div>
-          {TABS.slice(0,5).map(([id,label,Icon]) => (
+          {visibleManagement.map(([id,label,Icon]) => (
             <button key={id} className={`${styles.navItem} ${tab===id?styles.navActive:""}`} onClick={()=>{setTab(id);setSearch("");}}>
               <Icon size={17}/> {label}
               {id==="vendors"&&pendingVendors.length>0&&<span className={styles.navBadge}>{pendingVendors.length}</span>}
             </button>
           ))}
           <div className={styles.navGroup}>Communication</div>
-          {TABS.slice(5,6).map(([id,label,Icon]) => (
+          {visibleCommunication.map(([id,label,Icon]) => (
             <button key={id} className={`${styles.navItem} ${tab===id?styles.navActive:""}`} onClick={()=>{setTab(id);setSearch("");}}>
               <Icon size={17}/> {label}
             </button>
           ))}
           <div className={styles.navGroup}>Analytics & Ops</div>
-          {TABS.slice(6).map(([id,label,Icon]) => (
+          {visibleOps.map(([id,label,Icon]) => (
             <button key={id} className={`${styles.navItem} ${tab===id?styles.navActive:""}`} onClick={()=>{setTab(id);setSearch("");}}>
               <Icon size={17}/> {label}
             </button>
@@ -276,7 +319,7 @@ export default function UniversityAdminPage() {
                         {orders.filter(o=>orderFilter==="all"||o.status===orderFilter).map((o:any)=>(
                           <tr key={o.id}>
                             <td className={styles.subText}>#{o.id.slice(0,8)}</td>
-                            <td>{o.users?.name||"—"}</td>
+                            <td>{o.users?.name || o.users?.email?.split('@')[0] || "—"}</td>
                             <td>{o.brands?.name||"—"}</td>
                             <td style={{fontWeight:700,color:"#10b981"}}>₦{Number(o.total_amount).toLocaleString()}</td>
                             <td><span className={`${styles.badge} ${o.status==="paid"?styles.badgePaid:o.status==="cancelled"?styles.badgeCancelled:styles.badgePending}`}>{o.status}</span></td>
@@ -315,6 +358,7 @@ export default function UniversityAdminPage() {
               )}
 
               {tab==="notices"&&(
+                <>
                 <div className={styles.sectionCard}>
                   <div className={styles.sectionHeader}><div><h2>Broadcast Notices</h2><p>Send announcements to your university community</p></div></div>
                   <div className={styles.notifForm}>
@@ -345,6 +389,60 @@ export default function UniversityAdminPage() {
                     </button>
                   </div>
                 </div>
+
+                <div className={styles.sectionCard} style={{ marginTop: '2rem' }}>
+                  <div className={styles.sectionHeader}><div><h2>Manual Homepage Billboard</h2><p>Feature a custom promotional banner for your students</p></div></div>
+                  <div className={styles.notifForm}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', width: '100%' }}>
+                       <div>
+                          <label className={styles.formLabel}>Banner Title</label>
+                          <input 
+                            className={styles.formInput}
+                            placeholder="e.g. Summer Mega Sale" 
+                            value={billboardUpload.title}
+                            onChange={e => setBillboardUpload({...billboardUpload, title: e.target.value})}
+                          />
+                       </div>
+                       <div>
+                          <label className={styles.formLabel}>Description</label>
+                          <input 
+                            className={styles.formInput}
+                            placeholder="e.g. Up to 50% off all items" 
+                            value={billboardUpload.sub}
+                            onChange={e => setBillboardUpload({...billboardUpload, sub: e.target.value})}
+                          />
+                       </div>
+                       <div>
+                          <label className={styles.formLabel}>Click Link (Optional)</label>
+                          <input 
+                            className={styles.formInput}
+                            placeholder="e.g. /explore?cat=sale" 
+                            value={billboardUpload.link}
+                            onChange={e => setBillboardUpload({...billboardUpload, link: e.target.value})}
+                          />
+                       </div>
+                       <div>
+                          <label className={styles.formLabel}>Banner Image</label>
+                          <input 
+                            type="file"
+                            accept="image/*"
+                            className={styles.formInput}
+                            onChange={e => setBillboardUpload({...billboardUpload, file: e.target.files?.[0] || null})}
+                          />
+                       </div>
+                    </div>
+                    
+                    <button 
+                      className={styles.btnPrimary}
+                      style={{ marginTop: '1.5rem', minWidth: '200px' }}
+                      disabled={uploadingBillboard}
+                      onClick={handleBillboardUpload}
+                    >
+                       {uploadingBillboard ? <Loader2 size={18} className={styles.spin} /> : <><Plus size={15}/> Upload Billboard 🚀</>}
+                    </button>
+                  </div>
+                </div>
+                </>
               )}
 
               {tab==="analytics"&&(
@@ -475,7 +573,7 @@ export default function UniversityAdminPage() {
                   <div className={styles.sectionHeader}><div><h2>University Catalog</h2><p>Monitor and control all products listed in your university</p></div></div>
                   <div className={styles.tableWrap}>
                     <table className={styles.table}>
-                      <thead><tr><th>Product</th><th>Brand</th><th>Status</th><th>Stats</th><th>Actions</th></tr></thead>
+                      <thead><tr><th>Product</th><th>Brand</th><th>Visibility</th><th>Status</th><th>Stats</th><th>Actions</th></tr></thead>
                       <tbody>
                         {filter(products,["title"]).map((p:any)=>(
                           <tr key={p.id}>
@@ -486,6 +584,15 @@ export default function UniversityAdminPage() {
                               </div>
                             </td>
                             <td>{p.brands?.name}</td>
+                            <td>
+                               <span className={styles.badge} style={{ 
+                                  background: p.visibility_type === 'global' ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.05)', 
+                                  color: p.visibility_type === 'global' ? '#818cf8' : 'var(--text-200)',
+                                  fontSize: '0.65rem'
+                               }}>
+                                 {p.visibility_type === 'global' ? '🌍 Global' : '🎓 Campus'}
+                               </span>
+                            </td>
                             <td><span className={p.is_visible?styles.badgeActive:styles.badgeOffline}>{p.is_visible?"Visible":"Hidden"}</span></td>
                             <td className={styles.subText}>{p.sales_count} Sales / {p.views_count} Views</td>
                             <td>
