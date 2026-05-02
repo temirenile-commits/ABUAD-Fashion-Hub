@@ -9,6 +9,9 @@ import {
   BarChart3, Globe, Truck, Shield, LogOut, RefreshCw, Search,
   CheckCircle, XCircle, Loader2, AlertTriangle, Plus, UserPlus, Trash2, Tag, Settings, ShoppingBag, ShoppingCart as OrderIcon
 } from "lucide-react";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
+} from 'recharts';
 
 type Tab = "overview"|"vendors"|"customers"|"orders"|"reviews"|"notices"|"analytics"|"insights"|"fleet"|"team"|"catalog"|"merchandising";
 
@@ -454,16 +457,61 @@ export default function UniversityAdminPage() {
                   <div className={styles.sectionHeader}><div><h2>University Analytics</h2><p>Order and revenue trends for your university</p></div></div>
                   <div style={{padding:"1.5rem"}}>
                     {chartData.length===0?<div className={styles.emptyState}><p>No data yet</p></div>:(
-                      <table className={styles.table}>
-                        <thead><tr><th>Date</th><th>Orders</th><th>Revenue</th></tr></thead>
-                        <tbody>{chartData.map((d:any)=>(
-                          <tr key={d.time}>
-                            <td>{d.time}</td>
-                            <td style={{fontWeight:700}}>{d.orders}</td>
-                            <td style={{color:"#10b981",fontWeight:700}}>₦{Number(d.revenue).toLocaleString()}</td>
-                          </tr>
-                        ))}</tbody>
-                      </table>
+                      <>
+                        <div style={{ width: '100%', height: 350, marginBottom: '2rem', background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: '12px' }}>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={chartData}>
+                              <defs>
+                                <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                              <XAxis 
+                                dataKey="time" 
+                                stroke="#94a3b8" 
+                                fontSize={12} 
+                                tickLine={false} 
+                                axisLine={false} 
+                              />
+                              <YAxis 
+                                stroke="#94a3b8" 
+                                fontSize={12} 
+                                tickLine={false} 
+                                axisLine={false} 
+                                tickFormatter={(val) => `₦${val >= 1000 ? (val/1000).toFixed(0)+'k' : val}`}
+                              />
+                              <Tooltip 
+                                contentStyle={{ background: '#1e293b', border: 'none', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
+                                itemStyle={{ color: '#fff' }}
+                              />
+                              <Area 
+                                type="monotone" 
+                                dataKey="revenue" 
+                                stroke="#10b981" 
+                                fillOpacity={1} 
+                                fill="url(#colorRev)" 
+                                strokeWidth={3}
+                                name="Revenue"
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+
+                        <div className={styles.tableWrap}>
+                          <table className={styles.table}>
+                            <thead><tr><th>Date</th><th>Orders</th><th>Revenue</th></tr></thead>
+                            <tbody>{chartData.map((d:any)=>(
+                              <tr key={d.time}>
+                                <td>{d.time}</td>
+                                <td style={{fontWeight:700}}>{d.orders}</td>
+                                <td style={{color:"#10b981",fontWeight:700}}>₦{Number(d.revenue).toLocaleString()}</td>
+                              </tr>
+                            ))}</tbody>
+                          </table>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
