@@ -26,6 +26,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Edible/Consumable validation
+    const restrictedKeywords = ['food', 'drink', 'groceries', 'supplement', 'edible', 'consumable', 'snack', 'beverage', 'meal'];
+    const textToSearch = `${title} ${description} ${category}`.toLowerCase();
+    
+    if (restrictedKeywords.some(keyword => textToSearch.includes(keyword))) {
+      return NextResponse.json({ error: 'Edible or consumable items are not allowed on this platform.' }, { status: 400 });
+    }
+
     // 0. Fetch Brand & Credit Check
     const { data: brand, error: brandError } = await supabaseAdmin
       .from('brands')

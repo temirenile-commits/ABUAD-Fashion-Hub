@@ -15,16 +15,13 @@ import {
 import styles from './CategorySidebar.module.css';
 
 const CATEGORIES = [
-  { id: 'Mens-Fashion', label: "Men's Fashion", icon: <User size={18} /> },
-  { id: 'Womens-Fashion', label: "Women's Fashion", icon: <Sparkles size={18} /> },
-  { id: 'Traditional-Wear', label: "Traditional & Native", icon: <Scissors size={18} /> },
-  { id: 'Footwear', label: "Footwear", icon: <Shirt size={18} /> },
-  { id: 'Accessories', label: "Style Accessories", icon: <Watch size={18} /> },
-  { id: 'Bags', label: "Bags & Purses", icon: <ShoppingBag size={18} /> },
-  { id: 'Fabrics', label: "Fabrics & Textiles", icon: <Zap size={18} /> },
-  { id: 'Jewelry', label: "Jewelry", icon: <Gem size={18} /> },
-  { id: 'Tailoring', label: "Tailoring Services", icon: <Scissors size={18} /> },
-  { id: 'Photography', label: "Fashion Shoots", icon: <Camera size={18} /> },
+  { id: 'Fashion', label: "Fashion", icon: <User size={18} /> },
+  { id: 'Electronics', label: "Electronics", icon: <Zap size={18} /> },
+  { id: 'Phones-Accessories', label: "Phones & Accessories", icon: <Watch size={18} /> },
+  { id: 'Beauty-Personal-Care', label: "Beauty & Personal Care", icon: <Sparkles size={18} /> },
+  { id: 'Home-Living', label: "Home & Living", icon: <ShoppingBag size={18} /> },
+  { id: 'Gadgets', label: "Gadgets", icon: <Camera size={18} /> },
+  { id: 'General-Merchandise', label: "General Merchandise", icon: <Gem size={18} /> },
 ];
 
 export default function CategorySidebar() {

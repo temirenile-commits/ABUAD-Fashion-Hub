@@ -112,7 +112,7 @@ export default function VendorDashboard() {
     description: '',
     price: '',
     originalPrice: '',
-    category: 'Clothing',
+    category: 'Fashion',
     stockCount: '10',
     mediaUrls: [] as string[],
     imageUrl: '',
@@ -534,7 +534,7 @@ export default function VendorDashboard() {
           updateGlobalProduct(editingProduct.id, updates);
           setEditingProduct(null);
           setNewProduct({
-            title: '', description: '', price: '', originalPrice: '', category: 'Clothing',
+            title: '', description: '', price: '', originalPrice: '', category: 'Fashion',
             stockCount: '10', mediaUrls: [], imageUrl: '', videoUrl: '', variants: [], isDraft: false, visibility_type: 'university'
           });
           alert('Product updated successfully!');
@@ -566,7 +566,7 @@ export default function VendorDashboard() {
             description: '',
             price: '',
             originalPrice: '',
-            category: 'Clothing',
+            category: 'Fashion',
             stockCount: '10',
             mediaUrls: [],
             imageUrl: '',
@@ -946,7 +946,7 @@ export default function VendorDashboard() {
             title: row.title,
             description: row.description || '',
             price: Number(row.price),
-            category: row.category || 'Clothing',
+            category: row.category || 'Fashion',
             stock_count: Number(row.stockCount || -1),
             media_urls: row.imageUrls ? row.imageUrls.split(',') : []
           });
@@ -1931,14 +1931,13 @@ export default function VendorDashboard() {
                         value={newProduct.category}
                         onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                       >
-                        <option>Clothing</option>
-                        <option>Mens-Fashion</option>
-                        <option>Womens-Fashion</option>
-                        <option>Traditional-Wear</option>
-                        <option>Footwear</option>
-                        <option>Accessories</option>
-                        <option>Bags</option>
-                        <option>Handmade</option>
+                        <option>Fashion</option>
+                        <option>Electronics</option>
+                        <option>Phones-Accessories</option>
+                        <option>Beauty-Personal-Care</option>
+                        <option>Home-Living</option>
+                        <option>Gadgets</option>
+                        <option>General-Merchandise</option>
                       </select>
                     </div>
                     <div className={styles.inputGroup}>

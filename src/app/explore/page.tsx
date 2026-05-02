@@ -1,19 +1,20 @@
-﻿'use client';
+'use client';
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { SlidersHorizontal, Grid3X3, LayoutList, Search, X, Store, ShoppingBag, Sparkles, Shirt, Gem, Scissors, Footprints, Watch, Briefcase } from 'lucide-react';
+import { SlidersHorizontal, Grid3X3, LayoutList, Search, X, Store, ShoppingBag, Sparkles, Shirt, Gem, Scissors, Footprints, Watch, Briefcase, Zap, Camera } from 'lucide-react';
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
 import { useMarketplaceStore } from '@/store/marketplaceStore';
 import styles from './explore.module.css';
 
 const CATEGORIES = [
   { id: 'all', label: 'All Items', icon: <Sparkles size={16} /> },
-  { id: 'Mens-Fashion', label: "Men's Fashion", icon: <Shirt size={16} /> },
-  { id: 'Womens-Fashion', label: "Women's Fashion", icon: <Gem size={16} /> },
-  { id: 'Traditional-Wear', label: 'Traditional', icon: <Scissors size={16} /> },
-  { id: 'Footwear', label: 'Footwear', icon: <Footprints size={16} /> },
-  { id: 'Accessories', label: 'Accessories', icon: <Watch size={16} /> },
-  { id: 'Bags', label: 'Bags', icon: <Briefcase size={16} /> },
+  { id: 'Fashion', label: "Fashion", icon: <Shirt size={16} /> },
+  { id: 'Electronics', label: "Electronics", icon: <Zap size={16} /> },
+  { id: 'Phones-Accessories', label: "Phones & Accessories", icon: <Watch size={16} /> },
+  { id: 'Beauty-Personal-Care', label: "Beauty & Care", icon: <Gem size={16} /> },
+  { id: 'Home-Living', label: "Home & Living", icon: <ShoppingBag size={16} /> },
+  { id: 'Gadgets', label: "Gadgets", icon: <Camera size={16} /> },
+  { id: 'General-Merchandise', label: "General", icon: <Briefcase size={16} /> },
 ];
 
 const SORT_OPTIONS = [
