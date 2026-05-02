@@ -236,6 +236,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ products: data || [] });
   }
 
+  if (action === 'merchandising') {
+    const { data, error } = await supabaseAdmin
+      .from('homepage_sections')
+      .select('*')
+      .eq('university_id', universityId)
+      .order('priority', { ascending: true });
+    
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ sections: data || [] });
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }
 
@@ -251,6 +262,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const { action } = body;
+  const universityId = ctx.universityId;
 
   // Helper: enforce university scope on a target record
   const ensureScope = async (table: string, id: string, column = 'university_id') => {
@@ -554,6 +566,57 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden: User not in your university.' }, { status: 403 });
     }
     const { error } = await supabaseAdmin.from('users').update({ status }).eq('id', userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // --- Merchandising Actions ---
+  if (action === 'create_homepage_section') {
+    const { title, type, layout_type, auto_rule, priority, is_active } = body;
+    const { data, error } = await supabaseAdmin.from('homepage_sections').insert({
+      title, type, layout_type, auto_rule: auto_rule || {}, priority: priority || 0, 
+      university_id: universityId, // Enforced scope
+      is_active: is_active ?? true
+    }).select().single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, section: data });
+  }
+
+  if (action === 'update_homepage_section') {
+    const { id, updates } = body;
+    // Ensure we only update sections belonging to this university
+    const { error } = await supabaseAdmin.from('homepage_sections').update(updates).eq('id', id).eq('university_id', universityId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'delete_homepage_section') {
+    const { id } = body;
+    const { error } = await supabaseAdmin.from('homepage_sections').delete().eq('id', id).eq('university_id', universityId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'assign_product_to_section') {
+    const { sectionId, productId, position } = body;
+    // Verify section belongs to university
+    const { data: sec } = await supabaseAdmin.from('homepage_sections').select('university_id').eq('id', sectionId).single();
+    if (!sec || sec.university_id !== universityId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { error } = await supabaseAdmin.from('section_products').upsert({
+      section_id: sectionId, product_id: productId, position: position || 0
+    }, { onConflict: 'section_id,product_id' });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'remove_product_from_section') {
+    const { sectionId, productId } = body;
+    // Verify section belongs to university
+    const { data: sec } = await supabaseAdmin.from('homepage_sections').select('university_id').eq('id', sectionId).single();
+    if (!sec || sec.university_id !== universityId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { error } = await supabaseAdmin.from('section_products').delete().eq('section_id', sectionId).eq('product_id', productId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }

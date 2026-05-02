@@ -11,7 +11,7 @@ import styles from './admin.module.css';
 import TradingChart from '@/components/TradingChart';
 import { useToast } from '@/context/ToastContext';
 
-type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions';
+type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising';
 
 async function adminFetch(path: string, options: RequestInit = {}) {
   return fetch(path, {
@@ -55,6 +55,9 @@ export default function AdminDashboard() {
   const [deliveryAgents, setDeliveryAgents] = useState<any[]>([]);
   const [promoCodes, setPromoCodes] = useState<any[]>([]);
   const [universities, setUniversities] = useState<any[]>([]);
+  const [homepageSections, setHomepageSections] = useState<any[]>([]);
+  const [sectionForm, setSectionForm] = useState<any>({ title: '', type: 'manual', layout_type: 'horizontal_scroll', is_active: true, priority: 0, auto_rule: { criteria: 'limited_stock', threshold: 5, limit: 12 } });
+  const [editingSection, setEditingSection] = useState<any>(null);
   const [uniForm, setUniForm] = useState({ name: '', location: '', abbreviation: '' });
   const [uniCreating, setUniCreating] = useState(false);
   const [promoForm, setPromoForm] = useState({ code: '', type: 'percentage', value: 10, max_uses: 100, product_id: '' });
@@ -140,6 +143,7 @@ export default function AdminDashboard() {
       setDeliveryAgents(agentsD.agents || []);
       setPromoCodes(promosD.promoCodes || []);
       setUniversities(unisD.universities || []);
+      setHomepageSections(statsD.sections || []);
       
       setUniversityAdmins(uniJson[0].admins || []);
       setTeams(uniJson[1].teams || []);
@@ -296,6 +300,7 @@ export default function AdminDashboard() {
             ['orders', 'Orders', ShoppingCart],
             ['financials', 'Payouts', CreditCard],
             ['promotions', 'Promotions ', Star],
+            ['merchandising', 'Merchandising', Tag],
             ['settings', 'Settings', Settings],
             ['reviews', 'Reviews ', Star],
             ['notices', 'Notices ', Bell],
@@ -712,6 +717,205 @@ export default function AdminDashboard() {
                       </div>
                    </div>
                  )}
+              </div>
+            )}
+
+            {activeTab === 'merchandising' && (
+              <div className={styles.sectionCard}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                  <div>
+                    <h2>Homepage Merchandising</h2>
+                    <p className={styles.subText}>Manage dynamic sections, automated rules, and scheduled campaigns.</p>
+                  </div>
+                  <button className="btn btn-primary" onClick={() => { setEditingSection(null); setSectionForm({ title: '', type: 'manual', layout_type: 'horizontal_scroll', is_active: true, priority: 0, auto_rule: { criteria: 'limited_stock', threshold: 5, limit: 12 } }); (document.getElementById('section-modal') as any)?.showModal(); }}>
+                    + New Section
+                  </button>
+                </div>
+
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Section Title</th>
+                        <th>Type</th>
+                        <th>Layout</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>University</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {homepageSections.map(sec => (
+                        <tr key={sec.id}>
+                          <td>
+                            <div style={{ fontWeight: 700 }}>{sec.title}</div>
+                            {sec.description && <div className={styles.subText} style={{ fontSize: '0.75rem' }}>{sec.description}</div>}
+                          </td>
+                          <td>
+                            <span className={`badge ${sec.type === 'manual' ? 'badge-gold' : 'badge-verified'}`}>
+                              {sec.type.toUpperCase()}
+                            </span>
+                            {sec.type === 'automated' && <div className={styles.subText} style={{ fontSize: '0.65rem', marginTop: '4px' }}>Rule: {sec.auto_rule?.criteria}</div>}
+                          </td>
+                          <td><span className="badge badge-ghost">{sec.layout_type}</span></td>
+                          <td>{sec.priority}</td>
+                          <td><span className={sec.is_active ? 'text-green' : 'text-red'}>{sec.is_active ? 'Active' : 'Inactive'}</span></td>
+                          <td>{sec.universities?.abbreviation || 'Global'}</td>
+                          <td>
+                            <div className={styles.actionRow}>
+                              <button className="btn btn-ghost btn-sm" onClick={() => { setEditingSection(sec); setSectionForm(sec); (document.getElementById('section-modal') as any)?.showModal(); }}>
+                                <Settings size={14} />
+                              </button>
+                              {sec.type === 'manual' && (
+                                <button className="btn btn-ghost btn-sm" title="Manage Products" onClick={() => { setEditingSection(sec); (document.getElementById('product-picker-modal') as any)?.showModal(); }}>
+                                  <ShoppingBag size={14} />
+                                </button>
+                              )}
+                              <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => confirm('Delete this section?') && adminAction('delete_homepage_section', { id: sec.id })}>
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {homepageSections.length === 0 && (
+                        <tr><td colSpan={7} style={{ textAlign: 'center' }} className={styles.subText}>No sections configured. Create one to populate the homepage.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Section Form Modal */}
+                <dialog id="section-modal" className={styles.modal} style={{ padding: 0 }}>
+                  <div className={styles.modalContent} style={{ maxWidth: '500px' }}>
+                    <div className={styles.modalHeader}>
+                      <h3>{editingSection ? 'Edit Section' : 'Create New Section'}</h3>
+                      <button className="btn btn-icon" onClick={() => (document.getElementById('section-modal') as any)?.close()}><XCircle size={20} /></button>
+                    </div>
+                    <div className={styles.modalBody} style={{ padding: '1.5rem' }}>
+                      <div className="form-group mb-4">
+                        <label className="form-label">Title</label>
+                        <input className="form-input" value={sectionForm.title} onChange={e => setSectionForm({...sectionForm, title: e.target.value})} placeholder="e.g. Limited Stock Deals" />
+                      </div>
+                      <div className="form-group mb-4">
+                        <label className="form-label">Description (Optional)</label>
+                        <input className="form-input" value={sectionForm.description || ''} onChange={e => setSectionForm({...sectionForm, description: e.target.value})} placeholder="Short subtitle" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="form-label">Type</label>
+                          <select className="form-input" value={sectionForm.type} onChange={e => setSectionForm({...sectionForm, type: e.target.value})}>
+                            <option value="manual">Manual Selection</option>
+                            <option value="automated">System Automated</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="form-label">Layout</label>
+                          <select className="form-input" value={sectionForm.layout_type} onChange={e => setSectionForm({...sectionForm, layout_type: e.target.value})}>
+                            <option value="horizontal_scroll">Horizontal Scroll</option>
+                            <option value="grid">Grid (Recommended for large lists)</option>
+                            <option value="banner">Promotional Banner</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {sectionForm.type === 'automated' && (
+                        <div className={styles.settingsBox} style={{ background: 'var(--bg-300)', marginBottom: '1.5rem' }}>
+                          <h4 style={{ marginBottom: '1rem' }}>Automation Rules</h4>
+                          <div className="form-group mb-3">
+                            <label className="subText">Criteria</label>
+                            <select className="form-input" value={sectionForm.auto_rule?.criteria} onChange={e => setSectionForm({...sectionForm, auto_rule: {...sectionForm.auto_rule, criteria: e.target.value}})}>
+                              <option value="limited_stock">Limited Stock (Selling fast)</option>
+                              <option value="trending">Trending (High Views)</option>
+                              <option value="top_sellers">Top Sellers (High Sales)</option>
+                              <option value="hot_deals">Hot Deals (Best Discounts)</option>
+                            </select>
+                          </div>
+                          {sectionForm.auto_rule?.criteria === 'limited_stock' && (
+                            <div className="form-group mb-3">
+                              <label className="subText">Stock Threshold (Below this value)</label>
+                              <input type="number" className="form-input" value={sectionForm.auto_rule?.threshold} onChange={e => setSectionForm({...sectionForm, auto_rule: {...sectionForm.auto_rule, threshold: Number(e.target.value)}})} />
+                            </div>
+                          )}
+                          <div className="form-group">
+                            <label className="subText">Display Limit</label>
+                            <input type="number" className="form-input" value={sectionForm.auto_rule?.limit} onChange={e => setSectionForm({...sectionForm, auto_rule: {...sectionForm.auto_rule, limit: Number(e.target.value)}})} />
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="form-label">Priority Order</label>
+                          <input type="number" className="form-input" value={sectionForm.priority} onChange={e => setSectionForm({...sectionForm, priority: Number(e.target.value)})} />
+                        </div>
+                        <div>
+                          <label className="form-label">University (Global if empty)</label>
+                          <select className="form-input" value={sectionForm.university_id || ''} onChange={e => setSectionForm({...sectionForm, university_id: e.target.value || null})}>
+                            <option value="">🌍 Global</option>
+                            {universities.map(u => <option key={u.id} value={u.id}>{u.abbreviation}</option>)}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 mb-6">
+                        <input type="checkbox" checked={sectionForm.is_active} onChange={e => setSectionForm({...sectionForm, is_active: e.target.checked})} id="sec-active" />
+                        <label htmlFor="sec-active" style={{ cursor: 'pointer' }}>Visible on Homepage</label>
+                      </div>
+
+                      <button className="btn btn-primary w-full" onClick={() => {
+                        if (editingSection) adminAction('update_homepage_section', { id: editingSection.id, updates: sectionForm });
+                        else adminAction('create_homepage_section', sectionForm);
+                        (document.getElementById('section-modal') as any)?.close();
+                      }}>
+                        {editingSection ? 'Save Changes' : 'Create Section'}
+                      </button>
+                    </div>
+                  </div>
+                </dialog>
+
+                {/* Product Picker Modal (For Manual Sections) */}
+                <dialog id="product-picker-modal" className={styles.modal} style={{ padding: 0 }}>
+                   <div className={styles.modalContent} style={{ maxWidth: '800px', height: '80vh' }}>
+                      <div className={styles.modalHeader}>
+                        <h3>Manage Products: {editingSection?.title}</h3>
+                        <button className="btn btn-icon" onClick={() => (document.getElementById('product-picker-modal') as any)?.close()}><XCircle size={20} /></button>
+                      </div>
+                      <div className={styles.modalBody} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', height: 'calc(100% - 70px)', padding: '1.5rem' }}>
+                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflow: 'hidden' }}>
+                            <h4>Catalog</h4>
+                            <div className={styles.searchBar} style={{ width: '100%' }}>
+                              <Search size={14} />
+                              <input placeholder="Filter products..." value={adminSearch} onChange={e => setAdminSearch(e.target.value)} />
+                            </div>
+                            <div style={{ overflowY: 'auto', flex: 1 }}>
+                               {filterBy(products, ['title']).slice(0, 50).map(p => (
+                                 <div key={p.id} className={styles.settingsBox} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', padding: '0.75rem' }}>
+                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                       <img src={p.image_url || p.media_urls?.[0]} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                                       <div>
+                                          <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{p.title}</div>
+                                          <div className={styles.subText} style={{ fontSize: '0.7rem' }}>{p.brands?.name}</div>
+                                       </div>
+                                    </div>
+                                    <button className="btn btn-ghost btn-sm" onClick={() => adminAction('assign_product_to_section', { sectionId: editingSection.id, productId: p.id, position: 0 })}>Add</button>
+                                 </div>
+                               ))}
+                            </div>
+                         </div>
+
+                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflow: 'hidden' }}>
+                            <h4>Assigned to this Section</h4>
+                            <div style={{ overflowY: 'auto', flex: 1 }}>
+                               {/* Note: In a real app, you'd fetch the specific products for this section. 
+                                   For now, we'll assume the state is updated via adminAction + fetchAll. */}
+                               <p className={styles.subText} style={{ fontSize: '0.8rem' }}>Added products will appear here after sync.</p>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+                </dialog>
               </div>
             )}
 

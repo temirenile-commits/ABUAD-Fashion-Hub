@@ -28,6 +28,7 @@ import HeroExtras from '@/components/HeroExtras';
 import TopCategories from '@/components/TopCategories';
 import FlashSales from '@/components/FlashSales';
 import WelcomeModal from '@/components/WelcomeModal';
+import DynamicMerchandising from '@/components/DynamicMerchandising';
 
 export default function Home() {
   const allProducts = useMarketplaceStore(s => s.products);
@@ -239,6 +240,9 @@ export default function Home() {
             </div>
           </section>
         )}
+
+        {/* ───── DYNAMIC MERCHANDISING SECTIONS (Admin Controlled) ───── */}
+        <DynamicMerchandising />
 
         {/* ───── TRENDING PRODUCTS (Personalized) ───── */}
         <section className={styles.section}>

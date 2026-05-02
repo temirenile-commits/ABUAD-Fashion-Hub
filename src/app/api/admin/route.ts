@@ -140,13 +140,17 @@ export async function GET(req: NextRequest) {
       userRes,
       brandRes,
       productRes,
-      revenueRes
+      revenueRes,
+      sectionsRes
     ] = await Promise.all([
       userQuery,
       brandQuery,
       productQuery,
-      orderQuery
+      orderQuery,
+      supabaseAdmin.from('homepage_sections').select('*, universities(name, abbreviation)').order('priority', { ascending: true })
     ]);
+
+    const sections = (sectionsRes as any).data || [];
 
     const userCount = userRes.count ?? 0;
     const brandCount = brandRes.count ?? 0;
@@ -180,7 +184,8 @@ export async function GET(req: NextRequest) {
         totalSubsidies,
         totalProductViews,
         totalProfileViews
-      }
+      },
+      sections
     });
   }
 

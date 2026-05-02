@@ -165,7 +165,10 @@ export default function ProductCard({ product }: Props) {
           </div>
           <div className={styles.videoMeta}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h3 className={styles.videoTitle}>{product.title}</h3>
+              <div>
+                {product.category && <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--primary)', fontWeight: 700, letterSpacing: '0.5px' }}>{product.category}</div>}
+                <h3 className={styles.videoTitle}>{product.title}</h3>
+              </div>
               <VendorActions 
                 vendorId={product.brand_id} 
                 vendorName={brandName} 
@@ -207,6 +210,7 @@ export default function ProductCard({ product }: Props) {
                 minimal
               />
           </div>
+          {product.category && <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--primary)', fontWeight: 700, marginBottom: '2px', letterSpacing: '0.5px' }}>{product.category}</div>}
           <h3 className={styles.title}>{product.title}</h3>
           <div className={styles.priceRow}>
             <span className={styles.price}>{formatPrice(product.price)}</span>

@@ -7,10 +7,10 @@ import styles from "./university-admin.module.css";
 import {
   LayoutDashboard, Store, Users, ShoppingCart, Star, Bell,
   BarChart3, Globe, Truck, Shield, LogOut, RefreshCw, Search,
-  CheckCircle, XCircle, Loader2, AlertTriangle, Plus, UserPlus, Trash2
+  CheckCircle, XCircle, Loader2, AlertTriangle, Plus, UserPlus, Trash2, Tag, Settings, ShoppingBag, ShoppingCart as OrderIcon
 } from "lucide-react";
 
-type Tab = "overview"|"vendors"|"customers"|"orders"|"reviews"|"notices"|"analytics"|"insights"|"fleet"|"team"|"catalog";
+type Tab = "overview"|"vendors"|"customers"|"orders"|"reviews"|"notices"|"analytics"|"insights"|"fleet"|"team"|"catalog"|"merchandising";
 
 async function uaFetch(path: string, opts: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -49,6 +49,9 @@ export default function UniversityAdminPage() {
   const [staffForm, setStaffForm] = useState({ userId:"", staffRole:"university_staff", permissions:[] as string[] });
   const [addStaffLoading, setAddStaffLoading] = useState(false);
   const [orderFilter, setOrderFilter] = useState("all");
+  const [homepageSections, setHomepageSections] = useState<any[]>([]);
+  const [sectionForm, setSectionForm] = useState<any>({ title: '', type: 'manual', layout_type: 'horizontal_scroll', is_active: true, priority: 0, auto_rule: { criteria: 'limited_stock', threshold: 5, limit: 12 } });
+  const [editingSection, setEditingSection] = useState<any>(null);
 
   const [billboardUpload, setBillboardUpload] = useState({ title: '', sub: '', link: '', file: null as File|null });
   const [uploadingBillboard, setUploadingBillboard] = useState(false);
@@ -99,7 +102,7 @@ export default function UniversityAdminPage() {
   const fetchAll = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const actions = ["stats","vendors","customers","orders","reviews","riders","analytics","cross_university_insights","team","products"];
+      const actions = ["stats","vendors","customers","orders","reviews","riders","analytics","cross_university_insights","team","products", "merchandising"];
       const results = await Promise.allSettled(actions.map(a => uaFetch(`/api/university-admin?action=${a}`)));
       const jsons = await Promise.allSettled(results.map((r,i) => r.status==="fulfilled"&&r.value.ok ? r.value.json() : Promise.resolve({})));
       const g = (i: number) => jsons[i].status==="fulfilled" ? (jsons[i] as any).value : {};
@@ -113,6 +116,7 @@ export default function UniversityAdminPage() {
       setInsights(g(7).insights||[]);
       setTeam(g(8).team||[]);
       setProducts(g(9).products||[]);
+      setHomepageSections(g(10).sections||[]);
     } catch { setError("Failed to load dashboard data."); }
     setLoading(false);
   }, []);
@@ -143,7 +147,7 @@ export default function UniversityAdminPage() {
 
   const TABS: [Tab, string, any][] = [
     ["overview","Overview",LayoutDashboard],["vendors","Vendors",Store],["catalog","Catalog",ShoppingCart],["customers","Customers",Users],
-    ["orders","Orders",ShoppingCart],["reviews","Reviews",Star],["notices","Notices",Bell],
+    ["orders","Orders",ShoppingCart],["reviews","Reviews",Star],["notices","Notices",Bell],["merchandising", "Merchandising", Tag],
     ["analytics","Analytics",BarChart3],["insights","Insights",Globe],["fleet","Fleet",Truck],["team","My Team",Shield],
   ];
 
@@ -610,8 +614,191 @@ export default function UniversityAdminPage() {
                   </div>
                 </div>
               )}
+
+              {tab === "merchandising" && (
+                <div className={styles.sectionCard}>
+                  <div className={styles.sectionHeader}>
+                    <div>
+                      <h2>Homepage Merchandising</h2>
+                      <p>Manage dynamic sections and automated rules for your students' homepage.</p>
+                    </div>
+                    <button className={styles.btnPrimary} onClick={() => { setEditingSection(null); setSectionForm({ title: '', type: 'manual', layout_type: 'horizontal_scroll', is_active: true, priority: 0, auto_rule: { criteria: 'limited_stock', threshold: 5, limit: 12 } }); (document.getElementById('section-modal') as any)?.showModal(); }}>
+                      <Plus size={15} /> New Section
+                    </button>
+                  </div>
+
+                  <div className={styles.tableWrap}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>Title</th>
+                          <th>Type</th>
+                          <th>Layout</th>
+                          <th>Priority</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {homepageSections.map(sec => (
+                          <tr key={sec.id}>
+                            <td>
+                              <div style={{ fontWeight: 700 }}>{sec.title}</div>
+                              {sec.description && <div className={styles.subText} style={{ fontSize: '0.75rem' }}>{sec.description}</div>}
+                            </td>
+                            <td>
+                              <span className={`${styles.badge} ${sec.type === 'manual' ? styles.badgeGold : styles.badgeVerified}`}>
+                                {sec.type.toUpperCase()}
+                              </span>
+                              {sec.type === 'automated' && <div className={styles.subText} style={{ fontSize: '0.65rem', marginTop: '4px' }}>Rule: {sec.auto_rule?.criteria}</div>}
+                            </td>
+                            <td><span className={styles.badgeGhost}>{sec.layout_type}</span></td>
+                            <td>{sec.priority}</td>
+                            <td><span className={sec.is_active ? styles.textGreen : styles.textRed}>{sec.is_active ? 'Active' : 'Inactive'}</span></td>
+                            <td>
+                              <div className={styles.actionRow}>
+                                <button className={styles.btnSm} onClick={() => { setEditingSection(sec); setSectionForm(sec); (document.getElementById('section-modal') as any)?.showModal(); }}>
+                                  <Settings size={14} />
+                                </button>
+                                {sec.type === 'manual' && (
+                                  <button className={styles.btnSm} title="Manage Products" onClick={() => { setEditingSection(sec); (document.getElementById('product-picker-modal') as any)?.showModal(); }}>
+                                    <ShoppingBag size={14} />
+                                  </button>
+                                )}
+                                <button className={`${styles.btnSm} ${styles.btnDelete}`} onClick={() => confirm('Delete this section?') && action('delete_homepage_section', { id: sec.id })}>
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {homepageSections.length === 0 && (
+                          <tr><td colSpan={6} style={{ textAlign: 'center' }} className={styles.subText}>No campus-specific sections configured.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Section Form Modal */}
+                  <dialog id="section-modal" className={styles.modalDialog} style={{ padding: 0 }}>
+                    <div className={styles.modalContent} style={{ maxWidth: '500px', background: 'var(--bg-100)', color: '#fff', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                      <div className={styles.modalHeader} style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h3 style={{ margin: 0 }}>{editingSection ? 'Edit Section' : 'Create New Section'}</h3>
+                        <button className={styles.btnIcon} onClick={() => (document.getElementById('section-modal') as any)?.close()}><XCircle size={20} /></button>
+                      </div>
+                      <div style={{ padding: '1.5rem' }}>
+                        <div className="form-group mb-4">
+                          <label className={styles.formLabel}>Title</label>
+                          <input className={styles.formInput} value={sectionForm.title} onChange={e => setSectionForm({...sectionForm, title: e.target.value})} placeholder="e.g. Limited Stock Deals" />
+                        </div>
+                        <div className="form-group mb-4">
+                          <label className={styles.formLabel}>Description (Optional)</label>
+                          <input className={styles.formInput} value={sectionForm.description || ''} onChange={e => setSectionForm({...sectionForm, description: e.target.value})} placeholder="Short subtitle" />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                          <div>
+                            <label className={styles.formLabel}>Type</label>
+                            <select className={styles.formInput} value={sectionForm.type} onChange={e => setSectionForm({...sectionForm, type: e.target.value})}>
+                              <option value="manual">Manual Selection</option>
+                              <option value="automated">System Automated</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className={styles.formLabel}>Layout</label>
+                            <select className={styles.formInput} value={sectionForm.layout_type} onChange={e => setSectionForm({...sectionForm, layout_type: e.target.value})}>
+                              <option value="horizontal_scroll">Horizontal Scroll</option>
+                              <option value="grid">Grid (Recommended for large lists)</option>
+                              <option value="banner">Promotional Banner</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {sectionForm.type === 'automated' && (
+                          <div style={{ background: 'var(--bg-200)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
+                            <h4 style={{ marginBottom: '1rem', fontSize: '0.9rem' }}>Automation Rules</h4>
+                            <div className="form-group mb-3">
+                              <label className={styles.subText}>Criteria</label>
+                              <select className={styles.formInput} value={sectionForm.auto_rule?.criteria} onChange={e => setSectionForm({...sectionForm, auto_rule: {...sectionForm.auto_rule, criteria: e.target.value}})}>
+                                <option value="limited_stock">Limited Stock (Selling fast)</option>
+                                <option value="trending">Trending (High Views)</option>
+                                <option value="top_sellers">Top Sellers (High Sales)</option>
+                                <option value="hot_deals">Hot Deals (Best Discounts)</option>
+                              </select>
+                            </div>
+                            <div className="form-group">
+                              <label className={styles.subText}>Display Limit</label>
+                              <input type="number" className={styles.formInput} value={sectionForm.auto_rule?.limit} onChange={e => setSectionForm({...sectionForm, auto_rule: {...sectionForm.auto_rule, limit: Number(e.target.value)}})} />
+                            </div>
+                          </div>
+                        )}
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                          <div>
+                            <label className={styles.formLabel}>Priority Order</label>
+                            <input type="number" className={styles.formInput} value={sectionForm.priority} onChange={e => setSectionForm({...sectionForm, priority: Number(e.target.value)})} />
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                          <input type="checkbox" checked={sectionForm.is_active} onChange={e => setSectionForm({...sectionForm, is_active: e.target.checked})} id="sec-active-uni" />
+                          <label htmlFor="sec-active-uni" style={{ cursor: 'pointer', fontSize: '0.85rem' }}>Visible on Student Homepage</label>
+                        </div>
+
+                        <button className={styles.btnPrimary} style={{ width: '100%' }} onClick={() => {
+                          if (editingSection) action('update_homepage_section', { id: editingSection.id, updates: sectionForm });
+                          else action('create_homepage_section', sectionForm);
+                          (document.getElementById('section-modal') as any)?.close();
+                        }}>
+                          {editingSection ? 'Save Changes' : 'Create Section'}
+                        </button>
+                      </div>
+                    </div>
+                  </dialog>
+
+                  {/* Product Picker Modal */}
+                  <dialog id="product-picker-modal" className={styles.modalDialog} style={{ padding: 0 }}>
+                     <div className={styles.modalContent} style={{ maxWidth: '800px', height: '80vh', background: 'var(--bg-100)', color: '#fff', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                        <div className={styles.modalHeader} style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <h3 style={{ margin: 0 }}>Manage Products: {editingSection?.title}</h3>
+                          <button className={styles.btnIcon} onClick={() => (document.getElementById('product-picker-modal') as any)?.close()}><XCircle size={20} /></button>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', height: 'calc(100% - 70px)', padding: '1.5rem' }}>
+                           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflow: 'hidden' }}>
+                              <h4>University Catalog</h4>
+                              <div className={styles.searchBar} style={{ width: '100%', background: 'var(--bg-200)' }}>
+                                <Search size={14} />
+                                <input placeholder="Filter products..." value={search} onChange={e => setSearch(e.target.value)} style={{ background: 'none', border: 'none', color: '#fff' }} />
+                              </div>
+                              <div style={{ overflowY: 'auto', flex: 1 }}>
+                                 {filter(products, ['title']).slice(0, 50).map(p => (
+                                   <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', padding: '0.75rem', background: 'var(--bg-200)', borderRadius: '8px' }}>
+                                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                         <img src={p.image_url || p.media_urls?.[0]} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                                         <div>
+                                            <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{p.title}</div>
+                                            <div className={styles.subText} style={{ fontSize: '0.7rem' }}>{p.brands?.name}</div>
+                                         </div>
+                                      </div>
+                                      <button className={styles.btnSm} onClick={() => action('assign_product_to_section', { sectionId: editingSection.id, productId: p.id, position: 0 })}>Add</button>
+                                   </div>
+                                 ))}
+                              </div>
+                           </div>
+
+                           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflow: 'hidden' }}>
+                              <h4>Assigned to this Section</h4>
+                              <div style={{ overflowY: 'auto', flex: 1 }}>
+                                 <p className={styles.subText} style={{ fontSize: '0.8rem' }}>Added products will appear here after sync.</p>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </dialog>
+                </div>
+              )}
             </>
           )}
+
         </div>
       </main>
 
