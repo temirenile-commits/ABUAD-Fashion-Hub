@@ -15,6 +15,8 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
     setInitialized, isInitialized
   } = useMarketplaceStore();
 
+  const ABUAD_ID = '00000000-0000-0000-0000-000000000001';
+
   useEffect(() => {
     let active = true;
 
@@ -35,11 +37,11 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
           .order('created_at', { ascending: false });
 
         if (userUniId) {
-          // Scoped view: Global products OR products in my university
+          // Strictly show only my university's products + global ones
           query = query.or(`visibility_type.eq.global,university_id.eq.${userUniId}`);
         } else {
-          // Public/Unauthenticated: Only Global products
-          query = query.eq('visibility_type', 'global');
+          // Public users: Show ABUAD products by default + global
+          query = query.or(`visibility_type.eq.global,university_id.eq.${ABUAD_ID}`);
         }
 
         const { data: prodData, error: prodError } = await query;
@@ -57,17 +59,31 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
         }
 
         // Brands (Vendors)
-        const { data: brandData, error: bErr } = await supabase
-          .from('brands')
-          .select('*');
+        let brandQuery = supabase.from('brands').select('*');
+        if (userUniId) {
+          brandQuery = brandQuery.eq('university_id', userUniId);
+        } else {
+          // Public users: Show ABUAD vendors by default
+          brandQuery = brandQuery.eq('university_id', ABUAD_ID);
+        }
+        const { data: brandData, error: bErr } = await brandQuery;
         if (bErr) throw bErr;
         if (active && brandData) setVendors(brandData as any);
 
         // Brand Reels
-        const { data: reelData, error: rErr } = await supabase
+        let reelQuery = supabase
           .from('brand_reels')
           .select('*, brands(name, logo_url)')
           .order('created_at', { ascending: false });
+
+        if (userUniId) {
+          reelQuery = reelQuery.eq('university_id', userUniId);
+        } else {
+          // Public users: Show ABUAD reels by default
+          reelQuery = reelQuery.eq('university_id', ABUAD_ID);
+        }
+        
+        const { data: reelData, error: rErr } = await reelQuery;
         if (rErr) throw rErr;
         if (active && reelData) setReels(reelData as any);
 
@@ -101,13 +117,19 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
       { event: '*', schema: 'public', table: 'products' },
       async (payload: any) => {
         if (payload.eventType === 'INSERT') {
-          const { vendors } = useMarketplaceStore.getState();
-          const brand = vendors.find((v: any) => v.id === payload.new.brand_id);
-          const enriched = { ...payload.new, brands: brand };
+          // Verify university scope before adding to store
+          const { data: userProfile } = await supabase.from('users').select('university_id').eq('id', (await supabase.auth.getSession()).data.session?.user.id).single();
+          const userUniId = userProfile?.university_id;
+          
+          if (payload.new.visibility_type === 'global' || payload.new.university_id === userUniId) {
+            const { vendors } = useMarketplaceStore.getState();
+            const brand = vendors.find((v: any) => v.id === payload.new.brand_id);
+            const enriched = { ...payload.new, brands: brand };
 
-          addProduct(enriched as any);
-          if (!payload.new.is_draft) {
-            toast.success(`New Product: ${payload.new.title}!`);
+            addProduct(enriched as any);
+            if (!payload.new.is_draft) {
+              toast.success(`New Product: ${payload.new.title}!`);
+            }
           }
         }
         if (payload.eventType === 'UPDATE') {
@@ -161,13 +183,18 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
       { event: '*', schema: 'public', table: 'brand_reels' },
       async (payload: any) => {
         if (payload.eventType === 'INSERT') {
-          const { vendors } = useMarketplaceStore.getState();
-          const brand = vendors.find((v: any) => v.id === payload.new.brand_id);
-          const enriched = { 
-            ...payload.new, 
-            brands: brand ? { name: brand.name, logo_url: brand.logo_url } : undefined 
-          };
-          addReel(enriched as any);
+          const { data: userProfile } = await supabase.from('users').select('university_id').eq('id', (await supabase.auth.getSession()).data.session?.user.id).single();
+          const userUniId = userProfile?.university_id;
+
+          if (payload.new.university_id === userUniId) {
+            const { vendors } = useMarketplaceStore.getState();
+            const brand = vendors.find((v: any) => v.id === payload.new.brand_id);
+            const enriched = { 
+              ...payload.new, 
+              brands: brand ? { name: brand.name, logo_url: brand.logo_url } : undefined 
+            };
+            addReel(enriched as any);
+          }
         }
         if (payload.eventType === 'DELETE') {
           removeReel(payload.old.id);
