@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { ShoppingBag, Trash2, Plus, Minus, CreditCard } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/utils';
@@ -20,7 +21,7 @@ export default function CartPage() {
         <div style={{ textAlign: 'center', padding: '4rem 1rem', background: 'var(--bg-200)', borderRadius: '16px' }}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🛍️</div>
           <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Your bag is empty</h3>
-          <p style={{ color: 'var(--text-300)', marginBottom: '2rem' }}>Looks like you haven't added anything yet.</p>
+          <p style={{ color: 'var(--text-300)', marginBottom: '2rem' }}>Looks like you haven&apos;t added anything yet.</p>
           <button onClick={() => router.back()} className="btn btn-primary btn-lg">
             Start Shopping
           </button>
@@ -31,7 +32,7 @@ export default function CartPage() {
             {cart.map((item) => (
               <div key={item.id} style={{ display: 'flex', gap: '1rem', background: 'var(--bg-200)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
                 <div style={{ width: '80px', height: '100px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, background: 'var(--bg-300)' }}>
-                  <img src={item.media_urls?.[0]} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <Image src={item.media_urls?.[0] || ''} alt={item.title} width={80} height={100} style={{ objectFit: 'cover' }} />
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

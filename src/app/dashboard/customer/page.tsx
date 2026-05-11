@@ -2,17 +2,48 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingBag, Truck, CheckCircle, Clock, Package, Loader2, ArrowRight, MessageCircle, Bell, User, Camera } from 'lucide-react';
+import Image from 'next/image';
+import { ShoppingBag, Truck, CheckCircle, Clock, Loader2, ArrowRight, MessageCircle, Bell, User, Camera } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
 import styles from './customer.module.css';
 
+interface AppOrder {
+  id: string;
+  created_at: string;
+  status: string;
+  total_amount: string | number;
+  delivery_method?: string;
+  delivery_code?: string;
+  products?: { title: string; media_urls?: string[] };
+  brands?: { name: string };
+  deliveries?: { 
+    id: string;
+    status: string;
+    agent_id?: string;
+    delivery_code?: string; 
+    users?: { name?: string; phone?: string } 
+  }[];
+}
+
+interface AppEnquiry {
+  id: string;
+  content: string;
+  receiver?: { name: string };
+}
+
+interface AppUser {
+  id: string;
+  email?: string;
+  avatar_url?: string;
+}
+
 export default function CustomerDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [enquiries, setEnquiries] = useState<any[]>([]);
-  const [user, setUser] = useState<any>(null);
+  const [orders, setOrders] = useState<AppOrder[]>([]);
+  const [enquiries, setEnquiries] = useState<AppEnquiry[]>([]);
+  const [user, setUser] = useState<AppUser | null>(null);
 
   useEffect(() => {
     async function fetchOrders() {
@@ -41,7 +72,7 @@ export default function CustomerDashboard() {
         .order('created_at', { ascending: false });
 
       if (error) console.error(error);
-      setOrders(data || []);
+      setOrders((data as unknown as AppOrder[]) || []);
 
       // Fetch Enquiries
       const { data: enqData } = await supabase
@@ -50,7 +81,7 @@ export default function CustomerDashboard() {
         .eq('sender_id', session.user.id)
         .order('created_at', { ascending: false });
       
-      setEnquiries(enqData || []);
+      setEnquiries((enqData as unknown as AppEnquiry[]) || []);
       setLoading(false);
     }
     fetchOrders();
@@ -64,7 +95,7 @@ export default function CustomerDashboard() {
       const res = await fetch('/api/orders/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, userId: user.id })
+        body: JSON.stringify({ orderId, userId: user?.id })
       });
       const data = await res.json();
       
@@ -73,9 +104,9 @@ export default function CustomerDashboard() {
         const { data: updatedOrders } = await supabase
           .from('orders')
           .select('*, products(title, media_urls), brands(name)')
-          .eq('customer_id', user.id)
+          .eq('customer_id', user?.id)
           .order('created_at', { ascending: false });
-        setOrders(updatedOrders || []);
+        setOrders((updatedOrders as unknown as AppOrder[]) || []);
         alert('Payment released! Thank you for shopping with Master Cart.');
       } else {
         alert(data.error || 'Failed to confirm delivery.');
@@ -140,7 +171,7 @@ export default function CustomerDashboard() {
 
                   <div className={styles.orderBody}>
                     <div className={styles.itemImg}>
-                      <img src={order.products?.media_urls?.[0]} alt={order.products?.title} />
+                      <Image src={order.products?.media_urls?.[0] || '/placeholder.png'} alt={order.products?.title || 'Product'} width={100} height={100} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                     <div className={styles.itemInfo}>
                       <h3>{order.products?.title}</h3>
@@ -151,42 +182,82 @@ export default function CustomerDashboard() {
                       <Link href={`/track/${order.id}`} className="btn btn-ghost btn-sm">
                         Track Delivery
                       </Link>
-                      {order.status === 'delivered' && (
+                      {/* Manual confirmation is ONLY for non-platform deliveries (legacy/vendor handle) */}
+                      {order.status === 'in_transit' && order.delivery_method !== 'platform' && (
                         <button 
                           className="btn btn-secondary btn-sm"
                           onClick={() => handleConfirmDelivery(order.id)}
                         >
-                          Confirm Delivery
+                          Confirm Receipt
                         </button>
                       )}
                     </div>
                   </div>
 
-                  {(order.status === 'ready' || order.status === 'picked_up' || order.status === 'in_transit') && order.deliveries?.[0] && (
-                    <div className={styles.deliveryStatusCard} style={{ marginTop: '1rem', background: 'var(--bg-200)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                  {/* Live Status Timeline */}
+                  <div className={styles.timelineContainer} style={{ padding: '0 1.5rem 1rem' }}>
+                    <div className={styles.timeline}>
+                      {['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered'].map((step, idx) => {
+                        const statuses = ['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered'];
+                        const currentIdx = statuses.indexOf(order.status);
+                        const isCompleted = idx <= currentIdx;
+                        const isActive = idx === currentIdx;
+                        
+                        return (
+                          <div key={step} className={`${styles.timelineStep} ${isCompleted ? styles.completed : ''} ${isActive ? styles.active : ''}`}>
+                            <div className={styles.stepCircle}>
+                              {isCompleted ? <CheckCircle size={10} /> : <div className={styles.dot} />}
+                            </div>
+                            <span className={styles.stepLabel}>{step.replace('_', ' ')}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {order.delivery_code && order.status !== 'delivered' && (
+                    <div className={styles.deliveryCodeCard} style={{ margin: '0 1.5rem 1rem', background: 'var(--bg-200)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--primary-20)', position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ position: 'absolute', top: 0, right: 0, padding: '4px 12px', background: 'var(--primary)', color: '#fff', fontSize: '10px', fontWeight: 800, borderRadius: '0 0 0 8px' }}>SECRET CODE</div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                          <p style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '0.85rem' }}>🚚 Dispatch Details</p>
-                          <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>{order.deliveries[0].users?.name || 'Assigning Agent...'}</p>
-                          <p style={{ fontSize: '0.8rem', color: 'var(--text-400)' }}>{order.deliveries[0].users?.phone}</p>
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-400)' }}>Verification Code</p>
+                          <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 900, color: 'var(--primary)', letterSpacing: '4px' }}>{order.delivery_code}</h2>
                         </div>
-                        {order.deliveries[0].delivery_code && (
-                          <div style={{ textAlign: 'right' }}>
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-400)' }}>Delivery Code</p>
-                            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '2px' }}>{order.deliveries[0].delivery_code}</span>
-                          </div>
-                        )}
+                        <button 
+                          className="btn btn-ghost btn-sm" 
+                          onClick={() => {
+                            navigator.clipboard.writeText(order.delivery_code!);
+                            alert('Code copied to clipboard!');
+                          }}
+                        >
+                          Copy
+                        </button>
                       </div>
-                      <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--text-400)', background: 'var(--bg-300)', padding: '0.5rem', borderRadius: '4px' }}>
-                        💡 Give this code to the agent <strong>only</strong> when you receive your item.
+                      <p style={{ marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--text-400)', fontStyle: 'italic' }}>
+                        Give this code to the delivery agent only after inspecting your items.
                       </p>
                     </div>
                   )}
 
+                  {order.deliveries?.[0] && order.deliveries[0].agent_id && (
+                    <div className={styles.agentInfo} style={{ margin: '0 1.5rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', background: 'var(--bg-300)', borderRadius: '12px' }}>
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--primary-10)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                        <Truck size={20} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-400)', textTransform: 'uppercase', fontWeight: 700 }}>Assigned Agent</p>
+                        <p style={{ margin: 0, fontWeight: 700 }}>{order.deliveries[0].users?.name || 'Logistic Partner'}</p>
+                      </div>
+                      <a href={`tel:${order.deliveries[0].users?.phone}`} className="btn btn-primary btn-sm" style={{ padding: '8px' }}>
+                        <MessageCircle size={16} />
+                      </a>
+                    </div>
+                  )}
+
                   {order.status === 'paid' && !order.deliveries?.[0] && (
-                    <div className={styles.escrowBanner}>
+                    <div className={styles.escrowBanner} style={{ margin: '0 1.5rem 1.5rem' }}>
                       <Clock size={14} />
-                      <span>Funds held in Escrow. Vendor is processing your order.</span>
+                      <span>Secured in Escrow. Waiting for vendor to prepare.</span>
                     </div>
                   )}
                 </div>
@@ -201,7 +272,7 @@ export default function CustomerDashboard() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                <div style={{ position: 'relative' }}>
                  {user?.avatar_url ? (
-                   <img src={user.avatar_url} alt="" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
+                   <Image src={user.avatar_url} alt="" width={64} height={64} style={{ borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
                  ) : (
                    <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--bg-300)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                      <User size={32} color="var(--text-400)" />
@@ -217,10 +288,10 @@ export default function CustomerDashboard() {
                        const file = e.target.files[0];
                        const { uploadFile } = await import('@/lib/storage');
                        setLoading(true);
-                       const { url, error } = await uploadFile(file, 'brand-assets', `avatar-${user.id}`);
+                       const { url, error } = await uploadFile(file, 'brand-assets', `avatar-${user?.id}`);
                        if (url) {
-                         await supabase.from('users').update({ avatar_url: url }).eq('id', user.id);
-                         setUser((prev: any) => ({ ...prev, avatar_url: url }));
+                         await supabase.from('users').update({ avatar_url: url }).eq('id', user?.id);
+                         setUser((prev: AppUser | null) => prev ? { ...prev, avatar_url: url } : null);
                          alert('Profile photo updated!');
                        } else {
                          alert(error || 'Upload failed');

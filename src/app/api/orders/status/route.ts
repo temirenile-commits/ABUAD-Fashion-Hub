@@ -13,10 +13,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // 1. Verify the vendor owns this order
+    // 1. Verify the vendor or assigned delivery agent owns/is assigned to this order
     const { data: order, error: fetchError } = await supabaseAdmin
       .from('orders')
-      .select('*, brands(owner_id)')
+      .select('*, brands(owner_id), deliveries(agent_id)')
       .eq('id', orderId)
       .single();
 
@@ -24,7 +24,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    if (order.brands.owner_id !== vendorId) {
+    const isVendor = order.brands.owner_id === vendorId;
+    const isAgent = order.deliveries && order.deliveries[0]?.agent_id === vendorId; // vendorId acts as the current user's ID here
+
+    if (!isVendor && !isAgent) {
       return NextResponse.json({ error: 'Unauthorized to manage this order' }, { status: 403 });
     }
 
@@ -33,6 +36,12 @@ export async function POST(req: Request) {
     
     if (trackingNumber) updateData.tracking_number = trackingNumber;
     if (rejectionReason) updateData.rejection_reason = rejectionReason;
+
+    if (status === 'in_transit') {
+      const now = new Date().toISOString();
+      updateData.picked_up_at = now;
+      updateData.in_transit_at = now;
+    }
 
     if (status === 'delivered') {
       const deliveredAt = new Date().toISOString();
@@ -51,12 +60,11 @@ export async function POST(req: Request) {
 
     if (updateError) throw updateError;
 
-    // 3. (Optional) Create delivery record if status is marked as 'ready' for platform
+    // 3. Sync Delivery Visibility
     if (status === 'ready' && order.delivery_method === 'platform') {
-      await supabaseAdmin.from('deliveries').upsert({
-        order_id: orderId,
-        tracking_updates: JSON.stringify([{ status: 'ready', time: new Date() }])
-      });
+      await supabaseAdmin.from('deliveries')
+        .update({ status: 'pending' })
+        .eq('order_id', orderId);
     }
 
     return NextResponse.json({ success: true, message: `Status updated to ${status}` });

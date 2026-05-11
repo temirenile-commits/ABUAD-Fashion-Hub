@@ -39,10 +39,28 @@ export async function GET(req: NextRequest) {
     wishlist?.forEach((w: any) => w.products?.category && categories.add(w.products.category));
     orders?.forEach((o: any) => o.products?.category && categories.add(o.products.category));
 
+    // 0. Get user's university scope
+    const { data: profile } = await supabaseAdmin
+      .from('users')
+      .select('university_id')
+      .eq('id', userId)
+      .single();
+    
+    const userUniId = profile?.university_id;
+
     let query = supabaseAdmin
       .from('products')
       .select('*, brands(name, logo_url)')
       .eq('locked', false);
+
+    // Apply university filter
+    if (userUniId) {
+      // University users see their campus products + global ones
+      query = query.or(`visibility_type.eq.global,university_id.eq.${userUniId}`);
+    } else {
+      // General users see ONLY global products
+      query = query.eq('visibility_type', 'global');
+    }
 
     if (categories.size > 0) {
       // Prioritize these categories
@@ -54,12 +72,20 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(30);
 
-    // If targeted results are few, fill with other trending products
+    // If targeted results are few, fill with other relevant products
     if (!targeted || targeted.length < 10) {
-      const { data: trending } = await supabaseAdmin
+      let trendQuery = supabaseAdmin
         .from('products')
         .select('*, brands(name, logo_url)')
-        .eq('locked', false)
+        .eq('locked', false);
+      
+      if (userUniId) {
+        trendQuery = trendQuery.or(`visibility_type.eq.global,university_id.eq.${userUniId}`);
+      } else {
+        trendQuery = trendQuery.eq('visibility_type', 'global');
+      }
+
+      const { data: trending } = await trendQuery
         .order('views_count', { ascending: false })
         .limit(20);
       

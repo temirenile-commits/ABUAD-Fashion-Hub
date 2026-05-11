@@ -33,14 +33,17 @@ export default function Navbar() {
         // Fetch role and avatar
         const { data: userData } = await supabase
           .from('users')
-          .select('role, avatar_url')
+          .select('role, avatar_url, university_id, universities(abbreviation)')
           .eq('id', session.user.id)
           .single();
         if (userData) {
           setRole(userData.role);
-          if (userData.avatar_url) {
-            setUser((prev: any) => ({ ...prev, avatar_url: userData.avatar_url }));
-          }
+          setUser((prev: any) => ({ 
+            ...prev, 
+            avatar_url: userData.avatar_url,
+            university_id: userData.university_id,
+            university: userData.universities
+          }));
         }
         // Fallback: Check if they own a brand even if role isn't 'vendor'
         const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', session.user.id).single();
@@ -55,14 +58,17 @@ export default function Navbar() {
         setUser(session.user);
         const { data: userData } = await supabase
           .from('users')
-          .select('role, avatar_url')
+          .select('role, avatar_url, university_id, universities(abbreviation)')
           .eq('id', session.user.id)
           .single();
         if (userData) {
           setRole(userData.role);
-          if (userData.avatar_url) {
-             setUser((prev: any) => ({ ...prev, avatar_url: userData.avatar_url }));
-          }
+          setUser((prev: any) => ({ 
+            ...prev, 
+            avatar_url: userData.avatar_url,
+            university_id: userData.university_id,
+            university: userData.universities
+          }));
         }
         const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', session.user.id).single();
         setIsVendorOwner(!!brand);
@@ -138,7 +144,12 @@ export default function Navbar() {
 
               {/* Account Profile Pic (Always Visible) */}
               <div className={styles.actionItem}>
-                <Link href={dashboardLink} className={styles.actionLink} title="Account">
+                <Link href={dashboardLink} className={styles.actionLink} title="Account" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div className={styles.universityLabel}>
+                    <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', textAlign: 'right' }}>
+                      {user.university?.abbreviation || (user.university_id === '00000000-0000-0000-0000-000000000001' ? 'ABUAD' : 'Global')}
+                    </div>
+                  </div>
                   {user.avatar_url ? (
                     <img src={user.avatar_url} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
                   ) : (

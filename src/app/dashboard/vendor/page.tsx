@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera, MapPin, Navigation, Eye, ShoppingBag , Globe } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera, MapPin, Navigation, Eye, ShoppingBag , Globe, Phone } from 'lucide-react';
 import Papa from 'papaparse';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
@@ -1743,11 +1743,18 @@ export default function VendorDashboard() {
                             </div>
                           </div>
                         )}
-                        {order.status === 'in_transit' && (
+                        {order.status === 'in_transit' && order.delivery_method !== 'platform' && (
                           <div className={styles.statusBox}>
                             <button className="btn btn-secondary btn-sm" onClick={() => updateOrderStatus(order.id, 'delivered')}>Mark as Delivered</button>
                           </div>
                         )}
+                        {order.delivery_code && (
+                          <div className={styles.codeBox} style={{ marginBottom: '0.75rem', background: 'var(--bg-300)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px dashed var(--primary)' }}>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-400)', textTransform: 'uppercase' }}>Verification Code</p>
+                            <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '2px' }}>{order.delivery_code}</span>
+                          </div>
+                        )}
+
                         {order.status === 'ready' && (
                           <div className={styles.statusBox}>
                             <span className={`${styles.statusBadge} ${styles.statusWarning}`}>
@@ -1756,12 +1763,25 @@ export default function VendorDashboard() {
                           </div>
                         )}
                         {(order.status === 'ready' || order.status === 'picked_up' || order.status === 'in_transit') && order.deliveries?.[0] && (
-                          <div className={styles.agentInfo} style={{ marginTop: '0.5rem', background: 'var(--bg-300)', padding: '0.75rem', borderRadius: '8px', fontSize: '0.8rem' }}>
-                            <p style={{ color: 'var(--primary)', fontWeight: 700, marginBottom: '0.25rem' }}>?? Assigned Agent:</p>
-                            <p><strong>{order.deliveries[0].users?.name || 'Assigned'}</strong></p>
-                            <p>{order.deliveries[0].users?.phone}</p>
+                          <div className={styles.agentInfo} style={{ marginTop: '0.5rem', background: 'var(--bg-200)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                                <Truck size={16} />
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-400)', fontWeight: 700 }}>LOGISTIC AGENT</p>
+                                <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem' }}>{order.deliveries[0].users?.name || 'Assigning...'}</p>
+                              </div>
+                              {order.deliveries[0].users?.phone && (
+                                <a href={`tel:${order.deliveries[0].users.phone}`} className="btn btn-ghost btn-sm" style={{ padding: '6px' }}>
+                                  <Phone size={14} />
+                                </a>
+                              )}
+                            </div>
                             {order.deliveries[0].status === 'picked_up' && (
-                              <p style={{ marginTop: '0.5rem', color: 'var(--success)' }}>Status: In Transit to Customer</p>
+                              <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <CheckCircle size={12} /> Successfully Picked Up
+                              </p>
                             )}
                           </div>
                         )}

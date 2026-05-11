@@ -1,25 +1,206 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
-  Users, Store, ShoppingBag, TrendingUp, CheckCircle, XCircle,
-  Search, RefreshCw, Trash2, Star, Eye, ShieldCheck, ShoppingCart, Loader2, CreditCard, AlertTriangle, Settings, Bell,
-  BarChart3, PieChart, Activity, ExternalLink, MapPin, Tag, ArrowLeft
+  Users, Store, ShoppingBag, TrendingUp, XCircle,
+  Search, RefreshCw, Trash2, Star, Eye, ShoppingCart, Loader2, CreditCard, AlertTriangle, Settings, Bell,
+  BarChart3, Activity, ExternalLink, MapPin, Tag, ArrowLeft, ShieldAlert, ShieldCheck
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
 import TradingChart from '@/components/TradingChart';
 import { useToast } from '@/context/ToastContext';
 
-type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising';
+type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds';
+
+interface University {
+  id: string;
+  name: string;
+  abbreviation: string;
+  location?: string;
+  adminCount?: number;
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status?: string;
+  created_at: string;
+  university_id?: string;
+  universities?: University;
+}
+
+interface Brand {
+  id: string;
+  name: string;
+  logo_url?: string;
+  verification_status: string;
+  subscription_tier?: string;
+  billboard_boost_expires_at?: string;
+  users?: { name: string; email: string };
+  universities?: University;
+  avg_price?: number;
+  total_sales?: number;
+  verification_type?: string;
+  business_name?: string;
+  business_registration_number?: string;
+  business_address?: string;
+  matric_number?: string;
+  room_number?: string;
+  college?: string;
+  department?: string;
+  bank_name?: string;
+  bank_account_name?: string;
+  bank_account_number?: string;
+  whatsapp_number?: string;
+  free_listings_count?: number;
+  delivery_scope?: string;
+  assigned_delivery_system?: string;
+}
+
+interface Product {
+  id: string;
+  title: string;
+  price: number;
+  image_url?: string;
+  media_urls?: string[];
+  is_visible: boolean;
+  is_featured: boolean;
+  is_flash_sale?: boolean;
+  flash_sale_price?: number;
+  sales_count: number;
+  views_count: number;
+  category?: string;
+  brands?: { name: string };
+  universities?: University;
+}
+
+interface PayoutRequest {
+  id: string;
+  amount: number;
+  status: string;
+  created_at: string;
+  users?: User;
+  amount_requested?: number;
+  bank_details?: {
+    accountName: string;
+    bankName: string;
+    accountNumber: string;
+  };
+}
+
+interface ManualBillboard {
+  id: string;
+  title: string;
+  description?: string;
+  link?: string;
+  cover_url: string;
+  university_id?: string;
+}
+
+interface Order {
+  id: string;
+  created_at: string;
+  total_amount: number;
+  status: string;
+  customer_id: string;
+  paystack_reference?: string;
+  delivery_fee_charged?: number;
+  users?: { name: string; email: string };
+  products?: { title: string };
+  brand_id?: string;
+  university_id?: string;
+}
+
+interface Review {
+  id: string;
+  created_at: string;
+  rating: number;
+  comment?: string;
+}
+
+interface MarketData {
+  time: string;
+  value: number;
+}
+
+interface AutoRule {
+  criteria?: string;
+  threshold?: number;
+  limit?: number;
+}
+
+interface Section {
+  id: string;
+  title: string;
+  description?: string;
+  type: string;
+  layout_type: string;
+  is_active: boolean;
+  priority: number;
+  university_id?: string | null;
+  universities?: University;
+  auto_rule?: AutoRule;
+}
+
+interface DeliveryAgent {
+  id: string;
+  name: string;
+  status: string;
+  university_id?: string;
+}
+
+interface PromoCode {
+  id: string;
+  code: string;
+  type: string;
+  value: number;
+  max_uses: number;
+  current_uses?: number;
+  products?: { title: string };
+}
+
+interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  university_id?: string;
+  admin_id?: string;
+  member?: User;
+  permissions?: string[];
+}
+
+interface PlanConfig {
+  price?: number;
+  features?: string[];
+  upload_credits?: number;
+  [key: string]: unknown;
+}
+
+interface BoosterConfig {
+  price: number;
+  visibility?: number;
+}
+
+interface UniConfig {
+  credit_price?: number;
+  billboard_price?: number;
+  plans?: Record<string, PlanConfig>;
+  boosters?: Record<string, BoosterConfig>;
+  [key: string]: unknown;
+}
 
 async function adminFetch(path: string, options: RequestInit = {}) {
+  const { data: { session } } = await supabase.auth.getSession();
   return fetch(path, {
     ...options,
     cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
-      'x-admin-secret': 'abuad-admin-super-secret-2024',
+      'Authorization': session ? `Bearer ${session.access_token}` : '',
       ...(options.headers || {}),
     }
   });
@@ -27,59 +208,59 @@ async function adminFetch(path: string, options: RequestInit = {}) {
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [refundOrders, setRefundOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState('');
   const [search, setSearch] = useState('');
-  const [selectedVendor, setSelectedVendor] = useState<any>(null);
+  const [selectedVendor, setSelectedVendor] = useState<Brand | null>(null);
   const [enlargedImg, setEnlargedImg] = useState<string | null>(null);
   const [notifForm, setNotifForm] = useState({ title: '', content: '', target: 'all', userId: '', universityId: '' });
   const [notifSending, setNotifSending] = useState(false);
   
-  const [confirmPayoutModal, setConfirmPayoutModal] = useState<any>(null);
+  const [confirmPayoutModal, setConfirmPayoutModal] = useState<PayoutRequest | null>(null);
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [transferRef, setTransferRef] = useState('');
   const [uploadingProof, setUploadingProof] = useState(false);
 
   const [stats, setStats] = useState({ userCount: 0, brandCount: 0, productCount: 0, totalRevenue: 0, totalSubsidies: 0, totalProductViews: 0, totalProfileViews: 0 });
   const [error, setError] = useState<string | null>(null);
-  const [vendors, setVendors] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<Brand[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'paid' | 'pending' | 'cancelled'>('all');
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [payouts, setPayouts] = useState<any[]>([]);
-  const [platformSettings, setPlatformSettings] = useState<any>(null);
-  const [marketData, setMarketData] = useState<any[]>([]);
-  const [deliveryAgents, setDeliveryAgents] = useState<any[]>([]);
-  const [promoCodes, setPromoCodes] = useState<any[]>([]);
-  const [universities, setUniversities] = useState<any[]>([]);
-  const [homepageSections, setHomepageSections] = useState<any[]>([]);
-  const [sectionForm, setSectionForm] = useState<any>({ title: '', type: 'manual', layout_type: 'horizontal_scroll', is_active: true, priority: 0, auto_rule: { criteria: 'limited_stock', threshold: 5, limit: 12 } });
-  const [editingSection, setEditingSection] = useState<any>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [payouts, setPayouts] = useState<PayoutRequest[]>([]);
+  const [marketData, setMarketData] = useState<MarketData[]>([]);
+  const [deliveryAgents, setDeliveryAgents] = useState<DeliveryAgent[]>([]);
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
+  const [universities, setUniversities] = useState<University[]>([]);
+  const [homepageSections, setHomepageSections] = useState<Section[]>([]);
+  const [sectionForm, setSectionForm] = useState<Partial<Section>>({ title: '', type: 'manual', layout_type: 'horizontal_scroll', is_active: true, priority: 0, auto_rule: { criteria: 'limited_stock', threshold: 5, limit: 12 } });
+  const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [uniForm, setUniForm] = useState({ name: '', location: '', abbreviation: '' });
   const [uniCreating, setUniCreating] = useState(false);
   const [promoForm, setPromoForm] = useState({ code: '', type: 'percentage', value: 10, max_uses: 100, product_id: '' });
   
   const [adminSearch, setAdminSearch] = useState('');
-  const [universityAdmins, setUniversityAdmins] = useState<any[]>([]);
-  const [teams, setTeams] = useState<any[]>([]);
+  const [universityAdmins, setUniversityAdmins] = useState<User[]>([]);
+  const [teams, setTeams] = useState<TeamMember[]>([]);
   const [selectedAdminId, setSelectedAdminId] = useState('');
   
   const [selectedUniId, setSelectedUniId] = useState<string | null>(null);
-  const [uniUsers, setUniUsers] = useState<any[]>([]);
-  const [uniTeams, setUniTeams] = useState<any[]>([]);
-  const [uniStats, setUniStats] = useState<any>(null);
-  const [uniConfig, setUniConfig] = useState<any>({});
+  const [uniUsers, setUniUsers] = useState<User[]>([]);
+  const [uniTeams, setUniTeams] = useState<TeamMember[]>([]);
+  const [uniStats, setUniStats] = useState<Record<string, number> | null>(null);
+  const [uniConfig, setUniConfig] = useState<UniConfig>({});
   const [uniLoading, setUniLoading] = useState(false);
+
+  const [manualBillboards, setManualBillboards] = useState<ManualBillboard[]>([]);
+  const [billboardUpload, setBillboardUpload] = useState({ title: '', sub: '', link: '', file: null as File | null });
+  const [uploadingBillboard, setUploadingBillboard] = useState(false);
   
+  const [platformSettings, setPlatformSettings] = useState<Record<string, any>>({});
   const { addToast } = useToast();
   const fetchedRef = useRef(false);
-
-  const safeJson = async (res: Response) => {
-    try { return await res.json(); } catch { return {}; }
-  };
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -107,10 +288,14 @@ export default function AdminDashboard() {
       ]);
       const uniJson = await Promise.all(uniExtras.map(r => r.json()));
 
-      const getData = (i: number) => jsonResults[i].status === 'fulfilled' ? (jsonResults[i] as any).value : {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const getData = (i: number): any => {
+        const res = jsonResults[i];
+        return res.status === 'fulfilled' ? (res as PromiseFulfilledResult<any>).value : {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+      };
 
       // Check auth failure
-      if (jsonResults.some(r => r.status === 'fulfilled' && (r as any).value?.__401)) {
+      if (jsonResults.some(r => r.status === 'fulfilled' && (r as PromiseFulfilledResult<Record<string, unknown>>).value?.__401)) {
         setError('Unauthorized: You do not have admin permissions or your session has expired.');
         setLoading(false);
         return;
@@ -120,7 +305,6 @@ export default function AdminDashboard() {
       const vendorsD = getData(1);
       const productsD = getData(2);
       const usersD = getData(3);
-      const txD = getData(4);
       const ordersD = getData(5);
       const reviewsD = getData(6);
       const payoutsD = getData(7);
@@ -134,25 +318,35 @@ export default function AdminDashboard() {
       setVendors(vendorsD.vendors || []);
       setProducts(productsD.products || []);
       setUsers(usersD.users || []);
-      setTransactions(txD.transactions || []);
       setOrders(ordersD.orders || []);
       setReviews(reviewsD.reviews || []);
       setPayouts(payoutsD.payouts || []);
-      setPlatformSettings(settingsD.settings || null);
       setMarketData(marketD.chartData || []);
       setDeliveryAgents(agentsD.agents || []);
       setPromoCodes(promosD.promoCodes || []);
       setUniversities(unisD.universities || []);
       setHomepageSections(statsD.sections || []);
+      setPlatformSettings(settingsD.settings || {});
+      
+      // Filter orders that are stuck (Paid but not delivered for > 24h)
+      const now = new Date();
+      const staleOrders = (ordersD.orders || []).filter((o: Order) => {
+        const isStuck = ['paid', 'preparing', 'ready', 'picked_up', 'in_transit'].includes(o.status);
+        if (!isStuck) return false;
+        const createdAt = new Date(o.created_at);
+        const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+        return hoursDiff > 24;
+      });
+      setRefundOrders(staleOrders);
       
       setUniversityAdmins(uniJson[0].admins || []);
       setTeams(uniJson[1].teams || []);
 
-      const manualB = (settingsD.settings?.manual_billboards as any[]) || [];
+      const manualB = (settingsD.settings?.manual_billboards as ManualBillboard[]) || [];
       setManualBillboards(manualB);
 
-    } catch (e: any) {
-      console.error('Admin fetch error:', e);
+    } catch (err: unknown) {
+      console.error('Admin fetch error:', err);
       setError('Connection error: Could not reach the administration server.');
     }
     setLoading(false);
@@ -174,7 +368,7 @@ export default function AdminDashboard() {
       ]);
       const [uData, tData, sData, cData] = await Promise.all([uRes.json(), tRes.json(), sRes.json(), cRes.json()]);
       
-      setUniUsers((uData.users || []).filter((u: any) => u.role !== 'admin'));
+      setUniUsers((uData.users || []).filter((u: User) => u.role !== 'admin'));
       setUniTeams(tData.teams || []);
       setUniStats(sData.stats || null);
       
@@ -182,8 +376,8 @@ export default function AdminDashboard() {
         // Map global settings to the uniConfig format so the UI works without changes
         const gConfig = {
           credit_price: cData.settings?.credit_price || 50,
-          billboard_price: cData.settings?.boost_rates?.find((b:any)=>b.id==='billboard_boost')?.price || 500,
-          plans: (cData.settings?.subscription_rates || []).reduce((acc:any, r:any) => {
+          billboard_price: (cData.settings?.boost_rates as Array<{id: string; price: number}>)?.find(b => b.id === 'billboard_boost')?.price || 500,
+          plans: ((cData.settings?.subscription_rates || []) as Array<{id: string; price: number}>).reduce((acc: Record<string, {price: number; features: never[]}>, r) => {
              acc[r.id] = { price: r.price, features: [] }; // global features aren't structured the same but price is what matters
              return acc;
           }, {})
@@ -202,7 +396,7 @@ export default function AdminDashboard() {
     fetchAll(); 
   }, [fetchAll]);
 
-  const adminAction = async (action: string, payload: Record<string, any>) => {
+  const adminAction = async (action: string, payload: Record<string, unknown>) => {
     const key = action + (payload.brandId || payload.productId || payload.userId || '');
     setActionLoading(key);
     try {
@@ -225,6 +419,7 @@ export default function AdminDashboard() {
   };
 
   const handleConfirmPayout = async () => {
+    if (!confirmPayoutModal) return;
     if (!proofFile || !transferRef) return addToast('Please attach proof and enter reference', 'error');
     setUploadingProof(true);
     try {
@@ -239,15 +434,11 @@ export default function AdminDashboard() {
       setProofFile(null);
       setTransferRef('');
       addToast('Payout confirmed successfully!', 'success');
-    } catch (e: any) {
-      addToast(e.message || 'Upload failed', 'error');
+    } catch (err: unknown) {
+      addToast(err instanceof Error ? err.message : 'Upload failed', 'error');
     }
     setUploadingProof(false);
   };
-
-  const [manualBillboards, setManualBillboards] = useState<any[]>([]);
-  const [billboardUpload, setBillboardUpload] = useState({ title: '', sub: '', link: '', file: null as File|null });
-  const [uploadingBillboard, setUploadingBillboard] = useState(false);
 
   const handleBillboardUpload = async () => {
     if (!billboardUpload.file || !billboardUpload.title) return addToast('Image and Title required', 'error');
@@ -255,10 +446,10 @@ export default function AdminDashboard() {
     try {
       const ext = billboardUpload.file.name.split('.').pop();
       const path = `manual_billboards/${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('products').upload(path, billboardUpload.file);
+      const { error: uploadError } = await supabase.storage.from('brand-logos').upload(path, billboardUpload.file);
       if (uploadError) throw uploadError;
       
-      const { data } = supabase.storage.from('products').getPublicUrl(path);
+      const { data } = supabase.storage.from('brand-logos').getPublicUrl(path);
       
       await adminAction('add_manual_billboard', {
          title: billboardUpload.title,
@@ -271,11 +462,14 @@ export default function AdminDashboard() {
       setManualBillboards([...manualBillboards, newB]);
       setBillboardUpload({ title: '', sub: '', link: '', file: null });
       addToast('Billboard added successfully!', 'success');
-    } catch(e:any) { addToast(e.message, 'error'); }
+    } catch (err: unknown) {
+      addToast(err instanceof Error ? err.message : 'Upload failed', 'error');
+    }
     setUploadingBillboard(false);
   };
 
-  const filterBy = (items: any[], fields: string[]) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const filterBy = (items: any[], fields: string[]): any[] => {
     if (!search.trim()) return items;
     return items.filter(item =>
       fields.some(f => String(item[f] || '').toLowerCase().includes(search.toLowerCase()))
@@ -299,6 +493,7 @@ export default function AdminDashboard() {
             ['users', 'Users', Users],
             ['orders', 'Orders', ShoppingCart],
             ['financials', 'Payouts', CreditCard],
+            ['refunds', 'Refund Queue', ShieldAlert],
             ['promotions', 'Promotions ', Star],
             ['merchandising', 'Merchandising', Tag],
             ['settings', 'Settings', Settings],
@@ -307,7 +502,7 @@ export default function AdminDashboard() {
             ['market', 'Market ', BarChart3],
             ['delivery_agents', 'Fleet ', Activity],
             ['universities', 'Universities', MapPin],
-          ] as [Tab, string, any][]).map(([id, label, Icon]) => (
+          ] as [Tab, string, React.ElementType][]).map(([id, label, Icon]) => (
             <button
               key={id}
               className={`${styles.navItem} ${activeTab === id ? styles.navActive : ''}`}
@@ -384,7 +579,9 @@ export default function AdminDashboard() {
                       <tr key={v.id}>
                         <td>
                           <div className={styles.brandCell}>
-                            {v.logo_url ? <img src={v.logo_url} alt="" className={styles.tableLogo} /> : <div className={styles.logoPlaceholder}>{v.name?.substring(0, 2).toUpperCase()}</div>}
+                            {v.logo_url ? (
+                              <Image src={v.logo_url} alt={v.name} width={32} height={32} className={styles.tableLogo} />
+                            ) : <div className={styles.logoPlaceholder}>{v.name?.substring(0, 2).toUpperCase()}</div>}
                             <div><div>{v.name}</div><div className={styles.subText}>{v.users?.email}</div></div>
                           </div>
                         </td>
@@ -425,7 +622,7 @@ export default function AdminDashboard() {
               <div className={styles.sectionCard}>
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                   <thead>
-                    <tr><th>User</th><th>Role & Permissions</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
+                    <tr><th>User</th><th>Campus</th><th>Role & Permissions</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {filterBy(users, ['name', 'email']).map(u => (
@@ -433,6 +630,14 @@ export default function AdminDashboard() {
                         <td>
                           <div style={{ fontWeight: 600 }}>{u.name || '—'}</div>
                           <div className={styles.subText}>{u.email}</div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 600, color: 'var(--primary)' }}>
+                            {u.universities?.abbreviation || (u.university_id === '00000000-0000-0000-0000-000000000001' ? 'ABUAD' : 'General')}
+                          </div>
+                          <div className={styles.subText} style={{ fontSize: '0.7rem' }}>
+                            {u.universities?.name || (u.university_id ? 'Unknown Campus' : 'General Student/User')}
+                          </div>
                         </td>
                         <td>
                           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -480,7 +685,7 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td><span className={`badge badge-${u.status || 'active'}`}>{u.status || 'active'}</span></td>
-                        <td>{new Date(u.created_at).toLocaleDateString()}</td>
+                        <td>{new Date(u.created_at || '').toLocaleDateString()}</td>
                         <td>
                           <div className={styles.actionRow}>
                              {u.role !== 'admin' && (
@@ -514,12 +719,14 @@ export default function AdminDashboard() {
                         <td>
                           <div className={styles.brandCell}>
                             {(p.image_url || p.media_urls?.[0]) ? (
-                              <img
-                                src={p.image_url || p.media_urls[0]}
-                                alt=""
+                              <Image
+                                src={p.image_url || p.media_urls![0]}
+                                alt={p.title}
+                                width={32}
+                                height={32}
                                 className={styles.tableLogo}
                                 style={{ cursor: 'zoom-in' }}
-                                onClick={() => setEnlargedImg(p.image_url || p.media_urls[0])}
+                                onClick={() => setEnlargedImg(p.image_url || p.media_urls![0])}
                               />
                             ) : <div className={styles.logoPlaceholder}><ShoppingBag size={14}/></div>}
                             <div>{p.title}</div>
@@ -604,13 +811,13 @@ export default function AdminDashboard() {
                       <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                          <thead><tr><th>Brand</th><th>Expires</th></tr></thead>
                          <tbody>
-                            {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at) > new Date()).map(v => (
+                            {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at!) > new Date()).map(v => (
                                <tr key={v.id}>
                                   <td>{v.name}</td>
-                                  <td>{new Date(v.billboard_boost_expires_at).toLocaleDateString()}</td>
+                                  <td>{new Date(v.billboard_boost_expires_at!).toLocaleDateString()}</td>
                                </tr>
                             ))}
-                            {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at) > new Date()).length === 0 && (
+                            {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at!) > new Date()).length === 0 && (
                                <tr><td colSpan={2} style={{ textAlign: 'center' }} className={styles.subText}>No active billboards</td></tr>
                             )}
                          </tbody>
@@ -695,7 +902,7 @@ export default function AdminDashboard() {
                       <div className={styles.settingsGrid} style={{ marginTop: '1.5rem' }}>
                          {manualBillboards.map((mb, idx) => (
                            <div key={mb.id || idx} className={styles.settingsBox} style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                              <img src={mb.cover_url} style={{ width: '80px', height: '45px', objectFit: 'cover', borderRadius: '4px' }} />
+                              <Image src={mb.cover_url} alt={mb.title} width={80} height={45} style={{ objectFit: 'cover', borderRadius: '4px' }} />
                               <div style={{ flex: 1 }}>
                                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{mb.title}</div>
                                  <div className={styles.subText} style={{ fontSize: '0.75rem' }}>{mb.university_id ? '🎓 Campus Specific' : '🌍 Global'}</div>
@@ -727,7 +934,7 @@ export default function AdminDashboard() {
                     <h2>Homepage Merchandising</h2>
                     <p className={styles.subText}>Manage dynamic sections, automated rules, and scheduled campaigns.</p>
                   </div>
-                  <button className="btn btn-primary" onClick={() => { setEditingSection(null); setSectionForm({ title: '', type: 'manual', layout_type: 'horizontal_scroll', is_active: true, priority: 0, auto_rule: { criteria: 'limited_stock', threshold: 5, limit: 12 } }); (document.getElementById('section-modal') as any)?.showModal(); }}>
+                  <button className="btn btn-primary" onClick={() => { setEditingSection(null); setSectionForm({ title: '', type: 'manual', layout_type: 'horizontal_scroll', is_active: true, priority: 0, auto_rule: { criteria: 'limited_stock', threshold: 5, limit: 12 } }); (document.getElementById('section-modal') as HTMLDialogElement)?.showModal(); }}>
                     + New Section
                   </button>
                 </div>
@@ -764,11 +971,11 @@ export default function AdminDashboard() {
                           <td>{sec.universities?.abbreviation || 'Global'}</td>
                           <td>
                             <div className={styles.actionRow}>
-                              <button className="btn btn-ghost btn-sm" onClick={() => { setEditingSection(sec); setSectionForm(sec); (document.getElementById('section-modal') as any)?.showModal(); }}>
+                              <button className="btn btn-ghost btn-sm" onClick={() => { setEditingSection(sec); setSectionForm(sec); (document.getElementById('section-modal') as HTMLDialogElement)?.showModal(); }}>
                                 <Settings size={14} />
                               </button>
                               {sec.type === 'manual' && (
-                                <button className="btn btn-ghost btn-sm" title="Manage Products" onClick={() => { setEditingSection(sec); (document.getElementById('product-picker-modal') as any)?.showModal(); }}>
+                                <button className="btn btn-ghost btn-sm" title="Manage Products" onClick={() => { setEditingSection(sec); (document.getElementById('product-picker-modal') as HTMLDialogElement)?.showModal(); }}>
                                   <ShoppingBag size={14} />
                                 </button>
                               )}
@@ -791,7 +998,7 @@ export default function AdminDashboard() {
                   <div className={styles.modalContent} style={{ maxWidth: '500px' }}>
                     <div className={styles.modalHeader}>
                       <h3>{editingSection ? 'Edit Section' : 'Create New Section'}</h3>
-                      <button className="btn btn-icon" onClick={() => (document.getElementById('section-modal') as any)?.close()}><XCircle size={20} /></button>
+                      <button className="btn btn-icon" onClick={() => (document.getElementById('section-modal') as HTMLDialogElement)?.close()}><XCircle size={20} /></button>
                     </div>
                     <div className={styles.modalBody} style={{ padding: '1.5rem' }}>
                       <div className="form-group mb-4">
@@ -867,7 +1074,7 @@ export default function AdminDashboard() {
                       <button className="btn btn-primary w-full" onClick={() => {
                         if (editingSection) adminAction('update_homepage_section', { id: editingSection.id, updates: sectionForm });
                         else adminAction('create_homepage_section', sectionForm);
-                        (document.getElementById('section-modal') as any)?.close();
+                        (document.getElementById('section-modal') as HTMLDialogElement)?.close();
                       }}>
                         {editingSection ? 'Save Changes' : 'Create Section'}
                       </button>
@@ -880,7 +1087,7 @@ export default function AdminDashboard() {
                    <div className={styles.modalContent} style={{ maxWidth: '800px', height: '80vh' }}>
                       <div className={styles.modalHeader}>
                         <h3>Manage Products: {editingSection?.title}</h3>
-                        <button className="btn btn-icon" onClick={() => (document.getElementById('product-picker-modal') as any)?.close()}><XCircle size={20} /></button>
+                        <button className="btn btn-icon" onClick={() => (document.getElementById('product-picker-modal') as HTMLDialogElement)?.close()}><XCircle size={20} /></button>
                       </div>
                       <div className={styles.modalBody} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', height: 'calc(100% - 70px)', padding: '1.5rem' }}>
                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflow: 'hidden' }}>
@@ -893,13 +1100,13 @@ export default function AdminDashboard() {
                                {filterBy(products, ['title']).slice(0, 50).map(p => (
                                  <div key={p.id} className={styles.settingsBox} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', padding: '0.75rem' }}>
                                     <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                                       <img src={p.image_url || p.media_urls?.[0]} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                                       <Image src={p.image_url || p.media_urls?.[0] || ''} alt={p.title || ''} width={40} height={40} style={{ objectFit: 'cover', borderRadius: '4px' }} />
                                        <div>
                                           <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{p.title}</div>
                                           <div className={styles.subText} style={{ fontSize: '0.7rem' }}>{p.brands?.name}</div>
                                        </div>
                                     </div>
-                                    <button className="btn btn-ghost btn-sm" onClick={() => adminAction('assign_product_to_section', { sectionId: editingSection.id, productId: p.id, position: 0 })}>Add</button>
+                                    <button className="btn btn-ghost btn-sm" onClick={() => adminAction('assign_product_to_section', { sectionId: editingSection?.id, productId: p.id, position: 0 })}>Add</button>
                                  </div>
                                ))}
                             </div>
@@ -908,8 +1115,6 @@ export default function AdminDashboard() {
                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflow: 'hidden' }}>
                             <h4>Assigned to this Section</h4>
                             <div style={{ overflowY: 'auto', flex: 1 }}>
-                               {/* Note: In a real app, you'd fetch the specific products for this section. 
-                                   For now, we'll assume the state is updated via adminAction + fetchAll. */}
                                <p className={styles.subText} style={{ fontSize: '0.8rem' }}>Added products will appear here after sync.</p>
                             </div>
                          </div>
@@ -977,6 +1182,54 @@ export default function AdminDashboard() {
                     ))}
                   </tbody>
                 </table></div>
+
+                <div style={{ marginTop: '3rem', padding: '2rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                    <Activity size={20} color="var(--primary)" />
+                    <h3 style={{ margin: 0 }}>Logistics & Delivery Configuration</h3>
+                  </div>
+                  <p className={styles.subText} style={{ marginBottom: '2rem' }}>Configure the global delivery fees charged to customers and the base payout amounts for delivery agents.</p>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
+                    <div className={styles.settingsBox}>
+                      <label className={styles.subText} style={{ display: 'block', marginBottom: '0.5rem' }}>Customer Delivery Fee (₦)</label>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input 
+                          type="number" 
+                          className="form-input" 
+                          value={platformSettings.delivery_base_fee || 0}
+                          onChange={(e) => setPlatformSettings({ ...platformSettings, delivery_base_fee: Number(e.target.value) })}
+                        />
+                        <button 
+                          className="btn btn-primary btn-sm"
+                          onClick={() => adminAction('update_settings', { key: 'delivery_base_fee', value: platformSettings.delivery_base_fee })}
+                        >
+                          Save
+                        </button>
+                      </div>
+                      <p style={{ fontSize: '0.7rem', marginTop: '0.5rem', opacity: 0.6 }}>This amount is added to the order total at checkout.</p>
+                    </div>
+
+                    <div className={styles.settingsBox}>
+                      <label className={styles.subText} style={{ display: 'block', marginBottom: '0.5rem' }}>Agent Payout Per Delivery (₦)</label>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input 
+                          type="number" 
+                          className="form-input" 
+                          value={platformSettings.delivery_agent_payout || 0}
+                          onChange={(e) => setPlatformSettings({ ...platformSettings, delivery_agent_payout: Number(e.target.value) })}
+                        />
+                        <button 
+                          className="btn btn-primary btn-sm"
+                          onClick={() => adminAction('update_settings', { key: 'delivery_agent_payout', value: platformSettings.delivery_agent_payout })}
+                        >
+                          Save
+                        </button>
+                      </div>
+                      <p style={{ fontSize: '0.7rem', marginTop: '0.5rem', opacity: 0.6 }}>Automatically credited to agent wallet upon delivery verification.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1017,11 +1270,69 @@ export default function AdminDashboard() {
                             <span className={`badge badge-${o.status}`}>{o.status}</span>
                           )}
                         </td>
-                        <td className={styles.subText}>{new Date(o.created_at).toLocaleDateString()}</td>
+                        <td className={styles.subText}>{new Date(o.created_at || '').toLocaleDateString()}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table></div>
+              </div>
+            )}
+
+            {activeTab === 'refunds' && (
+              <div className={styles.sectionCard}>
+                <div style={{ marginBottom: '2rem' }}>
+                  <h2>Refund Queue (Unconfirmed Deliveries)</h2>
+                  <p className={styles.subText}>Orders that have been paid but not confirmed by the customer for over 24 hours.</p>
+                </div>
+
+                {refundOrders.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    <ShieldCheck size={48} color="var(--success)" />
+                    <h3>No stale orders found</h3>
+                    <p>All active deliveries are moving within the expected timeframe.</p>
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>Order</th>
+                          <th>Customer</th>
+                          <th>Total Paid</th>
+                          <th>Estimated Delivery Fee</th>
+                          <th>Refundable (Product Only)</th>
+                          <th>Status</th>
+                          <th>Age</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {refundOrders.map(o => {
+                          const feeCharged = Number(o.delivery_fee_charged || 0);
+                          const refundable = Number(o.total_amount) - feeCharged;
+                          const hours = Math.floor((new Date().getTime() - new Date(o.created_at).getTime()) / (1000 * 60 * 60));
+                          
+                          return (
+                            <tr key={o.id}>
+                              <td>
+                                <div style={{ fontWeight: 600 }}>#{o.id.slice(0, 8)}</div>
+                                <div className={styles.subText}>{o.products?.title}</div>
+                              </td>
+                              <td>
+                                <div>{o.users?.name}</div>
+                                <div className={styles.subText}>{o.users?.email}</div>
+                              </td>
+                              <td>₦{Number(o.total_amount).toLocaleString()}</td>
+                              <td>₦{feeCharged.toLocaleString()}</td>
+                              <td style={{ fontWeight: 700, color: '#ef4444' }}>₦{refundable.toLocaleString()}</td>
+                              <td><span className={`badge badge-${o.status}`}>{o.status.toUpperCase()}</span></td>
+                              <td>{hours}h ago</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1057,7 +1368,7 @@ export default function AdminDashboard() {
                          </td>
                          <td style={{ color: '#f59e0b', fontWeight: 'bold' }}>₦{Number(req.amount_requested).toLocaleString()}</td>
                          <td><span className={`badge badge-${req.status}`}>{req.status}</span></td>
-                         <td className={styles.subText}>{new Date(req.created_at).toLocaleDateString()}</td>
+                         <td className={styles.subText}>{new Date(req.created_at || '').toLocaleDateString()}</td>
                          <td>
                            {req.status === 'pending' || req.status === 'processing' ? (
                              <button className="btn btn-primary btn-sm" onClick={() => setConfirmPayoutModal(req)}>Confirm</button>
@@ -1115,7 +1426,7 @@ export default function AdminDashboard() {
                                 style={{ height: '36px' }}
                                 value={uniConfig.credit_price || ''}
                                 placeholder="e.g. 50"
-                                onChange={(e) => setUniConfig({ ...uniConfig, credit_price: e.target.value })}
+                                onChange={(e) => setUniConfig({ ...uniConfig, credit_price: Number(e.target.value) })}
                               />
                               <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'credit_price', value: uniConfig.credit_price })}>Save</button>
                             </div>
@@ -1138,7 +1449,7 @@ export default function AdminDashboard() {
                                        value={planConfig.price || ''}
                                        placeholder="Price"
                                        onChange={(e) => {
-                                          const next = { ...uniConfig, plans: { ...uniConfig.plans, [tierId]: { ...planConfig, price: e.target.value } } };
+                                          const next = { ...uniConfig, plans: { ...uniConfig.plans, [tierId]: { ...planConfig, price: Number(e.target.value) } } };
                                           setUniConfig(next);
                                        }}
                                      />
@@ -1343,7 +1654,7 @@ export default function AdminDashboard() {
                         } else {
                           addToast(data.error || 'Failed to send notification', 'error');
                         }
-                      } catch (e) {
+                      } catch {
                         addToast('Connection error', 'error');
                       }
                       setNotifSending(false);
@@ -1548,7 +1859,7 @@ export default function AdminDashboard() {
                           
                           <select id="assign-uni-id" className="form-input mb-2">
                             <option value="">-- Select University --</option>
-                            {universities.map((u: any) => (
+                            {universities.map((u: University) => (
                               <option key={u.id} value={u.id}>{u.name} ({u.abbreviation})</option>
                             ))}
                           </select>
@@ -1655,7 +1966,7 @@ export default function AdminDashboard() {
                         {[
                           { label: 'Campus Users', val: uniStats.userCount, color: '#3b82f6', Icon: Users },
                           { label: 'Local Vendors', val: uniStats.brandCount, color: '#10b981', Icon: Store },
-                          { label: 'Uni Revenue', val: `â‚¦${Number(uniStats.totalRevenue || 0).toLocaleString()}`, color: '#f59e0b', Icon: ShoppingCart },
+                          { label: 'Uni Revenue', val: `₦${Number(uniStats.totalRevenue || 0).toLocaleString()}`, color: '#f59e0b', Icon: ShoppingCart },
                           { label: 'Live Products', val: uniStats.productCount, color: '#8b5cf6', Icon: ShoppingBag },
                         ].map(({ label, val, color, Icon }) => (
                           <div className={styles.statCard} key={label} style={{ background: 'var(--bg-200)' }}>
@@ -1685,7 +1996,7 @@ export default function AdminDashboard() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {filterBy(uniUsers, ['name', 'email']).map((u: any) => (
+                                {filterBy(uniUsers, ['name', 'email']).map((u: User) => (
                                   <tr key={u.id} style={{ cursor: 'pointer' }} onClick={() => { setAdminSearch(u.name); setSelectedAdminId(u.id); }}>
                                     <td>
                                       <div style={{ fontWeight: 600 }}>{u.name}</div>
@@ -1695,10 +2006,10 @@ export default function AdminDashboard() {
                                       <span className={`badge ${u.role === 'admin' ? 'badge-verified' : u.role === 'vendor' ? 'badge-gold' : 'badge-ghost'}`}>{u.role}</span>
                                     </td>
                                     <td><span className={u.status === 'active' ? 'text-green' : 'text-red'}>{u.status}</span></td>
-                                    <td className={styles.subText}>{new Date(u.created_at).toLocaleDateString()}</td>
+                                    <td className={styles.subText}>{new Date(u.created_at || '').toLocaleDateString()}</td>
                                     <td>
                                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); adminAction('toggle_user_status', { userId: u.id, status: u.status === 'active' ? 'suspended' : 'active' }); }}>
+                                        <button className="btn btn-ghost btn-sm" onClick={(_e: React.MouseEvent) => { _e.stopPropagation(); adminAction('toggle_user_status', { userId: u.id, status: u.status === 'active' ? 'suspended' : 'active' }); }}>
                                           {u.status === 'active' ? 'Suspend' : 'Activate'}
                                         </button>
                                       </div>
@@ -1714,7 +2025,7 @@ export default function AdminDashboard() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         <div className={styles.settingsBox} style={{ background: 'var(--bg-200)', border: '1px solid var(--primary)' }}>
                           <h4 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Add to Management Team</h4>
-                          <p className={styles.subText} style={{ marginBottom: '1rem' }}>Assign delegated permissions for this university's sub-dashboards.</p>
+                          <p className={styles.subText} style={{ marginBottom: '1rem' }}>Assign delegated permissions for this university&apos;s sub-dashboards.</p>
                           
                           <div className="mb-3">
                             <label className={styles.subText}>Selected Member</label>
@@ -1784,7 +2095,7 @@ export default function AdminDashboard() {
                             <p className={styles.subText}>No staff assigned yet.</p>
                           ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                              {uniTeams.map((m: any) => (
+                              {uniTeams.map((m: TeamMember) => (
                                 <div key={m.id} style={{ padding: '0.75rem', background: 'var(--bg-200)', borderRadius: '8px', border: '1px solid var(--border)' }}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1961,9 +2272,9 @@ export default function AdminDashboard() {
             </div>
             <div className={styles.modalBody}>
               <div style={{ padding: '1rem', background: 'var(--bg-300)', borderRadius: '8px', marginBottom: '1.5rem' }}>
-                <p>Transfer <strong>₦{Number(confirmPayoutModal.amount_requested).toLocaleString()}</strong> to:</p>
-                <p><strong>{confirmPayoutModal.bank_details?.accountName}</strong></p>
-                <p><strong>{confirmPayoutModal.bank_details?.bankName}</strong> - {confirmPayoutModal.bank_details?.accountNumber}</p>
+                <p>Transfer <strong>₦{Number(confirmPayoutModal!.amount_requested).toLocaleString()}</strong> to:</p>
+                <p><strong>{confirmPayoutModal!.bank_details?.accountName}</strong></p>
+                <p><strong>{confirmPayoutModal!.bank_details?.bankName}</strong> - {confirmPayoutModal!.bank_details?.accountNumber}</p>
               </div>
 
               <div className="form-group">
@@ -2009,10 +2320,12 @@ export default function AdminDashboard() {
             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out',
           }}
         >
-          <img
+          <Image
             src={enlargedImg}
-            alt="Product"
-            style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 12, boxShadow: '0 0 60px rgba(0,0,0,0.8)' }}
+            alt="Product enlarged view"
+            width={1200}
+            height={1200}
+            style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 12, boxShadow: '0 0 60px rgba(0,0,0,0.8)', width: 'auto', height: 'auto' }}
           />
           <button
             onClick={() => setEnlargedImg(null)}

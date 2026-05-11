@@ -36,11 +36,16 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
           .select(`*, brands(*, universities(*))`)
           .order('created_at', { ascending: false });
 
-        if (userUniId) {
-          // Strictly show only my university's products + global ones
-          query = query.or(`visibility_type.eq.global,university_id.eq.${userUniId}`);
+        if (session?.user) {
+          if (userUniId) {
+            // University users see their campus products + global ones
+            query = query.or(`visibility_type.eq.global,university_id.eq.${userUniId}`);
+          } else {
+            // General users see ONLY global products
+            query = query.eq('visibility_type', 'global');
+          }
         } else {
-          // Public users: Show ABUAD products by default + global
+          // Anonymous users: Show ABUAD by default + global
           query = query.or(`visibility_type.eq.global,university_id.eq.${ABUAD_ID}`);
         }
 

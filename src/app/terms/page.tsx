@@ -5,7 +5,7 @@ import { Scale, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export default function TermsPage() {
-  const [policy, setPolicy] = useState<any>(null);
+  const [policy, setPolicy] = useState<{ last_updated: string; sections: { title: string; content: string }[] } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -117,7 +117,7 @@ export default function TermsPage() {
       </div>
 
       <div className="container" style={{ maxWidth: '860px', padding: '3rem 1.5rem 6rem' }}>
-        {activePolicy.sections.map((section: any, idx: number) => (
+        {activePolicy.sections.map((section: { title: string; content: string }, idx: number) => (
           <div key={idx} style={{ marginBottom: '3rem' }}>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-100)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <div style={{ width: '8px', height: '24px', background: 'var(--primary)', borderRadius: '4px' }} />

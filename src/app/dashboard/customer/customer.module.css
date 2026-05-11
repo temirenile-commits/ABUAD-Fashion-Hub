@@ -226,6 +226,103 @@
 .logoutCard h3 { color: #ef4444; font-size: 1.1rem; }
 .logoutCard p { font-size: 0.85rem; color: var(--text-400); }
 
+/* Timeline Styles */
+.timelineContainer {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.timelineContainer::-webkit-scrollbar { display: none; }
+
+.timeline {
+  display: flex;
+  justify-content: space-between;
+  min-width: 500px;
+  position: relative;
+  margin-top: 1rem;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--bg-300);
+  z-index: 1;
+}
+
+.timelineStep {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.stepCircle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-100);
+  border: 2px solid var(--bg-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-500);
+  transition: all 0.3s;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-500);
+}
+
+.stepLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-500);
+  text-align: center;
+}
+
+.completed .stepCircle {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.completed .stepLabel {
+  color: var(--primary);
+}
+
+.active .stepCircle {
+  box-shadow: 0 0 0 4px var(--primary-20);
+  transform: scale(1.1);
+}
+
+.deliveryCodeCard {
+  transition: transform 0.2s;
+}
+
+.deliveryCodeCard:hover {
+  transform: scale(1.02);
+}
+
+.agentInfo {
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+
+.agentInfo:hover {
+  border-color: var(--primary);
+}
+
 @media (max-width: 968px) {
   .dashboardGrid {
     grid-template-columns: 1fr;

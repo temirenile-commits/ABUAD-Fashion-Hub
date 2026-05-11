@@ -161,6 +161,12 @@
   align-items: center;
   justify-content: center;
 }
+.universityLabel {
+  display: block;
+}
+@media (max-width: 600px) {
+  .universityLabel { display: none; }
+}
 
 .avatarPlaceholder {
   width: 32px;

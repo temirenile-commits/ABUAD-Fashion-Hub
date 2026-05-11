@@ -80,23 +80,32 @@ RETURNS TRIGGER AS $$
 DECLARE
     v_order_record RECORD;
     v_vendor_earning DECIMAL;
+    v_agent_payout DECIMAL;
+    v_settings_record RECORD;
 BEGIN
     -- Only trigger when status changes to 'delivered'
     IF (NEW.status = 'delivered' AND OLD.status != 'delivered') THEN
         
         -- 1. Fetch Order Details
         SELECT * INTO v_order_record FROM public.orders WHERE id = NEW.order_id;
+
+        -- 2. Fetch Payout Setting
+        SELECT (value::text)::DECIMAL INTO v_agent_payout 
+        FROM public.platform_settings 
+        WHERE key = 'delivery_agent_payout';
         
-        -- 2. PAY THE DELIVERY AGENT (₦500)
+        IF v_agent_payout IS NULL THEN v_agent_payout := 500.00; END IF;
+        
+        -- 3. PAY THE DELIVERY AGENT
         IF NEW.agent_id IS NOT NULL THEN
-            PERFORM public.adjust_agent_wallet(NEW.agent_id, 500.00);
+            PERFORM public.adjust_agent_wallet(NEW.agent_id, v_agent_payout);
             
             -- Log Agent Transaction
             INSERT INTO public.transactions (user_id, order_id, type, amount, status, description)
-            VALUES (NEW.agent_id, NEW.order_id, 'payout', 500.00, 'success', 'Delivery payout for Order #' || substring(NEW.order_id::text, 1, 8));
+            VALUES (NEW.agent_id, NEW.order_id, 'payout', v_agent_payout, 'success', 'Delivery payout for Order #' || substring(NEW.order_id::text, 1, 8));
         END IF;
 
-        -- 3. RELEASE FUNDS TO VENDOR
+        -- 4. RELEASE FUNDS TO VENDOR
         -- Move vendor_earning from Pending to Available
         IF v_order_record.id IS NOT NULL THEN
             v_vendor_earning := v_order_record.vendor_earning;

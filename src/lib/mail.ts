@@ -40,7 +40,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
 }
 
 export const emailTemplates = {
-  paymentSuccess: (name: string, orderId: string, amount: string) => `
+  paymentSuccess: (name: string, orderId: string, amount: string, deliveryCode: string) => `
     <div style="font-family: sans-serif; color: #1e1b4b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
       <div style="background: #eb0c7a; padding: 30px; text-align: center;">
         <h1 style="color: white; margin: 0; font-size: 24px;">Payment Secured! 🎉</h1>
@@ -48,6 +48,13 @@ export const emailTemplates = {
       <div style="padding: 30px;">
         <p>Hi ${name || 'Customer'},</p>
         <p>Your payment of <strong>${amount}</strong> for order <strong>#${orderId}</strong> has been successfully received and is now held in <strong>Escrow Protection</strong>.</p>
+        
+        <div style="background: #fdf2f8; border: 2px dashed #eb0c7a; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+          <h2 style="margin: 0; color: #eb0c7a; font-size: 14px; text-transform: uppercase;">Your Delivery Verification Code</h2>
+          <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 10px 0;">${deliveryCode}</div>
+          <p style="margin: 0; font-size: 12px; color: #64748b;">Give this code to the delivery agent only when you receive your package.</p>
+        </div>
+
         <p>The vendor has been notified and will begin processing your items shortly.</p>
         <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0;">Order Summary</h3>
@@ -55,7 +62,7 @@ export const emailTemplates = {
           <p style="margin: 5px 0;">Status: Paid (Escrow)</p>
         </div>
         <p>Remember: Do not release the payment until you have received and inspected your items.</p>
-        <a href="https://mastercart.com/dashboard/customer" style="display: inline-block; background: #c9a14a; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">View Order Status</a>
+        <a href="https://abuadfashionista.com/dashboard/customer" style="display: inline-block; background: #eb0c7a; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">View Order Status</a>
       </div>
       <div style="background: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
         &copy; 2026 Master Cart. All rights reserved.

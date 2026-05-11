@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 'use client';
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { CreditCard, ShoppingBag, Truck, Lock, Loader2, CheckCircle, MapPin, Phone, ArrowRight, User, ShieldCheck, Clock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { CreditCard, ShoppingBag, Truck, Lock, Loader2, MapPin, Phone, ArrowRight, User, ShieldCheck, Clock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/context/CartContext';
 import { LiveProduct } from '@/components/ProductCard';
@@ -14,7 +15,7 @@ function CheckoutContent() {
   const { cart, getCartTotal, clearCart } = useCart();
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(null); // Supabase user type is complex, keeping any for now but could use User from @supabase/supabase-js
 
   // Form State
   const [name, setName] = useState('');
@@ -23,10 +24,10 @@ function CheckoutContent() {
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState<string | null>(null);
-  const [promoAppliedData, setPromoAppliedData] = useState<any>(null);
+  const [promoAppliedData, setPromoAppliedData] = useState<{ id: string; code: string; type: string; value: number; product_id?: string } | null>(null);
   const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
   const [calculatedDeliveryFee, setCalculatedDeliveryFee] = useState(1500);
-  const [deliveryConfigs, setDeliveryConfigs] = useState<any[]>([]);
+  const [, setDeliveryConfigs] = useState<{ id: string; delivery_scope: string; assigned_delivery_system: string }[]>([]);
 
   const deliveryFee = calculatedDeliveryFee;
   const orderTotal = getCartTotal();
@@ -146,7 +147,7 @@ function CheckoutContent() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [router, cart.length]);
+  }, [router, cart.length, cart]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -353,7 +354,7 @@ function CheckoutContent() {
                 )}
               </button>
               <p className={styles.termsNote}>
-                By clicking "Pay", you agree to the Master Cart <Link href="/terms">Terms of Service</Link> and recognize that funds will be held in escrow until delivery is confirmed.
+                By clicking &quot;Pay&quot;, you agree to the Master Cart <Link href="/terms">Terms of Service</Link> and recognize that funds will be held in escrow until delivery is confirmed.
               </p>
             </section>
           </div>
@@ -366,6 +367,7 @@ function CheckoutContent() {
               {cart.map((item: LiveProduct & { quantity: number }) => (
                 <div key={item.id} className={styles.summaryItem}>
                   <div className={styles.itemImage}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={item.media_urls?.[0]} alt={item.title} />
                   </div>
                   <div className={styles.itemDetails}>

@@ -1,26 +1,26 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { initializeTransaction } from '@/lib/paystack';
 
 export async function POST(req: Request) {
   // Default fallbacks
-  let commissionRate = 0.075; 
-  let deliveryFee = 1500;
+  const commissionRate = 0.075; 
 
   try {
-    const { userId, items, totalAmount, shippingAddress, promoCode } = await req.json();
+    const { userId, items, shippingAddress, promoCode } = await req.json();
 
     if (!userId || !items || items.length === 0) {
       return NextResponse.json({ error: 'Invalid checkout payload' }, { status: 400 });
     }
 
     // 0. Parallel Fetching for speed (Verify items, User profile, and Platform Fees)
-    const productIds = items.map((i: any) => i.productId);
+    const productIds = items.map((i: { productId: string }) => i.productId);
     
     const [productsResult, profileResult, settingsResult, promoResult] = await Promise.all([
       supabaseAdmin
         .from('products')
-        .select('id, brand_id, price, stock_count, brands(verified, fee_paid, delivery_scope, assigned_delivery_system)')
+        .select('id, title, brand_id, price, stock_count, brands(verified, fee_paid, delivery_scope, assigned_delivery_system)')
         .in('id', productIds),
       supabaseAdmin
         .from('users')
@@ -37,7 +37,6 @@ export async function POST(req: Request) {
 
     const liveProducts = productsResult.data;
     const userProfile = profileResult.data;
-    const fees = settingsResult.data?.value as any;
     const promoData = promoResult?.data;
 
     if (!liveProducts || liveProducts.length === 0) {
@@ -45,7 +44,7 @@ export async function POST(req: Request) {
     }
 
     // 1. Verify Brands activation status
-    const inactiveBrands = liveProducts.filter((p: any) => !p.brands?.verified || !p.brands?.fee_paid);
+    const inactiveBrands = liveProducts.filter((p: any) => !p.brands || (Array.isArray(p.brands) ? !p.brands[0].verified : !p.brands.verified));
     if (inactiveBrands.length > 0) {
        return NextResponse.json({ 
         error: 'INACTIVE_VENDORS', 
@@ -53,24 +52,38 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
+    // 1.5 Verify Stock Quantity
+    for (const item of items) {
+      const liveProduct = liveProducts.find((p) => p.id === item.productId);
+      if (!liveProduct || (liveProduct.stock_count < (item.quantity || 1))) {
+        return NextResponse.json({ 
+          error: 'OUT_OF_STOCK', 
+          message: `Product "${liveProduct?.title || 'Unknown'}" does not have enough stock available.` 
+        }, { status: 400 });
+      }
+    }
+
     // 2. Determine Delivery Logic from Brands
-    const hasOutSchool = liveProducts.some((p: any) => p.brands?.delivery_scope === 'out-school');
-    const hasPlatform = liveProducts.some((p: any) => p.brands?.assigned_delivery_system === 'platform');
+    const hasOutSchool = liveProducts.some((p: any) => (Array.isArray(p.brands) ? p.brands[0].delivery_scope : p.brands?.delivery_scope) === 'out-school');
+    const hasPlatform = liveProducts.some((p: any) => (Array.isArray(p.brands) ? p.brands[0].assigned_delivery_system : p.brands?.assigned_delivery_system) === 'platform');
+    
+    // Fetch dynamic fees from settings
+    const settingsDeliveryFee = Number(settingsResult.data?.value?.delivery_base_fee) || 1500;
     
     let totalDeliveryFee = 0;
     if (hasPlatform) {
-      totalDeliveryFee = hasOutSchool ? 3000 : 1500;
+      totalDeliveryFee = hasOutSchool ? (settingsDeliveryFee * 2) : settingsDeliveryFee;
     }
 
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 30);
 
-    const ordersToInsert = items.map((item: any, index: number) => {
+    const ordersToInsert = items.map((item: { productId: string; quantity: number; price: number; brandId: string }, index: number) => {
       const liveProduct = liveProducts.find(p => p.id === item.productId);
       const originalPrice = liveProduct?.price || item.price;
       const isFirst = index === 0;
       
-      const brandData = Array.isArray(liveProduct?.brands) ? liveProduct.brands[0] : liveProduct?.brands;
+      const brandData = (Array.isArray(liveProduct?.brands) ? liveProduct.brands[0] : liveProduct?.brands) as any;
       
       const vendorScope = brandData?.delivery_scope || 'in-school';
       const vendorSystem = brandData?.assigned_delivery_system || 'platform';
@@ -99,6 +112,8 @@ export async function POST(req: Request) {
       const adminCommission = baseCommission - itemDiscount;
       const totalCommissionForRecord = adminCommission + itemDeliveryFee;
 
+      const deliveryCode = Math.floor(100000 + Math.random() * 900000).toString();
+
       return {
         customer_id: userId,
         brand_id: item.brandId,
@@ -115,6 +130,9 @@ export async function POST(req: Request) {
         paystack_reference: '', 
         expires_at: expiresAt.toISOString(),
         admin_discount: itemDiscount,
+        delivery_code: deliveryCode,
+        delivery_fee_charged: itemDeliveryFee, // Explicitly track the fee
+        university_id: brandData?.university_id, // Explicitly tag with university for scoping
       };
     });
 
