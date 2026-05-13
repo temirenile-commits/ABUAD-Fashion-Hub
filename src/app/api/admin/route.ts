@@ -1006,6 +1006,48 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  if (action === 'add_delivery_agent') {
+    const { email, university_id, agent_type } = body;
+    
+    // 1. Find user by email
+    const { data: user, error: userError } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+    
+    if (userError || !user) {
+      return NextResponse.json({ error: 'User not found. Please ensure the user has registered first.' }, { status: 404 });
+    }
+
+    // 2. Promote user to delivery role
+    const { error: roleError } = await supabaseAdmin
+      .from('users')
+      .update({ role: 'delivery', university_id })
+      .eq('id', user.id);
+    
+    if (roleError) return NextResponse.json({ error: roleError.message }, { status: 500 });
+
+    // 3. Create/Update delivery agent record
+    const { error: agentError } = await supabaseAdmin
+      .from('delivery_agents')
+      .upsert({ 
+        id: user.id, 
+        university_id, 
+        agent_type: agent_type || 'in-campus',
+        is_active: false 
+      }, { onConflict: 'id' });
+    
+    if (agentError) return NextResponse.json({ error: agentError.message }, { status: 500 });
+
+    // 4. Update Auth Metadata
+    await supabaseAdmin.auth.admin.updateUserById(user.id, {
+      user_metadata: { role: 'delivery' }
+    });
+
+    return NextResponse.json({ success: true, message: 'Delivery agent added and verified.' });
+  }
+
   if (action === 'update_settings') {
     const { key, value } = body;
     const { error } = await supabaseAdmin

@@ -260,6 +260,9 @@ export default function AdminDashboard() {
   const [uploadingBillboard, setUploadingBillboard] = useState(false);
   
   const [platformSettings, setPlatformSettings] = useState<Record<string, any>>({});
+  const [showAddAgentModal, setShowAddAgentModal] = useState(false);
+  const [newAgentData, setNewAgentData] = useState({ email: '', university_id: '', agent_type: 'in-campus' });
+  const [addingAgent, setAddingAgent] = useState(false);
   const { addToast } = useToast();
   const fetchedRef = useRef(false);
 
@@ -410,6 +413,8 @@ export default function AdminDashboard() {
         await fetchAll();
         if (selectedVendor && payload.brandId === selectedVendor.id) setSelectedVendor(null);
         addToast('Action completed successfully!', 'success');
+        setActionLoading('');
+        return data;
       } else {
         addToast(data.error || 'Action failed', 'error');
       }
@@ -417,6 +422,7 @@ export default function AdminDashboard() {
       addToast('Network error', 'error');
     }
     setActionLoading('');
+    return null;
   };
 
   const handleConfirmPayout = async () => {
@@ -1137,6 +1143,9 @@ export default function AdminDashboard() {
                     <h2>Delivery Fleet</h2>
                     <p className={styles.subText}>Monitor riders, track their locations, and manage payout balances.</p>
                   </div>
+                  <button className="btn btn-primary btn-sm" onClick={() => setShowAddAgentModal(true)}>
+                    + Add New Rider
+                  </button>
                 </div>
 
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
@@ -2227,18 +2236,18 @@ export default function AdminDashboard() {
                         </div>
 
                         <div className={styles.settingsBox} style={{ background: 'var(--bg-200)', border: '1px solid var(--success)', marginTop: '1.5rem' }}>
-                          <h4 style={{ color: 'var(--success)', marginBottom: '1rem' }}>Logistics & Delivery Configuration</h4>
-                          <p className={styles.subText} style={{ marginBottom: '1rem' }}>Set campus-specific delivery rates and logistics rules.</p>
+                          <h4 style={{ color: 'var(--success)', marginBottom: '1rem' }}>In-Campus Logistics (Within University)</h4>
+                          <p className={styles.subText} style={{ marginBottom: '1rem' }}>Base fee charged to customers for deliveries within the campus.</p>
                           
                           <div className="mb-3">
-                            <label className={styles.subText}>Delivery Base Fee (₦)</label>
+                            <label className={styles.subText}>Base Fee (₦)</label>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                               <input 
                                 type="number" 
                                 className="form-input" 
                                 value={(uniConfig.delivery_base_fee as number) || ''} 
                                 onChange={(e) => setUniConfig({ ...uniConfig, delivery_base_fee: Number(e.target.value) })}
-                                placeholder="e.g. 1500"
+                                placeholder="e.g. 500"
                               />
                               <button 
                                 className="btn btn-primary btn-sm" 
@@ -2248,6 +2257,31 @@ export default function AdminDashboard() {
                               </button>
                             </div>
                           </div>
+                        </div>
+
+                        <div className={styles.settingsBox} style={{ background: 'var(--bg-200)', border: '1px solid var(--primary)', marginTop: '1rem' }}>
+                          <h4 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Out-Campus Logistics (Between Universities)</h4>
+                          <p className={styles.subText} style={{ marginBottom: '1rem' }}>Configuration for external deliveries from out-of-school vendors.</p>
+                          
+                          <div className="mb-3">
+                            <label className={styles.subText}>Platform Markup (₦)</label>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <input 
+                                type="number" 
+                                className="form-input" 
+                                value={(uniConfig.external_delivery_markup as number) || ''} 
+                                onChange={(e) => setUniConfig({ ...uniConfig, external_delivery_markup: Number(e.target.value) })}
+                                placeholder="e.g. 1000"
+                              />
+                              <button 
+                                className="btn btn-primary btn-sm" 
+                                onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'external_delivery_markup', value: uniConfig.external_delivery_markup })}
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
+                          <p className={styles.subText} style={{ fontSize: '0.75rem' }}>Note: Out-campus agents set their own base fees; this markup is added on top.</p>
                         </div>
 
                       </div>
@@ -2463,6 +2497,78 @@ export default function AdminDashboard() {
           >
             <XCircle size={28} />
           </button>
+        </div>
+      )}
+
+      {/* Add Rider Modal */}
+      {showAddAgentModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h2>Add New Delivery Agent</h2>
+              <button onClick={() => setShowAddAgentModal(false)}><XCircle size={24} /></button>
+            </div>
+            <div className={styles.modalBody}>
+              <p className={styles.subText} style={{ marginBottom: '1.5rem' }}>Search for an existing user by email to promote them to a delivery agent.</p>
+              
+              <div className="form-group">
+                <label className="form-label">User Email Address</label>
+                <input 
+                  type="email"
+                  className="form-input" 
+                  placeholder="rider@example.com"
+                  value={newAgentData.email}
+                  onChange={e => setNewAgentData({ ...newAgentData, email: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">University Assignment</label>
+                <select 
+                  className="form-input"
+                  value={newAgentData.university_id}
+                  onChange={e => setNewAgentData({ ...newAgentData, university_id: e.target.value })}
+                >
+                  <option value="">-- Select University --</option>
+                  {universities.map(u => (
+                    <option key={u.id} value={u.id}>{u.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Initial Agent Type</label>
+                <select 
+                  className="form-input"
+                  value={newAgentData.agent_type}
+                  onChange={e => setNewAgentData({ ...newAgentData, agent_type: e.target.value })}
+                >
+                  <option value="in-campus">In-Campus (Within Uni)</option>
+                  <option value="out-campus">Out-Campus (External)</option>
+                </select>
+              </div>
+
+              <button 
+                className="btn btn-primary" 
+                style={{ width: '100%', marginTop: '1.5rem' }}
+                onClick={async () => {
+                  if (!newAgentData.email || !newAgentData.university_id) {
+                    return addToast('Please fill all fields', 'error');
+                  }
+                  setAddingAgent(true);
+                  const res = await adminAction('add_delivery_agent', newAgentData);
+                  setAddingAgent(false);
+                  if (res?.success) {
+                    setShowAddAgentModal(false);
+                    setNewAgentData({ email: '', university_id: '', agent_type: 'in-campus' });
+                  }
+                }}
+                disabled={addingAgent}
+              >
+                {addingAgent ? 'Adding Rider...' : 'Add & Verify Rider'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
