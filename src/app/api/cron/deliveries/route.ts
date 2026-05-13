@@ -18,14 +18,17 @@ export async function GET(req: Request) {
     const threeDaysAgo = new Date();
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
+    const fiveDaysAgo = new Date();
+    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+
     const expiredDeliveries = [];
     const expiredOrderIds = [];
 
-    // Cancel deliveries not picked up within 3 days of being created
+    // 1. Cancel deliveries not picked up within the allowed time
     for (const delivery of waitingDeliveries || []) {
       const { data: order } = await supabaseAdmin
         .from('orders')
-        .select('is_preorder, preorder_arrival_date')
+        .select('is_preorder, preorder_arrival_date, delivery_scope')
         .eq('id', delivery.order_id)
         .single();
 
@@ -39,8 +42,11 @@ export async function GET(req: Request) {
         }
       }
 
-      // If the target date (creation or arrival) was more than 3 days ago, cancel it
-      if (targetDate < threeDaysAgo) {
+      // External deliveries (out-school) get 5 days, internal (in-school) get 3 days
+      const isExternal = order?.delivery_scope === 'out-school';
+      const expiryThreshold = isExternal ? fiveDaysAgo : threeDaysAgo;
+
+      if (targetDate < expiryThreshold) {
         expiredDeliveries.push(delivery.id);
         expiredOrderIds.push(delivery.order_id);
       }
@@ -53,16 +59,16 @@ export async function GET(req: Request) {
         .update({ status: 'cancelled' })
         .in('id', expiredDeliveries);
 
-      // Update order status to 'cancelled_delivery' so it triggers refund logic
+      // Update order status to 'cancelled_delivery'
       await supabaseAdmin
         .from('orders')
         .update({ status: 'cancelled_delivery' })
         .in('id', expiredOrderIds);
         
-      console.log(`Cancelled ${expiredDeliveries.length} deliveries due to 3-day timeout.`);
+      console.log(`Cancelled ${expiredDeliveries.length} deliveries due to timeout.`);
     }
 
-    // 2. Find deliveries picked up by an agent but not delivered within 3 days of pickup
+    // 2. Find deliveries picked up by an agent but not delivered within allowed time
     const { data: activeDeliveries, error: fetchActiveError } = await supabaseAdmin
       .from('deliveries')
       .select('id, order_id, picked_up_at')
@@ -75,8 +81,17 @@ export async function GET(req: Request) {
     
     for (const delivery of activeDeliveries || []) {
       if (delivery.picked_up_at) {
+        const { data: order } = await supabaseAdmin
+          .from('orders')
+          .select('delivery_scope')
+          .eq('id', delivery.order_id)
+          .single();
+
+        const isExternal = order?.delivery_scope === 'out-school';
+        const expiryThreshold = isExternal ? fiveDaysAgo : threeDaysAgo;
         const pickedUpDate = new Date(delivery.picked_up_at);
-        if (pickedUpDate < threeDaysAgo) {
+
+        if (pickedUpDate < expiryThreshold) {
           overdueDeliveries.push(delivery.id);
           overdueOrderIds.push(delivery.order_id);
         }
@@ -84,7 +99,6 @@ export async function GET(req: Request) {
     }
     
     if (overdueDeliveries.length > 0) {
-      // Mark these as failed or require admin intervention
       await supabaseAdmin
         .from('deliveries')
         .update({ status: 'failed_delivery' })
@@ -95,7 +109,7 @@ export async function GET(req: Request) {
         .update({ status: 'failed_delivery' })
         .in('id', overdueOrderIds);
         
-      console.log(`Marked ${overdueDeliveries.length} deliveries as failed (not delivered within 3 days of pickup).`);
+      console.log(`Marked ${overdueDeliveries.length} deliveries as failed (timeout after pickup).`);
     }
 
     return NextResponse.json({ 

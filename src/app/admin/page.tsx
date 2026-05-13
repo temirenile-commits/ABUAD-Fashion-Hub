@@ -7,6 +7,7 @@ import {
   Search, RefreshCw, Trash2, Star, Eye, ShoppingCart, Loader2, CreditCard, AlertTriangle, Settings, Bell,
   BarChart3, Activity, ExternalLink, MapPin, Tag, ArrowLeft, ShieldAlert, ShieldCheck, Clock
 } from 'lucide-react';
+import { uploadFile } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
 import TradingChart from '@/components/TradingChart';
@@ -444,21 +445,25 @@ export default function AdminDashboard() {
     if (!billboardUpload.file || !billboardUpload.title) return addToast('Image and Title required', 'error');
     setUploadingBillboard(true);
     try {
-      const ext = billboardUpload.file.name.split('.').pop();
-      const path = `manual_billboards/${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('brand-logos').upload(path, billboardUpload.file);
-      if (uploadError) throw uploadError;
-      
-      const { data } = supabase.storage.from('brand-logos').getPublicUrl(path);
+      const { url, error: uploadError } = await uploadFile(billboardUpload.file, 'brand-assets', `billboard-${Date.now()}`);
+      if (uploadError || !url) throw new Error(uploadError || 'Upload failed');
       
       await adminAction('add_manual_billboard', {
          title: billboardUpload.title,
          description: billboardUpload.sub,
          link: billboardUpload.link,
-         cover_url: data.publicUrl
+         cover_url: url,
+         university_id: selectedUniId === 'global' ? undefined : (selectedUniId || undefined)
       });
       
-      const newB = { id: `mb_${Date.now()}`, title: billboardUpload.title, description: billboardUpload.sub, link: billboardUpload.link, cover_url: data.publicUrl };
+      const newB = { 
+        id: `mb_${Date.now()}`, 
+        title: billboardUpload.title, 
+        description: billboardUpload.sub, 
+        link: billboardUpload.link, 
+        cover_url: url, 
+        university_id: selectedUniId === 'global' ? undefined : (selectedUniId || undefined)
+      };
       setManualBillboards([...manualBillboards, newB]);
       setBillboardUpload({ title: '', sub: '', link: '', file: null });
       addToast('Billboard added successfully!', 'success');

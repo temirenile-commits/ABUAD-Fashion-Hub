@@ -131,6 +131,9 @@ export default function VendorDashboard() {
   const [passLoading, setPassLoading] = useState(false);
   const [passError, setPassError] = useState('');
   const [passSuccess, setPassSuccess] = useState(false);
+  const [isEditingBillboard, setIsEditingBillboard] = useState(false);
+  const [billboardForm, setBillboardForm] = useState({ image: '', link: '' });
+  const [uploadingBillboard, setUploadingBillboard] = useState(false);
 
   useEffect(() => {
     if (brand) setTempName(brand.name);
@@ -797,6 +800,46 @@ export default function VendorDashboard() {
       alert('Error updating settings');
     } finally {
       setIsSettingsLoading(false);
+    }
+  };
+
+  const handleBillboardUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!brand) return;
+    setIsSettingsLoading(true);
+    try {
+      const social_links = brand.social_links || {};
+      const updatedSocial = {
+        ...social_links,
+        billboard_image: billboardForm.image,
+        billboard_link: billboardForm.link
+      };
+      
+      await handleUpdateSettings({ social_links: updatedSocial });
+      setIsEditingBillboard(false);
+    } catch (err) {
+      addToast('Failed to update billboard', 'error');
+    } finally {
+      setIsSettingsLoading(false);
+    }
+  };
+
+  const handleBillboardImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !brand) return;
+    setUploadingBillboard(true);
+    try {
+      const { url, error } = await uploadFile(file, 'brand-assets', `billboard-${brand.id}`);
+      if (url) {
+        setBillboardForm(prev => ({ ...prev, image: url }));
+        addToast('Billboard image uploaded!', 'success');
+      } else {
+        throw new Error(error || 'Upload failed');
+      }
+    } catch (err: any) {
+      addToast(err.message, 'error');
+    } finally {
+      setUploadingBillboard(false);
     }
   };
 
@@ -2383,8 +2426,22 @@ export default function VendorDashboard() {
                 <h3>Billboard Boost</h3>
                 <p>Featured on homepage "Gold Collection".</p>
                 {brand.billboard_boost_expires_at && new Date(brand.billboard_boost_expires_at) > new Date() ? (
-                  <div className={styles.activeStatus}>
-                    <CheckCircle size={14} /> Active until {new Date(brand.billboard_boost_expires_at).toLocaleDateString()}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div className={styles.activeStatus}>
+                      <CheckCircle size={14} /> Active until {new Date(brand.billboard_boost_expires_at).toLocaleDateString()}
+                    </div>
+                    <button 
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => {
+                        setBillboardForm({
+                          image: brand.social_links?.billboard_image || '',
+                          link: brand.social_links?.billboard_link || ''
+                        });
+                        setIsEditingBillboard(true);
+                      }}
+                    >
+                      <Edit3 size={14} /> Customize Billboard
+                    </button>
                   </div>
                 ) : (
                   <button 
@@ -2410,6 +2467,39 @@ export default function VendorDashboard() {
                   </button>
                 )}
               </div>
+
+              {isEditingBillboard && (
+                <div className={styles.modalOverlay}>
+                  <div className={styles.modalContent} style={{ maxWidth: '400px' }}>
+                    <h3>Customize Your Billboard</h3>
+                    <p className={styles.subText}>Upload a custom image and link for your homepage feature.</p>
+                    <form onSubmit={handleBillboardUpdate} style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <div>
+                        <label className={styles.subText}>Billboard Image</label>
+                        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', alignItems: 'center' }}>
+                          {billboardForm.image && <img src={billboardForm.image} style={{ width: 60, height: 40, borderRadius: 4, objectFit: 'cover' }} />}
+                          <input type="file" accept="image/*" onChange={handleBillboardImageUpload} disabled={uploadingBillboard} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className={styles.subText}>Click-through Link (Optional)</label>
+                        <input 
+                          className="form-input w-full mt-1" 
+                          placeholder="e.g. /vendor/my-brand?sale=1"
+                          value={billboardForm.link}
+                          onChange={e => setBillboardForm({...billboardForm, link: e.target.value})}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                        <button type="button" className="btn btn-ghost flex-1" onClick={() => setIsEditingBillboard(false)}>Cancel</button>
+                        <button type="submit" className="btn btn-primary flex-1" disabled={isSettingsLoading || uploadingBillboard}>
+                          {isSettingsLoading ? <Loader2 size={16} className="spin" /> : 'Save Billboard'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
 
               {/* Flash Sales Section */}
               <div className={styles.promoOption} style={{ gridColumn: 'span 2' }}>

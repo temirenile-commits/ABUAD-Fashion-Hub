@@ -21,7 +21,7 @@ export default function MainSlider() {
       // 1. Fetch Organic Brand Boosts
       let query = supabase
         .from('brands')
-        .select('id, name, description, cover_url, billboard_boost_expires_at, sales_count')
+        .select('id, name, description, cover_url, billboard_boost_expires_at, sales_count, social_links')
         .or(`billboard_boost_expires_at.gt.${new Date().toISOString()},sales_count.gt.10`)
         .order('sales_count', { ascending: false })
         .limit(5);
@@ -57,13 +57,16 @@ export default function MainSlider() {
       }
 
       if (brandData && brandData.length > 0) {
-        mergedSlides.push(...brandData.map(b => ({
-          id: b.id,
-          image: b.cover_url || '/gold_fashion_banner_1_1776541486791.png',
-          title: b.name,
-          sub: b.description || 'Verified Campus Brand',
-          link: `/vendor/${b.id}`
-        })));
+        mergedSlides.push(...brandData.map(b => {
+          const social = b.social_links || {};
+          return {
+            id: b.id,
+            image: social.billboard_image || b.cover_url || '/gold_fashion_banner_1_1776541486791.png',
+            title: b.name,
+            sub: b.description || 'Verified Campus Brand',
+            link: social.billboard_link || `/vendor/${b.id}`
+          };
+        }));
       }
 
       if (mergedSlides.length > 0) {
