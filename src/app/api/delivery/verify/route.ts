@@ -59,8 +59,9 @@ export async function POST(req: Request) {
       message: 'Delivery verified and completed successfully!' 
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Delivery Verification Error:', error);
-    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Server error';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

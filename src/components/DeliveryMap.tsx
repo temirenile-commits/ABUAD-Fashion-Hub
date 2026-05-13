@@ -35,7 +35,8 @@ export default function DeliveryMap({ lat, lng, riderName }: DeliveryMapProps) {
         document.head.appendChild(script);
         script.onload = () => setMapLoaded(true);
     } else {
-        setMapLoaded(true);
+        const initMap = async () => setMapLoaded(true);
+        initMap();
     }
 
     return () => {

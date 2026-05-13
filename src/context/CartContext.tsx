@@ -25,15 +25,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Load cart from localStorage on init
   useEffect(() => {
-    const savedCart = localStorage.getItem('ab_fashion_cart');
-    if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart));
-      } catch (e) {
-        console.error('Failed to parse cart', e);
+    const initCart = async () => {
+      const savedCart = localStorage.getItem('ab_fashion_cart');
+      if (savedCart) {
+        try {
+          setCart(JSON.parse(savedCart));
+        } catch (e) {
+          console.error('Failed to parse cart', e);
+        }
       }
-    }
-    setIsInitialized(true);
+      setIsInitialized(true);
+    };
+    initCart();
   }, []);
 
   // Save cart to localStorage on change

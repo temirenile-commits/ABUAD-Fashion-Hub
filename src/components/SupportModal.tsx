@@ -10,10 +10,14 @@ export default function SupportModal({ isOpen, onClose }: { isOpen: boolean, onC
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    if (!isOpen) {
-       setCurrentIndex(0);
-       return;
-    }
+    const resetIndex = async () => {
+      if (!isOpen) {
+        setCurrentIndex(0);
+      }
+    };
+    resetIndex();
+    
+    if (!isOpen) return;
 
     const fetchSupportNumbers = async () => {
       setLoading(true);
@@ -36,9 +40,26 @@ export default function SupportModal({ isOpen, onClose }: { isOpen: boolean, onC
         const { data: uniSettings } = await supabase.from('platform_settings').select('*').eq('key', `uni_config_${uniId}`).single();
         const config = uniSettings?.value || {};
         
+        const supportList = [];
+        
+        // 1. Check for specific WhatsApp field
+        if (config.customer_service_whatsapp) {
+            supportList.push({ 
+                phone: config.customer_service_whatsapp, 
+                name: 'Campus Support', 
+                is_whatsapp: true 
+            });
+        }
+        
+        // 2. Check for traditional support numbers array
         if (config.support_numbers && config.support_numbers.length > 0) {
-            setNumbers(config.support_numbers);
+            supportList.push(...config.support_numbers);
+        }
+        
+        if (supportList.length > 0) {
+            setNumbers(supportList);
         } else {
+            // 3. Absolute Fallback
             setNumbers([{ phone: '+2347045592604', name: 'General Support', is_whatsapp: true }]);
         }
       } catch (e) {

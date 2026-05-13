@@ -73,7 +73,7 @@ export async function POST(req: Request) {
       ? await supabaseAdmin.from('platform_settings').select('value').eq('key', `uni_config_${universityId}`).single()
       : { data: null };
     
-    const uniConfig = (uniConfigData as any) || {};
+    const uniConfig = (uniConfigData as any)?.value || {};
     const settingsDeliveryFee = Number(uniConfig.delivery_base_fee) || Number(settingsResult.data?.value?.delivery_base_fee) || 1500;
     const dynamicCommissionRate = uniConfig.commission_rate !== undefined ? (Number(uniConfig.commission_rate) / 100) : commissionRate;
     

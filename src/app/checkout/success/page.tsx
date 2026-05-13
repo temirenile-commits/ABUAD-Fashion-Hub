@@ -13,10 +13,13 @@ function SuccessContent() {
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    if (!ref) {
-      setStatus('failed');
-      return;
-    }
+    const initStatus = async () => {
+      if (!ref) {
+        setStatus('failed');
+        return;
+      }
+    };
+    initStatus();
 
     const checkPayment = async () => {
       try {

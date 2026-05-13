@@ -145,6 +145,8 @@ interface Section {
   university_id?: string | null;
   universities?: University;
   auto_rule?: AutoRule;
+  banner_url?: string;
+  link_url?: string;
 }
 
 interface DeliveryAgent {
@@ -189,6 +191,10 @@ interface BoosterConfig {
 interface UniConfig {
   credit_price?: number;
   billboard_price?: number;
+  commission_rate?: number;
+  customer_service_whatsapp?: string;
+  delivery_base_fee?: number;
+  external_delivery_markup?: number;
   plans?: Record<string, PlanConfig>;
   boosters?: Record<string, BoosterConfig>;
   [key: string]: unknown;
@@ -237,7 +243,7 @@ export default function AdminDashboard() {
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [universities, setUniversities] = useState<University[]>([]);
   const [homepageSections, setHomepageSections] = useState<Section[]>([]);
-  const [sectionForm, setSectionForm] = useState<Partial<Section>>({ title: '', type: 'manual', layout_type: 'horizontal_scroll', is_active: true, priority: 0, auto_rule: { criteria: 'limited_stock', threshold: 5, limit: 12 } });
+  const [sectionForm, setSectionForm] = useState<Partial<Section>>({ title: '', type: 'manual', layout_type: 'horizontal_scroll', is_active: true, priority: 0, banner_url: '', link_url: '', auto_rule: { criteria: 'limited_stock', threshold: 5, limit: 12 } });
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [uniForm, setUniForm] = useState({ name: '', location: '', abbreviation: '' });
   const [uniCreating, setUniCreating] = useState(false);
@@ -1038,6 +1044,19 @@ export default function AdminDashboard() {
                           </select>
                         </div>
                       </div>
+
+                      {sectionForm.layout_type === 'banner' && (
+                        <div className="grid grid-cols-1 gap-4 mb-4">
+                          <div className="form-group">
+                            <label className="form-label">Banner Image URL</label>
+                            <input className="form-input" value={sectionForm.banner_url || ''} onChange={e => setSectionForm({...sectionForm, banner_url: e.target.value})} placeholder="https://..." />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Redirect Link URL (Optional)</label>
+                            <input className="form-input" value={sectionForm.link_url || ''} onChange={e => setSectionForm({...sectionForm, link_url: e.target.value})} placeholder="e.g. /vendor/abc" />
+                          </div>
+                        </div>
+                      )}
 
                       {sectionForm.type === 'automated' && (
                         <div className={styles.settingsBox} style={{ background: 'var(--bg-300)', marginBottom: '1.5rem' }}>
@@ -2275,13 +2294,37 @@ export default function AdminDashboard() {
                               />
                               <button 
                                 className="btn btn-primary btn-sm" 
-                                onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'external_delivery_markup', value: uniConfig.external_delivery_markup })}
+                                onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'external_delivery_markup', value: Number(uniConfig.external_delivery_markup) })}
                               >
                                 Save
                               </button>
                             </div>
                           </div>
                           <p className={styles.subText} style={{ fontSize: '0.75rem' }}>Note: Out-campus agents set their own base fees; this markup is added on top.</p>
+                        </div>
+
+                        <div className={styles.settingsBox} style={{ background: 'var(--bg-200)', border: '1px solid var(--gold)', marginTop: '1rem' }}>
+                          <h4 style={{ color: 'var(--gold)', marginBottom: '1rem' }}>Commission & Revenue</h4>
+                          <p className={styles.subText} style={{ marginBottom: '1rem' }}>Platform commission rate applied to all sales in this university.</p>
+                          
+                          <div className="mb-3">
+                            <label className={styles.subText}>Commission Rate (%)</label>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <input 
+                                type="number" 
+                                className="form-input" 
+                                value={(uniConfig.commission_rate as number) ?? ''} 
+                                onChange={(e) => setUniConfig({ ...uniConfig, commission_rate: Number(e.target.value) })}
+                                placeholder="e.g. 7.5"
+                              />
+                              <button 
+                                className="btn btn-primary btn-sm" 
+                                onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'commission_rate', value: Number(uniConfig.commission_rate) })}
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
                         </div>
 
                       </div>

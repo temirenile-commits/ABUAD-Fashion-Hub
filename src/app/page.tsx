@@ -67,10 +67,13 @@ export default function Home() {
     };
     fetchDiscovery();
 
-    try {
-      const prefs = JSON.parse(localStorage.getItem('user_prefs') || '[]');
-      if (Array.isArray(prefs)) setPreferredCategories(prefs);
-    } catch {}
+    const initPrefs = async () => {
+      try {
+        const prefs = JSON.parse(localStorage.getItem('user_prefs') || '[]');
+        if (Array.isArray(prefs)) setPreferredCategories(prefs);
+      } catch {}
+    };
+    initPrefs();
   }, []);
 
   const featuredVendors = useMemo(() => {

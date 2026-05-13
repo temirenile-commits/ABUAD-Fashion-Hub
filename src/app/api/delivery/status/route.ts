@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     // 2. Update Delivery Table
-    const updateData: any = { status };
+    const updateData: { status: string; picked_up_at?: string } = { status };
     if (status === 'picked_up') {
       updateData.picked_up_at = new Date().toISOString();
     }
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     // 3. Sync with Orders Table
     if (delivery.order_id) {
        const orderStatus = status === 'picked_up' ? 'in_transit' : status;
-       const orderUpdateData: any = { status: orderStatus };
+       const orderUpdateData: { status: string; picked_up_at?: string; in_transit_at?: string } = { status: orderStatus };
        if (status === 'picked_up') {
           orderUpdateData.picked_up_at = updateData.picked_up_at;
           orderUpdateData.in_transit_at = updateData.picked_up_at;
@@ -67,8 +67,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Delivery Status Update Error:', error);
-    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Server error';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

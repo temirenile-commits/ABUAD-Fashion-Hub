@@ -26,8 +26,6 @@ const eslintConfig = defineConfig([
       "react/no-unescaped-entities": "warn",
       "@next/next/no-img-element": "warn",
       "prefer-const": "warn",
-      // React compiler plugin rules — warn only
-      "react-compiler/react-compiler": "warn",
     },
   },
 ]);

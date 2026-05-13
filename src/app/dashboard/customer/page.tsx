@@ -59,7 +59,7 @@ export default function CustomerDashboard() {
         .select(`
           *,
           products (title, media_urls),
-          brands (name),
+          brands (name, delivery_scope),
           deliveries (
             id,
             status,
@@ -258,6 +258,26 @@ export default function CustomerDashboard() {
                     <div className={styles.escrowBanner} style={{ margin: '0 1.5rem 1.5rem' }}>
                       <Clock size={14} />
                       <span>Secured in Escrow. Waiting for vendor to prepare.</span>
+                    </div>
+                  )}
+
+                  {/* External Delivery Window Notice */}
+                  {(order.brands as any)?.delivery_scope === 'out-school' && order.status !== 'delivered' && (
+                    <div style={{ 
+                      margin: '0 1.5rem 1.5rem', 
+                      padding: '0.75rem 1rem', 
+                      background: 'rgba(235, 12, 122, 0.05)', 
+                      border: '1px dashed var(--primary-40)', 
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      color: 'var(--primary)'
+                    }}>
+                      <Clock size={16} />
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                        External Order Window: <span style={{ opacity: 0.8 }}>Estimated delivery is 5 days from order date.</span>
+                      </div>
                     </div>
                   )}
                 </div>

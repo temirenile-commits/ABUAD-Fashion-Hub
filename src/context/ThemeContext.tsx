@@ -15,17 +15,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
-    // 1. Check local storage
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.classList.toggle('light-mode', savedTheme === 'light');
-    } else {
-      // 2. Check system preference
-      const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-      setTheme(systemTheme);
-      document.documentElement.classList.toggle('light-mode', systemTheme === 'light');
-    }
+    const initTheme = async () => {
+      // 1. Check local storage
+      const savedTheme = localStorage.getItem('theme') as Theme;
+      if (savedTheme) {
+        setTheme(savedTheme);
+        document.documentElement.classList.toggle('light-mode', savedTheme === 'light');
+      } else {
+        // 2. Check system preference
+        const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        setTheme(systemTheme);
+        document.documentElement.classList.toggle('light-mode', systemTheme === 'light');
+      }
+    };
+    initTheme();
   }, []);
 
   const toggleTheme = () => {

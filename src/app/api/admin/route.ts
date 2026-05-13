@@ -481,7 +481,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'create_homepage_section') {
-    const { title, description, type, layout_type, priority, is_active, auto_rule, university_id } = body;
+    const { title, description, type, layout_type, priority, is_active, auto_rule, university_id, banner_url, link_url } = body;
     const { error } = await supabaseAdmin.from('homepage_sections').insert({
       title,
       description,
@@ -490,7 +490,9 @@ export async function POST(req: NextRequest) {
       priority,
       is_active,
       auto_rule,
-      university_id: university_id || null
+      university_id: university_id || null,
+      banner_url,
+      link_url
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });

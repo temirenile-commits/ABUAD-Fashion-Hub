@@ -3,8 +3,52 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
-// GET — List all universities
+// GET — List all universities or get rankings
 export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const action = searchParams.get('action');
+
+  if (action === 'rankings') {
+    // 1. Fetch all active universities
+    const { data: unis, error: uniError } = await supabaseAdmin
+      .from('universities')
+      .select('id, name, abbreviation, logo_url')
+      .eq('is_active', true);
+    
+    if (uniError) return NextResponse.json({ error: uniError.message }, { status: 500 });
+
+    // 2. Get the start of the current month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    // 3. Fetch all delivered orders for this month
+    const { data: orders, error: orderError } = await supabaseAdmin
+      .from('orders')
+      .select('total_amount, brands(university_id)')
+      .gte('created_at', startOfMonth.toISOString())
+      .in('status', ['delivered', 'confirmed', 'completed']);
+
+    if (orderError) return NextResponse.json({ error: orderError.message }, { status: 500 });
+
+    // 4. Aggregate revenue per university
+    const revenueMap: Record<string, number> = {};
+    orders?.forEach((o: any) => {
+      const uniId = o.brands?.university_id;
+      if (uniId) {
+        revenueMap[uniId] = (revenueMap[uniId] || 0) + Number(o.total_amount);
+      }
+    });
+
+    // 5. Combine with university data and sort
+    const rankings = unis.map(u => ({
+      ...u,
+      monthly_revenue: revenueMap[u.id] || 0
+    })).sort((a, b) => b.monthly_revenue - a.monthly_revenue);
+
+    return NextResponse.json({ rankings });
+  }
+
   const { data, error } = await supabaseAdmin
     .from('universities')
     .select('*')

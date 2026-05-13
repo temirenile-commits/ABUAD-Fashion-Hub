@@ -134,9 +134,19 @@ export default function VendorDashboard() {
   const [isEditingBillboard, setIsEditingBillboard] = useState(false);
   const [billboardForm, setBillboardForm] = useState({ image: '', link: '' });
   const [uploadingBillboard, setUploadingBillboard] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (brand) setTempName(brand.name);
+    if (redirectUrl) {
+      window.location.href = redirectUrl;
+    }
+  }, [redirectUrl]);
+
+  useEffect(() => {
+    const initTempName = async () => {
+      if (brand) setTempName(brand.name);
+    };
+    initTempName();
   }, [brand]);
 
   useEffect(() => {
@@ -737,7 +747,7 @@ export default function VendorDashboard() {
 
       const data = await res.json();
       if (data.authorization_url) {
-        window.location.href = data.authorization_url;
+        setRedirectUrl(data.authorization_url);
       } else {
         alert(data.error || 'Payment initialization failed');
       }

@@ -56,20 +56,20 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const markAllRead = useCallback(() => setUnreadCount(0), []);
 
   useEffect(() => {
-    // Read current permission state
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      setPermission(Notification.permission);
-    }
-
     let cleanup: (() => void) | undefined;
 
     const boot = async () => {
+      // Read current permission state
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        setPermission(Notification.permission);
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const userId = session.user.id;
       userIdRef.current = userId;
 
-      // â”€â”€ Auto-prompt permission for logged-in users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ————————————————————— Auto-prompt permission for logged-in users ——————————————————————————————————————————————————————
       if (Notification.permission === 'default') {
         await requestPermission();
       }

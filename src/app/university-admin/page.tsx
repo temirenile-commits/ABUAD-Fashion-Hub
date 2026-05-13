@@ -14,7 +14,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 
-type Tab = "overview"|"vendors"|"customers"|"orders"|"reviews"|"notices"|"analytics"|"insights"|"fleet"|"team"|"catalog"|"merchandising";
+type Tab = "overview" | "vendors" | "customers" | "orders" | "reviews" | "notices" | "analytics" | "insights" | "fleet" | "team" | "catalog" | "merchandising" | "settings";
 
 async function uaFetch(path: string, opts: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -46,6 +46,7 @@ export default function UniversityAdminPage() {
   const [team, setTeam] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [staffSearch, setStaffSearch] = useState("");
+  const [platformSettings, setPlatformSettings] = useState<any>({});
 
   const [notifForm, setNotifForm] = useState({ title:"", content:"", target:"all" });
   const [notifSending, setNotifSending] = useState(false);
@@ -103,6 +104,7 @@ export default function UniversityAdminPage() {
         }
         setUserCtx(profile);
         setMyUniversity(profile.universities);
+        if (profile.universities?.config) setPlatformSettings(profile.universities.config);
       }
     };
     init();
@@ -169,7 +171,7 @@ export default function UniversityAdminPage() {
   const TABS: [Tab, string, any][] = [
     ["overview","Overview",LayoutDashboard],["vendors","Vendors",Store],["catalog","Catalog",ShoppingCart],["customers","Customers",Users],
     ["orders","Orders",ShoppingCart],["reviews","Reviews",Star],["notices","Notices",Bell],["merchandising", "Merchandising", Tag],
-    ["analytics","Analytics",BarChart3],["insights","Insights",Globe],["fleet","Fleet",Truck],["team","My Team",Shield],
+    ["analytics","Analytics",BarChart3],["insights","Insights",Globe],["fleet","Fleet",Truck],["team","My Team",Shield], ["settings", "Settings", Settings],
   ];
 
   const hasAccess = (tabId: string) => {
@@ -860,6 +862,48 @@ export default function UniversityAdminPage() {
                         </div>
                      </div>
                   </dialog>
+                </div>
+              )}
+
+              {tab === "settings" && (
+                <div className={styles.sectionCard}>
+                  <div className={styles.sectionHeader}>
+                    <div>
+                      <h2>Campus Settings</h2>
+                      <p>Configure university-specific options and support channels.</p>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.notifForm} style={{ maxWidth: '600px' }}>
+                    <div className="mb-6">
+                      <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Customer Service</h3>
+                      <p className={styles.subText} style={{ marginBottom: '1.5rem' }}>
+                        Set your university&apos;s dedicated WhatsApp support number. Students will see this when they need help.
+                      </p>
+                      
+                      <div className="form-group mb-4">
+                        <label className={styles.formLabel}>WhatsApp Support Number</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input 
+                            className={styles.formInput} 
+                            placeholder="e.g. 2347012345678" 
+                            value={platformSettings.customer_service_whatsapp || ''} 
+                            onChange={e => setPlatformSettings({...platformSettings, customer_service_whatsapp: e.target.value})} 
+                          />
+                          <button 
+                            className={styles.btnPrimary}
+                            onClick={() => action("update_uni_config", { key: 'customer_service_whatsapp', value: platformSettings.customer_service_whatsapp })}
+                            disabled={!!actionLoading}
+                          >
+                            {actionLoading ? <Loader2 size={14} className={styles.spin} /> : 'Save'}
+                          </button>
+                        </div>
+                        <p className={styles.subText} style={{ fontSize: '0.7rem', marginTop: '0.5rem' }}>
+                          Format: Country code first (e.g., 234 for Nigeria) followed by the number. No spaces or &apos;+&apos; sign.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </>
