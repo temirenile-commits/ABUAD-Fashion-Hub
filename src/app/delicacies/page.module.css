@@ -91,6 +91,115 @@
   max-width: 420px;
 }
 
+/* ── BILLBOARD CAROUSEL ── */
+.billboardWrap {
+  margin-bottom: 2rem;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #0d0d0d;
+  height: 240px;
+  position: relative;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.billboardSlide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease-in-out, transform 0.8s ease-in-out;
+  transform: translateX(20px);
+}
+
+.billboardSlideActive {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+.billboardContent {
+  flex: 1;
+  z-index: 1;
+}
+
+.billboardLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #f59e0b;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.billboardTitle {
+  font-size: clamp(1.4rem, 4vw, 2.2rem);
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  line-height: 1.1;
+}
+
+.billboardMeta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.85rem;
+}
+
+.billboardPrice {
+  color: #f59e0b;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.billboardMedia {
+  width: 320px;
+  height: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  margin-left: 2rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .billboardWrap { height: auto; min-height: 200px; }
+  .billboardSlide { flex-direction: column; text-align: center; padding: 1.5rem; gap: 1rem; }
+  .billboardMedia { width: 100%; margin-left: 0; height: 160px; }
+  .billboardMeta { justify-content: center; }
+}
+
+.billboardDots {
+  position: absolute;
+  bottom: 1rem;
+  left: 2rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 2;
+}
+
+.billboardDot {
+  width: 24px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.2);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.billboardDotActive {
+  background: #f59e0b;
+  width: 40px;
+}
+
 /* ── CATEGORY TABS ── */
 .catTabs {
   display: flex;

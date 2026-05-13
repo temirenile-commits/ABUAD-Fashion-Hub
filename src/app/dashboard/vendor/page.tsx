@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera, MapPin, Navigation, Eye, ShoppingBag , Globe, Phone } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera, MapPin, Navigation, Eye, ShoppingBag , Globe, Phone, UtensilsCrossed } from 'lucide-react';
 import Papa from 'papaparse';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
@@ -99,6 +99,9 @@ export default function VendorDashboard() {
   const [banks, setBanks] = useState<any[]>([]);
   const [verifyingBank, setVerifyingBank] = useState(false);
   const [isSettingUpBank, setIsSettingUpBank] = useState(false);
+  const [delicaciesBillboardDays, setDelicaciesBillboardDays] = useState(1);
+  const [buyingDelicaciesBillboard, setBuyingDelicaciesBillboard] = useState(false);
+  const [activeDelicaciesBillboard, setActiveDelicaciesBillboard] = useState<any>(null);
 
   // AI States
   const [aiSettings, setAiSettings] = useState<any>(null);
@@ -274,12 +277,23 @@ export default function VendorDashboard() {
         .order('created_at', { ascending: false });
       setWithdrawalRequests(withdrawData || []);
 
-      // Fetch Promo Codes
       const { data: promoData } = await supabase
         .from('promo_codes')
         .select('*')
         .eq('brand_id', brandData.id);
       setPromoCodes(promoData || []);
+
+      // Fetch active delicacies billboard
+      const { data: activeDelBillboard } = await supabase
+        .from('delicacies_billboards')
+        .select('*')
+        .eq('brand_id', brandData.id)
+        .eq('active', true)
+        .gt('expires_at', new Date().toISOString())
+        .order('expires_at', { ascending: false })
+        .limit(1)
+        .single();
+      setActiveDelicaciesBillboard(activeDelBillboard || null);
 
       // Fetch Reviews
       const { data: reviewData } = await supabase
@@ -831,6 +845,41 @@ export default function VendorDashboard() {
       addToast('Failed to update billboard', 'error');
     } finally {
       setIsSettingsLoading(false);
+    }
+  };
+
+  const handleBuyDelicaciesBillboard = async () => {
+    if (!brand || !brand.university_id) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    setBuyingDelicaciesBillboard(true);
+    try {
+      const res = await fetch('/api/delicacies/billboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: session.user.id,
+          brandId: brand.id,
+          universityId: brand.university_id,
+          days: delicaciesBillboardDays
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert(`🚀 Billboard activated for ${delicaciesBillboardDays} days!`);
+        // Refresh wallet balance
+        const { data: walletData } = await supabase.from('wallets').select('balance').eq('user_id', session.user.id).single();
+        if (walletData) setWallet(walletData);
+      } else {
+        alert(data.error || 'Failed to purchase billboard');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred during purchase');
+    } finally {
+      setBuyingDelicaciesBillboard(false);
     }
   };
 
@@ -2475,6 +2524,53 @@ export default function VendorDashboard() {
                   >
                     Boost Store ??
                   </button>
+                )}
+              </div>
+
+              {/* Delicacies Premium Billboard */}
+              <div className={styles.promoOption} style={{ 
+                border: '2px solid #f59e0b', 
+                background: activeDelicaciesBillboard ? 'rgba(245,158,11,0.1)' : 'var(--bg-300)'
+              }}>
+                <div className={styles.promoIcon}><UtensilsCrossed size={24} color="#f59e0b" /></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <h3 style={{ margin: 0 }}>Delicacies Billboard</h3>
+                  <span className="badge badge-primary" style={{ background: '#f59e0b' }}>PREMIUM</span>
+                </div>
+                <p>Featured in the main carousel on the Delicacies Marketplace. Drive massive visibility to your campus eats.</p>
+                
+                {activeDelicaciesBillboard ? (
+                  <div className={styles.activeStatus}>
+                    <CheckCircle size={14} color="#10b981" /> 
+                    <span>Active until {new Date(activeDelicaciesBillboard.expires_at).toLocaleDateString()}</span>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                      <label className={styles.subText} style={{ margin: 0 }}>Duration:</label>
+                      <select 
+                        className="form-input" 
+                        style={{ padding: '0.2rem 0.5rem', width: 'auto' }}
+                        value={delicaciesBillboardDays}
+                        onChange={(e) => setDelicaciesBillboardDays(Number(e.target.value))}
+                      >
+                        {[1, 2, 3, 5, 7, 14, 30].map(d => (
+                          <option key={d} value={d}>{d} {d === 1 ? 'day' : 'days'}</option>
+                        ))}
+                      </select>
+                      <span style={{ fontWeight: 800, color: 'var(--text-100)' }}>
+                        ₦{Number(delicaciesBillboardDays * 500).toLocaleString()}
+                      </span>
+                    </div>
+                    <button 
+                      className="btn btn-primary btn-sm" 
+                      style={{ background: '#f59e0b', border: 'none', width: '100%' }}
+                      onClick={handleBuyDelicaciesBillboard}
+                      disabled={buyingDelicaciesBillboard}
+                    >
+                      {buyingDelicaciesBillboard ? <Loader2 size={14} className="anim-spin" /> : 'Buy Advert Space 🚀'}
+                    </button>
+                  </div>
                 )}
               </div>
 

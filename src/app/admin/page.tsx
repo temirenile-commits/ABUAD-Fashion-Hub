@@ -1518,6 +1518,30 @@ export default function AdminDashboard() {
                           </button>
                         </div>
                       </div>
+
+                      {/* Billboard Pricing */}
+                      <div>
+                        <label className={styles.subText} style={{ display: 'block', marginBottom: '0.4rem' }}>Billboard Price/Day (₦)</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input 
+                            type="number" 
+                            className="form-input" 
+                            style={{ width: '140px', height: '36px' }}
+                            value={platformSettings.delicacies_billboard_price?.price_per_day ?? 500}
+                            onChange={(e) => setPlatformSettings({ 
+                              ...platformSettings, 
+                              delicacies_billboard_price: { price_per_day: Number(e.target.value) } 
+                            })}
+                          />
+                          <button 
+                            className="btn btn-primary btn-sm" 
+                            style={{ background: '#f59e0b', color: '#fff', border: 'none' }}
+                            onClick={() => adminAction('update_settings', { key: 'delicacies_billboard_price', value: { price_per_day: platformSettings.delicacies_billboard_price?.price_per_day || 500 } })}
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
 

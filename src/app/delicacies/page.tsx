@@ -67,6 +67,8 @@ export default function DelicaciesPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [universityId, setUniversityId] = useState<string | null>(null);
+  const [billboards, setBillboards] = useState<any[]>([]);
+  const [billboardIdx, setBillboardIdx] = useState(0);
 
   // Fetch user university
   useEffect(() => {
@@ -90,24 +92,35 @@ export default function DelicaciesPage() {
     const fetchAll = async () => {
       setLoading(true);
       try {
-        const [prodRes, rankRes, catRes] = await Promise.all([
+        const [prodRes, rankRes, catRes, billRes] = await Promise.all([
           fetch(`/api/delicacies?universityId=${universityId}&limit=60`),
           fetch(`/api/delicacies/rankings?universityId=${universityId}`),
           fetch('/api/delicacies/categories'),
+          fetch(`/api/delicacies/billboard?universityId=${universityId}`),
         ]);
 
-        const [prodData, rankData, catData] = await Promise.all([
-          prodRes.json(), rankRes.json(), catRes.json()
+        const [prodData, rankData, catData, billData] = await Promise.all([
+          prodRes.json(), rankRes.json(), catRes.json(), billRes.json()
         ]);
 
         setProducts(prodData.products || []);
         setRankings(rankData.rankings || []);
         setCategories(catData.categories || []);
+        setBillboards(billData.billboards || []);
       } catch { /* silent */ }
       finally { setLoading(false); }
     };
     fetchAll();
   }, [universityId]);
+
+  // Billboard Auto-rotation
+  useEffect(() => {
+    if (billboards.length <= 1) return;
+    const timer = setInterval(() => {
+      setBillboardIdx(prev => (prev + 1) % billboards.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [billboards.length]);
 
   const filtered = useMemo(() => {
     let list = products;
@@ -145,10 +158,62 @@ export default function DelicaciesPage() {
       </div>
 
       <div className={styles.container}>
-        {/* ── BATCH WINDOW TIMER (HIDDEN PER USER REQUEST) ── */}
-        {/* <div className={styles.timerWrap}>
-          <BatchWindowTimer />
-        </div> */}
+        {/* ── PREMIUM BILLBOARD CAROUSEL ── */}
+        {billboards.length > 0 && (
+          <div className={styles.billboardWrap}>
+            {billboards.map((bill, i) => (
+              <div 
+                key={bill.id} 
+                className={`${styles.billboardSlide} ${i === billboardIdx ? styles.billboardSlideActive : ''}`}
+              >
+                <div className={styles.billboardContent}>
+                  <div className={styles.billboardLabel}>
+                    <Star size={12} fill="currentColor" /> Premium Feature
+                  </div>
+                  <h2 className={styles.billboardTitle}>
+                    {bill.products?.title || bill.brands?.name || 'Delicacies Special'}
+                  </h2>
+                  <div className={styles.billboardMeta}>
+                    <span className={styles.billboardPrice}>
+                      ₦{Number(bill.products?.price || 0).toLocaleString()}
+                    </span>
+                    <span>By {bill.brands?.name}</span>
+                  </div>
+                  <Link 
+                    href={bill.products?.id ? `/product/${bill.products.id}` : `/vendor/${bill.brands?.id}`}
+                    className="btn btn-primary" 
+                    style={{ marginTop: '1.5rem', background: '#f59e0b', border: 'none', borderRadius: '999px' }}
+                  >
+                    View Offer <ArrowRight size={16} />
+                  </Link>
+                </div>
+                
+                <div className={styles.billboardMedia}>
+                  <img 
+                    src={bill.products?.image_url || bill.products?.media_urls?.[0] || bill.brands?.logo_url || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800'} 
+                    alt="" 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+              </div>
+            ))}
+            
+            {billboards.length > 1 && (
+              <div className={styles.billboardDots}>
+                {billboards.map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`${styles.billboardDot} ${i === billboardIdx ? styles.billboardDotActive : ''}`}
+                    onClick={() => setBillboardIdx(i)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Fallback space if no billboards (Hidden Timer) */}
+        {billboards.length === 0 && <div style={{ height: '1.5rem' }} />}
 
         {/* ── CATEGORY TABS ── */}
         <div className={styles.catTabs}>
