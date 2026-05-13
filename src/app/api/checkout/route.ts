@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const [productsResult, profileResult, settingsResult, promoResult] = await Promise.all([
       supabaseAdmin
         .from('products')
-        .select('id, title, brand_id, price, stock_count, brands(verified, fee_paid, delivery_scope, assigned_delivery_system)')
+        .select('id, title, brand_id, price, stock_count, university_id, brands(verified, fee_paid, delivery_scope, assigned_delivery_system)')
         .in('id', productIds),
       supabaseAdmin
         .from('users')
@@ -68,7 +68,13 @@ export async function POST(req: Request) {
     const hasPlatform = liveProducts.some((p: any) => (Array.isArray(p.brands) ? p.brands[0].assigned_delivery_system : p.brands?.assigned_delivery_system) === 'platform');
     
     // Fetch dynamic fees from settings
-    const settingsDeliveryFee = Number(settingsResult.data?.value?.delivery_base_fee) || 1500;
+    const universityId = liveProducts[0]?.university_id;
+    const { data: uniConfigData } = universityId 
+      ? await supabaseAdmin.from('platform_settings').select('value').eq('key', `uni_config_${universityId}`).single()
+      : { data: null };
+    
+    const uniConfig = (uniConfigData as any) || {};
+    const settingsDeliveryFee = Number(uniConfig.delivery_base_fee) || Number(settingsResult.data?.value?.delivery_base_fee) || 1500;
     
     let totalDeliveryFee = 0;
     if (hasPlatform) {
@@ -78,7 +84,7 @@ export async function POST(req: Request) {
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 30);
 
-    const ordersToInsert = items.map((item: { productId: string; quantity: number; price: number; brandId: string }, index: number) => {
+    const ordersToInsert = items.map((item: { productId: string; quantity: number; price: number; brandId: string; is_preorder?: boolean; preorder_arrival_date?: string; variants_selected?: Record<string, string> }, index: number) => {
       const liveProduct = liveProducts.find(p => p.id === item.productId);
       const originalPrice = liveProduct?.price || item.price;
       const isFirst = index === 0;
@@ -133,6 +139,9 @@ export async function POST(req: Request) {
         delivery_code: deliveryCode,
         delivery_fee_charged: itemDeliveryFee, // Explicitly track the fee
         university_id: brandData?.university_id, // Explicitly tag with university for scoping
+        is_preorder: item.is_preorder || false,
+        preorder_arrival_date: item.preorder_arrival_date || null,
+        variants_selected: item.variants_selected || {},
       };
     });
 

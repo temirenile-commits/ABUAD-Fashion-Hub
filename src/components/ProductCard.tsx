@@ -30,6 +30,9 @@ export interface LiveProduct {
   sales_count: number;
   boost_level: number;
   visibility_type?: 'university' | 'global';
+  is_preorder?: boolean;
+  preorder_arrival_date?: string;
+  variants?: any[];
   university_id?: string;
   brands: {
     id: string;

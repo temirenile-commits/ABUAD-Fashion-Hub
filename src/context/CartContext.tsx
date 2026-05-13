@@ -4,11 +4,12 @@ import { LiveProduct } from '@/components/ProductCard';
 
 export interface CartItem extends LiveProduct {
   quantity: number;
+  variants_selected?: Record<string, string>;
 }
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: LiveProduct, quantity?: number) => void;
+  addToCart: (product: LiveProduct, quantity?: number, variants_selected?: Record<string, string>) => void;
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
   updateQuantity: (productId: string, quantity: number) => void;
@@ -42,15 +43,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [cart, isInitialized]);
 
-  const addToCart = (product: LiveProduct, quantity: number = 1) => {
+  const addToCart = (product: LiveProduct, quantity: number = 1, variants_selected?: Record<string, string>) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
+      // Create a unique hash or string to identify the same product with the same variants
+      const variantKey = variants_selected ? JSON.stringify(variants_selected) : '';
+      const existingItem = prevCart.find((item) => item.id === product.id && (item.variants_selected ? JSON.stringify(item.variants_selected) : '') === variantKey);
+      
       if (existingItem) {
         return prevCart.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+          (item.id === product.id && (item.variants_selected ? JSON.stringify(item.variants_selected) : '') === variantKey) 
+            ? { ...item, quantity: item.quantity + quantity } 
+            : item
         );
       }
-      return [...prevCart, { ...product, quantity }];
+      return [...prevCart, { ...product, quantity, variants_selected }];
     });
   };
 

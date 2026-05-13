@@ -154,7 +154,7 @@ export async function GET(req: NextRequest) {
     let userQuery = supabaseAdmin.from('users').select('*', { count: 'exact', head: true });
     let brandQuery = supabaseAdmin.from('brands').select('id', { count: 'exact', head: true });
     let productQuery = supabaseAdmin.from('products').select('id', { count: 'exact', head: true });
-    let orderQuery = supabaseAdmin.from('orders').select('total_amount, admin_discount').eq('status', 'paid');
+    let orderQuery = supabaseAdmin.from('orders').select('total_amount, admin_discount').in('status', ['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered', 'received']);
 
     if (uniId) {
       userQuery = userQuery.eq('university_id', uniId);
@@ -293,7 +293,7 @@ export async function GET(req: NextRequest) {
     const { data: salesData } = await supabaseAdmin
       .from('orders')
       .select('created_at, total_amount, admin_discount')
-      .eq('status', 'paid')
+      .in('status', ['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered', 'received'])
       .order('created_at', { ascending: true });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

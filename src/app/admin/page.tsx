@@ -5,14 +5,14 @@ import Link from 'next/link';
 import {
   Users, Store, ShoppingBag, TrendingUp, XCircle,
   Search, RefreshCw, Trash2, Star, Eye, ShoppingCart, Loader2, CreditCard, AlertTriangle, Settings, Bell,
-  BarChart3, Activity, ExternalLink, MapPin, Tag, ArrowLeft, ShieldAlert, ShieldCheck
+  BarChart3, Activity, ExternalLink, MapPin, Tag, ArrowLeft, ShieldAlert, ShieldCheck, Clock
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
 import TradingChart from '@/components/TradingChart';
 import { useToast } from '@/context/ToastContext';
 
-type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds';
+type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds' | 'preorders';
 
 interface University {
   id: string;
@@ -493,6 +493,7 @@ export default function AdminDashboard() {
             ['users', 'Users', Users],
             ['orders', 'Orders', ShoppingCart],
             ['financials', 'Payouts', CreditCard],
+            ['preorders', 'Pre-orders', Clock],
             ['refunds', 'Refund Queue', ShieldAlert],
             ['promotions', 'Promotions ', Star],
             ['merchandising', 'Merchandising', Tag],
@@ -1275,6 +1276,58 @@ export default function AdminDashboard() {
                     ))}
                   </tbody>
                 </table></div>
+              </div>
+            )}
+
+            {activeTab === 'preorders' && (
+              <div className={styles.sectionCard}>
+                <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h2>Pre-order Logistics & Payouts</h2>
+                    <p className={styles.subText}>Monitor pre-orders, arrival dates, and escrow states. Payouts trigger when deliveries are verified.</p>
+                  </div>
+                </div>
+
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr><th>Order ID</th><th>Customer</th><th>Vendor</th><th>Arrival Date</th><th>Status</th><th>Escrow Action</th></tr>
+                    </thead>
+                    <tbody>
+                      {orders.filter((o: any) => o.is_preorder).map((o: any) => (
+                        <tr key={o.id}>
+                          <td className={styles.subText}>#{o.id.slice(0, 8)}</td>
+                          <td>
+                            <div>{o.users?.name || 'Customer'}</div>
+                            <div className={styles.subText}>{o.users?.email}</div>
+                          </td>
+                          <td>
+                            <div style={{ fontWeight: 600 }}>{o.brands?.name}</div>
+                            <div className={styles.subText} style={{ fontSize: '0.7rem' }}>📍 {o.universities?.abbreviation || 'General'}</div>
+                          </td>
+                          <td>
+                            {o.preorder_arrival_date ? new Date(o.preorder_arrival_date).toLocaleDateString() : 'TBD'}
+                          </td>
+                          <td>
+                            <span className={`badge badge-${o.status}`}>{o.status}</span>
+                          </td>
+                          <td>
+                            {['delivered', 'received'].includes(o.status) ? (
+                               <span className="badge" style={{ background: 'var(--success)' }}>Payout Eligible</span>
+                            ) : o.status === 'cancelled_delivery' ? (
+                               <span className="badge" style={{ background: '#ef4444' }}>Refund Initiated</span>
+                            ) : (
+                               <span className="badge" style={{ background: 'var(--bg-300)', color: 'var(--text-300)' }}>Locked in Escrow</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {orders.filter((o: any) => o.is_preorder).length === 0 && (
+                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>No pre-orders currently in the system.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
@@ -2118,6 +2171,30 @@ export default function AdminDashboard() {
                               ))}
                             </div>
                           )}
+                        </div>
+
+                        <div className={styles.settingsBox} style={{ background: 'var(--bg-200)', border: '1px solid var(--success)', marginTop: '1.5rem' }}>
+                          <h4 style={{ color: 'var(--success)', marginBottom: '1rem' }}>Logistics & Delivery Configuration</h4>
+                          <p className={styles.subText} style={{ marginBottom: '1rem' }}>Set campus-specific delivery rates and logistics rules.</p>
+                          
+                          <div className="mb-3">
+                            <label className={styles.subText}>Delivery Base Fee (₦)</label>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <input 
+                                type="number" 
+                                className="form-input" 
+                                value={(uniConfig.delivery_base_fee as number) || ''} 
+                                onChange={(e) => setUniConfig({ ...uniConfig, delivery_base_fee: Number(e.target.value) })}
+                                placeholder="e.g. 1500"
+                              />
+                              <button 
+                                className="btn btn-primary btn-sm" 
+                                onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'delivery_base_fee', value: uniConfig.delivery_base_fee })}
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
                         </div>
 
                       </div>

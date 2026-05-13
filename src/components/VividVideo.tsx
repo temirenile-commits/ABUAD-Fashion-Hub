@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 interface Props {
   src: string;
@@ -17,8 +17,9 @@ interface Props {
  */
 export default function VividVideo({ src, className, style }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  // Generate a stable unique ID for this instance
-  const instanceId = useRef(`vid_${Math.random().toString(36).substr(2, 9)}`);
+  // Generate a stable unique ID for this instance using useId
+  const uid = useId();
+  const instanceId = useRef(`vid_${uid.replace(/:/g, '')}`);
   const [isMuted, setIsMuted] = useState(true);
 
   useEffect(() => {
@@ -60,8 +61,9 @@ export default function VividVideo({ src, className, style }: Props) {
     );
 
     // Listener for audio focus changes
-    const handleFocusChange = (e: any) => {
-      if (e.detail.id === instanceId.current) {
+    const handleFocusChange = (e: Event) => {
+      const detail = (e as CustomEvent<{ id: string }>).detail;
+      if (detail.id === instanceId.current) {
         // We have focus! Unmute.
         video.muted = false;
         setIsMuted(false);

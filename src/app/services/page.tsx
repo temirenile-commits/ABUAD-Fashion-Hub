@@ -64,7 +64,7 @@ export default function ServicesPage() {
           <div className={styles.grid}>
             {filtered.map((svc) => {
               const brand = svc.brands;
-              const waMessage = `Hi ${brand.name}! I found you on Master Cart and I'm interested in your service: *${svc.title}*. Please share more details.`;
+              const waMessage = `Hi ${brand?.name ?? 'there'}! I found you on Master Cart and I'm interested in your service: *${svc.title}*. Please share more details.`;
               const normalizeNgPhone = (num: string) => {
                 const digits = (num || '').replace(/\D/g, '');
                 if (digits.startsWith('234')) return digits;
@@ -72,7 +72,7 @@ export default function ServicesPage() {
                 if (digits.length === 10) return '234' + digits;
                 return digits || '2348000000000';
               };
-              const whatsapp = normalizeNgPhone(brand.whatsapp_number);
+              const whatsapp = normalizeNgPhone(brand?.whatsapp_number ?? '');
 
               return (
                 <div key={svc.id} className={styles.serviceCard}>
@@ -89,7 +89,7 @@ export default function ServicesPage() {
                     <span className={`badge badge-gold ${styles.typeBadge}`}>
                       {svc.service_type}
                     </span>
-                    {brand.verified && (
+                    {brand?.verified && (
                       <div className={styles.verifiedBadge}>
                         <CheckCircle size={13} className="verified-icon" />
                         <span>Verified</span>
@@ -100,8 +100,8 @@ export default function ServicesPage() {
                   {/* Content */}
                   <div className={styles.cardBody}>
                     <div className={styles.brandRow}>
-                      <span className={styles.brandName}>{brand.name}</span>
-                      {brand.verified && <CheckCircle size={13} className="verified-icon" />}
+                      <span className={styles.brandName}>{brand?.name}</span>
+                      {brand?.verified && <CheckCircle size={13} className="verified-icon" />}
                     </div>
 
                     <h3 className={styles.title}>{svc.title}</h3>

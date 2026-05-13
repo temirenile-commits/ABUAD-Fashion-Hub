@@ -36,16 +36,7 @@ export default function ReviewSection({ productId }: { productId: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
-      fetchReviews();
-    };
-    init();
-  }, [productId]);
+  const [user, setUser] = useState<{ id: string } | null>(null);
 
   const fetchReviews = async () => {
     const { data, error } = await supabase
@@ -57,9 +48,19 @@ export default function ReviewSection({ productId }: { productId: string }) {
       .eq('product_id', productId)
       .order('created_at', { ascending: false });
     
-    if (!error) setReviews(data as any);
+    if (!error) setReviews(data as Review[]);
     setLoading(false);
   };
+
+  useEffect(() => {
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ? { id: session.user.id } : null);
+      fetchReviews();
+    };
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useId } from 'react';
 import {
   AreaChart,
   Area,
@@ -26,8 +26,9 @@ interface TradingChartProps {
 }
 
 export default function TradingChart({ data, title, color = '#10b981', height = 300 }: TradingChartProps) {
-  // Generate a unique ID for the gradient to avoid collisions
-  const gradientId = `colorValue-${Math.random().toString(36).substr(2, 9)}`;
+  // Generate a stable unique ID for the gradient to avoid collisions
+  const uid = useId();
+  const gradientId = `colorValue-${uid.replace(/:/g, '')}`;
 
   return (
     <div className={styles.chartContainer}>

@@ -173,11 +173,14 @@ function CheckoutContent() {
           // Delivery info is now inferred on server from vendor configs
           shippingAddress: address,
           promoCode: promoApplied,
-          items: cart.map((item: LiveProduct & { quantity: number }) => ({
+          items: cart.map((item: LiveProduct & { quantity: number; variants_selected?: Record<string, string> }) => ({
             brandId: item.brand_id,
             productId: item.id,
             quantity: item.quantity,
-            price: item.price
+            price: item.price,
+            variants_selected: item.variants_selected || null,
+            is_preorder: item.is_preorder || false,
+            preorder_arrival_date: item.preorder_arrival_date || null
           }))
         })
       });
@@ -364,7 +367,7 @@ function CheckoutContent() {
             <div className={`card ${styles.summaryCard}`}>
               <h2>Order Summary</h2>
               
-              {cart.map((item: LiveProduct & { quantity: number }) => (
+              {cart.map((item: LiveProduct & { quantity: number; variants_selected?: Record<string, string> }) => (
                 <div key={item.id} className={styles.summaryItem}>
                   <div className={styles.itemImage}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -374,6 +377,16 @@ function CheckoutContent() {
                     <h4>{item.title}</h4>
                     <span>{item.brands?.name}</span>
                     <span>Qty: {item.quantity}</span>
+                    {item.variants_selected && Object.keys(item.variants_selected).length > 0 && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-300)', marginTop: '4px' }}>
+                        {Object.entries(item.variants_selected).map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                      </div>
+                    )}
+                    {item.is_preorder && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '2px', fontWeight: 600 }}>
+                        [Pre-order] Arrives: {item.preorder_arrival_date ? new Date(item.preorder_arrival_date).toLocaleDateString() : 'TBD'}
+                      </div>
+                    )}
                   </div>
                   <span className={styles.itemPrice}>{formatPrice(item.price * item.quantity)}</span>
                 </div>

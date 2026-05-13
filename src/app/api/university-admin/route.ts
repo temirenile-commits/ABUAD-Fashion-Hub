@@ -45,7 +45,8 @@ export async function GET(req: NextRequest) {
     ]);
 
     const orders = ordersRes.data || [];
-    const paidOrders = orders.filter((o: any) => o.status === 'paid');
+    const paidStatuses = ['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered', 'received'];
+    const paidOrders = orders.filter((o: any) => paidStatuses.includes(o.status));
     const totalRevenue = paidOrders.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0);
 
     return NextResponse.json({
@@ -175,7 +176,8 @@ export async function GET(req: NextRequest) {
       const date = new Date(curr.created_at).toLocaleDateString('en-NG', { day: '2-digit', month: 'short' });
       if (!acc[date]) acc[date] = { orders: 0, revenue: 0 };
       acc[date].orders += 1;
-      if (curr.status === 'paid') acc[date].revenue += Number(curr.total_amount || 0);
+      const paidStatuses = ['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered', 'received'];
+      if (paidStatuses.includes(curr.status)) acc[date].revenue += Number(curr.total_amount || 0);
       return acc;
     }, {});
 

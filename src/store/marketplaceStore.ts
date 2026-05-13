@@ -31,7 +31,7 @@ export interface Product {
   rating?: number;
   reviews?: number;
   sold?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface Service {
@@ -42,8 +42,19 @@ export interface Service {
   price: number;
   category: string;
   created_at: string;
-  brand?: any;
-  [key: string]: any;
+  // Service-specific fields
+  service_type?: string;
+  portfolio_urls?: string[];
+  is_draft?: boolean;
+  // Join fields
+  brands?: {
+    id?: string;
+    name: string;
+    whatsapp_number: string;
+    verified?: boolean;
+    logo_url?: string;
+  } | null;
+  [key: string]: unknown;
 }
 
 export interface Vendor {
@@ -54,17 +65,32 @@ export interface Vendor {
   logo_url: string;
   verification_status: string;
   created_at: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface Order {
   id: string;
   buyer_id: string;
+  customer_id?: string;
   brand_id: string;
   total_amount: number;
   status: string;
   created_at: string;
-  [key: string]: any;
+  expires_at?: string;
+  paystack_reference?: string;
+  delivery_method?: string;
+  delivery_code?: string;
+  // Supabase join fields
+  products?: { title: string } | null;
+  users?: { id?: string; name?: string; email?: string; phone?: string } | null;
+  deliveries?: Array<{
+    id: string;
+    status: string;
+    agent_id?: string;
+    delivery_code?: string;
+    users?: { id?: string; name?: string; phone?: string } | null;
+  }> | null;
+  [key: string]: unknown;
 }
 
 export interface Reel {

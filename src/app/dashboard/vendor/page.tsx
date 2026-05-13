@@ -118,7 +118,11 @@ export default function VendorDashboard() {
     imageUrl: '',
     videoUrl: '',
     variants: [] as any[],
-    isDraft: false, visibility_type: 'university' });
+    isDraft: false, 
+    visibility_type: 'university',
+    isPreorder: false,
+    preorderArrivalDate: ''
+  });
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
@@ -529,7 +533,9 @@ export default function VendorDashboard() {
             image_url: newProduct.imageUrl || undefined,
             video_url: newProduct.videoUrl || undefined,
             variants: newProduct.variants,
-            is_draft: newProduct.isDraft
+            is_draft: newProduct.isDraft,
+            is_preorder: newProduct.isPreorder,
+            preorder_arrival_date: newProduct.isPreorder && newProduct.preorderArrivalDate ? new Date(newProduct.preorderArrivalDate).toISOString() : null
         };
         const { error } = await supabase
           .from('products')
@@ -542,7 +548,7 @@ export default function VendorDashboard() {
           setEditingProduct(null);
           setNewProduct({
             title: '', description: '', price: '', originalPrice: '', category: 'Fashion',
-            stockCount: '10', mediaUrls: [], imageUrl: '', videoUrl: '', variants: [], isDraft: false, visibility_type: 'university'
+            stockCount: '10', mediaUrls: [], imageUrl: '', videoUrl: '', variants: [], isDraft: false, visibility_type: 'university', isPreorder: false, preorderArrivalDate: ''
           });
           alert('Product updated successfully!');
         } else {
@@ -573,14 +579,16 @@ export default function VendorDashboard() {
             description: '',
             price: '',
             originalPrice: '',
-            category: 'Fashion',
-            stockCount: '10',
+            category: 'input category type',
+            stockCount: 'input required if not pre-order',
             mediaUrls: [],
             imageUrl: '',
             videoUrl: '',
             variants: [],
             isDraft: false,
-            visibility_type: 'university'
+            visibility_type: 'university',
+            isPreorder: false,
+            preorderArrivalDate: ''
           });
           alert('Product listed successfully!');
         } else {
@@ -2031,6 +2039,35 @@ export default function VendorDashboard() {
                       ))}
                     </div>
                   </div>
+                  <div className={styles.formRow} style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                    <div className={styles.inputGroup} style={{ flex: 1 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', padding: '0.75rem', background: 'var(--bg-300)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                        <input
+                          type="checkbox"
+                          checked={newProduct.isPreorder}
+                          onChange={(e) => setNewProduct({ ...newProduct, isPreorder: e.target.checked })}
+                          style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }}
+                        />
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: 600 }}>This is a Pre-order item</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-400)', marginTop: '0.25rem' }}>Customers can pay now, and delivery countdown starts on the arrival date.</span>
+                        </div>
+                      </label>
+                    </div>
+                    {newProduct.isPreorder && (
+                      <div className={styles.inputGroup} style={{ flex: 1 }}>
+                        <label>Expected Arrival Date</label>
+                        <input
+                          type="date"
+                          required={newProduct.isPreorder}
+                          value={newProduct.preorderArrivalDate}
+                          min={new Date().toISOString().split('T')[0]}
+                          onChange={(e) => setNewProduct({ ...newProduct, preorderArrivalDate: e.target.value })}
+                          style={{ padding: '0.75rem' }}
+                        />
+                      </div>
+                    )}
+                  </div>
 
                   <div className={styles.inputGroup}>
                     <label>Description</label>
@@ -2399,10 +2436,10 @@ export default function VendorDashboard() {
                               <span style={{ fontSize: '0.85rem' }}>{p.title}</span>
                             </div>
                           </td>
-                          <td>{formatPrice(p.price)}</td>
+                          <td>{formatPrice(Number(p.price))}</td>
                           <td>
                              {p.is_flash_sale ? (
-                               <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{formatPrice(p.flash_sale_price || p.price)}</span>
+                               <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{formatPrice(Number(p.flash_sale_price || p.price))}</span>
                              ) : '-'}
                           </td>
                           <td>

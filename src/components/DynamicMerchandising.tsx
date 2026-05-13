@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ShoppingBag, Zap, TrendingUp, Tag, Loader2 } from 'lucide-react';
+import { ArrowRight, Zap, Tag, Loader2 } from 'lucide-react';
 import ProductCard from './ProductCard';
 import styles from '@/app/page.module.css';
+import { Product } from '@/store/marketplaceStore';
 
 interface MerchandisingSection {
   id: string;
@@ -12,13 +13,25 @@ interface MerchandisingSection {
   type: 'manual' | 'automated';
   layout_type: 'horizontal_scroll' | 'grid' | 'banner';
   priority: number;
-  products: any[];
+  products: Product[];
 }
 
 export default function DynamicMerchandising() {
   const [sections, setSections] = useState<MerchandisingSection[]>([]);
   const [loading, setLoading] = useState(true);
   const observedSections = useRef<Set<string>>(new Set());
+
+  const trackEvent = async (sectionId: string, eventType: 'impression' | 'click', productId?: string) => {
+    try {
+      await fetch('/api/merchandising', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sectionId, eventType, productId }),
+      });
+    } catch (err) {
+      // Silent error for analytics
+    }
+  };
 
   useEffect(() => {
     const fetchSections = async () => {
@@ -60,17 +73,6 @@ export default function DynamicMerchandising() {
     return () => observer.disconnect();
   }, [sections]);
 
-  const trackEvent = async (sectionId: string, eventType: 'impression' | 'click', productId?: string) => {
-    try {
-      await fetch('/api/merchandising', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sectionId, eventType, productId }),
-      });
-    } catch (err) {
-      // Silent error for analytics
-    }
-  };
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>

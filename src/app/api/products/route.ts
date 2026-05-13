@@ -19,7 +19,9 @@ export async function POST(req: Request) {
       brandId,
       ownerId,
       variants,
-      isDraft
+      isDraft,
+      isPreorder,
+      preorderArrivalDate
     } = await req.json();
 
     if (!title || !price || !brandId) {
@@ -77,7 +79,9 @@ export async function POST(req: Request) {
         is_flash_sale: false,
         rating: 5,
         sold: 0,
-        views_count: 0
+        views_count: 0,
+        is_preorder: isPreorder || false,
+        preorder_arrival_date: isPreorder && preorderArrivalDate ? new Date(preorderArrivalDate).toISOString() : null
       })
       .select()
       .single();

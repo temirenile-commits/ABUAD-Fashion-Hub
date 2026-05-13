@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   const { data: product } = await supabaseAdmin
     .from('products')
-    .select('title, description, image_url, media_urls')
+    .select('title, description, image_url, media_urls, is_preorder, preorder_arrival_date, variants')
     .eq('id', id)
     .single();
 
@@ -215,7 +215,21 @@ export default async function ProductPage({ params }: Props) {
               />
             </div>
 
-            <h1 className={styles.productTitle}>{product.title}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <h1 className={styles.productTitle}>{product.title}</h1>
+              {product.is_preorder && (
+                <span className="badge" style={{ background: 'var(--primary)', color: '#000', fontWeight: 700, padding: '4px 8px', borderRadius: '4px' }}>
+                  PRE-ORDER
+                </span>
+              )}
+            </div>
+            
+            {product.is_preorder && product.preorder_arrival_date && (
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-300)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <CheckCircle size={14} style={{ color: 'var(--primary)' }} />
+                <span>Expected Arrival: <strong>{new Date(product.preorder_arrival_date).toLocaleDateString()}</strong></span>
+              </div>
+            )}
 
             {/* Rating Section (Real-time) */}
             <div className={styles.ratingRow}>
