@@ -20,11 +20,11 @@ export async function POST(req: Request) {
     const [productsResult, profileResult, settingsResult, promoResult] = await Promise.all([
       supabaseAdmin
         .from('products')
-        .select('id, title, brand_id, price, stock_count, university_id, brands(verified, fee_paid, delivery_scope, assigned_delivery_system)')
+        .select('id, title, brand_id, price, stock_count, university_id, visibility_type, brands(verified, fee_paid, delivery_scope, assigned_delivery_system)')
         .in('id', productIds),
       supabaseAdmin
         .from('users')
-        .select('email')
+        .select('email, university_id')
         .eq('id', userId)
         .single(),
       supabaseAdmin
@@ -50,6 +50,20 @@ export async function POST(req: Request) {
         error: 'INACTIVE_VENDORS', 
         message: 'A brand in your cart is currently offline. Please remove their items to proceed.' 
       }, { status: 400 });
+    }
+
+    // 1.2 University Scoping Check (Safety Rule)
+    const userUniId = userProfile?.university_id;
+    for (const p of liveProducts) {
+      const isGlobal = p.visibility_type === 'global';
+      const isMyUni = p.university_id === userUniId;
+      
+      if (!isGlobal && !isMyUni) {
+        return NextResponse.json({
+          error: 'SCOPE_VIOLATION',
+          message: `The product "${p.title}" is restricted to another university and cannot be ordered from your current location.`
+        }, { status: 403 });
+      }
     }
 
     // 1.5 Verify Stock Quantity
