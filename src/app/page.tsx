@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
@@ -29,6 +30,7 @@ import TopCategories from '@/components/TopCategories';
 import FlashSales from '@/components/FlashSales';
 import WelcomeModal from '@/components/WelcomeModal';
 import DynamicMerchandising from '@/components/DynamicMerchandising';
+import DelicaciesPreview from '@/components/DelicaciesPreview';
 
 export default function Home() {
   const allProducts = useMarketplaceStore(s => s.products);
@@ -38,13 +40,13 @@ export default function Home() {
 
   const [preferredCategories, setPreferredCategories] = useState<string[]>([]);
   const [targetedProducts, setTargetedProducts] = useState<LiveProduct[]>([]);
-  const [fetchingTargeted, setFetchingTargeted] = useState(false);
-  const [flashSalesEvents, setFlashSalesEvents] = useState<any[]>([]);
+  const [flashSalesEvents, setFlashSalesEvents] = useState<{ id?: string; title: string; product_ids?: string[] }[]>([]);
+  const [userUniversityId, setUserUniversityId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const fetchFlashSales = async () => {
       const { data } = await supabase.from('platform_settings').select('value').eq('key', 'flash_sales_events').single();
-      if (data && data.value) setFlashSalesEvents(data.value as any[]);
+      if (data && data.value) setFlashSalesEvents(data.value as { id?: string; title: string; product_ids?: string[] }[]);
     };
     fetchFlashSales();
   }, []);
@@ -53,15 +55,12 @@ export default function Home() {
     const fetchDiscovery = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        setFetchingTargeted(true);
         try {
           const res = await fetch(`/api/discovery?userId=${session.user.id}`);
           const data = await res.json();
           if (data.products) setTargetedProducts(data.products);
         } catch (e) {
           console.error('Discovery error:', e);
-        } finally {
-          setFetchingTargeted(false);
         }
       }
     };
@@ -72,18 +71,25 @@ export default function Home() {
         const prefs = JSON.parse(localStorage.getItem('user_prefs') || '[]');
         if (Array.isArray(prefs)) setPreferredCategories(prefs);
       } catch {}
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { data: profile } = await supabase.from('users').select('university_id').eq('id', session.user.id).single();
+          setUserUniversityId(profile?.university_id || undefined);
+        }
+      } catch {}
     };
     initPrefs();
   }, []);
 
   const featuredVendors = useMemo(() => {
-     return [...allBrands].slice(0, 4) as any as LiveVendor[];
+     return [...allBrands].slice(0, 4) as unknown as LiveVendor[];
   }, [allBrands]);
 
   const genuineFlashSales = useMemo(() => {
      return allProducts.filter(p => 
        !p.is_draft && 
-       ((p as any).is_flash_sale || (p.original_price || 0) > (p.price || 0))
+       ((p as unknown as { is_flash_sale?: boolean }).is_flash_sale || (p.original_price || 0) > (p.price || 0))
      ).slice(0, 10);
   }, [allProducts]);
 
@@ -106,8 +112,8 @@ export default function Home() {
      if (!allProducts.length) return [];
      
      // Separate into preferred and others
-     let preferred = allProducts.filter(p => !p.is_draft && p.category && preferredCategories.includes(p.category));
-     let others = allProducts.filter(p => !p.is_draft && (!p.category || !preferredCategories.includes(p.category)));
+     const preferred = allProducts.filter(p => !p.is_draft && p.category && preferredCategories.includes(p.category));
+     const others = allProducts.filter(p => !p.is_draft && (!p.category || !preferredCategories.includes(p.category)));
 
      // Sort by newest
      preferred.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -115,7 +121,7 @@ export default function Home() {
 
      // Combine: Prefered items first, then latest items
      const combined = [...preferred, ...others].slice(0, 8);
-     return combined as any as LiveProduct[];
+     return combined as unknown as LiveProduct[];
   }, [allProducts, preferredCategories]);
 
   return (
@@ -246,6 +252,9 @@ export default function Home() {
 
         {/* ───── DYNAMIC MERCHANDISING SECTIONS (Admin Controlled) ───── */}
         <DynamicMerchandising />
+
+        {/* ───── MASTERCART DELICACIES ───── */}
+        <DelicaciesPreview universityId={userUniversityId} />
 
         {/* ───── TRENDING PRODUCTS (Personalized) ───── */}
         <section className={styles.section}>

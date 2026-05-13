@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   Users, Store, ShoppingBag, TrendingUp, XCircle,
   Search, RefreshCw, Trash2, Star, Eye, ShoppingCart, Loader2, CreditCard, AlertTriangle, Settings, Bell,
-  BarChart3, Activity, ExternalLink, MapPin, Tag, ArrowLeft, ShieldAlert, ShieldCheck, Clock
+  BarChart3, Activity, ExternalLink, MapPin, Tag, ArrowLeft, ShieldAlert, ShieldCheck, Clock, UtensilsCrossed
 } from 'lucide-react';
 import { uploadFile } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
@@ -265,6 +265,7 @@ export default function AdminDashboard() {
   const [billboardUpload, setBillboardUpload] = useState({ title: '', sub: '', link: '', file: null as File | null });
   const [uploadingBillboard, setUploadingBillboard] = useState(false);
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [platformSettings, setPlatformSettings] = useState<Record<string, any>>({});
   const [showAddAgentModal, setShowAddAgentModal] = useState(false);
   const [newAgentData, setNewAgentData] = useState({ email: '', university_id: '', agent_type: 'in-campus' });
@@ -1338,6 +1339,7 @@ export default function AdminDashboard() {
                       <tr><th>Order ID</th><th>Customer</th><th>Vendor</th><th>Arrival Date</th><th>Status</th><th>Escrow Action</th></tr>
                     </thead>
                     <tbody>
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       {orders.filter((o: any) => o.is_preorder).map((o: any) => (
                         <tr key={o.id}>
                           <td className={styles.subText}>#{o.id.slice(0, 8)}</td>
@@ -1366,6 +1368,7 @@ export default function AdminDashboard() {
                           </td>
                         </tr>
                       ))}
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       {orders.filter((o: any) => o.is_preorder).length === 0 && (
                         <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>No pre-orders currently in the system.</td></tr>
                       )}
@@ -1484,6 +1487,41 @@ export default function AdminDashboard() {
                 <div className={styles.sectionCard}>
                   <h2>Campus Configuration & Subscription Settings</h2>
                   <p className={styles.subText}>Select a university to configure its specific subscription rates, feature availability, and booster plans.</p>
+
+                  {/* Global Delicacies Settings */}
+                  <div style={{ marginTop: '1.5rem', marginBottom: '2.5rem', padding: '1.5rem', background: 'rgba(245,158,11,0.05)', borderRadius: '12px', border: '1px solid rgba(245,158,11,0.2)' }}>
+                    <h3 style={{ color: '#f59e0b', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <UtensilsCrossed size={18} /> Global Delicacies Settings
+                    </h3>
+                    <p className={styles.subText} style={{ marginBottom: '1rem' }}>Configure the global commission rate applied to all MasterCart Delicacies orders across all universities.</p>
+                    
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                      <div>
+                        <label className={styles.subText} style={{ display: 'block', marginBottom: '0.4rem' }}>Commission Rate (%)</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input 
+                            type="number" 
+                            className="form-input" 
+                            style={{ width: '120px', height: '36px' }}
+                            value={platformSettings.delicacies_commission_rate?.rate ?? 0}
+                            onChange={(e) => setPlatformSettings({ 
+                              ...platformSettings, 
+                              delicacies_commission_rate: { rate: Number(e.target.value) } 
+                            })}
+                          />
+                          <button 
+                            className="btn btn-primary btn-sm" 
+                            style={{ background: '#f59e0b', color: '#fff', border: 'none' }}
+                            onClick={() => adminAction('update_settings', { key: 'delicacies_commission_rate', value: { rate: platformSettings.delicacies_commission_rate?.rate || 0 } })}
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr style={{ borderTop: '1px solid var(--border)', marginBottom: '2rem' }} />
 
                   <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <label style={{ fontWeight: 600 }}>Configure University:</label>
