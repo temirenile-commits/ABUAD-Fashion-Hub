@@ -145,10 +145,10 @@ export default function DelicaciesPage() {
       </div>
 
       <div className={styles.container}>
-        {/* ── BATCH WINDOW TIMER ── */}
-        <div className={styles.timerWrap}>
+        {/* ── BATCH WINDOW TIMER (HIDDEN PER USER REQUEST) ── */}
+        {/* <div className={styles.timerWrap}>
           <BatchWindowTimer />
-        </div>
+        </div> */}
 
         {/* ── CATEGORY TABS ── */}
         <div className={styles.catTabs}>
