@@ -370,6 +370,33 @@ export default function DeliveryDashboard() {
               max="50"
             />
           </div>
+
+          {agent?.agent_type === 'out-campus' && (
+            <div style={{ marginTop: '1rem' }}>
+              <label style={{ fontSize: '0.85rem', color: 'var(--text-400)' }}>Base Delivery Fee (₦)</label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input 
+                  type="number" 
+                  className={styles.capacityInput} 
+                  value={agent?.base_delivery_fee || 0} 
+                  onChange={(e) => setAgent({ ...agent, base_delivery_fee: Number(e.target.value) })}
+                  placeholder="e.g. 1500"
+                />
+                <button 
+                  className="btn btn-primary btn-sm"
+                  onClick={async () => {
+                    const { error } = await supabase.from('delivery_agents').update({ base_delivery_fee: agent.base_delivery_fee }).eq('id', agent.id);
+                    if (!error) alert('Delivery fee updated!');
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+              <p style={{ fontSize: '0.65rem', color: 'var(--text-400)', marginTop: '0.25rem' }}>
+                This is your base charge. The platform may add a markup to this.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className={styles.card} style={{ borderLeft: '4px solid var(--primary)' }}>

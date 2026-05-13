@@ -1141,7 +1141,7 @@ export default function AdminDashboard() {
 
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                   <thead>
-                    <tr><th>Rider</th><th>Status</th><th>Performance</th><th>Earnings</th><th>Location</th><th>Actions</th></tr>
+                    <tr><th>Rider</th><th>Type</th><th>Status</th><th>Performance</th><th>Earnings</th><th>Location</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {filterBy(deliveryAgents, ['name', 'email']).map(agent => (
@@ -1149,6 +1149,17 @@ export default function AdminDashboard() {
                         <td>
                           <div style={{ fontWeight: 600 }}>{agent.name}</div>
                           <div className={styles.subText} style={{ fontSize: '0.75rem' }}>{agent.email}</div>
+                        </td>
+                        <td>
+                          <select 
+                            className="form-input" 
+                            style={{ fontSize: '0.75rem', padding: '0.2rem', height: 'auto' }}
+                            value={agent.agent_type || 'in-campus'}
+                            onChange={(e) => adminAction('update_agent_type', { userId: agent.id, agentType: e.target.value })}
+                          >
+                            <option value="in-campus">In-Campus</option>
+                            <option value="out-campus">Out-Campus (Ext)</option>
+                          </select>
                         </td>
                         <td>
                           <span className={`badge ${agent.is_active ? 'badge-verified' : 'badge-pending'}`}>
@@ -1475,18 +1486,50 @@ export default function AdminDashboard() {
                         <p className={styles.subText}>Configure subscription plans specifically for this campus.</p>
                         
                         <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '500px' }}>
-                          <div>
-                            <label className={styles.subText}>Credit Listing Price (₦)</label>
-                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
-                              <input 
-                                type="number" 
-                                className="form-input" 
-                                style={{ height: '36px' }}
-                                value={uniConfig.credit_price || ''}
-                                placeholder="e.g. 50"
-                                onChange={(e) => setUniConfig({ ...uniConfig, credit_price: Number(e.target.value) })}
-                              />
-                              <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'credit_price', value: uniConfig.credit_price })}>Save</button>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                            <div>
+                              <label className={styles.subText}>Credit Listing Price (₦)</label>
+                              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
+                                <input 
+                                  type="number" 
+                                  className="form-input" 
+                                  style={{ height: '36px' }}
+                                  value={uniConfig.credit_price || ''}
+                                  placeholder="e.g. 50"
+                                  onChange={(e) => setUniConfig({ ...uniConfig, credit_price: Number(e.target.value) })}
+                                />
+                                <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'credit_price', value: uniConfig.credit_price })}>Save</button>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label className={styles.subText}>Commission Rate (%)</label>
+                              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
+                                <input 
+                                  type="number" 
+                                  className="form-input" 
+                                  style={{ height: '36px' }}
+                                  value={uniConfig.commission_rate !== undefined ? String(uniConfig.commission_rate) : ''}
+                                  placeholder="e.g. 7.5"
+                                  onChange={(e) => setUniConfig({ ...uniConfig, commission_rate: Number(e.target.value) })}
+                                />
+                                <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'commission_rate', value: uniConfig.commission_rate })}>Save</button>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className={styles.subText}>Ext. Delivery Markup (₦)</label>
+                              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
+                                <input 
+                                  type="number" 
+                                  className="form-input" 
+                                  style={{ height: '36px' }}
+                                  value={uniConfig.external_delivery_markup !== undefined ? String(uniConfig.external_delivery_markup) : ''}
+                                  placeholder="e.g. 500"
+                                  onChange={(e) => setUniConfig({ ...uniConfig, external_delivery_markup: Number(e.target.value) })}
+                                />
+                                <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'external_delivery_markup', value: uniConfig.external_delivery_markup })}>Save</button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -2070,6 +2113,11 @@ export default function AdminDashboard() {
                                         <button className="btn btn-ghost btn-sm" onClick={(_e: React.MouseEvent) => { _e.stopPropagation(); adminAction('toggle_user_status', { userId: u.id, status: u.status === 'active' ? 'suspended' : 'active' }); }}>
                                           {u.status === 'active' ? 'Suspend' : 'Activate'}
                                         </button>
+                                        {u.role !== 'delivery' && u.role !== 'admin' && (
+                                          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--primary)' }} onClick={(_e: React.MouseEvent) => { _e.stopPropagation(); if(confirm(`Promote ${u.name} to Delivery Agent?`)) adminAction('update_user_role', { userId: u.id, newRole: 'delivery' }); }}>
+                                            Make Rider
+                                          </button>
+                                        )}
                                       </div>
                                     </td>
                                   </tr>

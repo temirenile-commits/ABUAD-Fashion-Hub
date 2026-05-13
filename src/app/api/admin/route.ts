@@ -996,6 +996,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  if (action === 'update_agent_type') {
+    const { userId, agentType } = body;
+    const { error } = await supabaseAdmin
+      .from('delivery_agents')
+      .update({ agent_type: agentType })
+      .eq('id', userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
   if (action === 'update_settings') {
     const { key, value } = body;
     const { error } = await supabaseAdmin

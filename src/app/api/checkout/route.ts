@@ -5,7 +5,7 @@ import { initializeTransaction } from '@/lib/paystack';
 
 export async function POST(req: Request) {
   // Default fallbacks
-  const commissionRate = 0.075; 
+  const commissionRate = 0; 
 
   try {
     const { userId, items, shippingAddress, promoCode } = await req.json();
@@ -75,10 +75,28 @@ export async function POST(req: Request) {
     
     const uniConfig = (uniConfigData as any) || {};
     const settingsDeliveryFee = Number(uniConfig.delivery_base_fee) || Number(settingsResult.data?.value?.delivery_base_fee) || 1500;
+    const dynamicCommissionRate = uniConfig.commission_rate !== undefined ? (Number(uniConfig.commission_rate) / 100) : commissionRate;
     
     let totalDeliveryFee = 0;
     if (hasPlatform) {
-      totalDeliveryFee = hasOutSchool ? (settingsDeliveryFee * 2) : settingsDeliveryFee;
+      if (hasOutSchool) {
+        // Fetch average fee of active out-campus agents for this university
+        const { data: agents } = await supabaseAdmin
+          .from('delivery_agents')
+          .select('base_delivery_fee')
+          .eq('university_id', universityId)
+          .eq('agent_type', 'out-campus')
+          .eq('is_active', true);
+        
+        const avgAgentFee = (agents && agents.length > 0) 
+          ? (agents.reduce((sum, a) => sum + Number(a.base_delivery_fee), 0) / agents.length)
+          : settingsDeliveryFee;
+        
+        const markup = Number(uniConfig.external_delivery_markup) || 0;
+        totalDeliveryFee = avgAgentFee + markup;
+      } else {
+        totalDeliveryFee = settingsDeliveryFee;
+      }
     }
 
     const expiresAt = new Date();
@@ -109,11 +127,11 @@ export async function POST(req: Request) {
       }
 
       const discountedItemSubtotal = Math.max(0, baseItemSubtotal - itemDiscount);
-      // Only charge delivery fee on the FIRST item of the order batch if platform delivery is involved
+      // Only charge delivery fee on the FIRST item of the order batch
       const itemDeliveryFee = isFirst ? totalDeliveryFee : 0;
       const finalItemTotal = discountedItemSubtotal + itemDeliveryFee;
       
-      const baseCommission = baseItemSubtotal * commissionRate;
+      const baseCommission = baseItemSubtotal * dynamicCommissionRate;
       const vendorEarning = baseItemSubtotal - baseCommission;
       const adminCommission = baseCommission - itemDiscount;
       const totalCommissionForRecord = adminCommission + itemDeliveryFee;

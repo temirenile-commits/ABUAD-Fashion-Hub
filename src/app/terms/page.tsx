@@ -65,7 +65,7 @@ export default function TermsPage() {
       },
       {
         title: '8. Withdrawals & Payouts',
-        content: 'Vendors can request a withdrawal from their wallet once funds are cleared from Escrow. Payouts are processed via Paystack to any Nigerian bank account. A standard platform commission (currently 10%) is deducted from each sale to cover operational costs, payment processing, and server maintenance.'
+        content: 'Vendors can request a withdrawal from their wallet once funds are cleared from Escrow. Payouts are processed via Paystack to any Nigerian bank account. A standard platform commission (currently 0%) is deducted from each sale to cover operational costs, payment processing, and server maintenance.'
       },
       {
         title: '9. Data Privacy & Account Security',
