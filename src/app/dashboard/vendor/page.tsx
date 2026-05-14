@@ -1564,8 +1564,28 @@ export default function VendorDashboard() {
               </div>
             </div>
 
-            {/* ── Chief Chef Dashboard CTA ──────────────────────────── */}
-            <div style={{ marginTop: '2rem', padding: '1.5rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(235,12,122,0.08) 0%, rgba(124,58,237,0.08) 100%)', border: '1px solid rgba(235,12,122,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+
+            {userRole === 'admin' && (
+              <div className={styles.adminQuickLink} style={{ marginTop: '2rem', padding: '2rem', borderRadius: '16px', background: 'var(--bg-300)', border: '2px solid var(--accent-gold)', boxShadow: '0 0 30px rgba(212, 175, 55, 0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1rem' }}>
+                <ShieldCheck size={48} color="var(--accent-gold)" />
+                <div>
+                  <h2 style={{ color: 'var(--accent-gold)', marginBottom: '0.5rem' }}>Global Admin Console</h2>
+                  <p style={{ color: 'var(--text-300)', maxWidth: '400px' }}>You have root access to manage all vendors, products, and financial transactions on the platform.</p>
+                </div>
+                <Link href="/admin" className="btn btn-primary" style={{ background: 'var(--accent-gold)', borderColor: 'var(--accent-gold)', color: '#000', fontWeight: 'bold', padding: '1rem 3rem' }}>ENTER ADMIN DASHBOARD</Link>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Store Settings Tab */}
+        {activeTab === 'settings' && brand && (
+          <div className={styles.tabContent}>
+            <h1 className={styles.title}>Store Settings</h1>
+            <p className={styles.subtitle}>Manage your brand identity, contact details, and store policies.</p>
+
+            {/* ── Chief Chef Dashboard CTA ────────────────────────────────────────── */}
+            <div style={{ margin: '1.5rem 0', padding: '1.5rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(235,12,122,0.08) 0%, rgba(124,58,237,0.08) 100%)', border: '1px solid rgba(235,12,122,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <UtensilsCrossed size={36} color="#eb0c7a" />
                 <div>
@@ -1603,25 +1623,6 @@ export default function VendorDashboard() {
                 )}
               </div>
             </div>
-
-            {userRole === 'admin' && (
-              <div className={styles.adminQuickLink} style={{ marginTop: '2rem', padding: '2rem', borderRadius: '16px', background: 'var(--bg-300)', border: '2px solid var(--accent-gold)', boxShadow: '0 0 30px rgba(212, 175, 55, 0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1rem' }}>
-                <ShieldCheck size={48} color="var(--accent-gold)" />
-                <div>
-                  <h2 style={{ color: 'var(--accent-gold)', marginBottom: '0.5rem' }}>Global Admin Console</h2>
-                  <p style={{ color: 'var(--text-300)', maxWidth: '400px' }}>You have root access to manage all vendors, products, and financial transactions on the platform.</p>
-                </div>
-                <Link href="/admin" className="btn btn-primary" style={{ background: 'var(--accent-gold)', borderColor: 'var(--accent-gold)', color: '#000', fontWeight: 'bold', padding: '1rem 3rem' }}>ENTER ADMIN DASHBOARD</Link>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Store Settings Tab */}
-        {activeTab === 'settings' && brand && (
-          <div className={styles.tabContent}>
-            <h1 className={styles.title}>Store Settings</h1>
-            <p className={styles.subtitle}>Manage your brand identity, contact details, and store policies.</p>
 
             <div className={styles.settingsGrid}>
               <div className={styles.settingsSection}>
