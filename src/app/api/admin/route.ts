@@ -846,6 +846,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, message: 'Vendor has been reset to the free tier.' });
   }
 
+  if (action === 'grant_chef_access') {
+    const { brandId } = body;
+    const { error } = await supabaseAdmin
+      .from('brands')
+      .update({ marketplace_type: 'both' })
+      .eq('id', brandId);
+    
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Chief Chef access granted.' });
+  }
+
+  if (action === 'revoke_chef_access') {
+    const { brandId } = body;
+    const { error } = await supabaseAdmin
+      .from('brands')
+      .update({ marketplace_type: 'fashion', active_dashboard_mode: 'normal' })
+      .eq('id', brandId);
+    
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Chief Chef access revoked.' });
+  }
+
+
   if (action === 'update_delivery_config') {
     const { brandId, scope, system } = body;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

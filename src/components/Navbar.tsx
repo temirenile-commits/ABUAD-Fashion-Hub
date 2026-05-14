@@ -269,9 +269,7 @@ export default function Navbar() {
           <Link href="/delicacies" className={styles.catPill} style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: '#fff', border: 'none', fontWeight: 700 }}>
             🍔 Delicacies
           </Link>
-          <Link href="/rankings" className={styles.catPill} style={{ background: 'linear-gradient(135deg, #eb0c7a, #9333ea)', color: '#fff', border: 'none', fontWeight: 700 }}>
-            🏆 Leaderboard
-          </Link>
+
           {['All', 'Clothing', 'Footwear', 'Bags', 'Accessories', 'Jewelry', 'Makeup', 'Photography', 'Tailoring'].map(cat => (
             <Link key={cat} href={`/explore?category=${cat}`} className={styles.catPill}>
               {cat}

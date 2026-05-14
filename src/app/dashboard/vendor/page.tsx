@@ -1267,7 +1267,7 @@ export default function VendorDashboard() {
               <button className={`${styles.navItem} ${activeTab === 'overview' ? styles.navActive : ''}`} onClick={() => setActiveTab('overview')}>
                 <TrendingUp size={18} /> Overview
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'products' ? styles.navActive : ''}`} onClick={() => setActiveTab('products')}>
+              <button className={`${styles.navItem} ${activeTab === 'inventory' ? styles.navActive : ''}`} onClick={() => setActiveTab('inventory')}>
                 {isChef ? <UtensilsCrossed size={18} /> : <Package size={18} />} {isChef ? 'My Delicacies' : 'My Products'}
               </button>
               <button className={`${styles.navItem} ${activeTab === 'orders' ? styles.navActive : ''}`} onClick={() => setActiveTab('orders')}>
@@ -1561,6 +1561,46 @@ export default function VendorDashboard() {
                   <h4>Pro Tip</h4>
                   <p>Products with videos get 3x more enquiries. Upload a collection reel to boost your sales!</p>
                 </div>
+              </div>
+            </div>
+
+            {/* ── Chief Chef Dashboard CTA ──────────────────────────── */}
+            <div style={{ marginTop: '2rem', padding: '1.5rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(235,12,122,0.08) 0%, rgba(124,58,237,0.08) 100%)', border: '1px solid rgba(235,12,122,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <UtensilsCrossed size={36} color="#eb0c7a" />
+                <div>
+                  <h3 style={{ margin: 0, fontWeight: 800, color: '#fff', fontSize: '1rem' }}>Chief Chef Dashboard</h3>
+                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: '#94a3b8' }}>
+                    {brand?.marketplace_type === 'both'
+                      ? isChef
+                        ? 'Currently in Chef mode — sell delicacies on MasterCart'
+                        : 'You have Chief Chef access — switch to manage your kitchen'
+                      : brand?.marketplace_type === 'delicacies'
+                      ? 'You are a verified Chief Chef'
+                      : 'Sell food & delicacies on MasterCart — request Chef access from admin'}
+                  </p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {(brand?.marketplace_type === 'both' || brand?.marketplace_type === 'delicacies') ? (
+                  <button
+                    className="btn btn-primary"
+                    style={{ background: isChef ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #eb0c7a, #7c3aed)', border: isChef ? '1px solid rgba(255,255,255,0.1)' : 'none' }}
+                    onClick={() => handleDashboardSwitch(isChef ? 'normal' : 'chief_chef')}
+                    disabled={isSwitchingDashboard}
+                  >
+                    {isSwitchingDashboard ? <Loader2 size={14} className="anim-spin" /> : null}
+                    {isChef ? '← Back to Normal Dashboard' : '🍳 Enter Chief Chef Dashboard'}
+                  </button>
+                ) : (
+                  <a
+                    href="mailto:admin@mastercart.ng?subject=Chief Chef Access Request"
+                    className="btn btn-primary"
+                    style={{ background: 'linear-gradient(135deg, #eb0c7a, #7c3aed)' }}
+                  >
+                    Request Chef Access
+                  </a>
+                )}
               </div>
             </div>
 

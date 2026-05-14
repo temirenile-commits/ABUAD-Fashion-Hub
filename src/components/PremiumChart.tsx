@@ -107,7 +107,7 @@ export default function PremiumChart({
   valueSuffix = '',
 }: PremiumChartProps) {
   const [data, setData] = useState<DataPoint[]>([]);
-  const [range, setRange] = useState<Range>('24h');
+  const [range, setRange] = useState<Range>('7d');
   const [isLoading, setIsLoading] = useState(true);
   const [lastValue, setLastValue] = useState(0);
   const [flashNew, setFlashNew] = useState(false);

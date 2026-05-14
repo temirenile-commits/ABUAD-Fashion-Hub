@@ -627,6 +627,26 @@ export default function AdminDashboard() {
                           <div className={styles.actionRow} style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
                             <button className="btn btn-ghost btn-sm" onClick={() => setSelectedVendor(v)} title="Review Details"><Eye size={14} /></button>
                             <button className="btn btn-ghost btn-sm" style={{ color: '#f59e0b' }} onClick={() => { if(confirm('Reset this vendor to free mode?')) adminAction('reset_vendor_to_free', { brandId: v.id }) }} title="Reset to Free Mode"><RefreshCw size={14} /></button>
+                            {/* Chief Chef grant/revoke */}
+                            {v.marketplace_type !== 'both' ? (
+                              <button
+                                className="btn btn-ghost btn-sm"
+                                style={{ color: '#eb0c7a', fontSize: '0.7rem', gap: '2px' }}
+                                title="Grant Chief Chef Access"
+                                onClick={() => { if(confirm(`Grant Chief Chef dashboard access to ${v.name}?`)) adminAction('grant_chef_access', { brandId: v.id }) }}
+                              >
+                                🍳 Grant Chef
+                              </button>
+                            ) : (
+                              <button
+                                className="btn btn-ghost btn-sm"
+                                style={{ color: '#94a3b8', fontSize: '0.7rem' }}
+                                title="Revoke Chief Chef Access"
+                                onClick={() => { if(confirm(`Revoke Chief Chef access from ${v.name}?`)) adminAction('revoke_chef_access', { brandId: v.id }) }}
+                              >
+                                🚫 Revoke Chef
+                              </button>
+                            )}
                             <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => { if(confirm('Suspend this vendor?')) adminAction('suspend_vendor', { brandId: v.id }) }} title="Suspend Vendor"><Trash2 size={14} /></button>
                           </div>
                         </td>
