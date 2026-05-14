@@ -214,7 +214,6 @@ export default function UniversityAdminPage() {
           ))}
         </nav>
         <div className={styles.sidebarFooter}>
-          <Link href="/rankings" className={styles.footerLink} style={{ color: '#eb0c7a', fontWeight: 800 }}>🏆 Uni Leaderboard</Link>
           <Link href="/" className={styles.footerLink}>← Marketplace</Link>
           <button className={styles.footerLink} onClick={async()=>{await supabase.auth.signOut();router.push("/");}}>
             <LogOut size={14}/> Sign Out
