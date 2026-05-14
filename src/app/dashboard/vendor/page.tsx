@@ -103,6 +103,10 @@ export default function VendorDashboard() {
   const [delicaciesBillboardDays, setDelicaciesBillboardDays] = useState(1);
   const [buyingDelicaciesBillboard, setBuyingDelicaciesBillboard] = useState(false);
   const [activeDelicaciesBillboard, setActiveDelicaciesBillboard] = useState<any>(null);
+  const [activeDashboardMode, setActiveDashboardMode] = useState<'normal' | 'chief_chef'>('normal');
+  const [isSwitchingDashboard, setIsSwitchingDashboard] = useState(false);
+  const [isKitchenOpen, setIsKitchenOpen] = useState(true);
+  const [isUpdatingKitchen, setIsUpdatingKitchen] = useState(false);
 
   // AI States
   const [aiSettings, setAiSettings] = useState<any>(null);
@@ -199,6 +203,7 @@ export default function VendorDashboard() {
       }
 
       setBrand(brandData);
+      setActiveDashboardMode(brandData.active_dashboard_mode || 'normal');
 
       // Check for payment status in URL
       const searchParams = new URLSearchParams(window.location.search);
@@ -380,7 +385,51 @@ export default function VendorDashboard() {
     }
 
     fetchVendorData();
-  }, [router]);
+  }, [router, setGlobalOrders]);
+
+  const handleDashboardSwitch = async (mode: 'normal' | 'chief_chef') => {
+    if (!brand) return;
+    setIsSwitchingDashboard(true);
+    try {
+      const { error } = await supabase
+        .from('brands')
+        .update({ active_dashboard_mode: mode })
+        .eq('id', brand.id);
+      
+      if (error) throw error;
+      setActiveDashboardMode(mode);
+      addToast(`Switched to ${mode === 'chief_chef' ? 'Chief Chef' : 'Normal Vendor'} Dashboard`, 'success');
+    } catch (err: any) {
+      addToast(err.message || 'Failed to switch dashboard', 'error');
+    } finally {
+      setIsSwitchingDashboard(false);
+    }
+  };
+
+  const isChef = activeDashboardMode === 'chief_chef';
+
+  useEffect(() => {
+    if (brand) setIsKitchenOpen(brand.is_available_now ?? true);
+  }, [brand]);
+
+  const toggleKitchenStatus = async () => {
+    if (!brand) return;
+    setIsUpdatingKitchen(true);
+    try {
+      const { error } = await supabase
+        .from('brands')
+        .update({ is_available_now: !isKitchenOpen })
+        .eq('id', brand.id);
+      
+      if (error) throw error;
+      setIsKitchenOpen(!isKitchenOpen);
+      addToast(`Kitchen is now ${!isKitchenOpen ? 'OPEN 🍳' : 'CLOSED 💤'}`, 'success');
+    } catch (err: any) {
+      addToast(err.message || 'Failed to update kitchen status', 'error');
+    } finally {
+      setIsUpdatingKitchen(false);
+    }
+  };
 
   // Calculate 7-day sales trend
   const getSalesTrend = () => {
@@ -1166,115 +1215,138 @@ export default function VendorDashboard() {
       ) : (
         <>
           <aside className={styles.sidebar}>
-
-        <header className={styles.header}>
-          <div className={styles.brandInfo}>
-            <div className={`${styles.logo} ${uploadingLogo ? 'anim-pulse' : ''}`} style={{ cursor: 'pointer', overflow: 'hidden', position: 'relative' }} title="Change Logo" onClick={() => document.getElementById('logoInput')?.click()}>
-              {brand?.logo_url ? (
-                <img src={brand.logo_url} alt={brand?.name || 'Brand'} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
-              ) : (brand?.name || 'AF').substring(0, 2).toUpperCase()}
-              {uploadingLogo && (
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Loader2 size={16} className="anim-spin" />
+            <div className={styles.sidebarHeader}>
+              <div className={styles.brandInfo} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1.25rem' }}>
+                <div 
+                  className={`${styles.logo} ${uploadingLogo ? 'anim-pulse' : ''}`} 
+                  style={{ width: '40px', height: '40px', cursor: 'pointer', overflow: 'hidden', position: 'relative' }} 
+                  title="Change Logo" 
+                  onClick={() => document.getElementById('logoInput')?.click()}
+                >
+                  {brand?.logo_url ? (
+                    <img src={brand.logo_url} alt={brand?.name || 'Brand'} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                  ) : (brand?.name || 'AF').substring(0, 2).toUpperCase()}
+                  <input type="file" id="logoInput" hidden accept="image/*" onChange={handleLogoUpdate} />
                 </div>
-              )}
-              <input type="file" id="logoInput" hidden accept="image/*" onChange={handleLogoUpdate} />
-            </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {isEditingName ? (
-                  <div style={{ display: 'flex', gap: '0.3rem' }}>
-                    <input
-                      className="input-sm"
-                      value={tempName}
-                      onChange={e => setTempName(e.target.value)}
-                      autoFocus
-                      onKeyDown={e => e.key === 'Enter' && handleNameUpdate()}
-                    />
-                    <button className="btn btn-primary btn-sm" onClick={handleNameUpdate}><CheckCircle size={14} /></button>
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <h2 style={{ fontSize: '0.9rem', fontWeight: 800, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{brand?.name || 'Brand Portal'}</h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {isChef ? <UtensilsCrossed size={12} color="var(--primary)" /> : <Store size={12} color="var(--primary)" />}
+                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '0.05em' }}>{isChef ? 'CHIEF CHEF' : 'VENDOR'}</span>
                   </div>
-                ) : (
-                  <>
-                    <h2 className={styles.brandName} style={{ cursor: 'pointer' }} onClick={() => setIsEditingName(true)} title="Change Name">{brand?.name || 'Brand Portal'}</h2>
-                    <Edit3 size={14} className={styles.editIcon} onClick={() => setIsEditingName(true)} style={{ cursor: 'pointer', opacity: 0.5 }} />
-                  </>
-                )}
-              </div>
-              <div className={styles.brandType}>
-                <span className="badge badge-teal">{brand?.brand_type || 'Fashion'}</span>
+                </div>
               </div>
             </div>
-          </div>
-        </header>
 
-        <nav className={styles.nav}>
-          <Link href="/" className={styles.navItem} style={{ marginBottom: '0.5rem', color: 'var(--secondary)' }}>
-            <Home size={18} /> Marketplace Hub
-          </Link>
-          <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '1rem' }} />
+            {/* DASHBOARD SWITCHER */}
+            {brand?.marketplace_type === 'both' && (
+              <div className={styles.modeSwitcher}>
+                <button 
+                  className={`${styles.switchBtn} ${!isChef ? styles.switchActive : ''}`}
+                  onClick={() => handleDashboardSwitch('normal')}
+                  disabled={isSwitchingDashboard}
+                >
+                  Normal
+                </button>
+                <button 
+                  className={`${styles.switchBtn} ${isChef ? styles.switchActiveChef : ''}`}
+                  onClick={() => handleDashboardSwitch('chief_chef')}
+                  disabled={isSwitchingDashboard}
+                >
+                  Chief Chef
+                </button>
+              </div>
+            )}
 
-          <button className={`${styles.navItem} ${activeTab === 'overview' ? styles.navActive : ''}`} onClick={() => setActiveTab('overview')}>
-            <TrendingUp size={18} /> Overview
-          </button>
-          <button className={`${styles.navItem} ${activeTab === 'orders' ? styles.navActive : ''}`} onClick={() => setActiveTab('orders')}>
-            <Package size={18} /> Orders & Fulfillment
-          </button>
-          <button className={`${styles.navItem} ${activeTab === 'inventory' ? styles.navActive : ''}`} onClick={() => setActiveTab('inventory')}>
-            <ShoppingCart size={18} /> My Store & Stocks
-          </button>
-          <button className={`${styles.navItem} ${activeTab === 'payments' ? styles.navActive : ''}`} onClick={() => setActiveTab('payments')}>
-            <Wallet size={18} /> Wallet & Payouts
-          </button>
-          <button className={`${styles.navItem} ${activeTab === 'enquiries' ? styles.navActive : ''}`} onClick={() => setActiveTab('enquiries')}>
-            <Bell size={18} /> Notifications & Enquiries
-            {unreadCount > 0 && <span className={styles.navBadge}>{unreadCount}</span>}
-          </button>
-          <button className={`${styles.navItem} ${activeTab === 'reviews' ? styles.navActive : ''}`} onClick={() => setActiveTab('reviews')}>
-            <Star size={18} /> Customer Reviews
-          </button>
-          <button className={`${styles.navItem} ${activeTab === 'marketing' ? styles.navActive : ''}`} onClick={() => setActiveTab('marketing')}>
-            <Tag size={18} /> Marketing & Promos
-          </button>
-          <button className={`${styles.navItem} ${activeTab === 'services' ? styles.navActive : ''}`} onClick={() => setActiveTab('services')}>
-            <Scissors size={18} /> Services
-          </button>
-          <button className={`${styles.navItem} ${activeTab === 'reels' ? styles.navActive : ''}`} onClick={() => setActiveTab('reels')}>
-            <Video size={18} /> Collection Reels
-          </button>
-          <button className={`${styles.navItem} ${activeTab === 'analytics' ? styles.navActive : ''}`} onClick={() => setActiveTab('analytics')}>
-            <BarChart3 size={18} /> Smart Analytics
-          </button>
-          <button className={`${styles.navItem} ${activeTab === 'settings' ? styles.navActive : ''}`} onClick={() => setActiveTab('settings')}>
-            <Settings size={18} /> Store Settings
-          </button>
-          <button className={`${styles.navItem} ${activeTab === 'plans' ? styles.navActive : ''}`} onClick={() => setActiveTab('plans')} style={{ color: 'var(--primary)', background: activeTab === 'plans' ? 'var(--primary-soft)' : 'transparent' }}>
-            <Crown size={18} /> Plans & Upgrade
-          </button>
-          <button className={`${styles.navItem} ${activeTab === 'ai' ? styles.navActive : ''}`} onClick={() => setActiveTab('ai')} style={{ color: '#a78bfa', background: activeTab === 'ai' ? 'rgba(167,139,250,0.1)' : 'transparent' }}>
-            <Zap size={18} /> AI Assistant
-          </button>
+            <nav className={styles.nav}>
+              <Link href="/" className={styles.navItem} style={{ marginBottom: '0.5rem', color: 'var(--secondary)' }}>
+                <Home size={18} /> Marketplace Hub
+              </Link>
+              <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '1rem' }} />
 
-          {userRole === 'admin' && (
-            <Link href="/admin" className={styles.navItem} style={{ color: 'var(--accent-gold)', marginTop: '0.5rem', background: 'rgba(212, 175, 55, 0.05)' }}>
-              <ShieldCheck size={18} /> Admin Control Panel
-            </Link>
-          )}
+              <button className={`${styles.navItem} ${activeTab === 'overview' ? styles.navActive : ''}`} onClick={() => setActiveTab('overview')}>
+                <TrendingUp size={18} /> Overview
+              </button>
+              <button className={`${styles.navItem} ${activeTab === 'products' ? styles.navActive : ''}`} onClick={() => setActiveTab('products')}>
+                {isChef ? <UtensilsCrossed size={18} /> : <Package size={18} />} {isChef ? 'My Delicacies' : 'My Products'}
+              </button>
+              <button className={`${styles.navItem} ${activeTab === 'orders' ? styles.navActive : ''}`} onClick={() => setActiveTab('orders')}>
+                <ShoppingCart size={18} /> Orders & Fulfillment
+                {orders.filter(o => o.status === 'paid').length > 0 && <span className={styles.navBadge}>{orders.filter(o => o.status === 'paid').length}</span>}
+              </button>
+              <button className={`${styles.navItem} ${activeTab === 'payments' ? styles.navActive : ''}`} onClick={() => setActiveTab('payments')}>
+                <Wallet size={18} /> Wallet & Payouts
+              </button>
+              <button className={`${styles.navItem} ${activeTab === 'enquiries' ? styles.navActive : ''}`} onClick={() => setActiveTab('enquiries')}>
+                <Bell size={18} /> Notifications & Enquiries
+                {unreadCount > 0 && <span className={styles.navBadge}>{unreadCount}</span>}
+              </button>
+              <button className={`${styles.navItem} ${activeTab === 'reviews' ? styles.navActive : ''}`} onClick={() => setActiveTab('reviews')}>
+                <Star size={18} /> Customer Reviews
+              </button>
+              <button className={`${styles.navItem} ${activeTab === 'marketing' ? styles.navActive : ''}`} onClick={() => setActiveTab('marketing')}>
+                <Tag size={18} /> Marketing & Promos
+              </button>
+              <button className={`${styles.navItem} ${activeTab === 'services' ? styles.navActive : ''}`} onClick={() => setActiveTab('services')}>
+                <Scissors size={18} /> Services
+              </button>
+              <button className={`${styles.navItem} ${activeTab === 'reels' ? styles.navActive : ''}`} onClick={() => setActiveTab('reels')}>
+                <Video size={18} /> Collection Reels
+              </button>
+              <button className={`${styles.navItem} ${activeTab === 'analytics' ? styles.navActive : ''}`} onClick={() => setActiveTab('analytics')}>
+                <BarChart3 size={18} /> Smart Analytics
+              </button>
+              <button className={`${styles.navItem} ${activeTab === 'settings' ? styles.navActive : ''}`} onClick={() => setActiveTab('settings')}>
+                <Settings size={18} /> Store Settings
+              </button>
+              <button className={`${styles.navItem} ${activeTab === 'plans' ? styles.navActive : ''}`} onClick={() => setActiveTab('plans')} style={{ color: 'var(--primary)', background: activeTab === 'plans' ? 'var(--primary-soft)' : 'transparent' }}>
+                <Crown size={18} /> Plans & Upgrade
+              </button>
+              <button className={`${styles.navItem} ${activeTab === 'ai' ? styles.navActive : ''}`} onClick={() => setActiveTab('ai')} style={{ color: '#a78bfa', background: activeTab === 'ai' ? 'rgba(167,139,250,0.1)' : 'transparent' }}>
+                <Zap size={18} /> AI Assistant
+              </button>
 
-          <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0' }} />
-          <button
-            className={styles.navItem}
-            style={{ color: '#ef4444' }}
-            onClick={async () => {
-              await supabase.auth.signOut();
-              router.push('/');
-            }}
-          >
-            <LogOut size={18} /> Sign Out
-          </button>
-        </nav>
-      </aside>
+              {userRole === 'admin' && (
+                <Link href="/admin" className={styles.navItem} style={{ color: 'var(--accent-gold)', marginTop: '0.5rem', background: 'rgba(212, 175, 55, 0.05)' }}>
+                  <ShieldCheck size={18} /> Admin Control Panel
+                </Link>
+              )}
+
+              <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0' }} />
+              <button
+                className={styles.navItem}
+                style={{ color: '#ef4444' }}
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  router.push('/');
+                }}
+              >
+                <LogOut size={18} /> Sign Out
+              </button>
+            </nav>
+          </aside>
 
       <main className={styles.main}>
+        <header className={styles.dashboardHeader}>
+          <div className={styles.headerTitle}>
+            <h1 className={styles.title}>{isChef ? 'Chief Chef Dashboard' : 'Vendor Dashboard'}</h1>
+            <p className={styles.subtitle}>{isChef ? 'Manage your kitchen, delicacies, and fast-track orders.' : 'Manage your fashion brand and inventory.'}</p>
+          </div>
+          
+          <div className={styles.headerActions}>
+            {isChef && (
+              <div className={`${styles.kitchenToggle} ${isKitchenOpen ? styles.kitchenOpen : styles.kitchenClosed}`} onClick={toggleKitchenStatus}>
+                <div className={styles.toggleDot} />
+                <span>{isKitchenOpen ? 'KITCHEN OPEN' : 'KITCHEN CLOSED'}</span>
+                {isUpdatingKitchen && <Loader2 size={12} className="anim-spin" />}
+              </div>
+            )}
+            <button className={styles.notifBtn} onClick={() => setActiveTab('enquiries')}>
+              <Bell size={20} />
+              {unreadCount > 0 && <span className={styles.badgeCount}>{unreadCount}</span>}
+            </button>
+          </div>
+        </header>
         {activeTab === 'no_brand' && (
           <div className={styles.activationNotice}>
             <Store size={48} color="var(--primary)" />
