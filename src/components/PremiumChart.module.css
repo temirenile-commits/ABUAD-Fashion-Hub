@@ -1,0 +1,161 @@
+.container {
+  background: var(--bg-100, #0d0d0d);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 20px;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.titleGroup h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-100, #fff);
+  margin: 0;
+}
+
+.titleGroup p {
+  font-size: 0.75rem;
+  color: var(--text-400, #64748b);
+  margin: 0.2rem 0 0;
+}
+
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  background: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.chartControls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.controlBtn {
+  background: var(--bg-200, rgba(255,255,255,0.05));
+  border: 1px solid var(--border, rgba(255,255,255,0.1));
+  color: var(--text-300, #94a3b8);
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.controlBtn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.controlActive {
+  background: var(--primary, #eb0c7a) !important;
+  border-color: var(--primary, #eb0c7a) !important;
+  color: #fff !important;
+}
+
+.chartArea {
+  position: relative;
+  width: 100%;
+}
+
+.scrollContainer {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+
+.scrollContainer::-webkit-scrollbar {
+  height: 4px;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+}
+
+.chartInner {
+  min-width: 600px; /* Force minimum width for scrolling if needed */
+}
+
+.statsFooter {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.05));
+}
+
+.footerStat span {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-400, #64748b);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+}
+
+.footerStat strong {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-100, #fff);
+  font-variant-numeric: tabular-nums;
+}
+
+.trendUp { color: #10b981; }
+.trendDown { color: #ef4444; }
+
+.tooltip {
+  background: rgba(13, 13, 13, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0.75rem;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+
+.tooltipLabel {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.tooltipVal {
+  font-size: 1rem;
+  font-weight: 900;
+  color: #fff;
+}

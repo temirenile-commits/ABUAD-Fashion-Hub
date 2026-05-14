@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Trophy, TrendingUp, MapPin, ArrowLeft, Loader2, Medal, Activity } from 'lucide-react';
+import { Trophy, TrendingUp, MapPin, ArrowLeft, Loader2, Medal, Activity, Globe } from 'lucide-react';
+import PremiumChart from '@/components/PremiumChart';
 
 interface UniversityRanking {
   id: string;
@@ -51,24 +52,43 @@ export default function RankingsPage() {
   return (
     <div className="min-h-screen bg-[#050505] text-white">
       {/* Header Section */}
-      <div className="relative h-[300px] flex items-center justify-center overflow-hidden border-b border-white/5">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#eb0c7a]/20 to-transparent pointer-events-none" />
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none" />
+      <div className="relative pt-20 pb-12 flex items-center justify-center overflow-hidden border-b border-white/5">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#eb0c7a]/10 to-transparent pointer-events-none" />
         
-        <div className="max-w-4xl w-full px-6 relative z-10 text-center">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-8 group">
-            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-            Back to Marketplace
-          </Link>
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-[#eb0c7a]/10 rounded-2xl border border-[#eb0c7a]/20">
-              <Trophy className="text-[#eb0c7a]" size={32} />
+        <div className="max-w-6xl w-full px-6 relative z-10">
+          <div className="flex flex-col md:flex-row gap-12 items-center">
+            <div className="flex-1 text-left">
+              <Link href="/" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-8 group">
+                <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                Back to Marketplace
+              </Link>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-3 bg-[#eb0c7a]/10 rounded-2xl border border-[#eb0c7a]/20">
+                  <Trophy className="text-[#eb0c7a]" size={32} />
+                </div>
+                <div className="bg-green-500/10 text-green-500 text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-2 uppercase tracking-widest border border-green-500/20">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /> Live Economy
+                </div>
+              </div>
+              <h1 className="text-5xl md:text-6xl font-black mb-4 tracking-tight leading-none">University <br /><span className="text-[#eb0c7a]">Leaderboard</span></h1>
+              <p className="text-gray-400 text-lg max-w-md">
+                Live rankings based on monthly transaction volume and sales velocity across all campuses.
+              </p>
+            </div>
+
+            <div className="w-full md:w-[500px]">
+               <PremiumChart 
+                 title="Total Platform Volume"
+                 subtitle="Real-time sales across all universities"
+                 initialData={[]} // API will populate via realtime or we could fetch initial
+                 realtimeConfig={{
+                   table: 'orders',
+                   valueKey: 'total_amount'
+                 }}
+                 height={250}
+               />
             </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">University <span className="text-[#eb0c7a]">Leaderboard</span></h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Live rankings based on monthly transaction volume and sales velocity across all campuses.
-          </p>
         </div>
       </div>
 

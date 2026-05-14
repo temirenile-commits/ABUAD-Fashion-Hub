@@ -13,6 +13,7 @@ import {
 import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
+import PremiumChart from "@/components/PremiumChart";
 
 type Tab = "overview" | "vendors" | "customers" | "orders" | "reviews" | "notices" | "analytics" | "insights" | "fleet" | "team" | "catalog" | "merchandising" | "settings";
 
@@ -216,6 +217,7 @@ export default function UniversityAdminPage() {
           ))}
         </nav>
         <div className={styles.sidebarFooter}>
+          <Link href="/rankings" className={styles.footerLink} style={{ color: '#eb0c7a', fontWeight: 800 }}>🏆 Uni Leaderboard</Link>
           <Link href="/" className={styles.footerLink}>← Marketplace</Link>
           <button className={styles.footerLink} onClick={async()=>{await supabase.auth.signOut();router.push("/");}}>
             <LogOut size={14}/> Sign Out
@@ -474,65 +476,32 @@ export default function UniversityAdminPage() {
 
               {tab==="analytics"&&(
                 <div className={styles.sectionCard}>
-                  <div className={styles.sectionHeader}><div><h2>University Analytics</h2><p>Order and revenue trends for your university</p></div></div>
+                  <div className={styles.sectionHeader}><div><h2>University Analytics</h2><p>Live transaction and revenue tracking for your campus</p></div></div>
                   <div style={{padding:"1.5rem"}}>
-                    {chartData.length===0?<div className={styles.emptyState}><p>No data yet</p></div>:(
-                      <>
-                        <div style={{ width: '100%', height: 350, marginBottom: '2rem', background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: '12px' }}>
-                          <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData}>
-                              <defs>
-                                <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                                </linearGradient>
-                              </defs>
-                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                              <XAxis 
-                                dataKey="time" 
-                                stroke="#94a3b8" 
-                                fontSize={12} 
-                                tickLine={false} 
-                                axisLine={false} 
-                              />
-                              <YAxis 
-                                stroke="#94a3b8" 
-                                fontSize={12} 
-                                tickLine={false} 
-                                axisLine={false} 
-                                tickFormatter={(val) => `₦${val >= 1000 ? (val/1000).toFixed(0)+'k' : val}`}
-                              />
-                              <Tooltip 
-                                contentStyle={{ background: '#1e293b', border: 'none', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
-                                itemStyle={{ color: '#fff' }}
-                              />
-                              <Area 
-                                type="monotone" 
-                                dataKey="revenue" 
-                                stroke="#10b981" 
-                                fillOpacity={1} 
-                                fill="url(#colorRev)" 
-                                strokeWidth={3}
-                                name="Revenue"
-                              />
-                            </AreaChart>
-                          </ResponsiveContainer>
-                        </div>
-
-                        <div className={styles.tableWrap}>
-                          <table className={styles.table}>
-                            <thead><tr><th>Date</th><th>Orders</th><th>Revenue</th></tr></thead>
-                            <tbody>{chartData.map((d:any)=>(
-                              <tr key={d.time}>
-                                <td>{d.time}</td>
-                                <td style={{fontWeight:700}}>{d.orders}</td>
-                                <td style={{color:"#10b981",fontWeight:700}}>₦{Number(d.revenue).toLocaleString()}</td>
-                              </tr>
-                            ))}</tbody>
-                          </table>
-                        </div>
-                      </>
-                    )}
+                    <PremiumChart 
+                      title="Revenue Analytics"
+                      subtitle="Real-time order volume and sales data"
+                      initialData={chartData}
+                      realtimeConfig={{
+                        table: 'orders',
+                        filter: { university_id: myUniversity?.id },
+                        valueKey: 'total_amount'
+                      }}
+                    />
+                    
+                    <div style={{ marginTop: '2rem' }}>
+                       <PremiumChart 
+                        title="Financial Transactions"
+                        subtitle="Detailed ledger activity across all vendors"
+                        initialData={orders.map(o => ({ time: o.created_at, value: o.total_amount }))} 
+                        color="#10b981"
+                        realtimeConfig={{
+                          table: 'financial_ledger',
+                          filter: { user_id: userCtx?.id },
+                          valueKey: 'amount'
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               )}

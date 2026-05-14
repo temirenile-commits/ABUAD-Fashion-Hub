@@ -11,6 +11,7 @@ import { uploadFile } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
 import TradingChart from '@/components/TradingChart';
+import PremiumChart from '@/components/PremiumChart';
 import { useToast } from '@/context/ToastContext';
 
 type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds' | 'preorders';
@@ -1877,13 +1878,27 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
+                <div className="sectionCard" style={{ marginTop: '2rem' }}>
+                    <div className="sectionHeader">
+                      <div>
+                        <h2>Platform Performance</h2>
+                        <p>Real-time transaction volume across all universities</p>
+                      </div>
+                    </div>
+                    <div style={{ padding: '1.5rem' }}>
+                      <PremiumChart 
+                        title="Global Revenue"
+                        subtitle="Aggregated sales across the entire platform"
+                        initialData={marketData}
+                        realtimeConfig={{
+                          table: 'orders',
+                          valueKey: 'total_amount'
+                        }}
+                      />
+                    </div>
+                </div>
+
                 <div className={styles.chartsGrid}>
-                  <TradingChart 
-                    data={marketData} 
-                    title="Live Sales Velocity (Naira / Day)" 
-                    color="#10b981" 
-                    height={350}
-                  />
                   <div className={styles.marketInsights}>
                     <h3>Market Trends</h3>
                     <div className={styles.insightCard}>

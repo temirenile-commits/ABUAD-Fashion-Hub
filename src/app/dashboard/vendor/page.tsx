@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera, MapPin, Navigation, Eye, ShoppingBag , Globe, Phone, UtensilsCrossed } from 'lucide-react';
+import PremiumChart from '@/components/PremiumChart';
 import Papa from 'papaparse';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
@@ -2328,18 +2329,17 @@ export default function VendorDashboard() {
             <p className={styles.subtitle}>Data-driven insights to grow your fashion brand.</p>
 
             <div className={styles.analyticsGrid}>
-              <div className={`card ${styles.chartCard}`}>
-                <h3>Weekly Revenue Growth</h3>
-                <div className={styles.vividChart}>
-                  {[45, 78, 52, 91, 63, 85, 95].map((h, i) => (
-                    <div key={i} className={styles.chartBarWrap}>
-                      <div className={styles.chartBar} style={{ height: `${h}%`, background: i === 6 ? 'var(--primary)' : 'var(--bg-300)' }}>
-                        <span className={styles.barVal}>{h}k</span>
-                      </div>
-                      <span className={styles.barLabel}>{['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}</span>
-                    </div>
-                  ))}
-                </div>
+              <div className={`card ${styles.chartCard}`} style={{ gridColumn: 'span 2' }}>
+                <PremiumChart 
+                  title="Revenue Growth"
+                  subtitle="Live sales tracking for your brand"
+                  initialData={orders.map(o => ({ time: new Date(o.created_at).toLocaleTimeString(), value: o.total_amount }))}
+                  realtimeConfig={{
+                    table: 'orders',
+                    filter: { brand_id: brand.id },
+                    valueKey: 'total_amount'
+                  }}
+                />
               </div>
 
               <div className={styles.statsCardsMini}>

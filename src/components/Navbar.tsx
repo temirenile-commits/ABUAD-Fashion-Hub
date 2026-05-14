@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Search, Heart, User, Menu, X, Store, Home, Layers, LogOut, LayoutDashboard, ShoppingBag, MessageCircle, Bell, ShieldCheck, Sun, Moon, UtensilsCrossed } from 'lucide-react';
+import { Search, Heart, User, Menu, X, Store, Home, Layers, LogOut, LayoutDashboard, ShoppingBag, MessageCircle, Bell, ShieldCheck, Sun, Moon, UtensilsCrossed, Trophy } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/context/CartContext';
 import { useNotifications } from '@/context/NotificationContext';
@@ -93,6 +93,7 @@ export default function Navbar() {
     { href: '/vendors', label: 'Vendors', icon: <Store size={16} /> },
     { href: '/services', label: 'Services', icon: <Layers size={16} /> },
     { href: '/delicacies', label: 'Delicacies', icon: <UtensilsCrossed size={16} /> },
+    { href: '/rankings', label: 'Leaderboard', icon: <Trophy size={16} /> },
   ];
 
   const dashboardLink = isVendorOwner ? '/dashboard/vendor' : role === 'university_admin' ? '/university-admin' : role === 'delivery' ? '/dashboard/delivery' : '/dashboard/customer';
@@ -267,6 +268,9 @@ export default function Navbar() {
         <div className={`container-wide ${styles.categoryInner}`}>
           <Link href="/delicacies" className={styles.catPill} style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: '#fff', border: 'none', fontWeight: 700 }}>
             🍔 Delicacies
+          </Link>
+          <Link href="/rankings" className={styles.catPill} style={{ background: 'linear-gradient(135deg, #eb0c7a, #9333ea)', color: '#fff', border: 'none', fontWeight: 700 }}>
+            🏆 Leaderboard
           </Link>
           {['All', 'Clothing', 'Footwear', 'Bags', 'Accessories', 'Jewelry', 'Makeup', 'Photography', 'Tailoring'].map(cat => (
             <Link key={cat} href={`/explore?category=${cat}`} className={styles.catPill}>
