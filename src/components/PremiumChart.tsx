@@ -3,39 +3,42 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine, Customized
+  ResponsiveContainer, ReferenceLine, Legend
 } from 'recharts';
 import { supabase } from '@/lib/supabase';
 import { TrendingUp, TrendingDown, Wifi } from 'lucide-react';
 import styles from './PremiumChart.module.css';
 
+export interface MultiLineConfig {
+  keys: { dataKey: string; color: string; label: string; isProjected?: boolean }[];
+  categorize: (row: any) => { dataKey: string; value: number }[];
+}
+
 interface DataPoint {
   time: string;
-  value: number;
   raw_time: number;
-  cumulative: number;
+  [key: string]: string | number; // dynamic keys for values
 }
 
 interface PremiumChartProps {
   title: string;
   subtitle?: string;
-  /** Legacy prop — chart now self-fetches; passing this is still OK and will be merged */
-  initialData?: { time?: string; created_at?: string; amount?: number; total_amount?: number; value?: number }[];
-  color?: string;
+  initialData?: any[];
   height?: number;
   realtimeConfig?: {
-    table: 'orders' | 'financial_ledger' | 'transactions';
+    table: string;
     filter?: Record<string, string | number | boolean | null>;
-    valueKey: string;
   };
+  multiLineConfig: MultiLineConfig;
   valuePrefix?: string;
   valueSuffix?: string;
+  plotType?: 'cumulative' | 'individual'; // Plot running total or individual spikes
 }
 
 type Range = 'live' | '1h' | '24h' | '7d' | '30d';
 
 const RANGE_HOURS: Record<Range, number | null> = {
-  live: null,   // show all streaming points
+  live: null,
   '1h': 1,
   '24h': 24,
   '7d': 168,
@@ -74,24 +77,25 @@ const LiveDotRenderer = ({ cx, cy, color }: { cx?: number; cy?: number; color: s
 };
 
 const CustomDot = (props: any) => {
-  const { cx, cy, index, dataLength, color } = props;
-  if (index !== dataLength - 1) return null;
+  const { cx, cy, index, dataLength, color, isProjected } = props;
+  // Only pulse on the projected/main line to avoid chaos
+  if (index !== dataLength - 1 || !isProjected) return null;
   return <LiveDotRenderer cx={cx} cy={cy} color={color} />;
 };
 
-const CustomTooltip = ({ active, payload, label, valuePrefix, valueSuffix }: any) => {
+const CustomTooltip = ({ active, payload, label, valuePrefix, valueSuffix, keys }: any) => {
   if (!active || !payload?.length) return null;
   return (
     <div className={styles.tooltip}>
       <div className={styles.tooltipLabel}>{label}</div>
-      <div className={styles.tooltipVal}>
-        {valuePrefix}{Number(payload[0].value).toLocaleString()}{valueSuffix}
-      </div>
-      {payload[1] && (
-        <div className={styles.tooltipCum}>
-          Cumulative: {valuePrefix}{Number(payload[1].value).toLocaleString()}{valueSuffix}
-        </div>
-      )}
+      {payload.map((entry: any, i: number) => {
+        const keyDef = keys.find((k: any) => k.dataKey === entry.dataKey);
+        return (
+          <div key={i} className={styles.tooltipVal} style={{ color: entry.color, fontSize: '0.9rem', marginBottom: '4px' }}>
+            {keyDef?.label || entry.dataKey}: {valuePrefix}{Number(entry.value).toLocaleString()}{valueSuffix}
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -100,29 +104,69 @@ export default function PremiumChart({
   title,
   subtitle,
   initialData = [],
-  color = '#eb0c7a',
   height = 380,
   realtimeConfig,
+  multiLineConfig,
   valuePrefix = '₦',
   valueSuffix = '',
+  plotType = 'cumulative'
 }: PremiumChartProps) {
   const [data, setData] = useState<DataPoint[]>([]);
-  const [range, setRange] = useState<Range>('7d');
+  const [range, setRange] = useState<Range>('30d');
   const [isLoading, setIsLoading] = useState(true);
-  const [lastValue, setLastValue] = useState(0);
   const [flashNew, setFlashNew] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const gradId = `grad-${title.replace(/\s+/g, '')}`;
 
-  // ── Build a DataPoint from a raw DB row ─────────────────────────────────
-  const makePoint = useCallback((row: Record<string, any>, cumSoFar: number): DataPoint => {
-    const ts = row.created_at || row.time || new Date().toISOString();
-    const raw_time = new Date(ts).getTime();
-    const value = Number(row[realtimeConfig?.valueKey ?? 'total_amount'] ?? row.amount ?? row.value ?? 0);
-    return { time: formatTime(raw_time, range), value, raw_time, cumulative: cumSoFar + value };
-  }, [range, realtimeConfig]);
+  // Initialize running totals object based on keys
+  const getInitTally = useCallback(() => {
+    const init: Record<string, number> = {};
+    multiLineConfig.keys.forEach(k => init[k.dataKey] = 0);
+    return init;
+  }, [multiLineConfig.keys]);
 
-  // ── Fetch historical data from Supabase ──────────────────────────────────
+  // ── Build DataPoints from raw DB rows ─────────────────────────────────
+  const processRows = useCallback((rows: any[]) => {
+    let tally = getInitTally();
+    const sorted = [...rows].sort((a, b) => {
+      const ta = new Date(a.created_at || a.time || 0).getTime();
+      const tb = new Date(b.created_at || b.time || 0).getTime();
+      return ta - tb;
+    });
+
+    const pts: DataPoint[] = [];
+    
+    sorted.forEach(r => {
+      const ts = r.created_at || r.time || new Date().toISOString();
+      const raw_time = new Date(ts).getTime();
+      
+      const changes = multiLineConfig.categorize(r);
+      if (changes.length === 0) return;
+
+      const point: DataPoint = { time: formatTime(raw_time, range), raw_time };
+      
+      // Update tallies
+      changes.forEach(c => {
+        tally[c.dataKey] = (tally[c.dataKey] || 0) + c.value;
+      });
+
+      // Write values to point based on plotType
+      multiLineConfig.keys.forEach(k => {
+        if (plotType === 'cumulative') {
+          point[k.dataKey] = tally[k.dataKey];
+        } else {
+          // Find if this specific row changed this key
+          const chg = changes.find(c => c.dataKey === k.dataKey);
+          point[k.dataKey] = chg ? chg.value : 0;
+        }
+      });
+
+      pts.push(point);
+    });
+
+    return pts;
+  }, [range, multiLineConfig, plotType, getInitTally]);
+
+  // ── Fetch historical data ──────────────────────────────────
   const fetchHistory = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -148,43 +192,21 @@ export default function PremiumChart({
 
         const { data: rows } = await q.limit(500);
         if (rows && rows.length > 0) {
-          let cum = 0;
-          const pts = rows.map((r: any) => {
-            const p = makePoint(r, cum);
-            cum = p.cumulative;
-            return p;
-          });
-          setData(pts);
-          setLastValue(pts[pts.length - 1]?.value ?? 0);
+          setData(processRows(rows));
           setIsLoading(false);
           return;
         }
       }
 
-      // Fallback: use passed-in initialData
       if (initialData.length > 0) {
-        let cum = 0;
-        const pts = initialData.map(d => {
-          const ts = d.created_at || d.time || new Date().toISOString();
-          const raw_time = new Date(ts).getTime();
-          const value = Number(d.value ?? d.amount ?? d.total_amount ?? 0);
-          cum += value;
-          return {
-            time: formatTime(raw_time, range),
-            value,
-            raw_time,
-            cumulative: cum,
-          };
-        }).sort((a, b) => a.raw_time - b.raw_time);
-        setData(pts);
-        setLastValue(pts[pts.length - 1]?.value ?? 0);
+        setData(processRows(initialData));
       } else {
         setData([]);
       }
     } finally {
       setIsLoading(false);
     }
-  }, [range, realtimeConfig, initialData, makePoint]);
+  }, [range, realtimeConfig, initialData, processRows]);
 
   useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
@@ -197,15 +219,10 @@ export default function PremiumChart({
       .channel(channelId)
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: realtimeConfig.table,
-        },
+        { event: 'INSERT', schema: 'public', table: realtimeConfig.table },
         (payload: { new: Record<string, any> }) => {
           const row = payload.new;
 
-          // Check filter match client-side
           if (realtimeConfig.filter) {
             const match = Object.entries(realtimeConfig.filter).every(
               ([k, v]) => v === null || String(row[k]) === String(v)
@@ -213,33 +230,55 @@ export default function PremiumChart({
             if (!match) return;
           }
 
-          const value = Number(row[realtimeConfig.valueKey] ?? 0);
-          if (value <= 0) return;
+          const changes = multiLineConfig.categorize(row);
+          if (changes.length === 0) return;
 
           const now = Date.now();
           setData(prev => {
-            const cum = (prev[prev.length - 1]?.cumulative ?? 0) + value;
-            const newPt: DataPoint = {
-              time: formatTime(now, 'live'),
-              value,
-              raw_time: now,
-              cumulative: cum,
-            };
-            // Merge if within 3 seconds
-            const last = prev[prev.length - 1];
-            if (last && (now - last.raw_time < 3000)) {
-              const updated = [...prev];
-              updated[updated.length - 1] = {
-                ...last,
-                value: last.value + value,
-                cumulative: last.cumulative + value,
-              };
-              return updated.slice(-200);
+            const pts = [...prev];
+            const lastTally = getInitTally();
+            
+            // Get current running totals from the last point
+            if (pts.length > 0 && plotType === 'cumulative') {
+              const lastPt = pts[pts.length - 1];
+              multiLineConfig.keys.forEach(k => {
+                lastTally[k.dataKey] = Number(lastPt[k.dataKey] || 0);
+              });
             }
-            return [...prev, newPt].slice(-200);
+
+            // Apply new changes
+            changes.forEach(c => lastTally[c.dataKey] += c.value);
+
+            const newPt: DataPoint = { time: formatTime(now, 'live'), raw_time: now };
+            
+            multiLineConfig.keys.forEach(k => {
+              if (plotType === 'cumulative') {
+                newPt[k.dataKey] = lastTally[k.dataKey];
+              } else {
+                const chg = changes.find(c => c.dataKey === k.dataKey);
+                newPt[k.dataKey] = chg ? chg.value : 0;
+              }
+            });
+
+            // Merge if within 3 seconds
+            const last = pts[pts.length - 1];
+            if (last && (now - last.raw_time < 3000)) {
+               if (plotType === 'cumulative') {
+                 // Replace last point with updated tallies
+                 pts[pts.length - 1] = { ...last, ...newPt };
+               } else {
+                 // Add values together
+                 const merged = { ...last };
+                 multiLineConfig.keys.forEach(k => {
+                   merged[k.dataKey] = Number(last[k.dataKey] || 0) + Number(newPt[k.dataKey] || 0);
+                 });
+                 pts[pts.length - 1] = merged;
+               }
+               return pts.slice(-200);
+            }
+            return [...pts, newPt].slice(-200);
           });
 
-          setLastValue(value);
           setFlashNew(true);
           setTimeout(() => setFlashNew(false), 600);
         }
@@ -248,40 +287,42 @@ export default function PremiumChart({
 
     return () => { supabase.removeChannel(channel); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [realtimeConfig?.table, realtimeConfig?.valueKey, title]);
+  }, [realtimeConfig?.table, title, multiLineConfig, plotType, getInitTally]);
 
-  // Auto-scroll to end on new live data
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
-    }
+    if (scrollRef.current) scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
   }, [data.length]);
 
-  const total = data.reduce((s, d) => s + d.value, 0);
-  const first = data[0]?.value ?? 0;
-  const last  = data[data.length - 1]?.value ?? 0;
-  const pct   = first > 0 ? ((last - first) / first) * 100 : 0;
-  const isUp  = pct >= 0;
-  const chartColor = isUp ? color : '#ef4444';
+  const lastPoint = data[data.length - 1] || {};
+  
+  // Find min/max across all keys for YAxis domain
+  let minVal = 0;
+  let maxVal = 100;
+  if (data.length > 0) {
+    const allVals = data.flatMap(d => multiLineConfig.keys.map(k => Number(d[k.dataKey] || 0)));
+    minVal = Math.min(...allVals) * 0.95;
+    maxVal = Math.max(...allVals) * 1.05;
+  }
 
-  const minVal = data.length > 0 ? Math.min(...data.map(d => d.value)) * 0.95 : 0;
-  const maxVal = data.length > 0 ? Math.max(...data.map(d => d.value)) * 1.05 : 100;
-
-  // Tick count: ~6 evenly spaced Y labels
-  const tickCount = 6;
+  // Get the main metric for the ticker (use the 'isProjected' key, or the first key)
+  const mainKey = multiLineConfig.keys.find(k => k.isProjected) || multiLineConfig.keys[0];
+  const lastMainValue = Number(lastPoint[mainKey.dataKey] || 0);
+  
+  const firstPoint = data[0] || {};
+  const firstMainValue = Number(firstPoint[mainKey.dataKey] || 0);
+  const pct = firstMainValue > 0 ? ((lastMainValue - firstMainValue) / firstMainValue) * 100 : 0;
+  const isUp = pct >= 0;
 
   return (
     <div className={`${styles.container} ${flashNew ? styles.flashBorder : ''}`}>
-      {/* ── Header ── */}
       <div className={styles.header}>
         <div className={styles.titleGroup}>
           <h3>{title}</h3>
           {subtitle && <p>{subtitle}</p>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {/* Last-price ticker */}
           <div className={`${styles.priceTicker} ${flashNew ? styles.tickerFlash : ''}`}>
-            {valuePrefix}{lastValue.toLocaleString()}{valueSuffix}
+            {valuePrefix}{lastMainValue.toLocaleString()}{valueSuffix}
           </div>
           <div className={styles.liveBadge}>
             <span className={styles.liveDot} />
@@ -290,7 +331,6 @@ export default function PremiumChart({
         </div>
       </div>
 
-      {/* ── Range controls ── */}
       <div className={styles.rangeRow}>
         <div className={styles.chartControls}>
           {(['live', '1h', '24h', '7d', '30d'] as Range[]).map(r => (
@@ -309,7 +349,6 @@ export default function PremiumChart({
         </div>
       </div>
 
-      {/* ── Chart ── */}
       <div className={styles.chartArea} style={{ height }}>
         {isLoading ? (
           <div className={styles.loadingState}>
@@ -329,19 +368,15 @@ export default function PremiumChart({
               <ResponsiveContainer width="100%" height={height}>
                 <ComposedChart data={data} margin={{ top: 16, right: 24, left: 8, bottom: 0 }}>
                   <defs>
-                    <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={chartColor} stopOpacity={0.35} />
-                      <stop offset="100%" stopColor={chartColor} stopOpacity={0.01} />
-                    </linearGradient>
+                    {multiLineConfig.keys.map(k => (
+                      <linearGradient key={`grad-${k.dataKey}`} id={`grad-${k.dataKey}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={k.color} stopOpacity={k.isProjected ? 0.35 : 0.15} />
+                        <stop offset="100%" stopColor={k.color} stopOpacity={0.01} />
+                      </linearGradient>
+                    ))}
                   </defs>
 
-                  {/* ── Full grid — both vertical & horizontal ── */}
-                  <CartesianGrid
-                    strokeDasharray="4 4"
-                    stroke="rgba(255,255,255,0.07)"
-                    horizontal={true}
-                    vertical={true}
-                  />
+                  <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.07)" />
 
                   <XAxis
                     dataKey="time"
@@ -350,12 +385,11 @@ export default function PremiumChart({
                     tickLine={{ stroke: 'rgba(255,255,255,0.1)' }}
                     axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
                     minTickGap={50}
-                    interval="preserveStartEnd"
                   />
 
                   <YAxis
                     domain={[minVal, maxVal]}
-                    tickCount={tickCount}
+                    tickCount={6}
                     stroke="#475569"
                     tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'monospace' }}
                     tickLine={{ stroke: 'rgba(255,255,255,0.1)' }}
@@ -365,34 +399,50 @@ export default function PremiumChart({
                   />
 
                   <Tooltip
-                    content={<CustomTooltip valuePrefix={valuePrefix} valueSuffix={valueSuffix} />}
+                    content={<CustomTooltip valuePrefix={valuePrefix} valueSuffix={valueSuffix} keys={multiLineConfig.keys} />}
                     cursor={{ stroke: 'rgba(255,255,255,0.15)', strokeWidth: 1, strokeDasharray: '4 4' }}
                   />
+                  <Legend wrapperStyle={{ fontSize: '10px', fontFamily: 'monospace', paddingTop: '10px' }} />
 
-                  {/* Filled area */}
-                  <Area
-                    type="monotoneX"
-                    dataKey="value"
-                    stroke={chartColor}
-                    strokeWidth={2}
-                    fill={`url(#${gradId})`}
-                    fillOpacity={1}
-                    isAnimationActive={false}
-                    dot={<CustomDot dataLength={data.length} color={chartColor} />}
-                    activeDot={{ r: 5, fill: chartColor, strokeWidth: 0 }}
-                  />
+                  {multiLineConfig.keys.map(k => (
+                    k.isProjected ? (
+                      <Area
+                        key={k.dataKey}
+                        type="monotoneX"
+                        dataKey={k.dataKey}
+                        name={k.label}
+                        stroke={k.color}
+                        strokeWidth={2}
+                        fill={`url(#grad-${k.dataKey})`}
+                        isAnimationActive={false}
+                        dot={<CustomDot dataLength={data.length} color={k.color} isProjected={true} />}
+                        activeDot={{ r: 5, fill: k.color, strokeWidth: 0 }}
+                      />
+                    ) : (
+                      <Line
+                        key={k.dataKey}
+                        type="monotoneX"
+                        dataKey={k.dataKey}
+                        name={k.label}
+                        stroke={k.color}
+                        strokeWidth={1.5}
+                        dot={false}
+                        isAnimationActive={false}
+                      />
+                    )
+                  ))}
 
-                  {/* Current-price horizontal reference line */}
+                  {/* Reference line for the main metric */}
                   {data.length > 0 && (
                     <ReferenceLine
-                      y={last}
-                      stroke={chartColor}
+                      y={lastMainValue}
+                      stroke={mainKey.color}
                       strokeDasharray="5 3"
                       strokeOpacity={0.7}
                       label={{
-                        value: `${valuePrefix}${last.toLocaleString()}`,
+                        value: `${valuePrefix}${lastMainValue.toLocaleString()}`,
                         position: 'right',
-                        fill: chartColor,
+                        fill: mainKey.color,
                         fontSize: 10,
                         fontFamily: 'monospace',
                         fontWeight: 700,
@@ -406,28 +456,15 @@ export default function PremiumChart({
         )}
       </div>
 
-      {/* ── Footer stats ── */}
       <div className={styles.statsFooter}>
-        <div className={styles.footerStat}>
-          <span>Period Volume</span>
-          <strong>{valuePrefix}{total.toLocaleString()}{valueSuffix}</strong>
-        </div>
-        <div className={styles.footerStat}>
-          <span>Latest Tx</span>
-          <strong className={isUp ? styles.statUp : styles.statDown}>
-            {valuePrefix}{last.toLocaleString()}{valueSuffix}
-          </strong>
-        </div>
-        <div className={styles.footerStat}>
-          <span>Trend</span>
-          <strong className={isUp ? styles.statUp : styles.statDown}>
-            {isUp ? '▲' : '▼'} {Math.abs(pct).toFixed(2)}%
-          </strong>
-        </div>
-        <div className={styles.footerStat}>
-          <span>Data Points</span>
-          <strong>{data.length}</strong>
-        </div>
+        {multiLineConfig.keys.slice(0, 4).map(k => (
+          <div key={k.dataKey} className={styles.footerStat}>
+            <span>{k.label}</span>
+            <strong style={{ color: k.color }}>
+              {valuePrefix}{Number(lastPoint[k.dataKey] || 0).toLocaleString()}{valueSuffix}
+            </strong>
+          </div>
+        ))}
       </div>
     </div>
   );

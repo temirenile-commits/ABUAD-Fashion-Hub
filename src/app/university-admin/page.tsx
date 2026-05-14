@@ -475,29 +475,30 @@ export default function UniversityAdminPage() {
                   <div className={styles.sectionHeader}><div><h2>University Analytics</h2><p>Live transaction and revenue tracking for your campus</p></div></div>
                   <div style={{padding:"1.5rem"}}>
                     <PremiumChart 
-                      title="Revenue Analytics"
-                      subtitle="Real-time order volume and sales data"
-                      initialData={chartData}
+                      title="University Financial Breakdown"
+                      subtitle="Projected, Realized & Unrealized Revenue for your campus"
                       realtimeConfig={{
                         table: 'orders',
-                        filter: { university_id: myUniversity?.id },
-                        valueKey: 'total_amount'
+                        filter: { university_id: myUniversity?.id }
+                      }}
+                      multiLineConfig={{
+                        keys: [
+                          { dataKey: 'projected', color: '#10b981', label: 'Campus Projected', isProjected: true },
+                          { dataKey: 'realized', color: '#3b82f6', label: 'Campus Realized' },
+                          { dataKey: 'unrealized', color: '#f59e0b', label: 'Campus Unrealized' },
+                          { dataKey: 'failed', color: '#ef4444', label: 'Campus Failed' }
+                        ],
+                        categorize: (row) => {
+                          const val = Number(row.total_amount || 0);
+                          const status = row.status || 'pending';
+                          const res = [{ dataKey: 'projected', value: val }];
+                          if (status === 'completed' || status === 'confirmed') res.push({ dataKey: 'realized', value: val });
+                          else if (status === 'paid' || status === 'ready' || status === 'in_transit' || status === 'picked_up') res.push({ dataKey: 'unrealized', value: val });
+                          else if (status === 'cancelled' || status === 'failed') res.push({ dataKey: 'failed', value: val });
+                          return res;
+                        }
                       }}
                     />
-                    
-                    <div style={{ marginTop: '2rem' }}>
-                       <PremiumChart 
-                        title="Financial Transactions"
-                        subtitle="Detailed ledger activity across all vendors"
-                        initialData={orders.map(o => ({ time: o.created_at, value: o.total_amount }))} 
-                        color="#10b981"
-                        realtimeConfig={{
-                          table: 'financial_ledger',
-                          filter: { user_id: userCtx?.id },
-                          valueKey: 'amount'
-                        }}
-                      />
-                    </div>
                   </div>
                 </div>
               )}

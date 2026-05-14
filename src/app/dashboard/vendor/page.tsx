@@ -2443,13 +2443,30 @@ export default function VendorDashboard() {
             <div className={styles.analyticsGrid}>
               <div className={`card ${styles.chartCard}`} style={{ gridColumn: 'span 2' }}>
                 <PremiumChart 
-                  title="Revenue Growth"
-                  subtitle="Live sales tracking for your brand"
-                  initialData={orders.map(o => ({ time: new Date(o.created_at).toLocaleTimeString(), value: o.total_amount }))}
+                  title="Financial Breakdown"
+                  subtitle="Projected, Realized & Unrealized Revenue"
                   realtimeConfig={{
                     table: 'orders',
-                    filter: { brand_id: brand.id },
-                    valueKey: 'total_amount'
+                    filter: { brand_id: brand.id }
+                  }}
+                  multiLineConfig={{
+                    keys: [
+                      { dataKey: 'projected', color: '#10b981', label: 'Projected Revenue', isProjected: true },
+                      { dataKey: 'realized', color: '#3b82f6', label: 'Realized Profits' },
+                      { dataKey: 'unrealized', color: '#f59e0b', label: 'Unrealized Profits' },
+                      { dataKey: 'failed', color: '#ef4444', label: 'Failed Orders' }
+                    ],
+                    categorize: (row) => {
+                      const val = Number(row.total_amount || row.amount || row.value || 0);
+                      const status = row.status || 'pending';
+                      const res = [{ dataKey: 'projected', value: val }];
+                      
+                      if (status === 'completed' || status === 'confirmed') res.push({ dataKey: 'realized', value: val });
+                      else if (status === 'paid' || status === 'ready' || status === 'in_transit' || status === 'picked_up') res.push({ dataKey: 'unrealized', value: val });
+                      else if (status === 'cancelled' || status === 'failed') res.push({ dataKey: 'failed', value: val });
+                      
+                      return res;
+                    }
                   }}
                 />
               </div>

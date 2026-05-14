@@ -1906,12 +1906,27 @@ export default function AdminDashboard() {
                     </div>
                     <div style={{ padding: '1.5rem' }}>
                       <PremiumChart 
-                        title="Global Revenue"
-                        subtitle="Aggregated sales across the entire platform"
-                        initialData={marketData}
-                        realtimeConfig={{
-                          table: 'orders',
-                          valueKey: 'total_amount'
+                        title="Global Financial Breakdown"
+                        subtitle="Projected, Realized & Unrealized Platform Revenue"
+                        realtimeConfig={{ table: 'orders' }}
+                        multiLineConfig={{
+                          keys: [
+                            { dataKey: 'projected', color: '#10b981', label: 'Global Projected', isProjected: true },
+                            { dataKey: 'realized', color: '#3b82f6', label: 'Global Realized' },
+                            { dataKey: 'unrealized', color: '#f59e0b', label: 'Global Unrealized' },
+                            { dataKey: 'failed', color: '#ef4444', label: 'Global Failed' }
+                          ],
+                          categorize: (row) => {
+                            const val = Number(row.total_amount || 0);
+                            const status = row.status || 'pending';
+                            const res = [{ dataKey: 'projected', value: val }];
+                            
+                            if (status === 'completed' || status === 'confirmed') res.push({ dataKey: 'realized', value: val });
+                            else if (status === 'paid' || status === 'ready' || status === 'in_transit' || status === 'picked_up') res.push({ dataKey: 'unrealized', value: val });
+                            else if (status === 'cancelled' || status === 'failed') res.push({ dataKey: 'failed', value: val });
+                            
+                            return res;
+                          }
                         }}
                       />
                     </div>

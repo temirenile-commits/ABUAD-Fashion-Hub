@@ -80,10 +80,24 @@ export default function RankingsPage() {
                <PremiumChart 
                  title="Total Platform Volume"
                  subtitle="Real-time sales across all universities"
-                 initialData={[]} // API will populate via realtime or we could fetch initial
-                 realtimeConfig={{
-                   table: 'orders',
-                   valueKey: 'total_amount'
+                 realtimeConfig={{ table: 'orders' }}
+                 multiLineConfig={{
+                   keys: rankings.slice(0, 5).map((r, i) => ({
+                     dataKey: r.id || `school_${i}`,
+                     color: ['#eb0c7a', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'][i % 5],
+                     label: r.abbreviation || r.name,
+                     isProjected: i === 0 // Pulse only the top university
+                   })),
+                   categorize: (row) => {
+                     // Orders belong to a vendor, and vendors belong to a university.
+                     // The orders table might not have university_id directly on the row 
+                     // unless it was added. If it doesn't, this will group by 'unknown'.
+                     // Assuming 'university_id' exists on the order for analytical purposes.
+                     const val = Number(row.total_amount || 0);
+                     const schoolId = row.university_id;
+                     if (!schoolId) return [];
+                     return [{ dataKey: schoolId, value: val }];
+                   }
                  }}
                  height={250}
                />
