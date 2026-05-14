@@ -210,10 +210,10 @@ export default function UniversityAdminPage() {
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <div className={styles.logoMark}>
-            <div className={styles.logoIcon}>🏛</div>
-            <span className={styles.logoText}>UNI ADMIN</span>
+            <div className={styles.logoIcon}>📦</div>
+            <span className={styles.logoText}>MASTER CART</span>
           </div>
-          {myUniversity && <div className={styles.universityBadge}>📍 {myUniversity.abbreviation||myUniversity.name}</div>}
+          {myUniversity && <div className={styles.universityBadge}>🏛 {myUniversity.abbreviation||myUniversity.name} ADMIN</div>}
         </div>
         <nav className={styles.nav}>
           <div className={styles.navGroup}>Management</div>
@@ -272,9 +272,9 @@ export default function UniversityAdminPage() {
                       {label:"Vendors",val:stats.totalVendors||0,color:"#7c3aed",bg:"rgba(124,58,237,0.1)"},
                       {label:"Customers",val:stats.totalUsers||0,color:"#3b82f6",bg:"rgba(59,130,246,0.1)"},
                       {label:"Total Orders",val:stats.totalOrders||0,color:"#f59e0b",bg:"rgba(245,158,11,0.1)"},
-                      {label:"Total Revenue",val:`₦${(stats.totalRevenue||0).toLocaleString()}`,color:"#ec4899",bg:"rgba(236,72,153,0.1)"},
-                      {label:"Acquired Revenue",val:`₦${(stats.acquiredRevenue||0).toLocaleString()}`,color:"#10b981",bg:"rgba(16,185,129,0.1)"},
-                      {label:"Projected Revenue",val:`₦${(stats.projectedRevenue||0).toLocaleString()}`,color:"#f59e0b",bg:"rgba(245,158,11,0.1)"},
+                      {label:"Total Revenue (Paid)",val:`₦${(stats.totalRevenue||0).toLocaleString()}`,color:"#ec4899",bg:"rgba(236,72,153,0.1)"},
+                      {label:"Acquired Revenue (Completed)",val:`₦${(stats.acquiredRevenue||0).toLocaleString()}`,color:"#10b981",bg:"rgba(16,185,129,0.1)"},
+                      {label:"Projected Revenue (Stock Value)",val:`₦${(stats.projectedRevenue||0).toLocaleString()}`,color:"#f59e0b",bg:"rgba(245,158,11,0.1)"},
                     ].map(({label,val,color,bg})=>(
                       <div key={label} className={styles.statCard}>
                         <div><div className={styles.statLabel}>{label}</div><div className={styles.statValue}>{val}</div></div>
@@ -978,7 +978,7 @@ export default function UniversityAdminPage() {
                           />
                           <button 
                             className={styles.btnPrimary}
-                            onClick={() => action("update_uni_config", { key: 'customer_service_whatsapp', value: platformSettings.customer_service_whatsapp })}
+                            onClick={() => action("update_uni_config", { university_id: myUniversity?.id, key: 'customer_service_whatsapp', value: platformSettings.customer_service_whatsapp })}
                             disabled={!!actionLoading}
                           >
                             {actionLoading ? <Loader2 size={14} className={styles.spin} /> : 'Save'}

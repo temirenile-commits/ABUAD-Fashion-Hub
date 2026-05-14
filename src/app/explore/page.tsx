@@ -45,7 +45,7 @@ export default function ExplorePage() {
 
   // â”€â”€ Main filtered products â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const filtered = useMemo(() => {
-    let result = [...allProducts].filter(p => !(p as any).is_draft);
+    let result = [...allProducts].filter(p => !(p as any).is_draft && (p as any).product_section !== 'delicacies');
 
     if (selectedCategory !== 'all') {
       const dbSearch = selectedCategory.toLowerCase().replace(/-/g, ' ');

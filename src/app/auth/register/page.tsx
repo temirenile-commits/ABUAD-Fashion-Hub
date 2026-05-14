@@ -110,7 +110,7 @@ export default function RegisterPage() {
         <div className={styles.cardHeader}>
           <div className={styles.cardLogo}>MC</div>
           <h2>Create Account</h2>
-          <p>Join the #1 campus fashion community</p>
+          <p>Join the #1 campus marketplace</p>
         </div>
 
         {errorMsg && (

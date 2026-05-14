@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
       .eq('university_id', universityId)
       .eq('is_visible', true);
     
+    const activeStockCount = (stockData || []).reduce((sum, p) => sum + (Number(p.stock_count) || 0), 0);
     const projectedRevenue = (stockData || []).reduce((sum, p) => sum + (Number(p.price) * (Number(p.stock_count) || 0)), 0);
 
     return NextResponse.json({
@@ -67,8 +68,9 @@ export async function GET(req: NextRequest) {
         totalOrders: orders.length,
         paidOrders: paidOrders.length,
         totalRevenue, // paid but not necessarily completed
-        acquiredRevenue, // completed
-        projectedRevenue, // stock value
+        acquiredRevenue, // completed (money already made)
+        projectedRevenue, // stock value (potential revenue)
+        activeStockCount, // total units/plates available
         totalRiders: ridersRes.count ?? 0,
         popularProducts: productsRes.data || [],
       },
@@ -269,8 +271,24 @@ export async function GET(req: NextRequest) {
       .eq('university_id', universityId)
       .order('created_at', { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      // Fallback for missing column during migration phase
+      if (error.message.includes('column promo_codes.university_id does not exist')) {
+        return NextResponse.json({ promoCodes: [] });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ promoCodes: data || [] });
+  }
+
+  if (action === 'university_config') {
+    const { data: config } = await supabaseAdmin
+      .from('platform_settings')
+      .select('value')
+      .eq('key', `uni_config_${universityId}`)
+      .single();
+    
+    return NextResponse.json({ config: config?.value || {} });
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
@@ -514,16 +532,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
-  // â”€â”€ Update University Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // — Update University Config ————————————————————————————
   if (action === 'update_uni_config') {
     const { key, value } = body;
-    const targetUniId = ctx.universityId || body.university_id;
+    // Use target university from body if super admin, otherwise use context uni
+    const targetUniId = (ctx.isFullAdmin && body.university_id) ? body.university_id : ctx.universityId;
     
-    if (!targetUniId) return NextResponse.json({ error: 'University ID required' }, { status: 400 });
+    if (!targetUniId) return NextResponse.json({ error: 'University ID required for configuration update.' }, { status: 400 });
     
-    // Ensure university admin can only update their own university
+    // Security check: ensure university admin only updates their own campus
     if (!ctx.isFullAdmin && targetUniId !== ctx.universityId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden: You do not have permission to manage this university.' }, { status: 403 });
     }
 
     const configKey = `uni_config_${targetUniId}`;
@@ -543,7 +562,7 @@ export async function POST(req: NextRequest) {
     }, { onConflict: 'key' });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: 'University configuration updated.' });
   }
 
   // â”€â”€ Manage university staff (university_admin only) â”€â”€â”€â”€â”€â”€â”€â”€
@@ -683,7 +702,12 @@ export async function POST(req: NextRequest) {
       university_id: ctx.universityId, // Enforced scope
       is_active: true
     });
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      if (error.message.includes('column "university_id" of relation "promo_codes" does not exist')) {
+        return NextResponse.json({ error: 'System update required: Please run the promo_codes migration in Supabase dashboard.' }, { status: 500 });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ success: true });
   }
 

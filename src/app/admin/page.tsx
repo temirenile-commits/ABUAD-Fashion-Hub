@@ -812,6 +812,18 @@ export default function AdminDashboard() {
                       <label>Product ID (Optional)</label>
                       <input value={promoForm.product_id} onChange={e => setPromoForm({ ...promoForm, product_id: e.target.value })} placeholder="Paste Product UUID" className="input mb-2" />
                       
+                      <label>University Scope <span className={styles.subText}>(optional — leave blank for global)</span></label>
+                      <select
+                        className="input mb-2"
+                        value={(promoForm as any).university_id || ''}
+                        onChange={e => setPromoForm({ ...promoForm, university_id: e.target.value || undefined } as any)}
+                      >
+                        <option value="">🌍 Global (All Campuses)</option>
+                        {universities.map(u => (
+                          <option key={u.id} value={u.id}>🎓 {u.abbreviation} — {u.name}</option>
+                        ))}
+                      </select>
+                      
                       <button className="btn btn-primary w-full" onClick={() => adminAction('create_promo_code', promoForm)}>Create Code</button>
                     </div>
 
@@ -1994,6 +2006,7 @@ export default function AdminDashboard() {
                                 <th>University</th>
                                 <th>Location</th>
                                 <th>Admins</th>
+                                <th>Growth Velocity</th>
                                 <th>Action</th>
                               </tr>
                             </thead>
@@ -2005,7 +2018,17 @@ export default function AdminDashboard() {
                                     <div style={{ fontSize: '0.75rem', color: 'var(--text-400)' }}>{u.name}</div>
                                   </td>
                                   <td>{u.location}</td>
-                                  <td><span className="badge badge-primary">{u.adminCount || 0}</span></td>
+                                  <td><span className="badge badge-primary">{(u as any).adminCount || 0}</span></td>
+                                  <td>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '120px' }}>
+                                      <div style={{ flex: 1, height: '6px', background: 'var(--bg-300)', borderRadius: '10px', overflow: 'hidden' }}>
+                                        <div style={{ width: `${Math.min((u as any).volatility || 0, 100)}%`, height: '100%', background: (u as any).volatility > 40 ? '#10b981' : (u as any).volatility > 15 ? '#f59e0b' : '#ef4444', borderRadius: '10px', transition: 'width 0.4s ease' }} />
+                                      </div>
+                                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: (u as any).volatility > 40 ? '#10b981' : (u as any).volatility > 15 ? '#f59e0b' : '#ef4444', minWidth: '36px' }}>
+                                        {(u as any).volatility || 0}%
+                                      </span>
+                                    </div>
+                                  </td>
                                   <td>
                                     <button 
                                       className="btn btn-icon text-red" 

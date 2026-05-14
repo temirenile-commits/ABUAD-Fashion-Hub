@@ -104,6 +104,7 @@ export default function VendorDashboard() {
   const [buyingDelicaciesBillboard, setBuyingDelicaciesBillboard] = useState(false);
   const [activeDelicaciesBillboard, setActiveDelicaciesBillboard] = useState<any>(null);
   const [activeDashboardMode, setActiveDashboardMode] = useState<'normal' | 'chief_chef'>('normal');
+  const isChef = activeDashboardMode === 'chief_chef';
   const [isSwitchingDashboard, setIsSwitchingDashboard] = useState(false);
   const [isKitchenOpen, setIsKitchenOpen] = useState(true);
   const [isUpdatingKitchen, setIsUpdatingKitchen] = useState(false);
@@ -406,7 +407,6 @@ export default function VendorDashboard() {
     }
   };
 
-  const isChef = activeDashboardMode === 'chief_chef';
 
   useEffect(() => {
     if (brand) setIsKitchenOpen(brand.is_available_now ?? true);
@@ -2235,10 +2235,10 @@ export default function VendorDashboard() {
                 <form onSubmit={handleProductSubmit} className={styles.productForm}>
                   <div className={styles.formRow}>
                     <div className={styles.inputGroup}>
-                      <label>Product Name</label>
+                      <label>{isChef ? 'Meal / Item Name' : 'Product Name'}</label>
                       <input
                         type="text"
-                        placeholder="e.g. Classic Vintage Denim Jacket"
+                        placeholder={isChef ? 'e.g. Special Jollof Rice' : 'e.g. Classic Vintage Denim Jacket'}
                         required
                         value={newProduct.title}
                         onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
@@ -2274,20 +2274,34 @@ export default function VendorDashboard() {
                         value={newProduct.category}
                         onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                       >
-                        <option>General</option>
-                        <option>Electronics</option>
-                        <option>Phones-Accessories</option>
-                        <option>Beauty-Personal-Care</option>
-                        <option>Home-Living</option>
-                        <option>Gadgets</option>
-                        <option>General-Merchandise</option>
+                        {isChef ? (
+                          <>
+                            <option value="snacks">Snacks</option>
+                            <option value="small_chops">Small Chops</option>
+                            <option value="pastries">Pastries</option>
+                            <option value="main_dish">Main Dish</option>
+                            <option value="sides">Sides</option>
+                            <option value="beverages">Beverages</option>
+                            <option value="provisions">Provisions</option>
+                          </>
+                        ) : (
+                          <>
+                            <option>General</option>
+                            <option>Electronics</option>
+                            <option>Phones-Accessories</option>
+                            <option>Beauty-Personal-Care</option>
+                            <option>Home-Living</option>
+                            <option>Gadgets</option>
+                            <option>General-Merchandise</option>
+                          </>
+                        )}
                       </select>
                     </div>
                     <div className={styles.inputGroup}>
-                      <label>Total Global Stock</label>
+                      <label>{isChef ? 'Quantity (Plates / Pieces)' : 'Total Global Stock'}</label>
                       <input
                         type="number"
-                        placeholder="10"
+                        placeholder={isChef ? '50' : '10'}
                         value={newProduct.stockCount}
                         onChange={(e) => setNewProduct({ ...newProduct, stockCount: e.target.value })}
                       />
@@ -2312,9 +2326,19 @@ export default function VendorDashboard() {
                               setNewProduct({ ...newProduct, variants: updated });
                             }}
                           >
-                            <option>Size</option>
-                            <option>Color</option>
-                            <option>Material</option>
+                            {isChef ? (
+                              <>
+                                <option>Size (Portion)</option>
+                                <option>Spice Level</option>
+                                <option>Add-ons</option>
+                              </>
+                            ) : (
+                              <>
+                                <option>Size</option>
+                                <option>Color</option>
+                                <option>Material</option>
+                              </>
+                            )}
                           </select>
                           <input
                             type="text"
@@ -2432,7 +2456,7 @@ export default function VendorDashboard() {
                     <span className={styles.invPrice}>{formatPrice(p.price)}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0', background: 'var(--bg-300)', padding: '4px', borderRadius: '4px' }}>
                        <button className="btn btn-ghost btn-sm" style={{ padding: '0 8px' }} onClick={() => updateStock(p.id, -1)}>-</button>
-                       <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.stock_count || 0}</span>
+                       <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.stock_count || 0} <span style={{fontSize: '0.7rem', opacity: 0.7}}>{isChef ? 'Plates' : 'Units'}</span></span>
                        <button className="btn btn-ghost btn-sm" style={{ padding: '0 8px' }} onClick={() => updateStock(p.id, 1)}>+</button>
                     </div>
                    </div>

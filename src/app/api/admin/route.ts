@@ -343,6 +343,11 @@ export async function GET(req: NextRequest) {
   }
 
   if (action === 'universities_list') {
+    const { data: ordersData } = await supabaseAdmin
+      .from('orders')
+      .select('university_id, created_at')
+      .in('status', ['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered', 'received']);
+
     const { data, error } = await supabaseAdmin
       .from('universities')
       .select('*, users!university_id(id, role)')
@@ -350,11 +355,26 @@ export async function GET(req: NextRequest) {
     
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     
-    const transformed = (data || []).map(u => ({
-      ...u,
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const transformed = (data || []).map(u => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      adminCount: (u as any).users?.filter((usr: any) => usr.role === 'admin' || usr.role === 'university_admin').length || 0
-    }));
+      const adminCount = (u as any).users?.filter((usr: any) => usr.role === 'admin' || usr.role === 'university_admin').length || 0;
+      
+      // Calculate growth (order volume last 7 days vs previous 7 days)
+      const uniOrders = (ordersData || []).filter(o => o.university_id === u.id);
+      const recentOrders = uniOrders.filter(o => new Date(o.created_at) > weekAgo).length;
+      const totalOrders = uniOrders.length;
+      const volatility = totalOrders > 0 ? (recentOrders / totalOrders) * 100 : 0;
+
+      return {
+        ...u,
+        adminCount,
+        volatility: Math.round(volatility * 10) / 10, // Growth score
+        totalOrders
+      };
+    });
 
     return NextResponse.json({ universities: transformed });
   }
@@ -902,16 +922,27 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'create_promo_code') {
-    const { code, type, value, max_uses, product_id } = body;
-    const { error } = await supabaseAdmin.from('promo_codes').insert({
+    const { code, type, value, max_uses, product_id, university_id } = body;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const insertData: any = {
       code: code.toUpperCase(),
       type,
       value,
       max_uses,
       product_id: product_id || null,
       is_active: true
-    });
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    };
+    
+    // Add university_id if it exists in the body
+    if (university_id) insertData.university_id = university_id;
+
+    const { error } = await supabaseAdmin.from('promo_codes').insert(insertData);
+    if (error) {
+      if (error.message.includes('column "university_id" of relation "promo_codes" does not exist')) {
+        return NextResponse.json({ error: 'System update required: Please run the promo_codes migration in Supabase dashboard.' }, { status: 500 });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ success: true });
   }
 
