@@ -18,12 +18,12 @@ interface DataPoint {
 interface PremiumChartProps {
   title: string;
   subtitle?: string;
-  initialData: any[];
+  initialData: { time?: string; created_at?: string; amount?: number; total_amount?: number; value?: number }[];
   color?: string;
   height?: number;
   realtimeConfig?: {
     table: 'orders' | 'financial_ledger' | 'transactions';
-    filter?: Record<string, any>;
+    filter?: Record<string, string | number | boolean | null>;
     valueKey: string;
   };
   valuePrefix?: string;
@@ -49,11 +49,14 @@ export default function PremiumChart({
   // Process initial data
   useEffect(() => {
     if (initialData && initialData.length > 0) {
-      const processed = initialData.map(d => ({
-        time: d.time || new Date(d.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        value: Number(d.value || d.amount || d.total_amount || 0),
-        raw_time: new Date(d.created_at || d.time).getTime()
-      })).sort((a, b) => a.raw_time - b.raw_time);
+      const processed = initialData.map(d => {
+        const timestamp = d.created_at || d.time || new Date().toISOString();
+        return {
+          time: d.time || new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          value: Number(d.value || d.amount || d.total_amount || 0),
+          raw_time: new Date(timestamp).getTime()
+        };
+      }).sort((a, b) => a.raw_time - b.raw_time);
       
       setData(processed);
       
@@ -77,7 +80,7 @@ export default function PremiumChart({
           table: realtimeConfig.table,
           filter: realtimeConfig.filter ? Object.entries(realtimeConfig.filter).map(([k, v]) => `${k}=eq.${v}`).join('&') : undefined
         },
-        (payload) => {
+        (payload: { new: Record<string, any> }) => {
           const newValue = Number(payload.new[realtimeConfig.valueKey] || 0);
           if (newValue === 0) return;
 
@@ -88,7 +91,7 @@ export default function PremiumChart({
             raw_time: now.getTime()
           };
 
-          setData(prev => {
+          setData((prev: DataPoint[]) => {
             const last = prev[prev.length - 1];
             if (last && (newPoint.raw_time - last.raw_time < 2000)) {
                const updated = [...prev];
@@ -98,7 +101,7 @@ export default function PremiumChart({
             return [...prev, newPoint].slice(-100); 
           });
 
-          setTotal(prev => prev + newValue);
+          setTotal((prev: number) => prev + newValue);
         }
       )
       .subscribe();
@@ -178,7 +181,7 @@ export default function PremiumChart({
                   fontSize={10} 
                   tickLine={false} 
                   axisLine={false}
-                  tickFormatter={(val) => `${valuePrefix}${val >= 1000 ? (val/1000).toFixed(1) + 'k' : val}`}
+                  tickFormatter={(val: number) => `${valuePrefix}${val >= 1000 ? (val/1000).toFixed(1) + 'k' : val}`}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Area 

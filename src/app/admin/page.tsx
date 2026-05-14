@@ -10,7 +10,6 @@ import {
 import { uploadFile } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
-import TradingChart from '@/components/TradingChart';
 import PremiumChart from '@/components/PremiumChart';
 import { useToast } from '@/context/ToastContext';
 
