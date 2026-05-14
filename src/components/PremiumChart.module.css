@@ -137,6 +137,26 @@
 .trendUp { color: #10b981; }
 .trendDown { color: #ef4444; }
 
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); transform: scale(1); }
+  70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); transform: scale(1.2); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); transform: scale(1); }
+}
+
+@keyframes flash {
+  0% { opacity: 0.3; stroke-width: 1; }
+  50% { opacity: 1; stroke-width: 3; }
+  100% { opacity: 0.3; stroke-width: 1; }
+}
+
+.pulse {
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.beepingLine {
+  animation: flash 1s infinite;
+}
+
 .tooltip {
   background: rgba(13, 13, 13, 0.95);
   backdrop-filter: blur(10px);

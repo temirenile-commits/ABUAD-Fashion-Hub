@@ -145,8 +145,8 @@ export default function PremiumChart({
         </div>
         
         <div className={styles.liveBadge}>
-          <span className={styles.liveDot} />
-          LIVE
+          <span className={`${styles.liveDot} ${styles.pulse}`} />
+          LIVE ECONOMY
         </div>
       </div>
 
@@ -204,6 +204,7 @@ export default function PremiumChart({
                      y={data[data.length - 1].value} 
                      stroke={color} 
                      strokeDasharray="3 3" 
+                     className={styles.beepingLine}
                    />
                 )}
               </AreaChart>

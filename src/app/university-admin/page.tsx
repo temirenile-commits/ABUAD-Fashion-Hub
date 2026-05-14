@@ -870,6 +870,19 @@ export default function UniversityAdminPage() {
                       </div>
                     </div>
                   </div>
+
+                  <div className={styles.sectionCard} style={{ marginTop: '2rem' }}>
+                    <div className={styles.sectionHeader}><div><h2>Platform Standings</h2><p>View where your university ranks globally</p></div></div>
+                    <div style={{ padding: '1.5rem' }}>
+                      <Link 
+                        href="/rankings" 
+                        className={styles.btnPrimary} 
+                        style={{ background: 'linear-gradient(135deg, #eb0c7a 0%, #7c3aed 100%)', width: 'fit-content' }}
+                      >
+                        🏆 Open University Leaderboard
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               )}
             </>
