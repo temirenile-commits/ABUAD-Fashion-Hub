@@ -38,11 +38,10 @@ USING (auth.uid() IN (SELECT id FROM public.users WHERE role = 'admin'));
 
 -- 2. Setup the global pricing default (500 NGN per day)
 -- This assumes platform_settings already exists. We will upsert the config.
-INSERT INTO public.platform_settings (key, value, description)
+INSERT INTO public.platform_settings (key, value)
 VALUES (
   'delicacies_billboard_price', 
-  '{"price_per_day": 500}', 
-  'Base price per day in NGN for a delicacy vendor to buy a billboard slot.'
+  '{"price_per_day": 500}'
 )
 ON CONFLICT (key) DO UPDATE 
 SET value = '{"price_per_day": 500}';
