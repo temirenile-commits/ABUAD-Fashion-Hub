@@ -117,15 +117,21 @@ export default function PremiumChart({
   const [flashNew, setFlashNew] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const propsRef = useRef({ multiLineConfig, realtimeConfig, initialData, plotType, title });
+  useEffect(() => {
+    propsRef.current = { multiLineConfig, realtimeConfig, initialData, plotType, title };
+  }, [multiLineConfig, realtimeConfig, initialData, plotType, title]);
+
   // Initialize running totals object based on keys
   const getInitTally = useCallback(() => {
     const init: Record<string, number> = {};
-    multiLineConfig.keys.forEach(k => init[k.dataKey] = 0);
+    propsRef.current.multiLineConfig.keys.forEach(k => init[k.dataKey] = 0);
     return init;
-  }, [multiLineConfig.keys]);
+  }, []);
 
   // ── Build DataPoints from raw DB rows ─────────────────────────────────
   const processRows = useCallback((rows: any[]) => {
+    const { multiLineConfig, plotType } = propsRef.current;
     let tally = getInitTally();
     const sorted = [...rows].sort((a, b) => {
       const ta = new Date(a.created_at || a.time || 0).getTime();
@@ -164,10 +170,14 @@ export default function PremiumChart({
     });
 
     return pts;
-  }, [range, multiLineConfig, plotType, getInitTally]);
+  }, [range, getInitTally]);
 
   // ── Fetch historical data ──────────────────────────────────
+  const realtimeConfigStr = JSON.stringify(realtimeConfig);
+  const initialDataLen = initialData.length;
+
   const fetchHistory = useCallback(async () => {
+    const { realtimeConfig, initialData } = propsRef.current;
     setIsLoading(true);
     try {
       if (realtimeConfig) {
@@ -206,12 +216,13 @@ export default function PremiumChart({
     } finally {
       setIsLoading(false);
     }
-  }, [range, realtimeConfig, initialData, processRows]);
+  }, [range, realtimeConfigStr, initialDataLen, processRows]);
 
   useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
   // ── Live subscription ────────────────────────────────────────────────────
   useEffect(() => {
+    const { realtimeConfig, title } = propsRef.current;
     if (!realtimeConfig) return;
 
     const channelId = `chart-${realtimeConfig.table}-${title.replace(/\s+/g,'')}`;
@@ -222,9 +233,10 @@ export default function PremiumChart({
         { event: 'INSERT', schema: 'public', table: realtimeConfig.table },
         (payload: { new: Record<string, any> }) => {
           const row = payload.new;
+          const { realtimeConfig: currentRealtime, multiLineConfig, plotType } = propsRef.current;
 
-          if (realtimeConfig.filter) {
-            const match = Object.entries(realtimeConfig.filter).every(
+          if (currentRealtime?.filter) {
+            const match = Object.entries(currentRealtime.filter).every(
               ([k, v]) => v === null || String(row[k]) === String(v)
             );
             if (!match) return;
@@ -287,7 +299,7 @@ export default function PremiumChart({
 
     return () => { supabase.removeChannel(channel); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [realtimeConfig?.table, title, multiLineConfig, plotType, getInitTally]);
+  }, [realtimeConfig?.table, title, getInitTally]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;

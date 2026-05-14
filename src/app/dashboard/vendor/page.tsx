@@ -1313,6 +1313,19 @@ export default function VendorDashboard() {
               )}
 
               <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0' }} />
+              
+              {brand?.marketplace_type === 'both' && (
+                <button
+                  className={styles.navItem}
+                  style={{ color: 'var(--primary)', marginBottom: '0.5rem', background: 'rgba(235,12,122,0.05)' }}
+                  onClick={() => handleDashboardSwitch(isChef ? 'normal' : 'chief_chef')}
+                  disabled={isSwitchingDashboard}
+                >
+                  {isSwitchingDashboard ? <Loader2 size={18} className="anim-spin" /> : <Rocket size={18} />}
+                  {isChef ? 'Normal Dashboard' : 'Chief Chef Dashboard'}
+                </button>
+              )}
+
               <button
                 className={styles.navItem}
                 style={{ color: '#ef4444' }}
@@ -1584,43 +1597,51 @@ export default function VendorDashboard() {
             <h1 className={styles.title}>Store Settings</h1>
             <p className={styles.subtitle}>Manage your brand identity, contact details, and store policies.</p>
 
-            {/* ── Chief Chef Dashboard CTA ────────────────────────────────────────── */}
-            <div style={{ margin: '1.5rem 0', padding: '1.5rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(235,12,122,0.08) 0%, rgba(124,58,237,0.08) 100%)', border: '1px solid rgba(235,12,122,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <UtensilsCrossed size={36} color="#eb0c7a" />
+            {/* ── Dashboard Operations Section ────────────────────────────────── */}
+            <div className={styles.settingsSection} style={{ border: '1px solid var(--primary-soft)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', background: 'rgba(235,12,122,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <Rocket size={20} color="var(--primary)" />
+                <h3 style={{ margin: 0 }}>Dashboard Operations</h3>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontWeight: 800, color: '#fff', fontSize: '1rem' }}>Chief Chef Dashboard</h3>
-                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: '#94a3b8' }}>
-                    {brand?.marketplace_type === 'both'
-                      ? isChef
-                        ? 'Currently in Chef mode — sell delicacies on MasterCart'
-                        : 'You have Chief Chef access — switch to manage your kitchen'
-                      : brand?.marketplace_type === 'delicacies'
-                      ? 'You are a verified Chief Chef'
-                      : 'Sell food & delicacies on MasterCart — request Chef access from admin'}
+                  <p style={{ margin: 0, fontWeight: 600, color: '#fff' }}>
+                    Current Mode: <span style={{ color: 'var(--primary)', textTransform: 'uppercase' }}>{isChef ? 'Chief Chef' : 'Normal Vendor'}</span>
+                  </p>
+                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text-400)' }}>
+                    {isChef ? 'You are managing your Kitchen & Delicacies.' : 'You are managing your Fashion/General Store.'}
                   </p>
                 </div>
-              </div>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                {(brand?.marketplace_type === 'both' || brand?.marketplace_type === 'delicacies') ? (
-                  <button
-                    className="btn btn-primary"
-                    style={{ background: isChef ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #eb0c7a, #7c3aed)', border: isChef ? '1px solid rgba(255,255,255,0.1)' : 'none' }}
-                    onClick={() => handleDashboardSwitch(isChef ? 'normal' : 'chief_chef')}
-                    disabled={isSwitchingDashboard}
-                  >
-                    {isSwitchingDashboard ? <Loader2 size={14} className="anim-spin" /> : null}
-                    {isChef ? '← Back to Normal Dashboard' : '🍳 Enter Chief Chef Dashboard'}
-                  </button>
-                ) : (
-                  <a
-                    href="mailto:admin@mastercart.ng?subject=Chief Chef Access Request"
-                    className="btn btn-primary"
-                    style={{ background: 'linear-gradient(135deg, #eb0c7a, #7c3aed)' }}
-                  >
-                    Request Chef Access
-                  </a>
-                )}
+
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  {(brand?.marketplace_type === 'both' || brand?.marketplace_type === 'delicacies') ? (
+                    <button
+                      className="btn btn-primary"
+                      style={{ 
+                        background: isChef ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #eb0c7a, #7c3aed)',
+                        border: isChef ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                        padding: '0.75rem 1.5rem'
+                      }}
+                      onClick={() => handleDashboardSwitch(isChef ? 'normal' : 'chief_chef')}
+                      disabled={isSwitchingDashboard}
+                    >
+                      {isSwitchingDashboard && <Loader2 size={14} className="anim-spin" />}
+                      {isChef ? '← Switch to Normal Dashboard' : '🍳 Enter Chief Chef Dashboard'}
+                    </button>
+                  ) : (
+                    <div style={{ textAlign: 'right' }}>
+                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#ef4444', fontWeight: 600 }}>Chef Access Required</p>
+                      <a
+                        href="mailto:admin@mastercart.ng?subject=Chief Chef Access Request"
+                        className="btn btn-sm"
+                        style={{ border: '1px solid var(--primary)', color: 'var(--primary)' }}
+                      >
+                        Apply for Chief Chef Status
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
