@@ -6,7 +6,7 @@ import {
   ResponsiveContainer, ReferenceLine
 } from 'recharts';
 import { supabase } from '@/lib/supabase';
-import { TrendingUp, TrendingDown, Activity, Clock } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
 import styles from './PremiumChart.module.css';
 
 interface DataPoint {
@@ -30,6 +30,20 @@ interface PremiumChartProps {
   valueSuffix?: string;
 }
 
+const CustomTooltip = ({ active, payload, label, valuePrefix, valueSuffix }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className={styles.tooltip}>
+        <div className={styles.tooltipLabel}>{label}</div>
+        <div className={styles.tooltipVal}>
+          {valuePrefix}{payload[0].value.toLocaleString()}{valueSuffix}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function PremiumChart({
   title,
   subtitle,
@@ -40,31 +54,37 @@ export default function PremiumChart({
   valuePrefix = '₦',
   valueSuffix = ''
 }: PremiumChartProps) {
-  const [data, setData] = useState<DataPoint[]>([]);
+  const [liveData, setLiveData] = useState<DataPoint[]>([]);
   const [range, setRange] = useState<'live' | '1h' | '24h' | '7d' | '30d'>('24h');
   const [total, setTotal] = useState(0);
   const [prevTotal, setPrevTotal] = useState(0);
   const chartRef = useRef<HTMLDivElement>(null);
 
-  // Process initial data
-  useEffect(() => {
-    if (initialData && initialData.length > 0) {
-      const processed = initialData.map(d => {
-        const timestamp = d.created_at || d.time || new Date().toISOString();
-        return {
-          time: d.time || new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          value: Number(d.value || d.amount || d.total_amount || 0),
-          raw_time: new Date(timestamp).getTime()
-        };
-      }).sort((a, b) => a.raw_time - b.raw_time);
-      
-      setData(processed);
-      
-      const currentSum = processed.reduce((acc, curr) => acc + curr.value, 0);
-      setTotal(currentSum);
-      setPrevTotal(currentSum * 0.9); 
-    }
+  // Derived historical data
+  const historicalData = useMemo(() => {
+    if (!initialData || initialData.length === 0) return [];
+    return initialData.map(d => {
+      const ts = d.created_at || d.time || new Date().toISOString();
+      return {
+        time: d.time || new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        value: Number(d.value || d.amount || d.total_amount || 0),
+        raw_time: new Date(ts).getTime()
+      };
+    }).sort((a, b) => a.raw_time - b.raw_time);
   }, [initialData]);
+
+  // Combined data
+  const data = useMemo(() => {
+    const combined = [...historicalData, ...liveData];
+    return combined.sort((a, b) => a.raw_time - b.raw_time).slice(-100);
+  }, [historicalData, liveData]);
+
+  // Initialize total
+  useEffect(() => {
+    const currentSum = historicalData.reduce((acc, curr) => acc + curr.value, 0);
+    setTotal(currentSum);
+    setPrevTotal(currentSum * 0.9);
+  }, [historicalData]);
 
   // Real-time listener
   useEffect(() => {
@@ -91,17 +111,17 @@ export default function PremiumChart({
             raw_time: now.getTime()
           };
 
-          setData((prev: DataPoint[]) => {
+          setLiveData(prev => {
             const last = prev[prev.length - 1];
             if (last && (newPoint.raw_time - last.raw_time < 2000)) {
                const updated = [...prev];
                updated[updated.length - 1] = { ...last, value: last.value + newPoint.value };
                return updated;
             }
-            return [...prev, newPoint].slice(-100); 
+            return [...prev, newPoint].slice(-50); 
           });
 
-          setTotal((prev: number) => prev + newValue);
+          setTotal(prev => prev + newValue);
         }
       )
       .subscribe();
@@ -115,20 +135,6 @@ export default function PremiumChart({
     if (prevTotal === 0) return 0;
     return ((total - prevTotal) / prevTotal) * 100;
   }, [total, prevTotal]);
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className={styles.tooltip}>
-          <div className={styles.tooltipLabel}>{label}</div>
-          <div className={styles.tooltipVal}>
-            {valuePrefix}{payload[0].value.toLocaleString()}{valueSuffix}
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className={styles.container}>
@@ -183,7 +189,7 @@ export default function PremiumChart({
                   axisLine={false}
                   tickFormatter={(val: number) => `${valuePrefix}${val >= 1000 ? (val/1000).toFixed(1) + 'k' : val}`}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip valuePrefix={valuePrefix} valueSuffix={valueSuffix} />} />
                 <Area 
                   type="monotone" 
                   dataKey="value" 

@@ -10,7 +10,7 @@ import {
 import { uploadFile } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
-import PremiumChart from '@/components/PremiumChart';
+import PremiumChart from '@/components/PremiumChart'; 
 import { useToast } from '@/context/ToastContext';
 
 type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds' | 'preorders';
