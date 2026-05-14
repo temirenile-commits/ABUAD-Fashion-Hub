@@ -10,65 +10,53 @@ import BatchWindowTimer from '@/components/BatchWindowTimer';
 import VendorAvailabilityTimer from '@/components/VendorAvailabilityTimer';
 import styles from './page.module.css';
 
-const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
-  snacks:     { label: 'Snacks',      emoji: '🍟' },
-  drinks:     { label: 'Drinks',      emoji: '🥤' },
-  pastries:   { label: 'Pastries',    emoji: '🥐' },
-  provisions: { label: 'Provisions',  emoji: '🛒' },
-  small_chops:{ label: 'Small Chops', emoji: '🍢' },
-  beverages:  { label: 'Beverages',   emoji: '☕' },
-  other:      { label: 'Other',       emoji: '🍽️' },
-};
+interface Category {
+  id: string;
+  label: string;
+  emoji: string;
+}
 
 interface DelicacyProduct {
   id: string;
   title: string;
-  description?: string;
   price: number;
   original_price?: number;
   image_url?: string;
   media_urls?: string[];
-  stock_count: number;
   rating?: number;
-  sales_count?: number;
-  delicacy_category?: string;
+  delicacy_category: string;
   available_from?: string;
-  brands?: {
-    id?: string;
-    name?: string;
-    logo_url?: string;
-    avg_rating?: number;
-    is_available_now?: boolean;
-    availability_start?: string;
-    availability_end?: string;
-  };
+  brands: any; // Can be object or array depending on join
 }
 
 interface RankingEntry {
   rank: number;
-  badge?: string;
-  score: number;
-  avg_rating: number;
+  brands: any;
   orders_completed: number;
-  brands?: { name?: string; logo_url?: string };
+  avg_rating: number;
+  badge?: string;
 }
 
-const BADGE_CONFIG: Record<string, { emoji: string; color: string; label: string }> = {
-  gold:   { emoji: '🥇', color: '#f59e0b', label: 'Gold' },
-  silver: { emoji: '🥈', color: '#94a3b8', label: 'Silver' },
-  bronze: { emoji: '🥉', color: '#b45309', label: 'Bronze' },
+const BADGE_CONFIG: Record<string, { label: string; emoji: string }> = {
+  'top_chef': { label: 'Top Chef', emoji: '👨‍🍳' },
+  'rising_star': { label: 'Rising Star', emoji: '🌟' },
+  'speedy_cook': { label: 'Speedy Cook', emoji: '⚡' },
 };
 
 export default function DelicaciesPage() {
   const [products, setProducts] = useState<DelicacyProduct[]>([]);
   const [rankings, setRankings] = useState<RankingEntry[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCat, setSelectedCat] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [universityId, setUniversityId] = useState<string | null>(null);
   const [billboards, setBillboards] = useState<any[]>([]);
   const [billboardIdx, setBillboardIdx] = useState(0);
+
+  // Advanced Filters
+  const [filterMode, setFilterMode] = useState<string>('all'); // all, available, preorder, top_rated
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
 
   // Fetch user university
   useEffect(() => {
@@ -86,14 +74,14 @@ export default function DelicaciesPage() {
     init();
   }, []);
 
-  // Fetch products + rankings
+  // Fetch products + rankings + categories
   useEffect(() => {
     if (!universityId) return;
     const fetchAll = async () => {
       setLoading(true);
       try {
         const [prodRes, rankRes, catRes, billRes] = await Promise.all([
-          fetch(`/api/delicacies?universityId=${universityId}&limit=60`),
+          fetch(`/api/delicacies?universityId=${universityId}&limit=100`),
           fetch(`/api/delicacies/rankings?universityId=${universityId}`),
           fetch('/api/delicacies/categories'),
           fetch(`/api/delicacies/billboard?universityId=${universityId}`),
@@ -107,7 +95,7 @@ export default function DelicaciesPage() {
         setRankings(rankData.rankings || []);
         setCategories(catData.categories || []);
         setBillboards(billData.billboards || []);
-      } catch { /* silent */ }
+      } catch (err) { console.error('Fetch error:', err); }
       finally { setLoading(false); }
     };
     fetchAll();
@@ -123,14 +111,34 @@ export default function DelicaciesPage() {
   }, [billboards.length]);
 
   const filtered = useMemo(() => {
-    let list = products;
+    let list = [...products];
+    
+    // Category Filter
     if (selectedCat !== 'all') list = list.filter(p => p.delicacy_category === selectedCat);
-    if (search.trim()) list = list.filter(p =>
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      (Array.isArray(p.brands) ? p.brands[0] : p.brands)?.name?.toLowerCase().includes(search.toLowerCase())
-    );
+    
+    // Search Filter
+    if (search.trim()) {
+      const s = search.toLowerCase();
+      list = list.filter(p =>
+        p.title.toLowerCase().includes(s) ||
+        (Array.isArray(p.brands) ? p.brands[0] : p.brands)?.name?.toLowerCase().includes(s)
+      );
+    }
+
+    // Advanced Mode Filters
+    if (filterMode === 'available') {
+      list = list.filter(p => (Array.isArray(p.brands) ? p.brands[0] : p.brands)?.is_available_now !== false);
+    } else if (filterMode === 'preorder') {
+      list = list.filter(p => p.available_from);
+    } else if (filterMode === 'top_rated') {
+      list = list.filter(p => (p.rating || 0) >= 4.5);
+    }
+
+    // Price Filter
+    list = list.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
+
     return list;
-  }, [products, selectedCat, search]);
+  }, [products, selectedCat, search, filterMode, priceRange]);
 
   return (
     <main style={{ minHeight: '100vh', background: 'var(--bg-300)' }}>
@@ -143,12 +151,12 @@ export default function DelicaciesPage() {
           </div>
           <h1 className={styles.heroTitle}>MasterCart Delicacies</h1>
           <p className={styles.heroSubtitle}>
-            Fresh snacks, drinks & campus favourites — delivered within your university
+            Snacks, Small Chops, Pastries & Provisions — strictly for campus cravings
           </p>
           <div className={styles.searchBar}>
             <Search size={16} style={{ opacity: 0.5, flexShrink: 0 }} />
             <input
-              placeholder="Search snacks, pastries, drinks..."
+              placeholder="Search delicacies..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className={styles.searchInput}
@@ -158,83 +166,32 @@ export default function DelicaciesPage() {
       </div>
 
       <div className={styles.container}>
-        {/* ── PREMIUM BILLBOARD CAROUSEL ── */}
-        {billboards.length > 0 && (
-          <div className={styles.billboardWrap}>
-            {billboards.map((bill, i) => (
-              <div 
-                key={bill.id} 
-                className={`${styles.billboardSlide} ${i === billboardIdx ? styles.billboardSlideActive : ''}`}
-              >
-                <div className={styles.billboardContent}>
-                  <div className={styles.billboardLabel}>
-                    <Star size={12} fill="currentColor" /> Premium Feature
-                  </div>
-                  <h2 className={styles.billboardTitle}>
-                    {bill.products?.title || bill.brands?.name || 'Delicacies Special'}
-                  </h2>
-                  <div className={styles.billboardMeta}>
-                    <span className={styles.billboardPrice}>
-                      ₦{Number(bill.products?.price || 0).toLocaleString()}
-                    </span>
-                    <span>By {bill.brands?.name}</span>
-                  </div>
-                  <Link 
-                    href={bill.products?.id ? `/product/${bill.products.id}` : `/vendor/${bill.brands?.id}`}
-                    className="btn btn-primary" 
-                    style={{ marginTop: '1.5rem', background: '#f59e0b', border: 'none', borderRadius: '999px' }}
-                  >
-                    View Offer <ArrowRight size={16} />
-                  </Link>
-                </div>
-                
-                <div className={styles.billboardMedia}>
-                  <img 
-                    src={bill.products?.image_url || bill.products?.media_urls?.[0] || bill.brands?.logo_url || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800'} 
-                    alt="" 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                </div>
-              </div>
-            ))}
-            
-            {billboards.length > 1 && (
-              <div className={styles.billboardDots}>
-                {billboards.map((_, i) => (
-                  <div 
-                    key={i} 
-                    className={`${styles.billboardDot} ${i === billboardIdx ? styles.billboardDotActive : ''}`}
-                    onClick={() => setBillboardIdx(i)}
-                  />
-                ))}
-              </div>
-            )}
+        {/* ── FAST FILTERS & CATEGORIES ── */}
+        <div className={styles.filterSection}>
+          <div className={styles.fastFilters}>
+            <button className={`${styles.filterBtn} ${filterMode === 'all' ? styles.filterBtnActive : ''}`} onClick={() => setFilterMode('all')}>All Items</button>
+            <button className={`${styles.filterBtn} ${filterMode === 'available' ? styles.filterBtnActive : ''}`} onClick={() => setFilterMode('available')}>Available Now</button>
+            <button className={`${styles.filterBtn} ${filterMode === 'preorder' ? styles.filterBtnActive : ''}`} onClick={() => setFilterMode('preorder')}>Preorders</button>
+            <button className={`${styles.filterBtn} ${filterMode === 'top_rated' ? styles.filterBtnActive : ''}`} onClick={() => setFilterMode('top_rated')}>Top Rated</button>
           </div>
-        )}
 
-        {/* Fallback space if no billboards (Hidden Timer) */}
-        {billboards.length === 0 && <div style={{ height: '1.5rem' }} />}
-
-        {/* ── CATEGORY TABS ── */}
-        <div className={styles.catTabs}>
-          <button
-            className={`${styles.catTab} ${selectedCat === 'all' ? styles.catTabActive : ''}`}
-            onClick={() => setSelectedCat('all')}
-          >
-            🍽️ All
-          </button>
-          {categories.map(cat => {
-            const meta = CATEGORY_META[cat] || { label: cat, emoji: '🍽️' };
-            return (
+          <div className={styles.catTabs}>
+            <button
+              className={`${styles.catTab} ${selectedCat === 'all' ? styles.catTabActive : ''}`}
+              onClick={() => setSelectedCat('all')}
+            >
+              🍽️ All
+            </button>
+            {categories.map(cat => (
               <button
-                key={cat}
-                className={`${styles.catTab} ${selectedCat === cat ? styles.catTabActive : ''}`}
-                onClick={() => setSelectedCat(cat)}
+                key={cat.id}
+                className={`${styles.catTab} ${selectedCat === cat.id ? styles.catTabActive : ''}`}
+                onClick={() => setSelectedCat(cat.id)}
               >
-                {meta.emoji} {meta.label}
+                {cat.emoji} {cat.label}
               </button>
-            );
-          })}
+            ))}
+          </div>
         </div>
 
         <div className={styles.layout}>
@@ -248,16 +205,17 @@ export default function DelicaciesPage() {
               </div>
             ) : filtered.length === 0 ? (
               <div className={styles.empty}>
-                <span style={{ fontSize: '3rem' }}>🍽️</span>
-                <h3>No delicacies found</h3>
-                <p>Try a different category or check back later</p>
+                <span style={{ fontSize: '3.5rem' }}>🍪</span>
+                <h3>No delicacies match your search</h3>
+                <p>Try different filters or browse all categories</p>
+                <button onClick={() => { setSelectedCat('all'); setFilterMode('all'); setSearch(''); }} className="btn btn-ghost" style={{ marginTop: '1rem' }}>Clear All Filters</button>
               </div>
             ) : (
               <div className={styles.grid}>
                 {filtered.map(item => {
                   const brand = Array.isArray(item.brands) ? item.brands[0] : item.brands;
                   const img = item.image_url || item.media_urls?.[0];
-                  const catMeta = CATEGORY_META[item.delicacy_category || 'other'];
+                  const catMeta = categories.find(c => c.id === item.delicacy_category);
                   const isOpen = brand?.is_available_now !== false;
                   const discount = item.original_price && item.original_price > item.price
                     ? Math.round(((item.original_price - item.price) / item.original_price) * 100)
@@ -271,23 +229,16 @@ export default function DelicaciesPage() {
                         ) : (
                           <div className={styles.cardImgPlaceholder}>{catMeta?.emoji || '🍽️'}</div>
                         )}
-                        {discount > 0 && (
-                          <span className={styles.discountBadge}>-{discount}%</span>
-                        )}
+                        {discount > 0 && <span className={styles.discountBadge}>-{discount}%</span>}
                         <span className={`${styles.statusBadge} ${isOpen ? styles.open : styles.closed}`}>
                           <Clock size={9} />
                           {isOpen ? 'OPEN' : 'CLOSED'}
                         </span>
                       </div>
                       <div className={styles.cardBody}>
-                        <div className={styles.cardCategory}>{catMeta?.emoji} {catMeta?.label}</div>
+                        <div className={styles.cardCategory}>{catMeta?.emoji || '🍽️'} {catMeta?.label || 'Delicacy'}</div>
                         <div className={styles.cardTitle}>{item.title}</div>
                         <div className={styles.cardBrand}>{brand?.name}</div>
-                        <VendorAvailabilityTimer
-                          availabilityStart={brand?.availability_start}
-                          availabilityEnd={brand?.availability_end}
-                          isAvailableNow={brand?.is_available_now !== false}
-                        />
                         <div className={styles.cardFooter}>
                           <div className={styles.cardPrice}>₦{Number(item.price).toLocaleString()}</div>
                           {item.rating && (
@@ -297,7 +248,7 @@ export default function DelicaciesPage() {
                             </span>
                           )}
                         </div>
-                        <button className={styles.addToCart}>
+                        <button className={styles.addToCart} onClick={(e) => { e.preventDefault(); /* Cart logic */ }}>
                           <ShoppingCart size={14} /> Add to Cart
                         </button>
                       </div>
@@ -313,38 +264,25 @@ export default function DelicaciesPage() {
             <div className={styles.rankingsCard}>
               <div className={styles.rankingsHeader}>
                 <Trophy size={16} style={{ color: '#f59e0b' }} />
-                <span>This Week&apos;s Top Vendors</span>
-                <Link href="/delicacies/rankings" className={styles.rankingsLink}>
-                  Full <ChevronRight size={12} />
-                </Link>
+                <span>Weekly Hall of Fame</span>
               </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-400)', marginBottom: '1rem', padding: '0 0.5rem' }}>Top vendors awarded badges of honor & boosts.</p>
               {rankings.slice(0, 5).map((r, i) => {
                 const brand = Array.isArray(r.brands) ? r.brands[0] : r.brands;
                 const badge = r.badge ? BADGE_CONFIG[r.badge] : null;
                 return (
                   <div key={i} className={styles.rankRow}>
-                    <div className={styles.rankNum}>
-                      {badge ? badge.emoji : `#${r.rank}`}
+                    <div className={styles.rankNum}>{badge ? badge.emoji : `#${r.rank}`}</div>
+                    <div className={styles.rankAvatar}>
+                      {brand?.logo_url ? <img src={brand.logo_url} alt="" /> : <span>{brand?.name?.[0]}</span>}
                     </div>
-                    {brand?.logo_url ? (
-                      <img src={brand.logo_url} alt="" className={styles.rankAvatar} />
-                    ) : (
-                      <div className={styles.rankAvatarFallback}>
-                        {brand?.name?.substring(0, 1).toUpperCase() || '?'}
-                      </div>
-                    )}
                     <div className={styles.rankInfo}>
-                      <div className={styles.rankName}>{brand?.name || 'Unknown'}</div>
-                      <div className={styles.rankStats}>
-                        <Star size={9} fill="#facc15" color="#facc15" /> {r.avg_rating?.toFixed(1)} · {r.orders_completed} orders
-                      </div>
+                      <div className={styles.rankName}>{brand?.name}</div>
+                      <div className={styles.rankStats}>{r.orders_completed} orders · {r.avg_rating?.toFixed(1)} ⭐</div>
                     </div>
                   </div>
                 );
               })}
-              {rankings.length === 0 && (
-                <p className={styles.noRankings}>Rankings update every Monday</p>
-              )}
             </div>
           </aside>
         </div>

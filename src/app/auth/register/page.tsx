@@ -108,7 +108,7 @@ export default function RegisterPage() {
 
       <div className={`card ${styles.card}`}>
         <div className={styles.cardHeader}>
-          <div className={styles.cardLogo}>AF</div>
+          <div className={styles.cardLogo}>MC</div>
           <h2>Create Account</h2>
           <p>Join the #1 campus fashion community</p>
         </div>

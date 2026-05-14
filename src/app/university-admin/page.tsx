@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import PremiumChart from "@/components/PremiumChart"; 
 
-type Tab = "overview" | "vendors" | "customers" | "orders" | "reviews" | "notices" | "analytics" | "insights" | "fleet" | "team" | "catalog" | "merchandising" | "settings";
+type Tab = "overview" | "vendors" | "customers" | "orders" | "reviews" | "notices" | "analytics" | "insights" | "fleet" | "team" | "catalog" | "merchandising" | "settings" | "promos";
 
 async function uaFetch(path: string, opts: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -53,6 +53,8 @@ export default function UniversityAdminPage() {
   const [addStaffLoading, setAddStaffLoading] = useState(false);
   const [orderFilter, setOrderFilter] = useState("all");
   const [homepageSections, setHomepageSections] = useState<any[]>([]);
+  const [promoCodes, setPromoCodes] = useState<any[]>([]);
+  const [promoForm, setPromoForm] = useState({ code: '', type: 'fixed', value: '', max_uses: '100', product_id: '' });
   const [sectionForm, setSectionForm] = useState<any>({ title: '', type: 'manual', layout_type: 'horizontal_scroll', is_active: true, priority: 0, auto_rule: { criteria: 'limited_stock', threshold: 5, limit: 12 } });
   const [editingSection, setEditingSection] = useState<any>(null);
 
@@ -102,7 +104,19 @@ export default function UniversityAdminPage() {
         }
         setUserCtx(profile);
         setMyUniversity(profile.universities);
-        if (profile.universities?.config) setPlatformSettings(profile.universities.config);
+        
+        // Fetch latest university config
+        try {
+          const configRes = await uaFetch(`/api/university-admin?action=university_config&uniId=${profile.university_id}`);
+          if (configRes.ok) {
+            const { config } = await configRes.json();
+            setPlatformSettings(config || {});
+          } else if (profile.universities?.config) {
+            setPlatformSettings(profile.universities.config);
+          }
+        } catch {
+          if (profile.universities?.config) setPlatformSettings(profile.universities.config);
+        }
       }
     };
     init();
@@ -111,7 +125,7 @@ export default function UniversityAdminPage() {
   const fetchAll = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const actions = ["stats","vendors","customers","orders","reviews","riders","analytics","cross_university_insights","team","products", "merchandising"];
+      const actions = ["stats","vendors","customers","orders","reviews","riders","analytics","cross_university_insights","team","products", "merchandising", "promo_codes"];
       const results = await Promise.allSettled(actions.map(async a => {
         const r = await uaFetch(`/api/university-admin?action=${a}`);
         if (!r.ok) {
@@ -132,10 +146,18 @@ export default function UniversityAdminPage() {
       setReviews(g(4).reviews||[]);
       setRiders(g(5).riders||[]);
       setChartData(g(6).chartData||[]);
-      setInsights(g(7).insights||[]);
       setTeam(g(8).team||[]);
       setProducts(g(9).products||[]);
       setHomepageSections(g(10).sections||[]);
+      setPromoCodes(g(11).promoCodes||[]);
+
+      // Identify most volatile university (example logic: highest growth or activity)
+      const insightsData = g(7).insights || [];
+      if (insightsData.length > 0) {
+        // Sort by orders or revenue to find the 'hottest'
+        const sorted = [...insightsData].sort((a, b) => Number(b.total_orders || 0) - Number(a.total_orders || 0));
+        setInsights(sorted);
+      }
     } catch (e: any) { 
       setError(e.message || "Failed to load dashboard data."); 
     }
@@ -169,6 +191,7 @@ export default function UniversityAdminPage() {
   const TABS: [Tab, string, any][] = [
     ["overview","Overview",LayoutDashboard],["vendors","Vendors",Store],["catalog","Catalog",ShoppingCart],["customers","Customers",Users],
     ["orders","Orders",ShoppingCart],["reviews","Reviews",Star],["notices","Notices",Bell],["merchandising", "Merchandising", Tag],
+    ["promos", "Promo Codes", Tag],
     ["analytics","Analytics",BarChart3],["insights","Insights",Globe],["fleet","Fleet",Truck],["team","My Team",Shield], ["settings", "Settings", Settings],
   ];
 
@@ -249,9 +272,9 @@ export default function UniversityAdminPage() {
                       {label:"Vendors",val:stats.totalVendors||0,color:"#7c3aed",bg:"rgba(124,58,237,0.1)"},
                       {label:"Customers",val:stats.totalUsers||0,color:"#3b82f6",bg:"rgba(59,130,246,0.1)"},
                       {label:"Total Orders",val:stats.totalOrders||0,color:"#f59e0b",bg:"rgba(245,158,11,0.1)"},
-                      {label:"Paid Orders",val:stats.paidOrders||0,color:"#10b981",bg:"rgba(16,185,129,0.1)"},
-                      {label:"Revenue",val:`₦${(stats.totalRevenue||0).toLocaleString()}`,color:"#ec4899",bg:"rgba(236,72,153,0.1)"},
-                      {label:"Riders",val:stats.totalRiders||0,color:"#06b6d4",bg:"rgba(6,182,212,0.1)"},
+                      {label:"Total Revenue",val:`₦${(stats.totalRevenue||0).toLocaleString()}`,color:"#ec4899",bg:"rgba(236,72,153,0.1)"},
+                      {label:"Acquired Revenue",val:`₦${(stats.acquiredRevenue||0).toLocaleString()}`,color:"#10b981",bg:"rgba(16,185,129,0.1)"},
+                      {label:"Projected Revenue",val:`₦${(stats.projectedRevenue||0).toLocaleString()}`,color:"#f59e0b",bg:"rgba(245,158,11,0.1)"},
                     ].map(({label,val,color,bg})=>(
                       <div key={label} className={styles.statCard}>
                         <div><div className={styles.statLabel}>{label}</div><div className={styles.statValue}>{val}</div></div>
@@ -503,14 +526,111 @@ export default function UniversityAdminPage() {
                 </div>
               )}
 
+              {tab === "promos" && (
+                <div className={styles.sectionCard}>
+                  <div className={styles.sectionHeader}>
+                    <div>
+                      <h2>Campus Promo Codes</h2>
+                      <p>Create and manage discount codes for your university students.</p>
+                    </div>
+                    <button className={styles.btnPrimary} onClick={() => (document.getElementById('promo-modal') as any)?.showModal()}>
+                      <Plus size={15} /> New Promo Code
+                    </button>
+                  </div>
+
+                  <div className={styles.tableWrap}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>Code</th>
+                          <th>Value</th>
+                          <th>Uses</th>
+                          <th>Scope</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {promoCodes.map(p => (
+                          <tr key={p.id}>
+                            <td><div style={{ fontWeight: 800, color: 'var(--primary)', letterSpacing: '0.05em' }}>{p.code}</div></td>
+                            <td>{p.type === 'percentage' ? `${p.value}% Off` : `₦${p.value} Off`}</td>
+                            <td>{p.used_count || 0} / {p.max_uses}</td>
+                            <td>{p.product_id ? <span className={styles.subText}>{p.products?.title}</span> : 'Entire Catalog'}</td>
+                            <td><span className={p.is_active ? styles.textGreen : styles.textRed}>{p.is_active ? 'Active' : 'Inactive'}</span></td>
+                            <td>
+                              <button className={`${styles.btnSm} ${styles.btnReject}`} onClick={() => confirm('Delete promo code?') && action('delete_promo_code', { codeId: p.id })}>
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {promoCodes.length === 0 && (
+                          <tr><td colSpan={6} style={{ textAlign: 'center' }} className={styles.subText}>No campus promo codes yet.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Promo Code Modal */}
+                  <dialog id="promo-modal" className={styles.modalDialog} style={{ padding: 0 }}>
+                    <div className={styles.modalContent} style={{ maxWidth: '400px', background: 'var(--bg-100)', color: '#fff', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                      <div className={styles.modalHeader} style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h3 style={{ margin: 0 }}>New Promo Code</h3>
+                        <button className={styles.btnIcon} onClick={() => (document.getElementById('promo-modal') as any)?.close()}><XCircle size={20} /></button>
+                      </div>
+                      <div style={{ padding: '1.5rem' }}>
+                        <div className="form-group mb-4">
+                          <label className={styles.formLabel}>Discount Code</label>
+                          <input className={styles.formInput} value={promoForm.code} onChange={e => setPromoForm({...promoForm, code: e.target.value.toUpperCase()})} placeholder="e.g. CAMPUS50" />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                          <div>
+                            <label className={styles.formLabel}>Type</label>
+                            <select className={styles.formInput} value={promoForm.type} onChange={e => setPromoForm({...promoForm, type: e.target.value})}>
+                              <option value="fixed">Fixed (₦)</option>
+                              <option value="percentage">Percentage (%)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className={styles.formLabel}>Value</label>
+                            <input type="number" className={styles.formInput} value={promoForm.value} onChange={e => setPromoForm({...promoForm, value: e.target.value})} placeholder="10" />
+                          </div>
+                        </div>
+                        <div className="form-group mb-4">
+                          <label className={styles.formLabel}>Max Uses</label>
+                          <input type="number" className={styles.formInput} value={promoForm.max_uses} onChange={e => setPromoForm({...promoForm, max_uses: e.target.value})} />
+                        </div>
+                        <button className={styles.btnPrimary} style={{ width: '100%' }} onClick={async () => {
+                          await action('create_promo_code', promoForm);
+                          setPromoForm({ code: '', type: 'fixed', value: '', max_uses: '100', product_id: '' });
+                          (document.getElementById('promo-modal') as any)?.close();
+                        }}>
+                          Create Code
+                        </button>
+                      </div>
+                    </div>
+                  </dialog>
+                </div>
+              )}
+
               {tab==="insights"&&(
                 <div className={styles.sectionCard}>
                   <div className={styles.sectionHeader}><div><h2>Cross-University Insights</h2><p>Read-only comparison across all universities</p></div></div>
                   <div className={styles.insightGrid}>
-                    {insights.map((u:any)=>(
+                    {insights.map((u:any, i:number)=>(
                       <div key={u.university_id} className={`${styles.insightCard} ${u.university_id===myUniversity?.id?styles.myUniversity:""}`}>
-                        <div className={styles.insightName}>{u.university_name}</div>
-                        <div className={styles.insightAbbr}>{u.abbreviation}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div>
+                            <div className={styles.insightName}>{u.university_name}</div>
+                            <div className={styles.insightAbbr}>{u.abbreviation}</div>
+                          </div>
+                          {i === 0 && (
+                            <span className={styles.badge} style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', fontSize: '0.65rem', fontWeight: 800 }}>
+                              🔥 MOST VOLATILE
+                            </span>
+                          )}
+                        </div>
                         {[["Users",u.total_users],["Vendors",u.total_vendors],["Orders",u.total_orders],["Revenue",u.total_revenue===null?"Restricted":u.total_revenue===0?"₦0":`₦${Number(u.total_revenue).toLocaleString()}`]].map(([k,v])=>(
                           <div key={k as string} className={styles.insightRow}>
                             <span>{k}</span>

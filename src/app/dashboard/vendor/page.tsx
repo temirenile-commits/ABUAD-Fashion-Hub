@@ -120,7 +120,7 @@ export default function VendorDashboard() {
     description: '',
     price: '',
     originalPrice: '',
-    category: 'Fashion',
+    category: 'General',
     stockCount: '10',
     mediaUrls: [] as string[],
     imageUrl: '',
@@ -605,6 +605,8 @@ export default function VendorDashboard() {
             price: Number(newProduct.price),
             original_price: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined,
             category: newProduct.category,
+            product_section: isChef ? 'delicacies' : 'fashion',
+            delicacy_category: isChef ? newProduct.category : null,
             stock_count: Number(newProduct.stockCount),
             media_urls: newProduct.mediaUrls,
             image_url: newProduct.imageUrl || undefined,
@@ -624,7 +626,7 @@ export default function VendorDashboard() {
           updateGlobalProduct(editingProduct.id, updates);
           setEditingProduct(null);
           setNewProduct({
-            title: '', description: '', price: '', originalPrice: '', category: 'Fashion',
+            title: '', description: '', price: '', originalPrice: '', category: isChef ? 'snacks' : 'General',
             stockCount: '10', mediaUrls: [], imageUrl: '', videoUrl: '', variants: [], isDraft: false, visibility_type: 'university', isPreorder: false, preorderArrivalDate: ''
           });
           alert('Product updated successfully!');
@@ -638,7 +640,8 @@ export default function VendorDashboard() {
           body: JSON.stringify({
             ...newProduct,
             brandId: brand.id,
-            ownerId: brand.owner_id
+            ownerId: brand.owner_id,
+            product_section: isChef ? 'delicacies' : 'fashion'
           })
         });
 
@@ -1113,7 +1116,7 @@ export default function VendorDashboard() {
             title: row.title,
             description: row.description || '',
             price: Number(row.price),
-            category: row.category || 'Fashion',
+            category: row.category || 'General',
             stock_count: Number(row.stockCount || -1),
             media_urls: row.imageUrls ? row.imageUrls.split(',') : []
           });
@@ -1225,7 +1228,7 @@ export default function VendorDashboard() {
                 >
                   {brand?.logo_url ? (
                     <img src={brand.logo_url} alt={brand?.name || 'Brand'} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
-                  ) : (brand?.name || 'AF').substring(0, 2).toUpperCase()}
+                  ) : (brand?.name || 'MC').substring(0, 2).toUpperCase()}
                   <input type="file" id="logoInput" hidden accept="image/*" onChange={handleLogoUpdate} />
                 </div>
                 <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -1343,7 +1346,7 @@ export default function VendorDashboard() {
         <header className={styles.dashboardHeader}>
           <div className={styles.headerTitle}>
             <h1 className={styles.title}>{isChef ? 'Chief Chef Dashboard' : 'Vendor Dashboard'}</h1>
-            <p className={styles.subtitle}>{isChef ? 'Manage your kitchen, delicacies, and fast-track orders.' : 'Manage your fashion brand and inventory.'}</p>
+            <p className={styles.subtitle}>{isChef ? 'Manage your kitchen, delicacies, and fast-track orders.' : 'Manage your general brand and inventory.'}</p>
           </div>
           
           <div className={styles.headerActions}>
@@ -1610,7 +1613,7 @@ export default function VendorDashboard() {
                     Current Mode: <span style={{ color: 'var(--primary)', textTransform: 'uppercase' }}>{isChef ? 'Chief Chef' : 'Normal Vendor'}</span>
                   </p>
                   <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text-400)' }}>
-                    {isChef ? 'You are managing your Kitchen & Delicacies.' : 'You are managing your Fashion/General Store.'}
+                    {isChef ? 'You are managing your Kitchen & Delicacies.' : 'You are managing your General / Non-Edibles Store.'}
                   </p>
                 </div>
 
@@ -1723,6 +1726,54 @@ export default function VendorDashboard() {
                     onBlur={(e) => handleUpdateSettings({ description: e.target.value })}
                   />
                 </div>
+
+                {/* ── Category Suggestions Section (For Chefs) ───────────────────── */}
+                {(brand?.marketplace_type === 'both' || brand?.marketplace_type === 'delicacies') && (
+                  <div className={styles.settingsSection} style={{ marginTop: '2rem', borderTop: '1px solid var(--border)', paddingTop: '2rem' }}>
+                    <h3>Category Expansion</h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-400)', marginBottom: '1.5rem' }}>
+                      Suggest new delicacy categories to be added to the MasterCart ecosystem. Admin approval is required.
+                    </p>
+                    
+                    <div style={{ background: 'var(--bg-200)', padding: '1.25rem', borderRadius: '12px', border: '1px dashed var(--border)' }}>
+                      <div className={styles.inputGroup}>
+                        <label>Proposed Category Name</label>
+                        <input type="text" placeholder="e.g. Local Soups, Fruit Platters..." id="suggested_cat_name" style={{ width: '100%', background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem', color: '#fff' }} />
+                      </div>
+                      <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
+                        <label>Why should we add this?</label>
+                        <textarea placeholder="Explain why this category would benefit the marketplace..." id="suggested_cat_desc" style={{ height: '80px', width: '100%', background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem', color: '#fff' }}></textarea>
+                      </div>
+                      <button 
+                        className="btn btn-secondary" 
+                        style={{ marginTop: '1rem', width: '100%' }}
+                        onClick={async () => {
+                          const nameInput = document.getElementById('suggested_cat_name') as HTMLInputElement;
+                          const descInput = document.getElementById('suggested_cat_desc') as HTMLTextAreaElement;
+                          const name = nameInput.value;
+                          const desc = descInput.value;
+                          if (!name) return alert('Please enter a category name');
+                          
+                          const { error } = await supabase.from('category_suggestions').insert({
+                            brand_id: brand.id,
+                            category_name: name,
+                            description: desc
+                          });
+                          
+                          if (!error) {
+                            alert('Suggestion submitted! Admin will review it shortly.');
+                            nameInput.value = '';
+                            descInput.value = '';
+                          } else {
+                            alert('Error submitting suggestion: ' + error.message);
+                          }
+                        }}
+                      >
+                        Submit Suggestion
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div className={styles.settingsSection} style={{ marginTop: '2rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
@@ -2223,7 +2274,7 @@ export default function VendorDashboard() {
                         value={newProduct.category}
                         onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                       >
-                        <option>Fashion</option>
+                        <option>General</option>
                         <option>Electronics</option>
                         <option>Phones-Accessories</option>
                         <option>Beauty-Personal-Care</option>

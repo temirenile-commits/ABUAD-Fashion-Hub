@@ -47,7 +47,18 @@ export async function GET(req: NextRequest) {
     const orders = ordersRes.data || [];
     const paidStatuses = ['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered', 'received'];
     const paidOrders = orders.filter((o: any) => paidStatuses.includes(o.status));
+    const completedOrders = orders.filter((o: any) => o.status === 'delivered' || o.status === 'received');
     const totalRevenue = paidOrders.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0);
+    const acquiredRevenue = completedOrders.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0);
+
+    // Projected Revenue: Value of active stock
+    const { data: stockData } = await supabaseAdmin
+      .from('products')
+      .select('price, stock_count')
+      .eq('university_id', universityId)
+      .eq('is_visible', true);
+    
+    const projectedRevenue = (stockData || []).reduce((sum, p) => sum + (Number(p.price) * (Number(p.stock_count) || 0)), 0);
 
     return NextResponse.json({
       stats: {
@@ -55,7 +66,9 @@ export async function GET(req: NextRequest) {
         totalVendors: vendorsRes.count ?? 0,
         totalOrders: orders.length,
         paidOrders: paidOrders.length,
-        totalRevenue, // read-only
+        totalRevenue, // paid but not necessarily completed
+        acquiredRevenue, // completed
+        projectedRevenue, // stock value
         totalRiders: ridersRes.count ?? 0,
         popularProducts: productsRes.data || [],
       },
@@ -247,6 +260,17 @@ export async function GET(req: NextRequest) {
     
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ sections: data || [] });
+  }
+
+  if (action === 'promo_codes') {
+    const { data, error } = await supabaseAdmin
+      .from('promo_codes')
+      .select('*, brands(name), products(title)')
+      .eq('university_id', universityId)
+      .order('created_at', { ascending: false });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ promoCodes: data || [] });
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
@@ -492,7 +516,7 @@ export async function POST(req: NextRequest) {
 
   // â”€â”€ Update University Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (action === 'update_uni_config') {
-    const { config } = body;
+    const { key, value } = body;
     const targetUniId = ctx.universityId || body.university_id;
     
     if (!targetUniId) return NextResponse.json({ error: 'University ID required' }, { status: 400 });
@@ -502,8 +526,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    const configKey = `uni_config_${targetUniId}`;
+    const { data: exist } = await supabaseAdmin.from('platform_settings').select('value').eq('key', configKey).single();
+    const config = (exist?.value as any) || {};
+    
+    if (key) {
+      config[key] = value;
+    } else if (body.config) {
+      Object.assign(config, body.config);
+    }
+
     const { error } = await supabaseAdmin.from('platform_settings').upsert({
-      key: `uni_config_${targetUniId}`,
+      key: configKey,
       value: config,
       updated_at: new Date().toISOString()
     }, { onConflict: 'key' });
@@ -635,16 +669,46 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
-  // â”€â”€ BLOCK: Prevent global financial actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Promo Codes Management ────────────────────────────────────────────────
+  if (action === 'create_promo_code') {
+    const { code, type, value, max_uses, product_id } = body;
+    if (!code || !type || value === undefined) return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+
+    const { error } = await supabaseAdmin.from('promo_codes').insert({
+      code: code.toUpperCase(),
+      type,
+      value,
+      max_uses,
+      product_id: product_id || null,
+      university_id: ctx.universityId, // Enforced scope
+      is_active: true
+    });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'delete_promo_code') {
+    const { codeId } = body;
+    // Verify ownership
+    const { data: promo } = await supabaseAdmin.from('promo_codes').select('university_id').eq('id', codeId).single();
+    if (!promo || (promo.university_id !== ctx.universityId && !ctx.isFullAdmin)) {
+      return NextResponse.json({ error: 'Unauthorized or not found' }, { status: 401 });
+    }
+
+    const { error } = await supabaseAdmin.from('promo_codes').delete().eq('id', codeId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // ── BLOCK: Prevent global financial actions ──────────────────────────────────
   const FORBIDDEN_ACTIONS = [
-    'confirm_payout', 'reject_payout',
-    'activate_plan', 'activate_boost', 'update_visibility_price',
-    'create_promo_code', 'delete_promo_code'
+    'confirm_payout', 'confirm_escrow_release', 'reject_payout',
+    'activate_plan', 'activate_boost', 'update_visibility_price'
   ];
 
   if (FORBIDDEN_ACTIONS.includes(action) && !ctx.isFullAdmin) {
     return NextResponse.json({
-      error: 'Forbidden: University admins cannot access global financial or promo controls.',
+      error: 'Forbidden: University admins cannot access global financial or payout controls.',
     }, { status: 403 });
   }
 

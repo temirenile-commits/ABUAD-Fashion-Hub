@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
 
       <div className={`card ${styles.card}`}>
         <div className={styles.cardHeader}>
-          <div className={styles.cardLogo}>AF</div>
+          <div className={styles.cardLogo}>MC</div>
           <h2>Reset Password</h2>
           <p>Enter your email to receive a recovery link</p>
         </div>

@@ -8,7 +8,7 @@ import styles from './explore.module.css';
 
 const CATEGORIES = [
   { id: 'all', label: 'All Items', icon: <Sparkles size={16} /> },
-  { id: 'Fashion', label: "Fashion", icon: <Shirt size={16} /> },
+  { id: 'Fashion', label: "Marketplace", icon: <Shirt size={16} /> },
   { id: 'Electronics', label: "Electronics", icon: <Zap size={16} /> },
   { id: 'Phones-Accessories', label: "Phones & Accessories", icon: <Watch size={16} /> },
   { id: 'Beauty-Personal-Care', label: "Beauty & Care", icon: <Gem size={16} /> },
@@ -107,7 +107,7 @@ export default function ExplorePage() {
         {/* Header */}
         <div className={styles.pageHeader}>
           <div>
-            <h1 className={styles.pageTitle}>Explore Fashion</h1>
+            <h1 className={styles.pageTitle}>Explore Marketplace</h1>
             <p className={styles.pageSubtitle}>
               {loading ? 'Loading...' : `${filtered.length} products available`}
             </p>

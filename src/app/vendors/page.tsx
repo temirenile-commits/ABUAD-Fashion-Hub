@@ -32,7 +32,7 @@ export default function VendorsPage() {
           <div>
             <h1>Campus Brand Directory</h1>
             <p className={styles.subtitle}>
-              Discover {LIVE_VENDORS.length} fashion brands on the Campus
+              Discover {LIVE_VENDORS.length} verified brands on the Campus
             </p>
           </div>
           <div className={styles.headerStats}>
@@ -67,7 +67,7 @@ export default function VendorsPage() {
                     {vendor.logo_url && vendor.logo_url.startsWith('http') ? (
                        <img src={vendor.logo_url} alt="Logo" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%'}} />
                     ) : (
-                      (vendor.name || 'AF').substring(0, 2).toUpperCase()
+                      (vendor.name || 'MC').substring(0, 2).toUpperCase()
                     )}
                   </div>
                   <div className={styles.leaderInfo}>
@@ -75,7 +75,7 @@ export default function VendorsPage() {
                       {vendor.name || 'Anonymous Brand'}
                       {vendor.verified && <CheckCircle size={14} className="verified-icon" />}
                     </div>
-                    <p className={styles.leaderCat}>{vendor.category || 'Fashion'}</p>
+                    <p className={styles.leaderCat}>{vendor.category || 'General'}</p>
                   </div>
                   <div className={styles.leaderFollowers}>
                     <span className={styles.followerNum}>{vendor.followers_count || 0}</span>

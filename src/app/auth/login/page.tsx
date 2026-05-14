@@ -84,7 +84,7 @@ export default function LoginPage() {
 
       <div className={`card ${styles.card}`}>
         <div className={styles.cardHeader}>
-          <div className={styles.cardLogo}>AF</div>
+          <div className={styles.cardLogo}>MC</div>
           <h2>Welcome Back</h2>
           <p>Sign in to continue exploring</p>
         </div>

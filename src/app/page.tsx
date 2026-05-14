@@ -89,6 +89,7 @@ export default function Home() {
   const genuineFlashSales = useMemo(() => {
      return allProducts.filter(p => 
        !p.is_draft && 
+       (!p.product_section || p.product_section === 'fashion') &&
        ((p as unknown as { is_flash_sale?: boolean }).is_flash_sale || (p.original_price || 0) > (p.price || 0))
      ).slice(0, 10);
   }, [allProducts]);
@@ -111,9 +112,12 @@ export default function Home() {
   const trendingProducts = useMemo(() => {
      if (!allProducts.length) return [];
      
+     // Only show Fashion products in the main marketplace feed
+     const fashionProducts = allProducts.filter(p => !p.is_draft && (!p.product_section || p.product_section === 'fashion'));
+
      // Separate into preferred and others
-     const preferred = allProducts.filter(p => !p.is_draft && p.category && preferredCategories.includes(p.category));
-     const others = allProducts.filter(p => !p.is_draft && (!p.category || !preferredCategories.includes(p.category)));
+     const preferred = fashionProducts.filter(p => p.category && preferredCategories.includes(p.category));
+     const others = fashionProducts.filter(p => !p.category || !preferredCategories.includes(p.category));
 
      // Sort by newest
      preferred.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());

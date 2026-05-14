@@ -10,11 +10,11 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Master Cart – Campus Fashion Marketplace',
+    default: 'Master Cart – Campus Marketplace',
     template: '%s | Master Cart',
   },
   description:
-    'The premier digital fashion marketplace for students and entrepreneurs at your University. Discover trending styles, verified vendors, and campus fashion services.',
+    'The premier digital marketplace for students and entrepreneurs at your University. Discover trending items, verified vendors, and campus services.',
   keywords: ['Master Cart', 'fashion', 'campus', 'marketplace', 'clothing', 'style'],
   icons: {
     icon: [

@@ -21,19 +21,22 @@ export async function POST(req: Request) {
       variants,
       isDraft,
       isPreorder,
-      preorderArrivalDate
+      preorderArrivalDate,
+      product_section // New field
     } = await req.json();
 
     if (!title || !price || !brandId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Edible/Consumable validation
-    const restrictedKeywords = ['food', 'drink', 'groceries', 'supplement', 'edible', 'consumable', 'snack', 'beverage', 'meal'];
-    const textToSearch = `${title} ${description} ${category}`.toLowerCase();
-    
-    if (restrictedKeywords.some(keyword => textToSearch.includes(keyword))) {
-      return NextResponse.json({ error: 'Edible or consumable items are not allowed on this platform.' }, { status: 400 });
+    // Edible/Consumable validation (Only for normal fashion marketplace)
+    if (product_section !== 'delicacies') {
+      const restrictedKeywords = ['food', 'drink', 'groceries', 'supplement', 'edible', 'consumable', 'snack', 'beverage', 'meal'];
+      const textToSearch = `${title} ${description} ${category}`.toLowerCase();
+      
+      if (restrictedKeywords.some(keyword => textToSearch.includes(keyword))) {
+        return NextResponse.json({ error: 'Edible or consumable items are not allowed on this platform. Please use the Chief Chef Dashboard to list delicacies.' }, { status: 400 });
+      }
     }
 
     // 0. Fetch Brand & Credit Check
@@ -65,6 +68,8 @@ export async function POST(req: Request) {
         price: Number(price),
         original_price: originalPrice ? Number(originalPrice) : null,
         category,
+        product_section: product_section || 'fashion',
+        delicacy_category: product_section === 'delicacies' ? category : null,
         stock_count: typeof stockCount === 'number' ? stockCount : 10,
         media_urls: mediaUrls || [],
         image_url: imageUrl || (mediaUrls && mediaUrls[0]) || null,

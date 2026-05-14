@@ -200,6 +200,42 @@
   width: 40px;
 }
 
+/* ── FILTERS ── */
+.filterSection {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fastFilters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  background: var(--bg-100);
+  border: 1px solid var(--border);
+  color: var(--text-200);
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.filterBtn:hover {
+  background: var(--bg-200);
+}
+
+.filterBtnActive {
+  background: #f59e0b;
+  color: #fff;
+  border-color: #f59e0b;
+}
+
 /* ── CATEGORY TABS ── */
 .catTabs {
   display: flex;
@@ -207,7 +243,6 @@
   overflow-x: auto;
   scrollbar-width: none;
   padding-bottom: 0.25rem;
-  margin-bottom: 1.5rem;
 }
 
 .catTabs::-webkit-scrollbar { display: none; }

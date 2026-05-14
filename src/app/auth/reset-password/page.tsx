@@ -76,7 +76,7 @@ export default function ResetPasswordPage() {
     <div className={styles.page}>
       <div className={`card ${styles.card}`}>
         <div className={styles.cardHeader}>
-          <div className={styles.cardLogo}>AF</div>
+          <div className={styles.cardLogo}>MC</div>
           <h2>Create New Password</h2>
           <p>Please enter your secure new password below</p>
         </div>

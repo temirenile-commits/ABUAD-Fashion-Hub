@@ -114,7 +114,7 @@ export default async function VendorPage({ params, searchParams }: Props) {
               {vendor.logo_url && vendor.logo_url.startsWith('http') ? (
                 <Image src={vendor.logo_url} alt={vendor.name || 'Brand'} fill style={{objectFit: 'cover', borderRadius: '12px'}} />
               ) : (
-                (vendor.name || 'AF').substring(0, 2).toUpperCase()
+                (vendor.name || 'MC').substring(0, 2).toUpperCase()
               )}
             </span>
           </div>
@@ -129,7 +129,7 @@ export default async function VendorPage({ params, searchParams }: Props) {
                 </div>
               )}
             </div>
-            <span className={`badge badge-teal`}>{vendor.brand_type || 'Fashion'}</span>
+            <span className={`badge badge-teal`}>{vendor.brand_type || 'General / Non-Edibles'}</span>
             <p className={styles.description}>{vendor.description}</p>
           </div>
 
