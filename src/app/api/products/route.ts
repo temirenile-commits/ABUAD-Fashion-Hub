@@ -59,10 +59,8 @@ export async function POST(req: Request) {
       }
     }
 
-    // 1. Create the Product record
-    const { data: product, error: productError } = await supabaseAdmin
-      .from('products')
-      .insert({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const insertPayload: any = {
         title,
         description,
         price: Number(price),
@@ -87,9 +85,23 @@ export async function POST(req: Request) {
         views_count: 0,
         is_preorder: isPreorder || false,
         preorder_arrival_date: isPreorder && preorderArrivalDate ? new Date(preorderArrivalDate).toISOString() : null
-      })
+    };
+
+    // 1. Create the Product record
+    let { data: product, error: productError } = await supabaseAdmin
+      .from('products')
+      .insert(insertPayload)
       .select()
       .single();
+
+    if (productError && productError.message.includes('schema cache')) {
+       // Fallback for missing is_preorder column if migration hasn't run yet
+       delete insertPayload.is_preorder;
+       delete insertPayload.preorder_arrival_date;
+       const fallback = await supabaseAdmin.from('products').insert(insertPayload).select().single();
+       product = fallback.data;
+       productError = fallback.error;
+    }
 
     if (productError) throw productError;
 

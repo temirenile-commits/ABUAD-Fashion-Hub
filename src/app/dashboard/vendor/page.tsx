@@ -409,7 +409,13 @@ export default function VendorDashboard() {
 
 
   useEffect(() => {
-    if (brand) setIsKitchenOpen(brand.is_available_now ?? true);
+    let mounted = true;
+    if (brand && mounted) {
+      setTimeout(() => {
+         if (mounted) setIsKitchenOpen(brand.is_available_now ?? true);
+      }, 0);
+    }
+    return () => { mounted = false; };
   }, [brand]);
 
   const toggleKitchenStatus = async () => {
@@ -1067,21 +1073,36 @@ export default function VendorDashboard() {
   const handleCreatePromo = async (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.target as any;
+    
+    // Check limit
+    if (promoCodes.length >= 3 && currentTier === 'free') {
+      alert('Free tier is limited to 3 active promo codes. Please upgrade to create more.');
+      return;
+    }
+    
     const body = {
       brand_id: brand.id,
-            visibility_type: newProduct.visibility_type,
+      university_id: brand.university_id || null,
       product_id: form.product_id?.value || null,
       code: form.code.value.toUpperCase(),
       type: form.type.value,
       value: Number(form.value.value),
-      is_active: true
+      max_uses: Number(form.max_uses.value) || 100,
+      expires_at: form.expires_at?.value ? new Date(form.expires_at.value).toISOString() : null,
+      target_customer_id: form.target_customer_id?.value || null,
+      is_regular_patrons_only: form.is_regular_patrons_only?.checked || false,
+      is_active: true,
+      is_funded: true // Vendor's own codes don't need admin funding validation
     };
 
     try {
       const res = await supabase.from('promo_codes').insert(body);
       if (!res.error) {
-        alert('Promo code created!');
+        alert('Promo code created successfully!');
         setPromoCodes([...promoCodes, { ...body, id: Math.random().toString() }]);
+        form.reset();
+      } else {
+        alert('Error creating promo code: ' + res.error.message);
       }
     } catch (err) {
       alert('Error creating promo code');
@@ -2553,7 +2574,7 @@ export default function VendorDashboard() {
                       { dataKey: 'unrealized', color: '#f59e0b', label: 'Unrealized Profits' },
                       { dataKey: 'failed', color: '#ef4444', label: 'Failed Orders' }
                     ],
-                    categorize: (row) => {
+                    categorize: (row: Record<string, any>) => {
                       const val = Number(row.total_amount || row.amount || row.value || 0);
                       const status = row.status || 'pending';
                       const res = [{ dataKey: 'projected', value: val }];
@@ -2832,6 +2853,65 @@ export default function VendorDashboard() {
                   </div>
                 </div>
               )}
+
+              {/* Vendor Promo Codes Section */}
+              <div className={styles.promoOption} style={{ gridColumn: 'span 2' }}>
+                <div className={styles.promoIcon}><Tag size={24} color="var(--primary)" /></div>
+                <h3>Discount & Promo Codes</h3>
+                <p>Create and manage discount codes for your customers.</p>
+                
+                <div className={styles.settingsGrid} style={{ marginTop: '1.5rem' }}>
+                  <div className={styles.settingsBox}>
+                    <h4 style={{ marginBottom: '1rem' }}>Create New Code</h4>
+                    <form onSubmit={handleCreatePromo}>
+                      <input name="code" placeholder="e.g. SUMMER20" className="input mb-2" required />
+                      <div className="flex gap-2 mb-2">
+                        <select name="type" className="input" required>
+                           <option value="percentage">Percentage (%)</option>
+                           <option value="fixed">Fixed Amount (₦)</option>
+                        </select>
+                        <input name="value" type="number" className="input" placeholder="Value" required />
+                      </div>
+                      <div className="flex gap-2 mb-2">
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: '0.8rem' }}>Max Uses</label>
+                          <input name="max_uses" type="number" className="input" defaultValue={100} required />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: '0.8rem' }}>Expiration</label>
+                          <input name="expires_at" type="datetime-local" className="input" />
+                        </div>
+                      </div>
+                      <div className="mb-2">
+                         <label style={{ fontSize: '0.8rem' }}>Target Customer (Email or User UUID)</label>
+                         <input name="target_customer_id" placeholder="Optional" className="input" />
+                      </div>
+                      <label className="checkbox-label mb-2" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
+                        <input type="checkbox" name="is_regular_patrons_only" />
+                        Restrict to Regular Patronizers (Has past orders)
+                      </label>
+                      <button type="submit" className="btn btn-primary w-full">Generate Code</button>
+                    </form>
+                  </div>
+
+                  <div className={styles.settingsBox}>
+                     <h4 style={{ marginBottom: '1rem' }}>Active Codes</h4>
+                     {promoCodes.length === 0 && <p className={styles.subText}>No active promo codes.</p>}
+                     {promoCodes.map(pc => (
+                        <div key={pc.id} style={{ padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px', marginBottom: '0.5rem' }}>
+                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <strong>{pc.code}</strong>
+                              <span style={{ color: 'var(--primary)' }}>{pc.type === 'percentage' ? `${pc.value}% off` : `₦${pc.value} off`}</span>
+                           </div>
+                           <div style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginTop: '4px' }}>
+                              Uses: {pc.current_uses || 0} / {pc.max_uses}
+                           </div>
+                           {pc.expires_at && <div style={{ fontSize: '0.8rem', color: '#ef4444' }}>Expires: {new Date(pc.expires_at).toLocaleDateString()}</div>}
+                        </div>
+                     ))}
+                  </div>
+                </div>
+              </div>
 
               {/* Flash Sales Section */}
               <div className={styles.promoOption} style={{ gridColumn: 'span 2' }}>

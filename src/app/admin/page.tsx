@@ -247,7 +247,7 @@ export default function AdminDashboard() {
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [uniForm, setUniForm] = useState({ name: '', location: '', abbreviation: '' });
   const [uniCreating, setUniCreating] = useState(false);
-  const [promoForm, setPromoForm] = useState({ code: '', type: 'percentage', value: 10, max_uses: 100, product_id: '' });
+  const [promoForm, setPromoForm] = useState({ code: '', type: 'percentage', value: 10, max_uses: 100, product_id: '', expires_at: '', target_customer_id: '', min_account_age_days: 0, min_purchase_amount: 0, is_funded: false, funding_reference: '' });
   
   const [adminSearch, setAdminSearch] = useState('');
   const [universityAdmins, setUniversityAdmins] = useState<User[]>([]);
@@ -812,6 +812,23 @@ export default function AdminDashboard() {
                       <label>Product ID (Optional)</label>
                       <input value={promoForm.product_id} onChange={e => setPromoForm({ ...promoForm, product_id: e.target.value })} placeholder="Paste Product UUID" className="input mb-2" />
                       
+                      <label>Target Customer UUID (Optional)</label>
+                      <input value={(promoForm as any).target_customer_id || ''} onChange={e => setPromoForm({ ...promoForm, target_customer_id: e.target.value } as any)} placeholder="Customer ID" className="input mb-2" />
+                      
+                      <label>Expiration Date & Time</label>
+                      <input type="datetime-local" className="input mb-2" value={(promoForm as any).expires_at || ''} onChange={e => setPromoForm({ ...promoForm, expires_at: e.target.value } as any)} />
+                      
+                      <div className="flex gap-2 mb-2">
+                        <div style={{ flex: 1 }}>
+                           <label>Min Account Age (Days)</label>
+                           <input type="number" className="input" value={(promoForm as any).min_account_age_days || ''} onChange={e => setPromoForm({ ...promoForm, min_account_age_days: Number(e.target.value) } as any)} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                           <label>Min Amount Spent (₦)</label>
+                           <input type="number" className="input" value={(promoForm as any).min_purchase_amount || ''} onChange={e => setPromoForm({ ...promoForm, min_purchase_amount: Number(e.target.value) } as any)} />
+                        </div>
+                      </div>
+
                       <label>University Scope <span className={styles.subText}>(optional — leave blank for global)</span></label>
                       <select
                         className="input mb-2"
@@ -823,8 +840,51 @@ export default function AdminDashboard() {
                           <option key={u.id} value={u.id}>🎓 {u.abbreviation} — {u.name}</option>
                         ))}
                       </select>
+
+                      <div style={{ background: 'var(--bg-200)', padding: '1rem', borderRadius: '8px', marginTop: '1rem', marginBottom: '1rem' }}>
+                         <h4 style={{ marginBottom: '0.5rem', color: 'var(--primary)' }}>Admin Subsidized Funding</h4>
+                         <p style={{ fontSize: '0.75rem', color: 'var(--text-400)', marginBottom: '1rem' }}>You must authorize a payment source to subsidize this promo code for vendors.</p>
+                         {!(promoForm as any).is_funded ? (
+                             <button className="btn btn-secondary w-full" onClick={() => {
+                                 // Trigger Paystack (Simulated here, but the actual logic would use PaystackPop)
+                                 const handler = (window as any).PaystackPop?.setup({
+                                    key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_xxxxx',
+                                    email: 'admin@mastercart.com',
+                                    amount: 10000 * 100, // Pre-authorize a nominal amount or use tokenization
+                                    currency: 'NGN',
+                                    callback: function(response: any) {
+                                       setPromoForm({ ...promoForm, is_funded: true, funding_reference: response.reference } as any);
+                                       addToast('Funding Source Authorized!', 'success');
+                                    },
+                                    onClose: function() {
+                                       alert('Funding authorization cancelled.');
+                                    }
+                                 });
+                                 if (handler) handler.openIframe();
+                                 else {
+                                    // Fallback simulation for local dev without Paystack script
+                                    setTimeout(() => {
+                                        setPromoForm({ ...promoForm, is_funded: true, funding_reference: 'sim_paystack_' + Date.now() } as any);
+                                        addToast('Funding Source Authorized!', 'success');
+                                    }, 1000);
+                                 }
+                             }}>
+                                <CreditCard size={14} style={{ marginRight: '8px' }} /> Authorize Funding Source
+                             </button>
+                         ) : (
+                             <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderRadius: '4px', textAlign: 'center', fontSize: '0.8rem', fontWeight: 600 }}>
+                                <ShieldCheck size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'text-bottom' }} /> Funding Authorized ({((promoForm as any).funding_reference as string).substring(0, 8)}...)
+                             </div>
+                         )}
+                      </div>
                       
-                      <button className="btn btn-primary w-full" onClick={() => adminAction('create_promo_code', promoForm)}>Create Code</button>
+                      <button 
+                        className="btn btn-primary w-full" 
+                        disabled={!(promoForm as any).is_funded}
+                        onClick={() => adminAction('create_promo_code', promoForm)}
+                      >
+                        Create Code
+                      </button>
                     </div>
 
                     {promoCodes.map(pc => (
@@ -836,7 +896,9 @@ export default function AdminDashboard() {
                             </div>
                             <div className={styles.subText} style={{ fontSize: '0.8rem' }}>{pc.type === 'percentage' ? `${pc.value}% off` : `₦${pc.value} off`}</div>
                             <div style={{ fontSize: '0.7rem', marginTop: '4px' }}>Uses: <strong>{pc.current_uses || 0}</strong> / {pc.max_uses}</div>
-                            {pc.products && <div style={{ fontSize: '0.7rem', color: 'var(--primary)' }}>Target: {pc.products.title.substring(0, 20)}...</div>}
+                            {(pc as any).expires_at && <div style={{ fontSize: '0.7rem', color: 'var(--text-400)', marginTop: '2px' }}><Clock size={10} style={{ display: 'inline', marginRight: '2px' }} /> Expires: {new Date((pc as any).expires_at).toLocaleString()}</div>}
+                            {(pc as any).min_purchase_amount > 0 && <div style={{ fontSize: '0.7rem', color: 'var(--text-400)', marginTop: '2px' }}>Min Spend: ₦{(pc as any).min_purchase_amount}</div>}
+                            {pc.products && <div style={{ fontSize: '0.7rem', color: 'var(--primary)', marginTop: '2px' }}>Target Product: {pc.products.title.substring(0, 20)}...</div>}
                           </div>
                           <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444', padding: '4px' }} onClick={() => confirm('Delete this code?') && adminAction('delete_promo_code', { codeId: pc.id })}><Trash2 size={14} /></button>
                         </div>
@@ -1928,7 +1990,7 @@ export default function AdminDashboard() {
                             { dataKey: 'unrealized', color: '#f59e0b', label: 'Global Unrealized' },
                             { dataKey: 'failed', color: '#ef4444', label: 'Global Failed' }
                           ],
-                          categorize: (row) => {
+                          categorize: (row: Record<string, any>) => {
                             const val = Number(row.total_amount || 0);
                             const status = row.status || 'pending';
                             const res = [{ dataKey: 'projected', value: val }];

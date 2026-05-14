@@ -37,10 +37,33 @@ export async function POST(req: Request) {
 
     const liveProducts = productsResult.data;
     const userProfile = profileResult.data;
-    const promoData = promoResult?.data;
+    let promoData = promoResult?.data;
 
     if (!liveProducts || liveProducts.length === 0) {
       return NextResponse.json({ error: 'STALE_CART_ITEMS' }, { status: 400 });
+    }
+
+    // --- PROMO CODE VALIDATION ---
+    if (promoData) {
+      // 1. Expiration Check
+      if (promoData.expires_at && new Date(promoData.expires_at) < new Date()) {
+        return NextResponse.json({ error: 'PROMO_EXPIRED', message: 'This promo code has expired.' }, { status: 400 });
+      }
+      // 2. Max Uses Check
+      if (promoData.current_uses >= promoData.max_uses) {
+         return NextResponse.json({ error: 'PROMO_LIMIT_REACHED', message: 'This promo code has reached its maximum usage limit.' }, { status: 400 });
+      }
+      // 3. Target Customer Check
+      if (promoData.target_customer_id && promoData.target_customer_id !== userId) {
+         return NextResponse.json({ error: 'PROMO_NOT_ELIGIBLE', message: 'You are not eligible for this promo code.' }, { status: 400 });
+      }
+      // 4. Regular Patronizer Check (Vendor specific)
+      if (promoData.is_regular_patrons_only && promoData.brand_id) {
+         const { count } = await supabaseAdmin.from('orders').select('*', { count: 'exact', head: true }).eq('customer_id', userId).eq('brand_id', promoData.brand_id).eq('status', 'delivered');
+         if (!count || count < 2) {
+             return NextResponse.json({ error: 'PROMO_REGULAR_ONLY', message: 'This promo code is strictly for regular patronizers of this vendor.' }, { status: 400 });
+         }
+      }
     }
 
     // 1. Verify Brands activation status

@@ -1,4 +1,6 @@
 'use client';
+import Script from 'next/script';
+
 export default function AdminLayout({
   children,
 }: {
@@ -6,6 +8,7 @@ export default function AdminLayout({
 }) {
   return (
     <div className="admin-root">
+      <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
       {children}
       <style jsx global>{`
         /* Hide main navbar/footer for admin area if they are not conditionally rendered */

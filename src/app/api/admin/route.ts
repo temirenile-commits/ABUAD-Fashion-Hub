@@ -922,7 +922,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'create_promo_code') {
-    const { code, type, value, max_uses, product_id, university_id } = body;
+    const { code, type, value, max_uses, product_id, university_id, expires_at, target_customer_id, min_account_age_days, min_purchase_amount, is_funded, funding_reference } = body;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const insertData: any = {
       code: code.toUpperCase(),
@@ -930,7 +930,13 @@ export async function POST(req: NextRequest) {
       value,
       max_uses,
       product_id: product_id || null,
-      is_active: true
+      is_active: true,
+      expires_at: expires_at || null,
+      target_customer_id: target_customer_id || null,
+      min_account_age_days: min_account_age_days || 0,
+      min_purchase_amount: min_purchase_amount || 0,
+      is_funded: is_funded || false,
+      funding_reference: funding_reference || null
     };
     
     // Add university_id if it exists in the body

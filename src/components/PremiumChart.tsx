@@ -11,7 +11,7 @@ import styles from './PremiumChart.module.css';
 
 export interface MultiLineConfig {
   keys: { dataKey: string; color: string; label: string; isProjected?: boolean }[];
-  categorize: (row: any) => { dataKey: string; value: number }[];
+  categorize: (row: Record<string, unknown> | any) => { dataKey: string; value: number }[];
 }
 
 interface DataPoint {
@@ -23,7 +23,7 @@ interface DataPoint {
 interface PremiumChartProps {
   title: string;
   subtitle?: string;
-  initialData?: any[];
+  initialData?: Record<string, unknown>[];
   height?: number;
   realtimeConfig?: {
     table: string;
@@ -76,14 +76,14 @@ const LiveDotRenderer = ({ cx, cy, color }: { cx?: number; cy?: number; color: s
   );
 };
 
-const CustomDot = (props: any) => {
+const CustomDot = (props: Record<string, any>) => {
   const { cx, cy, index, dataLength, color, isProjected } = props;
   // Only pulse on the projected/main line to avoid chaos
   if (index !== dataLength - 1 || !isProjected) return null;
   return <LiveDotRenderer cx={cx} cy={cy} color={color} />;
 };
 
-const CustomTooltip = ({ active, payload, label, valuePrefix, valueSuffix, keys }: any) => {
+const CustomTooltip = ({ active, payload, label, valuePrefix, valueSuffix, keys }: Record<string, any>) => {
   if (!active || !payload?.length) return null;
   return (
     <div className={styles.tooltip}>
@@ -130,7 +130,7 @@ export default function PremiumChart({
   }, []);
 
   // ── Build DataPoints from raw DB rows ─────────────────────────────────
-  const processRows = useCallback((rows: any[]) => {
+  const processRows = useCallback((rows: Record<string, any>[]) => {
     const { multiLineConfig, plotType } = propsRef.current;
     let tally = getInitTally();
     const sorted = [...rows].sort((a, b) => {
@@ -218,7 +218,8 @@ export default function PremiumChart({
     }
   }, [range, realtimeConfigStr, initialDataLen, processRows]);
 
-  useEffect(() => { fetchHistory(); }, [fetchHistory]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { void fetchHistory(); }, [fetchHistory]);
 
   // ── Live subscription ────────────────────────────────────────────────────
   useEffect(() => {

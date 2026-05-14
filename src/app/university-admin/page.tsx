@@ -511,7 +511,7 @@ export default function UniversityAdminPage() {
                           { dataKey: 'unrealized', color: '#f59e0b', label: 'Campus Unrealized' },
                           { dataKey: 'failed', color: '#ef4444', label: 'Campus Failed' }
                         ],
-                        categorize: (row) => {
+                        categorize: (row: Record<string, any>) => {
                           const val = Number(row.total_amount || 0);
                           const status = row.status || 'pending';
                           const res = [{ dataKey: 'projected', value: val }];
