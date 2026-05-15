@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       } else if (section.type === 'automated') {
         // Execute auto-rules
         const rule = section.auto_rule || {};
-        let prodQuery = supabaseAdmin.from('products').select('*, brands(*)').eq('is_draft', false);
+        let prodQuery = supabaseAdmin.from('products').select('*, brands(*)').eq('is_draft', false).eq('product_section', 'fashion');
 
         // Scope to university if section is campus-specific
         if (section.university_id) {

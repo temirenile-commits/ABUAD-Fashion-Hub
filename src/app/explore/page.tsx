@@ -79,7 +79,7 @@ export default function ExplorePage() {
     if (!search.trim() || filtered.length > 0) return [];
     const words = search.toLowerCase().split(' ').filter(w => w.length > 2);
     return allProducts
-      .filter(p => !(p as any).is_draft && words.some(w =>
+      .filter(p => !(p as any).is_draft && (p as any).product_section !== 'delicacies' && words.some(w =>
         p.title?.toLowerCase().includes(w) ||
         p.category?.toLowerCase().includes(w)
       ))
@@ -89,7 +89,7 @@ export default function ExplorePage() {
   // â”€â”€ Recommended (top selling, always show at bottom) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const recommended = useMemo(() => {
     return [...allProducts]
-      .filter(p => !(p as any).is_draft)
+      .filter(p => !(p as any).is_draft && (p as any).product_section !== 'delicacies')
       .sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0))
       .slice(0, 8);
   }, [allProducts]);

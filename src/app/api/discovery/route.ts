@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
       .from('products')
       .select('*, brands(name, logo_url)')
       .eq('locked', false)
+      .eq('product_section', 'fashion')
       .order('views_count', { ascending: false })
       .limit(20);
     return NextResponse.json({ products: data });
@@ -51,7 +52,8 @@ export async function GET(req: NextRequest) {
     let query = supabaseAdmin
       .from('products')
       .select('*, brands(name, logo_url)')
-      .eq('locked', false);
+      .eq('locked', false)
+      .eq('product_section', 'fashion');
 
     // Apply university filter
     if (userUniId) {
@@ -77,7 +79,8 @@ export async function GET(req: NextRequest) {
       let trendQuery = supabaseAdmin
         .from('products')
         .select('*, brands(name, logo_url)')
-        .eq('locked', false);
+        .eq('locked', false)
+        .eq('product_section', 'fashion');
       
       if (userUniId) {
         trendQuery = trendQuery.or(`visibility_type.eq.global,university_id.eq.${userUniId}`);
