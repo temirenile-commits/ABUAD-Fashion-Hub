@@ -809,8 +809,19 @@ export default function AdminDashboard() {
                       </div>
                       <label>Max Uses</label>
                       <input type="number" className="input mb-2" value={promoForm.max_uses} onChange={e => setPromoForm({ ...promoForm, max_uses: Number(e.target.value) })} />
-                      <label>Product ID (Optional)</label>
-                      <input value={promoForm.product_id} onChange={e => setPromoForm({ ...promoForm, product_id: e.target.value })} placeholder="Paste Product UUID" className="input mb-2" />
+                      <label>Product Specific <span className={styles.subText}>(optional)</span></label>
+                      <select 
+                        className="input mb-2" 
+                        value={promoForm.product_id || ''} 
+                        onChange={e => setPromoForm({ ...promoForm, product_id: e.target.value || '' })}
+                      >
+                        <option value="">🎁 All Products (Generic)</option>
+                        {products.map(p => (
+                          <option key={p.id} value={p.id}>
+                            {p.title} — {p.brands?.name} (₦{p.price})
+                          </option>
+                        ))}
+                      </select>
                       
                       <label>Target Customer UUID (Optional)</label>
                       <input value={(promoForm as any).target_customer_id || ''} onChange={e => setPromoForm({ ...promoForm, target_customer_id: e.target.value } as any)} placeholder="Customer ID" className="input mb-2" />

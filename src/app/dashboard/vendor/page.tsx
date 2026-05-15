@@ -2883,6 +2883,15 @@ export default function VendorDashboard() {
                         </div>
                       </div>
                       <div className="mb-2">
+                         <label style={{ fontSize: '0.8rem' }}>Applicable Product (Optional)</label>
+                         <select name="product_id" className="input">
+                            <option value="">All My Products</option>
+                            {products.filter(p => !p.is_draft).map(p => (
+                               <option key={p.id} value={p.id}>{p.title} (₦{p.price})</option>
+                            ))}
+                         </select>
+                      </div>
+                      <div className="mb-2">
                          <label style={{ fontSize: '0.8rem' }}>Target Customer (Email or User UUID)</label>
                          <input name="target_customer_id" placeholder="Optional" className="input" />
                       </div>

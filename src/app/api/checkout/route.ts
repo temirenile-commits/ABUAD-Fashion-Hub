@@ -151,14 +151,23 @@ export async function POST(req: Request) {
 
       const baseItemSubtotal = originalPrice * (item.quantity || 1);
       
-      // Calculate Discount (Paid by Admin)
+      // Calculate Discount (Paid by Admin or Vendor)
       let itemDiscount = 0;
       if (promoData) {
-          if (!promoData.product_id || promoData.product_id === item.productId) {
+          const isBrandMatch = !promoData.brand_id || promoData.brand_id === item.brandId;
+          const isProductMatch = !promoData.product_id || promoData.product_id === item.productId;
+          
+          if (isBrandMatch && isProductMatch) {
               if (promoData.type === 'percentage') {
                   itemDiscount = baseItemSubtotal * (Number(promoData.value) / 100);
               } else if (promoData.type === 'fixed') {
-                  itemDiscount = index === 0 ? Number(promoData.value) : 0; 
+                  // For fixed discounts, only apply to the FIRST matching item in the batch
+                  const firstMatchingIndex = items.findIndex((it: any) => {
+                      const itBrandMatch = !promoData.brand_id || promoData.brand_id === it.brandId;
+                      const itProductMatch = !promoData.product_id || promoData.product_id === it.productId;
+                      return itBrandMatch && itProductMatch;
+                  });
+                  itemDiscount = index === firstMatchingIndex ? Number(promoData.value) : 0; 
               }
           }
       }

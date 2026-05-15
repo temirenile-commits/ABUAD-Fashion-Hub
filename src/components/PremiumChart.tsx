@@ -11,7 +11,7 @@ import styles from './PremiumChart.module.css';
 
 export interface MultiLineConfig {
   keys: { dataKey: string; color: string; label: string; isProjected?: boolean }[];
-  categorize: (row: Record<string, unknown> | any) => { dataKey: string; value: number }[];
+  categorize: (row: Record<string, any>) => { dataKey: string; value: number }[];
 }
 
 interface DataPoint {
@@ -88,8 +88,8 @@ const CustomTooltip = ({ active, payload, label, valuePrefix, valueSuffix, keys 
   return (
     <div className={styles.tooltip}>
       <div className={styles.tooltipLabel}>{label}</div>
-      {payload.map((entry: any, i: number) => {
-        const keyDef = keys.find((k: any) => k.dataKey === entry.dataKey);
+      {payload.map((entry: Record<string, any>, i: number) => {
+        const keyDef = keys.find((k: Record<string, any>) => k.dataKey === entry.dataKey);
         return (
           <div key={i} className={styles.tooltipVal} style={{ color: entry.color, fontSize: '0.9rem', marginBottom: '4px' }}>
             {keyDef?.label || entry.dataKey}: {valuePrefix}{Number(entry.value).toLocaleString()}{valueSuffix}
@@ -132,7 +132,7 @@ export default function PremiumChart({
   // ── Build DataPoints from raw DB rows ─────────────────────────────────
   const processRows = useCallback((rows: Record<string, any>[]) => {
     const { multiLineConfig, plotType } = propsRef.current;
-    let tally = getInitTally();
+    const tally = getInitTally();
     const sorted = [...rows].sort((a, b) => {
       const ta = new Date(a.created_at || a.time || 0).getTime();
       const tb = new Date(b.created_at || b.time || 0).getTime();
@@ -216,10 +216,15 @@ export default function PremiumChart({
     } finally {
       setIsLoading(false);
     }
-  }, [range, realtimeConfigStr, initialDataLen, processRows]);
+  }, [range, processRows]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { void fetchHistory(); }, [fetchHistory]);
+  useEffect(() => {
+    let mounted = true;
+    setTimeout(() => {
+      if (mounted) void fetchHistory();
+    }, 0);
+    return () => { mounted = false; };
+  }, [fetchHistory]);
 
   // ── Live subscription ────────────────────────────────────────────────────
   useEffect(() => {
@@ -299,7 +304,6 @@ export default function PremiumChart({
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [realtimeConfig?.table, title, getInitTally]);
 
   useEffect(() => {

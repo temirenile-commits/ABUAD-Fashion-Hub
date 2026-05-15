@@ -996,7 +996,7 @@ export default function UniversityAdminPage() {
                     <div style={{ padding: '1.5rem' }}>
                       <Link 
                         href="/rankings" 
-                        className={styles.btnPrimary} 
+                               className={styles.btnPrimary} 
                         style={{ background: 'linear-gradient(135deg, #eb0c7a 0%, #7c3aed 100%)', width: 'fit-content' }}
                       >
                         🏆 Open University Leaderboard
@@ -1007,10 +1007,8 @@ export default function UniversityAdminPage() {
               )}
             </>
           )}
-
         </div>
       </main>
-
       {showAddStaff&&(
         <div className={styles.modalOverlay} onClick={()=>setShowAddStaff(false)}>
           <div className={styles.modal} onClick={e=>e.stopPropagation()}>
