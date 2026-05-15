@@ -99,14 +99,17 @@ export default function VendorDashboard() {
   const [banks, setBanks] = useState<any[]>([]);
   const [verifyingBank, setVerifyingBank] = useState(false);
   const [isSettingUpBank, setIsSettingUpBank] = useState(false);
+  const [delicaciesBillboardDays, setDelicaciesBillboardDays] = useState(1);
+  const [buyingDelicaciesBillboard, setBuyingDelicaciesBillboard] = useState(false);
+  const [activeDelicaciesBillboard, setActiveDelicaciesBillboard] = useState<any>(null);
   const [isKitchenOpen, setIsKitchenOpen] = useState(true);
   const [isUpdatingKitchen, setIsUpdatingKitchen] = useState(false);
 
-  // Dedicated Fashion Logic
-  const isChef = false;
-  const activeDashboardMode = 'normal';
-  const products = brand ? allProducts.filter(p => p.brand_id === brand.id && (p.product_section === 'fashion' || !p.product_section)) : [];
-  const filteredReels = brand ? reels.filter(r => (r.product_section === 'fashion' || !r.product_section)) : [];
+  // Dedicated Chief Chef Logic
+  const isChef = true;
+  const activeDashboardMode = 'chief_chef';
+  const products = brand ? allProducts.filter(p => p.brand_id === brand.id && p.product_section === 'delicacies') : [];
+  const filteredReels = brand ? reels.filter(r => r.product_section === 'delicacies') : [];
 
   // AI States
   const [aiSettings, setAiSettings] = useState<any>(null);
@@ -288,7 +291,17 @@ export default function VendorDashboard() {
         .eq('brand_id', brandData.id);
       setPromoCodes(promoData || []);
 
-
+      // Fetch active delicacies billboard
+      const { data: activeDelBillboard } = await supabase
+        .from('delicacies_billboards')
+        .select('*')
+        .eq('brand_id', brandData.id)
+        .eq('active', true)
+        .gt('expires_at', new Date().toISOString())
+        .order('expires_at', { ascending: false })
+        .limit(1)
+        .single();
+      setActiveDelicaciesBillboard(activeDelBillboard || null);
 
       // Fetch Reviews
       const { data: reviewData } = await supabase
@@ -389,7 +402,24 @@ export default function VendorDashboard() {
     return () => { mounted = false; };
   }, [brand]);
 
-
+  const toggleKitchenStatus = async () => {
+    if (!brand) return;
+    setIsUpdatingKitchen(true);
+    try {
+      const { error } = await supabase
+        .from('brands')
+        .update({ is_available_now: !isKitchenOpen })
+        .eq('id', brand.id);
+      
+      if (error) throw error;
+      setIsKitchenOpen(!isKitchenOpen);
+      addToast(`Kitchen is now ${!isKitchenOpen ? 'OPEN 🍳' : 'CLOSED 💤'}`, 'success');
+    } catch (err: any) {
+      addToast(err.message || 'Failed to update kitchen status', 'error');
+    } finally {
+      setIsUpdatingKitchen(false);
+    }
+  };
 
   // Calculate 7-day sales trend
   const getSalesTrend = () => {
@@ -864,7 +894,40 @@ export default function VendorDashboard() {
     }
   };
 
+  const handleBuyDelicaciesBillboard = async () => {
+    if (!brand || !brand.university_id) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
 
+    setBuyingDelicaciesBillboard(true);
+    try {
+      const res = await fetch('/api/delicacies/billboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: session.user.id,
+          brandId: brand.id,
+          universityId: brand.university_id,
+          days: delicaciesBillboardDays
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert(`🚀 Billboard activated for ${delicaciesBillboardDays} days!`);
+        // Refresh wallet balance
+        const { data: walletData } = await supabase.from('wallets').select('balance').eq('user_id', session.user.id).single();
+        if (walletData) setWallet(walletData);
+      } else {
+        alert(data.error || 'Failed to purchase billboard');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred during purchase');
+    } finally {
+      setBuyingDelicaciesBillboard(false);
+    }
+  };
 
   const handleBillboardImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1177,18 +1240,16 @@ export default function VendorDashboard() {
                   <input type="file" id="logoInput" hidden accept="image/*" onChange={handleLogoUpdate} />
                 </div>
                 <div style={{ flex: 1, overflow: 'hidden' }}>
-                  <h2 style={{ fontSize: '0.9rem', fontWeight: 800, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{brand?.name || 'Brand Portal'}</h2>
+                  <h2 style={{ fontSize: '0.9rem', fontWeight: 800, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--primary)' }}>{brand?.name || 'Brand Portal'}</h2>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Store size={12} color="var(--primary)" />
-                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-400)', letterSpacing: '0.05em' }}>MASTER CART GENERAL</span>
+                    <UtensilsCrossed size={12} color="var(--primary)" />
+                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '0.05em' }}>MASTER CART DELICACIES</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* DASHBOARD SWITCHER REMOVED FOR STRUCTURAL SEPARATION */}
-
-
 
             <nav className={styles.nav}>
               <Link href="/" className={styles.navItem} style={{ marginBottom: '0.5rem', color: 'var(--secondary)' }}>
@@ -1264,15 +1325,22 @@ export default function VendorDashboard() {
       <main className={styles.main}>
         <header className={styles.dashboardHeader}>
           <div className={styles.headerTitle}>
-            <h1 className={styles.title}>Master Cart Marketplace</h1>
-            <p className={styles.subtitle}>Manage your fashion brand and general merchandise inventory.</p>
+            <h1 className={styles.title} style={{ color: isChef ? 'var(--primary)' : 'inherit' }}>{isChef ? 'Master Cart Delicacies' : 'Master Cart Marketplace'}</h1>
+            <p className={styles.subtitle}>{isChef ? 'Manage your kitchen, edible delicacies, and fast-track food orders.' : 'Manage your fashion brand and general merchandise inventory.'}</p>
           </div>
           
           <div className={styles.headerActions}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: 'var(--bg-200)', borderRadius: '20px', border: '1px solid var(--border)' }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }} />
-              <span style={{ fontSize: '0.7rem', fontWeight: 800 }}>MARKETPLACE MODE</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: isChef ? 'var(--primary-soft)' : 'var(--bg-200)', borderRadius: '20px', border: `1px solid ${isChef ? 'var(--primary)' : 'var(--border)'}` }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: isChef ? 'var(--primary)' : '#10b981' }} />
+              <span style={{ fontSize: '0.7rem', fontWeight: 800, color: isChef ? 'var(--primary)' : 'inherit' }}>{isChef ? 'DELICACIES MODE' : 'MARKETPLACE MODE'}</span>
             </div>
+            {isChef && (
+              <div className={`${styles.kitchenToggle} ${isKitchenOpen ? styles.kitchenOpen : styles.kitchenClosed}`} onClick={toggleKitchenStatus}>
+                <div className={styles.toggleDot} />
+                <span>{isKitchenOpen ? 'KITCHEN OPEN' : 'KITCHEN CLOSED'}</span>
+                {isUpdatingKitchen && <Loader2 size={12} className="anim-spin" />}
+              </div>
+            )}
             <button className={styles.notifBtn} onClick={() => setActiveTab('enquiries')}>
               <Bell size={20} />
               {unreadCount > 0 && <span className={styles.badgeCount}>{unreadCount}</span>}
@@ -1516,20 +1584,20 @@ export default function VendorDashboard() {
             <h1 className={styles.title}>Store Settings</h1>
             <p className={styles.subtitle}>Manage your brand identity, contact details, and store policies.</p>
 
-            {/* ── Dashboard Operations Section (General Dedicated) ────────────────────────────────── */}
-            <div className={styles.settingsSection} style={{ border: '1px solid var(--primary-soft)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', background: 'rgba(124,58,237,0.03)' }}>
+            {/* ── Dashboard Operations Section (Chief Chef Dedicated) ────────────────────────────────── */}
+            <div className={styles.settingsSection} style={{ border: '1px solid var(--primary-soft)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', background: 'rgba(235,12,122,0.03)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                <Store size={20} color="var(--primary)" />
-                <h3 style={{ margin: 0 }}>Store Operations</h3>
+                <UtensilsCrossed size={20} color="var(--primary)" />
+                <h3 style={{ margin: 0 }}>Kitchen Operations</h3>
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
                 <div>
                   <p style={{ margin: 0, fontWeight: 600, color: '#fff' }}>
-                    Workspace: <span style={{ color: 'var(--primary)', textTransform: 'uppercase' }}>Fashion & General Dashboard</span>
+                    Workspace: <span style={{ color: 'var(--primary)', textTransform: 'uppercase' }}>Chief Chef Dashboard</span>
                   </p>
                   <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text-400)' }}>
-                    You are in your dedicated marketplace management environment.
+                    You are in your dedicated kitchen management environment.
                   </p>
                 </div>
               </div>
@@ -2640,7 +2708,52 @@ export default function VendorDashboard() {
                 )}
               </div>
 
-
+              {/* Delicacies Premium Billboard */}
+              <div className={styles.promoOption} style={{ 
+                border: '2px solid #f59e0b', 
+                background: activeDelicaciesBillboard ? 'rgba(245,158,11,0.1)' : 'var(--bg-300)'
+              }}>
+                <div className={styles.promoIcon}><UtensilsCrossed size={24} color="#f59e0b" /></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <h3 style={{ margin: 0 }}>Delicacies Billboard</h3>
+                  <span className="badge badge-primary" style={{ background: '#f59e0b' }}>PREMIUM</span>
+                </div>
+                <p>Featured in the main carousel on the Delicacies Marketplace. Drive massive visibility to your campus eats.</p>
+                
+                {activeDelicaciesBillboard ? (
+                  <div className={styles.activeStatus}>
+                    <CheckCircle size={14} color="#10b981" /> 
+                    <span>Active until {new Date(activeDelicaciesBillboard.expires_at).toLocaleDateString()}</span>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                      <label className={styles.subText} style={{ margin: 0 }}>Duration:</label>
+                      <select 
+                        className="form-input" 
+                        style={{ padding: '0.2rem 0.5rem', width: 'auto' }}
+                        value={delicaciesBillboardDays}
+                        onChange={(e) => setDelicaciesBillboardDays(Number(e.target.value))}
+                      >
+                        {[1, 2, 3, 5, 7, 14, 30].map(d => (
+                          <option key={d} value={d}>{d} {d === 1 ? 'day' : 'days'}</option>
+                        ))}
+                      </select>
+                      <span style={{ fontWeight: 800, color: 'var(--text-100)' }}>
+                        ₦{Number(delicaciesBillboardDays * 500).toLocaleString()}
+                      </span>
+                    </div>
+                    <button 
+                      className="btn btn-primary btn-sm" 
+                      style={{ background: '#f59e0b', border: 'none', width: '100%' }}
+                      onClick={handleBuyDelicaciesBillboard}
+                      disabled={buyingDelicaciesBillboard}
+                    >
+                      {buyingDelicaciesBillboard ? <Loader2 size={14} className="anim-spin" /> : 'Buy Advert Space 🚀'}
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {isEditingBillboard && (
                 <div className={styles.modalOverlay}>

@@ -47,8 +47,11 @@ export default function Navbar() {
           }));
         }
         // Fallback: Check if they own a brand even if role isn't 'vendor'
-        const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', session.user.id).single();
-        if (brand) setIsVendorOwner(true);
+        const { data: brand } = await supabase.from('brands').select('id, marketplace_type').eq('owner_id', session.user.id).single();
+        if (brand) {
+          setIsVendorOwner(true);
+          setUser((prev: any) => ({ ...prev, brand }));
+        }
       }
     };
     checkSession();
@@ -71,8 +74,9 @@ export default function Navbar() {
             university: userData.universities
           }));
         }
-        const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', session.user.id).single();
+        const { data: brand } = await supabase.from('brands').select('id, marketplace_type').eq('owner_id', session.user.id).single();
         setIsVendorOwner(!!brand);
+        if (brand) setUser((prev: any) => ({ ...prev, brand }));
       } else {
         setUser(null);
         setRole(null);
@@ -222,10 +226,20 @@ export default function Navbar() {
                   </Link>
                 )}
                 {(role === 'vendor' || role === 'admin' || isVendorOwner) && (
-                  <Link href="/dashboard/vendor" className={styles.moduleItem}>
-                    <Store size={18} />
-                    <span>Vendor Dashboard</span>
-                  </Link>
+                  <>
+                    {(user?.brand?.marketplace_type === 'normal' || user?.brand?.marketplace_type === 'both' || !user?.brand?.marketplace_type) && (
+                      <Link href="/dashboard/vendor" className={styles.moduleItem}>
+                        <Store size={18} />
+                        <span>Vendor Dashboard (Fashion)</span>
+                      </Link>
+                    )}
+                    {(user?.brand?.marketplace_type === 'delicacies' || user?.brand?.marketplace_type === 'both') && (
+                      <Link href="/dashboard/delicacies" className={styles.moduleItem} style={{ borderLeft: '3px solid var(--primary)', background: 'rgba(235,12,122,0.05)' }}>
+                        <UtensilsCrossed size={18} style={{ color: 'var(--primary)' }} />
+                        <span style={{ color: 'var(--primary)', fontWeight: 600 }}>Chief Chef Dashboard</span>
+                      </Link>
+                    )}
+                  </>
                 )}
                 {role === 'delivery' && (
                   <Link href="/dashboard/delivery" className={styles.moduleItem}>

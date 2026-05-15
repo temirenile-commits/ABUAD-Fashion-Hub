@@ -11,7 +11,7 @@ import styles from './PremiumChart.module.css';
 
 export interface MultiLineConfig {
   keys: { dataKey: string; color: string; label: string; isProjected?: boolean }[];
-  categorize: (row: Record<string, any>) => { dataKey: string; value: number }[];
+  categorize: (row: any) => { dataKey: string; value: number }[];
 }
 
 interface DataPoint {
@@ -83,13 +83,13 @@ const CustomDot = (props: Record<string, any>) => {
   return <LiveDotRenderer cx={cx} cy={cy} color={color} />;
 };
 
-const CustomTooltip = ({ active, payload, label, valuePrefix, valueSuffix, keys }: Record<string, any>) => {
+const CustomTooltip = ({ active, payload, label, valuePrefix, valueSuffix, keys }: any) => {
   if (!active || !payload?.length) return null;
   return (
     <div className={styles.tooltip}>
       <div className={styles.tooltipLabel}>{label}</div>
-      {payload.map((entry: Record<string, any>, i: number) => {
-        const keyDef = keys.find((k: Record<string, any>) => k.dataKey === entry.dataKey);
+      {payload.map((entry: any, i: number) => {
+        const keyDef = keys.find((k: any) => k.dataKey === entry.dataKey);
         return (
           <div key={i} className={styles.tooltipVal} style={{ color: entry.color, fontSize: '0.9rem', marginBottom: '4px' }}>
             {keyDef?.label || entry.dataKey}: {valuePrefix}{Number(entry.value).toLocaleString()}{valueSuffix}
@@ -130,10 +130,10 @@ export default function PremiumChart({
   }, []);
 
   // ── Build DataPoints from raw DB rows ─────────────────────────────────
-  const processRows = useCallback((rows: Record<string, any>[]) => {
+  const processRows = useCallback((rows: any[]) => {
     const { multiLineConfig, plotType } = propsRef.current;
     const tally = getInitTally();
-    const sorted = [...rows].sort((a, b) => {
+    const sorted = [...rows].sort((a: any, b: any) => {
       const ta = new Date(a.created_at || a.time || 0).getTime();
       const tb = new Date(b.created_at || b.time || 0).getTime();
       return ta - tb;
@@ -141,7 +141,7 @@ export default function PremiumChart({
 
     const pts: DataPoint[] = [];
     
-    sorted.forEach(r => {
+    sorted.forEach((r: any) => {
       const ts = r.created_at || r.time || new Date().toISOString();
       const raw_time = new Date(ts).getTime();
       
@@ -237,7 +237,7 @@ export default function PremiumChart({
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: realtimeConfig.table },
-        (payload: { new: Record<string, any> }) => {
+        (payload: any) => {
           const row = payload.new;
           const { realtimeConfig: currentRealtime, multiLineConfig, plotType } = propsRef.current;
 
