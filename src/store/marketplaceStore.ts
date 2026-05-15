@@ -31,6 +31,7 @@ export interface Product {
   rating?: number;
   reviews?: number;
   sold?: number;
+  product_section?: 'fashion' | 'delicacies';
   [key: string]: unknown;
 }
 
@@ -104,6 +105,7 @@ export interface Reel {
     name: string;
     logo_url?: string;
   };
+  product_section?: 'fashion' | 'delicacies';
 }
 
 interface MarketplaceState {

@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
 
 export default function ReelsPage() {
-  const allReels = useMarketplaceStore(s => s.reels);
+  const allReels = useMarketplaceStore(s => s.reels).filter(r => !r.product_section || r.product_section === 'fashion');
   const allVendors = useMarketplaceStore(s => s.vendors);
   
   // Mixed feed logic: [Reel, Reel, VendorRow, Reel, Reel, VendorRow...]

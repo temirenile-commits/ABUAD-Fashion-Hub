@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
       supabaseAdmin.from('delivery_agents').select('id', { count: 'exact', head: true })
         .eq('university_id', universityId),
       supabaseAdmin.from('products')
-        .select('id, title, sales_count, views_count')
+        .select('id, title, sales_count, views_count, product_section')
         .eq('university_id', universityId)
         .order('sales_count', { ascending: false })
         .limit(5),
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     // Projected Revenue: Value of active stock
     const { data: stockData } = await supabaseAdmin
       .from('products')
-      .select('price, stock_count')
+      .select('price, stock_count, product_section')
       .eq('university_id', universityId)
       .eq('is_visible', true);
     

@@ -220,7 +220,7 @@ export default function Home() {
               </Link>
             </div>
             <div className={styles.reelsRow}>
-              {allReels.map((reel) => (
+              {allReels.filter(r => !r.product_section || r.product_section === 'fashion').map((reel) => (
                 <div key={reel.id} className={styles.reelCard}>
                   <div className={styles.reelVideoWrap}>
                     <VividVideo 

@@ -21,6 +21,7 @@ export default function Navbar() {
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
   const [isVendorOwner, setIsVendorOwner] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const pathname = usePathname();
   const router = useRouter();
 
@@ -87,6 +88,14 @@ export default function Navbar() {
     router.push('/');
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/explore?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    }
+  };
+
   const navLinks = [
     { href: '/', label: 'Home', icon: <Home size={16} /> },
     { href: '/explore', label: 'Explore', icon: <Search size={16} /> },
@@ -107,11 +116,16 @@ export default function Navbar() {
         </Link>
 
         {/* Search Bar (Jumia Style - Center) */}
-        <div className={styles.searchBar}>
+        <form className={styles.searchBar} onSubmit={handleSearch}>
           <Search size={18} className={styles.searchIcon} />
-          <input type="text" placeholder="Search products, brands and services..." />
-          <button className={styles.searchBtn}>SEARCH</button>
-        </div>
+          <input 
+            type="text" 
+            placeholder="Search products, brands and services..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button type="submit" className={styles.searchBtn}>SEARCH</button>
+        </form>
 
         {/* Actions (Right) */}
         <div className={styles.actions}>

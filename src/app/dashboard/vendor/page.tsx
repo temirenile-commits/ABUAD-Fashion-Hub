@@ -78,7 +78,6 @@ export default function VendorDashboard() {
   const { products: allProducts, orders: allOrders, setOrders: setGlobalOrders, addProduct, updateOrder, updateProduct: updateGlobalProduct } = useMarketplaceStore();
   const [showDraftsOnly, setShowDraftsOnly] = useState(false);
 
-  const products = brand ? allProducts.filter(p => p.brand_id === brand.id) : [];
   const orders = brand ? allOrders.filter(o => o.brand_id === brand.id).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
 
   const [isAddingProduct, setIsAddingProduct] = useState(false);
@@ -104,10 +103,13 @@ export default function VendorDashboard() {
   const [buyingDelicaciesBillboard, setBuyingDelicaciesBillboard] = useState(false);
   const [activeDelicaciesBillboard, setActiveDelicaciesBillboard] = useState<any>(null);
   const [activeDashboardMode, setActiveDashboardMode] = useState<'normal' | 'chief_chef'>('normal');
-  const isChef = activeDashboardMode === 'chief_chef';
   const [isSwitchingDashboard, setIsSwitchingDashboard] = useState(false);
   const [isKitchenOpen, setIsKitchenOpen] = useState(true);
   const [isUpdatingKitchen, setIsUpdatingKitchen] = useState(false);
+
+  const isChef = activeDashboardMode === 'chief_chef';
+  const products = brand ? allProducts.filter(p => p.brand_id === brand.id && (isChef ? p.product_section === 'delicacies' : (p.product_section === 'fashion' || !p.product_section))) : [];
+  const filteredReels = brand ? reels.filter(r => isChef ? r.product_section === 'delicacies' : (r.product_section === 'fashion' || !r.product_section)) : [];
 
   // AI States
   const [aiSettings, setAiSettings] = useState<any>(null);
@@ -541,8 +543,9 @@ export default function VendorDashboard() {
         .from('brand_reels')
         .insert({
           brand_id: brand.id,
-            visibility_type: newProduct.visibility_type,
+          visibility_type: newProduct.visibility_type,
           video_url: url,
+          product_section: isChef ? 'delicacies' : 'fashion'
         });
 
       if (!dbError) {
@@ -613,7 +616,7 @@ export default function VendorDashboard() {
             price: Number(newProduct.price),
             original_price: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined,
             category: newProduct.category,
-            product_section: isChef ? 'delicacies' : 'fashion',
+            product_section: (isChef ? 'delicacies' : 'fashion') as 'delicacies' | 'fashion',
             delicacy_category: isChef ? newProduct.category : null,
             stock_count: Number(newProduct.stockCount),
             media_urls: newProduct.mediaUrls,
@@ -1240,7 +1243,7 @@ export default function VendorDashboard() {
         </div>
       ) : (
         <>
-          <aside className={styles.sidebar}>
+          <aside className={`${styles.sidebar} ${isChef ? styles.chefSidebar : ''}`}>
             <div className={styles.sidebarHeader}>
               <div className={styles.brandInfo} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1.25rem' }}>
                 <div 
@@ -1255,32 +1258,37 @@ export default function VendorDashboard() {
                   <input type="file" id="logoInput" hidden accept="image/*" onChange={handleLogoUpdate} />
                 </div>
                 <div style={{ flex: 1, overflow: 'hidden' }}>
-                  <h2 style={{ fontSize: '0.9rem', fontWeight: 800, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{brand?.name || 'Brand Portal'}</h2>
+                  <h2 style={{ fontSize: '0.9rem', fontWeight: 800, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: isChef ? 'var(--primary)' : 'inherit' }}>{brand?.name || 'Brand Portal'}</h2>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     {isChef ? <UtensilsCrossed size={12} color="var(--primary)" /> : <Store size={12} color="var(--primary)" />}
-                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '0.05em' }}>{isChef ? 'CHIEF CHEF' : 'VENDOR'}</span>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: isChef ? 'var(--primary)' : 'var(--text-400)', letterSpacing: '0.05em' }}>{isChef ? 'MASTER CART DELICACIES' : 'MASTER CART GENERAL'}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* DASHBOARD SWITCHER */}
+            {/* DASHBOARD SWITCHER - MORE PROMINENT */}
             {brand?.marketplace_type === 'both' && (
-              <div className={styles.modeSwitcher}>
-                <button 
-                  className={`${styles.switchBtn} ${!isChef ? styles.switchActive : ''}`}
-                  onClick={() => handleDashboardSwitch('normal')}
-                  disabled={isSwitchingDashboard}
-                >
-                  Normal
-                </button>
-                <button 
-                  className={`${styles.switchBtn} ${isChef ? styles.switchActiveChef : ''}`}
-                  onClick={() => handleDashboardSwitch('chief_chef')}
-                  disabled={isSwitchingDashboard}
-                >
-                  Chief Chef
-                </button>
+              <div className={styles.modeSwitcher} style={{ margin: '0 1rem 1rem', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '12px' }}>
+                <p style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-400)', textTransform: 'uppercase', marginBottom: '0.5rem', textAlign: 'center' }}>Switch Workspace</p>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button 
+                    className={`${styles.switchBtn} ${!isChef ? styles.switchActive : ''}`}
+                    onClick={() => handleDashboardSwitch('normal')}
+                    disabled={isSwitchingDashboard}
+                    style={{ flex: 1, fontSize: '0.7rem' }}
+                  >
+                    Fashion
+                  </button>
+                  <button 
+                    className={`${styles.switchBtn} ${isChef ? styles.switchActiveChef : ''}`}
+                    onClick={() => handleDashboardSwitch('chief_chef')}
+                    disabled={isSwitchingDashboard}
+                    style={{ flex: 1, fontSize: '0.7rem' }}
+                  >
+                    Delicacies
+                  </button>
+                </div>
               </div>
             )}
 
@@ -1290,45 +1298,45 @@ export default function VendorDashboard() {
               </Link>
               <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '1rem' }} />
 
-              <button className={`${styles.navItem} ${activeTab === 'overview' ? styles.navActive : ''}`} onClick={() => setActiveTab('overview')}>
+              <button className={`${styles.navItem} ${activeTab === 'overview' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('overview')}>
                 <TrendingUp size={18} /> Overview
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'inventory' ? styles.navActive : ''}`} onClick={() => setActiveTab('inventory')}>
+              <button className={`${styles.navItem} ${activeTab === 'inventory' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('inventory')}>
                 {isChef ? <UtensilsCrossed size={18} /> : <Package size={18} />} {isChef ? 'My Delicacies' : 'My Products'}
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'orders' ? styles.navActive : ''}`} onClick={() => setActiveTab('orders')}>
+              <button className={`${styles.navItem} ${activeTab === 'orders' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('orders')}>
                 <ShoppingCart size={18} /> Orders & Fulfillment
                 {orders.filter(o => o.status === 'paid').length > 0 && <span className={styles.navBadge}>{orders.filter(o => o.status === 'paid').length}</span>}
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'payments' ? styles.navActive : ''}`} onClick={() => setActiveTab('payments')}>
+              <button className={`${styles.navItem} ${activeTab === 'payments' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('payments')}>
                 <Wallet size={18} /> Wallet & Payouts
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'enquiries' ? styles.navActive : ''}`} onClick={() => setActiveTab('enquiries')}>
+              <button className={`${styles.navItem} ${activeTab === 'enquiries' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('enquiries')}>
                 <Bell size={18} /> Notifications & Enquiries
                 {unreadCount > 0 && <span className={styles.navBadge}>{unreadCount}</span>}
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'reviews' ? styles.navActive : ''}`} onClick={() => setActiveTab('reviews')}>
+              <button className={`${styles.navItem} ${activeTab === 'reviews' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('reviews')}>
                 <Star size={18} /> Customer Reviews
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'marketing' ? styles.navActive : ''}`} onClick={() => setActiveTab('marketing')}>
+              <button className={`${styles.navItem} ${activeTab === 'marketing' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('marketing')}>
                 <Tag size={18} /> Marketing & Promos
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'services' ? styles.navActive : ''}`} onClick={() => setActiveTab('services')}>
+              <button className={`${styles.navItem} ${activeTab === 'services' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('services')}>
                 <Scissors size={18} /> Services
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'reels' ? styles.navActive : ''}`} onClick={() => setActiveTab('reels')}>
+              <button className={`${styles.navItem} ${activeTab === 'reels' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('reels')}>
                 <Video size={18} /> Collection Reels
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'analytics' ? styles.navActive : ''}`} onClick={() => setActiveTab('analytics')}>
+              <button className={`${styles.navItem} ${activeTab === 'analytics' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('analytics')}>
                 <BarChart3 size={18} /> Smart Analytics
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'settings' ? styles.navActive : ''}`} onClick={() => setActiveTab('settings')}>
+              <button className={`${styles.navItem} ${activeTab === 'settings' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('settings')}>
                 <Settings size={18} /> Store Settings
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'plans' ? styles.navActive : ''}`} onClick={() => setActiveTab('plans')} style={{ color: 'var(--primary)', background: activeTab === 'plans' ? 'var(--primary-soft)' : 'transparent' }}>
+              <button className={`${styles.navItem} ${activeTab === 'plans' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('plans')} style={{ color: 'var(--primary)', background: activeTab === 'plans' ? 'var(--primary-soft)' : 'transparent' }}>
                 <Crown size={18} /> Plans & Upgrade
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'ai' ? styles.navActive : ''}`} onClick={() => setActiveTab('ai')} style={{ color: '#a78bfa', background: activeTab === 'ai' ? 'rgba(167,139,250,0.1)' : 'transparent' }}>
+              <button className={`${styles.navItem} ${activeTab === 'ai' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('ai')} style={{ color: '#a78bfa', background: activeTab === 'ai' ? 'rgba(167,139,250,0.1)' : 'transparent' }}>
                 <Zap size={18} /> AI Assistant
               </button>
 
@@ -1368,11 +1376,15 @@ export default function VendorDashboard() {
       <main className={styles.main}>
         <header className={styles.dashboardHeader}>
           <div className={styles.headerTitle}>
-            <h1 className={styles.title}>{isChef ? 'Chief Chef Dashboard' : 'Vendor Dashboard'}</h1>
-            <p className={styles.subtitle}>{isChef ? 'Manage your kitchen, delicacies, and fast-track orders.' : 'Manage your general brand and inventory.'}</p>
+            <h1 className={styles.title} style={{ color: isChef ? 'var(--primary)' : 'inherit' }}>{isChef ? 'Master Cart Delicacies' : 'Master Cart Marketplace'}</h1>
+            <p className={styles.subtitle}>{isChef ? 'Manage your kitchen, edible delicacies, and fast-track food orders.' : 'Manage your fashion brand and general merchandise inventory.'}</p>
           </div>
           
           <div className={styles.headerActions}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: isChef ? 'var(--primary-soft)' : 'var(--bg-200)', borderRadius: '20px', border: `1px solid ${isChef ? 'var(--primary)' : 'var(--border)'}` }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: isChef ? 'var(--primary)' : '#10b981' }} />
+              <span style={{ fontSize: '0.7rem', fontWeight: 800, color: isChef ? 'var(--primary)' : 'inherit' }}>{isChef ? 'DELICACIES MODE' : 'MARKETPLACE MODE'}</span>
+            </div>
             {isChef && (
               <div className={`${styles.kitchenToggle} ${isKitchenOpen ? styles.kitchenOpen : styles.kitchenClosed}`} onClick={toggleKitchenStatus}>
                 <div className={styles.toggleDot} />
@@ -2529,7 +2541,7 @@ export default function VendorDashboard() {
             </div>
 
             <div className={styles.reelsGrid}>
-              {reels.map(reel => (
+              {filteredReels.map(reel => (
                 <div key={reel.id} className={styles.reelCard}>
                   <video src={reel.video_url} loop muted onMouseOver={e => e.currentTarget.play()} onMouseOut={e => e.currentTarget.pause()} />
                   <div className={styles.reelOverlay}>

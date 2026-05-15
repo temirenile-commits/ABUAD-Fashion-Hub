@@ -31,6 +31,12 @@ export default function ExplorePage() {
   const [search, setSearch] = useState('');
   const [view, setView] = useState<'grid' | 'list'>('grid');
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    if (q) setSearch(q);
+  }, []);
+
   const allProducts = useMarketplaceStore(s => s.products);
   const loading = !useMarketplaceStore(s => s.isInitialized);
 

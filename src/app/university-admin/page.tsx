@@ -731,7 +731,7 @@ export default function UniversityAdminPage() {
                   <div className={styles.sectionHeader}><div><h2>University Catalog</h2><p>Monitor and control all products listed in your university</p></div></div>
                   <div className={styles.tableWrap}>
                     <table className={styles.table}>
-                      <thead><tr><th>Product</th><th>Brand</th><th>Visibility</th><th>Status</th><th>Stats</th><th>Actions</th></tr></thead>
+                      <thead><tr><th>Product</th><th>Section</th><th>Brand</th><th>Visibility</th><th>Status</th><th>Stats</th><th>Actions</th></tr></thead>
                       <tbody>
                         {filter(products,["title"]).map((p:any)=>(
                           <tr key={p.id}>
@@ -740,6 +740,11 @@ export default function UniversityAdminPage() {
                                 <img src={p.image_url||"/placeholder.png"} alt={p.title || ''} className={styles.prodThumb} />
                                 <div><div style={{fontWeight:600}}>{p.title}</div><div className={styles.subText}>₦{p.price.toLocaleString()}</div></div>
                               </div>
+                            </td>
+                            <td>
+                               <span className={`${styles.badge} ${p.product_section === 'delicacies' ? styles.badgeGold : styles.badgeInfo}`} style={{ fontSize: '0.6rem' }}>
+                                 {p.product_section === 'delicacies' ? '🍔 DELICACIES' : '👕 FASHION'}
+                               </span>
                             </td>
                             <td>{p.brands?.name}</td>
                             <td>
