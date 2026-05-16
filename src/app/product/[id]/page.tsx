@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: Props) {
       .select('title, description, image_url, media_urls')
       .eq('id', id)
       .single();
-    product = fallback.data;
+    product = fallback.data as any;
   }
 
   if (!product) return { title: 'Product Not Found' };
