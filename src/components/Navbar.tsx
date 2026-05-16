@@ -113,7 +113,12 @@ export default function Navbar() {
     { href: '/rankings', label: 'Leaderboard', icon: <Trophy size={16} /> },
   ];
 
-  const dashboardLink = isVendorOwner ? '/dashboard/vendor' : role === 'university_admin' ? '/university-admin' : role === 'delivery' ? '/dashboard/delivery' : '/dashboard/customer';
+  const dashboardLink = role === 'admin' ? '/admin' 
+    : (role === 'vendor' || isVendorOwner) 
+    ? (user?.brand?.marketplace_type === 'delicacies' ? '/dashboard/delicacies' : '/dashboard/vendor')
+    : role === 'university_admin' ? '/university-admin' 
+    : role === 'delivery' ? '/dashboard/delivery' 
+    : '/dashboard/customer';
 
   return (
     <header className={styles.header}>

@@ -663,7 +663,7 @@ export async function POST(req: NextRequest) {
         const { data: existingBrand } = await supabaseAdmin.from('brands').select('id').eq('owner_id', userId).single();
         if (!existingBrand) {
             const { data: user } = await supabaseAdmin.from('users').select('name, university_id').eq('id', userId).single();
-            await supabaseAdmin.from('brands').insert({ 
+            const { error: brandInsertError } = await supabaseAdmin.from('brands').insert({ 
                 owner_id: userId, 
                 university_id: user?.university_id || null,
                 name: user?.name ? `${user.name}'s Store` : 'New Vendor Store',
@@ -672,8 +672,16 @@ export async function POST(req: NextRequest) {
                 fee_paid: true,
                 terms_accepted: true,
                 description: 'Manually initialized by admin.',
-                student_id_url: 'https://placeholder.com'
+                student_id_url: 'https://placeholder.com',
+                active_dashboard_mode: 'normal',
+                marketplace_type: 'normal',
+                subscription_tier: 'full',
+                trial_started_at: new Date().toISOString()
             });
+            if (brandInsertError) {
+              console.error('[ADMIN API] Failed to initialize brand for vendor:', brandInsertError);
+              return NextResponse.json({ error: 'User role updated, but failed to initialize brand record: ' + brandInsertError.message }, { status: 500 });
+            }
         }
     }
 
