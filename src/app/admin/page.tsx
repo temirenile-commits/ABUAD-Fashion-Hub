@@ -195,6 +195,7 @@ interface BoosterConfig {
 
 interface UniConfig {
   credit_price?: number;
+  delicacies_credit_price?: number;
   billboard_price?: number;
   commission_rate?: number;
   customer_service_whatsapp?: string;
@@ -400,6 +401,7 @@ export default function AdminDashboard() {
         // Map global settings to the uniConfig format so the UI works without changes
         const gConfig = {
           credit_price: cData.settings?.credit_price || 50,
+          delicacies_credit_price: cData.settings?.delicacies_credit_price || 50,
           billboard_price: (cData.settings?.boost_rates as Array<{id: string; price: number}>)?.find(b => b.id === 'billboard_boost')?.price || 500,
           plans: ((cData.settings?.subscription_rates || []) as Array<{id: string; price: number}>).reduce((acc: Record<string, {price: number; features: never[]}>, r) => {
              acc[r.id] = { price: r.price, features: [] }; // global features aren't structured the same but price is what matters
@@ -1910,7 +1912,7 @@ export default function AdminDashboard() {
                         <p className={styles.subText}>Configure subscription plans specifically for this campus.</p>
                         
                         <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '500px' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem' }}>
                             <div>
                               <label className={styles.subText}>Credit Listing Price (₦)</label>
                               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
@@ -1923,6 +1925,21 @@ export default function AdminDashboard() {
                                   onChange={(e) => setUniConfig({ ...uniConfig, credit_price: Number(e.target.value) })}
                                 />
                                 <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'credit_price', value: uniConfig.credit_price })}>Save</button>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className={styles.subText}>Delicacies Credit (₦)</label>
+                              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
+                                <input 
+                                  type="number" 
+                                  className="form-input" 
+                                  style={{ height: '36px' }}
+                                  value={uniConfig.delicacies_credit_price || ''}
+                                  placeholder="e.g. 50"
+                                  onChange={(e) => setUniConfig({ ...uniConfig, delicacies_credit_price: Number(e.target.value) })}
+                                />
+                                <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'delicacies_credit_price', value: uniConfig.delicacies_credit_price })}>Save</button>
                               </div>
                             </div>
                             

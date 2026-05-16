@@ -3270,7 +3270,7 @@ export default function VendorDashboard() {
                 Need more listing powers? Top up your credits instantly. 1 Credit = 1 Live Product Listing.
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '3rem' }}>
-                {[10, 15, 20, 25, 30, 35, 40, 45, 50].map(count => {
+                {[10, 15, 20, 25, 30, 35, 40, 50].map(count => {
                   const totalPrice = count * delicaciesCreditPrice;
                   const bundleId = `credits_${count}`;
                   return (
