@@ -641,6 +641,19 @@ export default function VendorDashboard() {
           });
         }
 
+        const isSubActive = brand.subscription_expires_at && new Date(brand.subscription_expires_at) > new Date();
+        const isTrialActive = brand.trial_started_at && 
+          (new Date().getTime() - new Date(brand.trial_started_at).getTime()) < (7 * 24 * 60 * 60 * 1000);
+
+        // Credit check for Delicacies vendors (Model: 1 credit per Edit/Post)
+        if (isChef && !newProduct.isDraft) {
+          if (!isTrialActive && !isSubActive && (brand.free_listings_count || 0) <= 0) {
+            alert('Insufficient listing credits to update this product. Please purchase more credits.');
+            setLoading(false);
+            return;
+          }
+        }
+
         const updates = {
             title: newProduct.title,
             description: newProduct.description,
@@ -665,6 +678,12 @@ export default function VendorDashboard() {
           .eq('id', editingProduct.id);
 
         if (!error) {
+          // 1.1 Decrement credits for Delicacies vendors if live
+          if (isChef && !newProduct.isDraft && !isTrialActive && !isSubActive) {
+            await supabase.rpc('decrement_listing_credits', { p_brand_id: brand.id });
+            setBrand({ ...brand, free_listings_count: (brand.free_listings_count || 0) - 1 });
+          }
+
           setIsAddingProduct(false);
           updateGlobalProduct(editingProduct.id, updates);
           setEditingProduct(null);
@@ -3145,49 +3164,7 @@ export default function VendorDashboard() {
 
               {/* -- Credit Rate Plans Section Removed (Delicacies use Credit Bundles instead) -- */}
 
-              {/* -- Boost Store Section -- */}
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-100)' }}>
-                ? Viral Boosters
-              </h2>
-              <p style={{ color: 'var(--text-400)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                One-time boosts to increase your store's visibility on the marketplace.
-              </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-                {/* Billboard Boost */}
-                <div style={{ background: 'var(--bg-300)', border: '2px solid var(--accent-gold)', borderRadius: '16px', padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ position: 'absolute', top: 0, right: 0, padding: '0.5rem', background: 'var(--accent-gold)', color: '#000', fontSize: '0.6rem', fontWeight: 900 }}>TRENDY BOARD</div>
-                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>??</div>
-                  <h3 style={{ fontSize: '1rem', color: 'var(--accent-gold)' }}>Campus Billboard</h3>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Get featured on the main homepage "The Gold Collection" billboard for 7 days.</p>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 900, color: '#fff' }}>₦500 <small>/week</small></span>
-                    <button className="btn btn-primary btn-sm" onClick={() => handleSubscribe({ id: 'billboard_boost', price: 500 })}>Activate 🚀</button>
-                  </div>
-                </div>
-
-                {boostRates.map(boost => (
-                  <div key={boost.id} style={{ background: 'var(--bg-300)', border: `1px solid ${boost.popular ? 'var(--primary)' : 'var(--border)'}`, borderRadius: '14px', padding: '1.5rem', position: 'relative' }}>
-                    {boost.popular && (
-                      <div style={{ position: 'absolute', top: '-12px', right: '1rem', background: 'var(--primary)', color: '#000', fontSize: '0.68rem', fontWeight: 800, padding: '0.25rem 0.75rem', borderRadius: '999px' }}>BEST VALUE</div>
-                    )}
-                    <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{getIcon(boost.id)}</div>
-                    <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{boost.name}</div>
-                    <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.5rem' }}>{boost.desc}</div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-500)', marginBottom: '1.25rem' }}>Duration: {boost.duration}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-                      <span style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--primary)' }}>₦{boost.price.toLocaleString()}</span>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        disabled={paying === boost.id}
-                        onClick={() => handleSubscribe({ id: boost.id, price: boost.price })}
-                        style={{ fontWeight: 700 }}
-                      >
-                        {paying === boost.id ? <><Loader2 size={14} className="spin" /> Paying...</> : 'Boost Now 🚀'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {/* -- Boost Store Section Removed for Delicacies -- */}
 
               {/* -- Credit Bundles Section -- */}
               <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginTop: '3rem', marginBottom: '1.25rem', color: 'var(--text-100)' }}>
