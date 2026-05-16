@@ -129,6 +129,27 @@ export async function POST(req: Request) {
         return NextResponse.json({ status: 'success' }, { status: 200 });
       }
 
+      // Case D: Delicacies Credit Top-up
+      if (metadata.payment_type === 'delicacies_credit_purchase') {
+        const { brand_id, credits } = metadata;
+        const creditsToAdd = Number(credits) || 0;
+        
+        if (creditsToAdd > 0) {
+          const { error: creditError } = await supabaseAdmin.rpc('add_listing_credits', { 
+            p_brand_id: brand_id, 
+            p_count: creditsToAdd 
+          });
+
+          if (creditError) {
+            console.error('Error adding delicacies credits:', creditError);
+            return NextResponse.json({ error: 'Credit update failed' }, { status: 500 });
+          }
+        }
+
+        console.log(`[WEBHOOK] ${creditsToAdd} credits added to delicacies vendor ${brand_id}`);
+        return NextResponse.json({ status: 'success' }, { status: 200 });
+      }
+
       // Case B: Customer Orders (Default)
       // 1. Fetch all orders with this Paystack reference
       const { data: orders, error: fetchError } = await supabaseAdmin

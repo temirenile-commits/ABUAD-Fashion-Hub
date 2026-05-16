@@ -147,6 +147,7 @@ export default function VendorDashboard() {
   const [billboardForm, setBillboardForm] = useState({ image: '', link: '' });
   const [uploadingBillboard, setUploadingBillboard] = useState(false);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [delicaciesCreditPrice, setDelicaciesCreditPrice] = useState(50);
 
   useEffect(() => {
     if (redirectUrl) {
@@ -326,6 +327,8 @@ export default function VendorDashboard() {
             { id: 'visibility_month', name: '30-Day Market Domination', price: 5000, duration: '30 Days', popular: true }
         ];
         let finalActivationFee = settingsData.find(s => s.key === 'activation_fee')?.value?.amount || 2000;
+        const delicaciesCreditPriceVal = settingsData.find(s => s.key === 'delicacies_credit_price')?.value?.price || 50;
+        setDelicaciesCreditPrice(delicaciesCreditPriceVal);
 
         if (brandData.university_id) {
             // University Vendor Settings Overlay
@@ -3190,6 +3193,44 @@ export default function VendorDashboard() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* -- Credit Bundles Section -- */}
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginTop: '3rem', marginBottom: '1.25rem', color: 'var(--text-100)' }}>
+                🍗 Listing Credit Bundles
+              </h2>
+              <p style={{ color: 'var(--text-400)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                Need more listing powers? Top up your credits instantly. 1 Credit = 1 Live Product Listing.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '3rem' }}>
+                {[10, 15, 20, 25, 30, 35, 40, 45, 50].map(count => {
+                  const totalPrice = count * delicaciesCreditPrice;
+                  const bundleId = `credits_${count}`;
+                  return (
+                    <div key={count} style={{ background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.25rem', textAlign: 'center' }}>
+                      <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📦</div>
+                      <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--primary)' }}>{count} Credits</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginBottom: '1rem' }}>₦{delicaciesCreditPrice} per credit</div>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 900, marginBottom: '1.25rem' }}>₦{totalPrice.toLocaleString()}</div>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        style={{ width: '100%' }}
+                        disabled={paying === bundleId}
+                        onClick={() => handleSubscribe({ 
+                          id: bundleId, 
+                          price: totalPrice,
+                          metadata: { 
+                            payment_type: 'delicacies_credit_purchase', 
+                            credits: count,
+                            brand_id: brand?.id 
+                          } 
+                        })}
+                      >
+                        {paying === bundleId ? '...' : 'Buy Bundle'}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* -- Trial & Admin Notes -- */}

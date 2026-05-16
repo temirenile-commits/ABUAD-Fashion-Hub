@@ -1841,6 +1841,30 @@ export default function AdminDashboard() {
                           </button>
                         </div>
                       </div>
+
+                      {/* Credit Pricing */}
+                      <div>
+                        <label className={styles.subText} style={{ display: 'block', marginBottom: '0.4rem' }}>Credit Price (₦)</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input 
+                            type="number" 
+                            className="form-input" 
+                            style={{ width: '120px', height: '36px' }}
+                            value={platformSettings.delicacies_credit_price?.price ?? 50}
+                            onChange={(e) => setPlatformSettings({ 
+                              ...platformSettings, 
+                              delicacies_credit_price: { price: Number(e.target.value) } 
+                            })}
+                          />
+                          <button 
+                            className="btn btn-primary btn-sm" 
+                            style={{ background: '#f59e0b', color: '#fff', border: 'none' }}
+                            onClick={() => adminAction('update_settings', { key: 'delicacies_credit_price', value: { price: platformSettings.delicacies_credit_price?.price || 50 } })}
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
