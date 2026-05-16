@@ -32,11 +32,20 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
   const { id } = await params;
-  const { data: product } = await supabaseAdmin
+  let { data: product, error: metaError } = await supabaseAdmin
     .from('products')
     .select('title, description, image_url, media_urls, is_preorder, preorder_arrival_date, variants')
     .eq('id', id)
     .single();
+
+  if (metaError && metaError.message.includes('schema cache')) {
+    const fallback = await supabaseAdmin
+      .from('products')
+      .select('title, description, image_url, media_urls')
+      .eq('id', id)
+      .single();
+    product = fallback.data;
+  }
 
   if (!product) return { title: 'Product Not Found' };
   
