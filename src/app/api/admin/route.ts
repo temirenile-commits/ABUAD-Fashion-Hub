@@ -599,6 +599,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, message: `User status updated to ${status}.` });
   }
 
+  if (action === 'update_product_finances') {
+    const { productId, commission_price, delivery_rate } = body;
+    const { error } = await supabaseAdmin
+      .from('products')
+      .update({ 
+        commission_price: Number(commission_price), 
+        delivery_rate: Number(delivery_rate) 
+      })
+      .eq('id', productId);
+    
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Financial settings updated for this product.' });
+  }
+
   if (action === 'delete_user') {
     const { userId } = body;
     

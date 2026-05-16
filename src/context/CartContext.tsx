@@ -79,7 +79,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = () => setCart([]);
 
   const getCartTotal = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+    return cart.reduce((total, item) => {
+      const commission = Number(item.commission_price || 0);
+      const delivery = Number(item.delivery_rate || 0);
+      const effectivePrice = Number(item.price) + commission + delivery;
+      return total + effectivePrice * item.quantity;
+    }, 0);
   };
 
   const getItemCount = () => {

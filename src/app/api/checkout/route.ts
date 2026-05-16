@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const [productsResult, profileResult, settingsResult, promoResult] = await Promise.all([
       supabaseAdmin
         .from('products')
-        .select('id, title, brand_id, price, stock_count, university_id, visibility_type, brands(verified, fee_paid, delivery_scope, assigned_delivery_system)')
+        .select('id, title, brand_id, price, commission_price, delivery_rate, stock_count, university_id, visibility_type, brands(verified, fee_paid, delivery_scope, assigned_delivery_system)')
         .in('id', productIds),
       supabaseAdmin
         .from('users')
@@ -148,8 +148,12 @@ export async function POST(req: Request) {
       
       const vendorScope = brandData?.delivery_scope || 'in-school';
       const vendorSystem = brandData?.assigned_delivery_system || 'platform';
+      
+      const liveCommission = Number(liveProduct?.commission_price || 0);
+      const liveDeliveryRate = Number(liveProduct?.delivery_rate || 0);
+      const effectiveItemPrice = originalPrice + liveCommission + liveDeliveryRate;
 
-      const baseItemSubtotal = originalPrice * (item.quantity || 1);
+      const baseItemSubtotal = effectiveItemPrice * (item.quantity || 1);
       
       // Calculate Discount (Paid by Admin or Vendor)
       let itemDiscount = 0;
@@ -177,13 +181,15 @@ export async function POST(req: Request) {
       const itemDeliveryFee = isFirst ? totalDeliveryFee : 0;
       const finalItemTotal = discountedItemSubtotal + itemDeliveryFee;
       
-      const baseCommission = baseItemSubtotal * dynamicCommissionRate;
+      // Platform commission logic
+      // Vendor Earning = (Original Price * quantity) - (Standard Commission on Original Price)
+      const standardCommission = (originalPrice * (item.quantity || 1)) * dynamicCommissionRate;
       
       // SUBSIDY FUNDING LOGIC
       // If the vendor created the promo code, they fund it (reduced earning)
       // If admin created it, admin funds it (reduced commission)
-      let vendorEarning = baseItemSubtotal - baseCommission;
-      let adminCommission = baseCommission;
+      let vendorEarning = (originalPrice * (item.quantity || 1)) - standardCommission;
+      let adminCommission = standardCommission + (liveCommission + liveDeliveryRate) * (item.quantity || 1);
 
       if (promoData?.creator_type === 'vendor') {
           // Vendor funds the discount

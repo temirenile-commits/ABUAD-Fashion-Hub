@@ -51,6 +51,9 @@ export interface LiveProduct {
   rating?: number;
   reviews?: number;
   sold?: number;
+  product_section?: 'fashion' | 'delicacies';
+  commission_price?: number;
+  delivery_rate?: number;
 }
 interface Props {
   product: LiveProduct;
@@ -208,7 +211,7 @@ export default function ProductCard({ product }: Props) {
             <div className={styles.videoStats}>
               <span>{brandName}</span>
               <span>•</span>
-              <span>{formatPrice(product.price)}</span>
+              <span>{formatPrice(Number(product.price) + Number(product.commission_price || 0) + Number(product.delivery_rate || 0))}</span>
               <span>•</span>
               <div className={styles.rating} style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
@@ -246,7 +249,7 @@ export default function ProductCard({ product }: Props) {
             </div>
           )}
           <div className={styles.priceRow}>
-            <span className={styles.price}>{formatPrice(product.price)}</span>
+            <span className={styles.price}>{formatPrice(Number(product.price) + Number(product.commission_price || 0) + Number(product.delivery_rate || 0))}</span>
             {product.original_price && product.original_price > product.price && (
               <span className={styles.oldPrice}>{formatPrice(product.original_price)}</span>
             )}

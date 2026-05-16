@@ -13,7 +13,7 @@ import styles from './admin.module.css';
 import PremiumChart from '@/components/PremiumChart'; 
 import { useToast } from '@/context/ToastContext';
 
-type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds' | 'preorders';
+type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds' | 'preorders' | 'delicacies';
 
 interface University {
   id: string;
@@ -77,6 +77,9 @@ interface Product {
   category?: string;
   brands?: { name: string };
   universities?: University;
+  product_section?: string;
+  commission_price?: number;
+  delivery_rate?: number;
 }
 
 interface PayoutRequest {
@@ -531,6 +534,7 @@ export default function AdminDashboard() {
             ['market', 'Market ', BarChart3],
             ['delivery_agents', 'Fleet ', Activity],
             ['universities', 'Universities', MapPin],
+            ['delicacies', 'Delicacies', UtensilsCrossed],
           ] as [Tab, string, React.ElementType][]).map(([id, label, Icon]) => (
             <button
               key={id}
@@ -1503,6 +1507,95 @@ export default function AdminDashboard() {
                       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       {orders.filter((o: any) => o.is_preorder).length === 0 && (
                         <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>No pre-orders currently in the system.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'delicacies' && (
+              <div className={styles.sectionCard}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                  <div>
+                    <h2>Delicacies Financials Management</h2>
+                    <p className={styles.subText}>Configure commission and delivery rates for food products. These charges are added to the vendor price and paid by customers.</p>
+                  </div>
+                </div>
+                <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>Base Price (Vendor)</th>
+                        <th>Commission (Admin)</th>
+                        <th>Delivery Rate</th>
+                        <th>Customer Pays</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.filter(p => p.product_section === 'delicacies').map(p => {
+                         const customerPrice = Number(p.price) + Number(p.commission_price || 0) + Number(p.delivery_rate || 0);
+                         return (
+                           <tr key={p.id}>
+                             <td>
+                               <div className={styles.brandCell}>
+                                 <Image src={p.image_url || p.media_urls?.[0] || '/logo.png'} alt="" width={32} height={32} className={styles.tableLogo} />
+                                 <div>
+                                   <div style={{ fontWeight: 600 }}>{p.title}</div>
+                                   <div className={styles.subText} style={{ fontSize: '0.7rem' }}>By {p.brands?.name}</div>
+                                 </div>
+                               </div>
+                             </td>
+                             <td>₦{Number(p.price).toLocaleString()}</td>
+                             <td>
+                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-400)' }}>₦</span>
+                                 <input 
+                                   type="number" 
+                                   className={styles.input} 
+                                   style={{ width: '100px', padding: '4px 8px', height: '32px' }}
+                                   defaultValue={p.commission_price || 0}
+                                   onBlur={(e) => {
+                                     const val = Number(e.target.value);
+                                     if (val !== p.commission_price) {
+                                       adminAction('update_product_finances', { productId: p.id, commission_price: val, delivery_rate: p.delivery_rate || 0 });
+                                     }
+                                   }}
+                                 />
+                               </div>
+                             </td>
+                             <td>
+                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-400)' }}>₦</span>
+                                 <input 
+                                   type="number" 
+                                   className={styles.input} 
+                                   style={{ width: '100px', padding: '4px 8px', height: '32px' }}
+                                   defaultValue={p.delivery_rate || 0}
+                                   onBlur={(e) => {
+                                     const val = Number(e.target.value);
+                                     if (val !== p.delivery_rate) {
+                                       adminAction('update_product_finances', { productId: p.id, commission_price: p.commission_price || 0, delivery_rate: val });
+                                     }
+                                   }}
+                                 />
+                               </div>
+                             </td>
+                             <td style={{ fontWeight: 800, color: 'var(--primary)' }}>
+                               ₦{customerPrice.toLocaleString()}
+                             </td>
+                             <td>
+                               <button className="btn btn-ghost btn-sm" onClick={() => addToast('Auto-saves on change', 'info')}>
+                                 <RefreshCw size={14} />
+                               </button>
+                             </td>
+                           </tr>
+                         );
+                      })}
+                      {products.filter(p => p.product_section === 'delicacies').length === 0 && (
+                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>No delicacy products found in the catalog.</td></tr>
                       )}
                     </tbody>
                   </table>

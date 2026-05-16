@@ -48,7 +48,7 @@ export default function CartPage() {
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-400)', textTransform: 'uppercase', marginBottom: 'auto' }}>{item.brands?.name}</p>
                   
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
-                    <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)' }}>{formatPrice(item.price)}</span>
+                    <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)' }}>{formatPrice(Number(item.price) + Number(item.commission_price || 0) + Number(item.delivery_rate || 0))}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--bg-300)', padding: '0.3rem 0.6rem', borderRadius: '8px' }}>
                       <button onClick={() => updateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1} style={{ background: 'none', border: 'none', color: 'var(--text-100)', cursor: 'pointer', padding: '0.2rem', opacity: item.quantity <= 1 ? 0.3 : 1 }}>
                         <Minus size={14} />
