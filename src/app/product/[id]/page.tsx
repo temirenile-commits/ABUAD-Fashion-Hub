@@ -22,6 +22,7 @@ import ProductEnquiry from '@/components/ProductEnquiry';
 import WishlistButton from '@/components/WishlistButton';
 import ReviewSection from '@/components/ReviewSection';
 import VendorActions from '@/app/vendor/[slug]/VendorActions';
+import CountdownTimer from '@/components/CountdownTimer';
 import styles from './product.module.css';
 
 interface Props {
@@ -227,9 +228,11 @@ export default async function ProductPage({ params }: Props) {
             </div>
             
             {product.is_preorder && product.preorder_arrival_date && (
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-300)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <CheckCircle size={14} style={{ color: 'var(--primary)' }} />
-                <span>Expected Arrival: <strong>{new Date(product.preorder_arrival_date).toLocaleDateString()}</strong></span>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-400)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+                  Pre-order Countdown:
+                </div>
+                <CountdownTimer expiryDate={product.preorder_arrival_date} />
               </div>
             )}
 

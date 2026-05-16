@@ -9,6 +9,7 @@ import { useCart } from '@/context/CartContext';
 import WishlistButton from '@/components/WishlistButton';
 import VividVideo from '@/components/VividVideo';
 import VendorActions from '@/app/vendor/[slug]/VendorActions';
+import CountdownTimer from '@/components/CountdownTimer';
 
 // Joined Database Type Structure
 export interface LiveProduct {
@@ -190,6 +191,11 @@ export default function ProductCard({ product }: Props) {
               <div>
                 {product.category && <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--primary)', fontWeight: 700, letterSpacing: '0.5px' }}>{product.category}</div>}
                 <h3 className={styles.videoTitle}>{product.title}</h3>
+                {product.is_preorder && product.preorder_arrival_date && (
+                  <div style={{ marginTop: '0.4rem' }}>
+                    <CountdownTimer expiryDate={product.preorder_arrival_date} compact />
+                  </div>
+                )}
               </div>
               <VendorActions 
                 vendorId={product.brand_id} 
@@ -234,6 +240,11 @@ export default function ProductCard({ product }: Props) {
           </div>
           {product.category && <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--primary)', fontWeight: 700, marginBottom: '2px', letterSpacing: '0.5px' }}>{product.category}</div>}
           <h3 className={styles.title}>{product.title}</h3>
+          {product.is_preorder && product.preorder_arrival_date && (
+            <div style={{ marginTop: '0.4rem', marginBottom: '0.6rem' }}>
+              <CountdownTimer expiryDate={product.preorder_arrival_date} compact />
+            </div>
+          )}
           <div className={styles.priceRow}>
             <span className={styles.price}>{formatPrice(product.price)}</span>
             {product.original_price && product.original_price > product.price && (
