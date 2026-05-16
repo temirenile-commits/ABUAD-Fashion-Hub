@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     // 0. Fetch Brand & Credit Check
     const { data: brand, error: brandError } = await supabaseAdmin
       .from('brands')
-      .select('free_listings_count, university_id, marketplace_type')
+      .select('free_listings_count, university_id, marketplace_type, subscription_status, subscription_expires_at, is_trial_active')
       .eq('id', brandId)
       .single();
 
@@ -51,18 +51,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Brand not found' }, { status: 404 });
     }
 
-    // Determine section based on brand type
-    const brandType = brand.marketplace_type || 'fashion';
-    const effectiveSection = brandType === 'delicacies' ? 'delicacies' : 'fashion';
+    const isSubActive = brand.subscription_status === 'active' && brand.subscription_expires_at && new Date(brand.subscription_expires_at) > new Date();
+    const isTrialActive = !!brand.is_trial_active;
 
     if (!isDraft) {
-      if (brand.free_listings_count <= 0) {
+      // If not trial and not active sub, check credits
+      if (!isTrialActive && !isSubActive && (brand.free_listings_count || 0) <= 0) {
         return NextResponse.json({ 
           error: 'Insufficient listing credits. Please upgrade your plan to upload more products.',
           insufficientCredits: true 
         }, { status: 403 });
       }
     }
+
+    // Determine section based on brand type
+    const brandType = brand.marketplace_type || 'fashion';
+    const effectiveSection = brandType === 'delicacies' ? 'delicacies' : 'fashion';
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const insertPayload: any = {

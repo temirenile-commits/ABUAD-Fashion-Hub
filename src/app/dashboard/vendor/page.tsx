@@ -2306,7 +2306,7 @@ export default function VendorDashboard() {
                   </div>
 
                   <div className={styles.formFooter}>
-                    <button type="submit" className="btn btn-primary btn-lg" disabled={loading || (brand?.free_listings_count <= 0 && !editingProduct && !newProduct.isDraft)}>
+                    <button type="submit" className="btn btn-primary btn-lg" disabled={loading || (!editingProduct && !newProduct.isDraft && products.filter(p => !p.is_draft).length >= productLimit && (brand?.free_listings_count || 0) <= 0)}>
                       {loading ? 'Processing...' : (editingProduct ? 'Update Product' : 'Post Product to Marketplace')}
                     </button>
                   </div>
