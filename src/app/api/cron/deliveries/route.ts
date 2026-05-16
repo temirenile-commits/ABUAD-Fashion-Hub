@@ -26,11 +26,21 @@ export async function GET(req: Request) {
 
     // 1. Cancel deliveries not picked up within the allowed time
     for (const delivery of waitingDeliveries || []) {
-      const { data: order } = await supabaseAdmin
+      let { data: order, error: orderFetchError } = await supabaseAdmin
         .from('orders')
         .select('is_preorder, preorder_arrival_date, delivery_scope')
         .eq('id', delivery.order_id)
         .single();
+
+      if (orderFetchError && orderFetchError.message.includes('schema cache')) {
+        // Fallback if preorder columns are missing
+        const fallback = await supabaseAdmin
+          .from('orders')
+          .select('delivery_scope')
+          .eq('id', delivery.order_id)
+          .single();
+        order = fallback.data as any;
+      }
 
       let targetDate = new Date(delivery.created_at);
 

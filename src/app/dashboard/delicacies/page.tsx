@@ -672,10 +672,18 @@ export default function VendorDashboard() {
             preorder_arrival_date: newProduct.isPreorder && newProduct.preorderArrivalDate ? new Date(newProduct.preorderArrivalDate).toISOString() : null,
             location_availability: newProduct.location_availability
         };
-        const { error } = await supabase
+        let { error } = await supabase
           .from('products')
           .update(updates)
           .eq('id', editingProduct.id);
+        
+        if (error && error.message.includes('schema cache')) {
+          const fallbackUpdates = { ...updates };
+          delete (fallbackUpdates as any).is_preorder;
+          delete (fallbackUpdates as any).preorder_arrival_date;
+          const fallback = await supabase.from('products').update(fallbackUpdates).eq('id', editingProduct.id);
+          error = fallback.error;
+        }
 
         if (!error) {
           // 1.1 Decrement credits for Delicacies vendors if live

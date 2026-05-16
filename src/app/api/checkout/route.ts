@@ -251,7 +251,18 @@ export async function POST(req: Request) {
     ordersToInsert.forEach((o: any) => o.paystack_reference = batchReference);
 
     // 3. SECURE DATA PERSISTENCE: Save state before redirect
-    const { error: orderError } = await supabaseAdmin.from('orders').insert(ordersToInsert);
+    let { error: orderError } = await supabaseAdmin.from('orders').insert(ordersToInsert);
+    
+    if (orderError && orderError.message.includes('schema cache')) {
+       // Fallback for missing is_preorder/variants columns on orders table
+       const fallbackOrders = ordersToInsert.map((o: any) => {
+          const { is_preorder, preorder_arrival_date, variants_selected, ...rest } = o;
+          return rest;
+       });
+       const fallback = await supabaseAdmin.from('orders').insert(fallbackOrders);
+       orderError = fallback.error;
+    }
+
     if (orderError) throw orderError;
 
     // 4. FAST REDIRECT: Initialize Paystack
