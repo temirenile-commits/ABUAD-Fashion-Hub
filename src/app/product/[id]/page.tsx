@@ -34,14 +34,14 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   let { data: product, error: metaError } = await supabaseAdmin
     .from('products')
-    .select('title, description, image_url, media_urls, is_preorder, preorder_arrival_date, variants')
+    .select('title, description, image_url, media_urls, is_preorder, preorder_arrival_date, variants, price')
     .eq('id', id)
     .single();
 
   if (metaError && metaError.message.includes('schema cache')) {
     const fallback = await supabaseAdmin
       .from('products')
-      .select('title, description, image_url, media_urls')
+      .select('title, description, image_url, media_urls, price')
       .eq('id', id)
       .single();
     product = fallback.data as any;
@@ -50,13 +50,17 @@ export async function generateMetadata({ params }: Props) {
   if (!product) return { title: 'Product Not Found' };
   
   const ogImage = product.image_url || product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500';
+  const priceString = product.price ? `Get it for ${formatPrice(product.price)}` : '';
+  const metaDescription = `${priceString ? priceString + ' | ' : ''}${product.description}`;
 
   return {
-    title: product.title,
-    description: product.description,
+    title: `${product.title} | MasterCart`,
+    description: metaDescription,
     openGraph: {
       title: product.title,
-      description: product.description,
+      description: metaDescription,
+      type: 'website',
+      siteName: 'MasterCart',
       images: [
         {
           url: ogImage,
@@ -69,7 +73,7 @@ export async function generateMetadata({ params }: Props) {
     twitter: {
       card: 'summary_large_image',
       title: product.title,
-      description: product.description,
+      description: metaDescription,
       images: [ogImage],
     },
   };
@@ -187,6 +191,7 @@ export default async function ProductPage({ params }: Props) {
                 <ShareProductButton
                   productId={product.id}
                   productTitle={product.title}
+                  productPrice={product.price}
                   className={styles.downloadBtn}
                 />
               </div>

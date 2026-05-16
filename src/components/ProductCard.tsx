@@ -92,7 +92,8 @@ export default function ProductCard({ product }: Props) {
     e.stopPropagation();
     
     const shareUrl = `${window.location.origin}/product/${product.id}`;
-    const shareText = `Check out this ${product.title} on Master Cart! ??`;
+    const formattedPrice = formatPrice(product.price);
+    const shareText = `Check out ${product.title} for only ${formattedPrice} on MasterCart! 🛍️`;
     
     if (navigator.share) {
       navigator.share({

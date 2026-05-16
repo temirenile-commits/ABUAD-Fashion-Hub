@@ -6,12 +6,14 @@ import { Share2, Link as LinkIcon, Check } from 'lucide-react';
 interface ShareProductButtonProps {
   productId: string;
   productTitle: string;
+  productPrice?: number;
   className?: string;
 }
 
 export default function ShareProductButton({
   productId,
   productTitle,
+  productPrice,
   className = ''
 }: ShareProductButtonProps) {
   const [copied, setCopied] = React.useState(false);
@@ -21,7 +23,14 @@ export default function ShareProductButton({
     e.stopPropagation();
 
     const shareUrl = `${window.location.origin}/product/${productId}`;
-    const shareText = `Check out this amazing product on MasterCart: ${productTitle}`;
+    
+    const formattedPrice = productPrice 
+      ? new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(productPrice) 
+      : '';
+
+    const shareText = productPrice 
+      ? `Check out ${productTitle} for only ${formattedPrice} on MasterCart! 🛍️`
+      : `Check out ${productTitle} on MasterCart! 🛍️`;
 
     if (navigator.share) {
       try {
