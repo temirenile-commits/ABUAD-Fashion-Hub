@@ -10,7 +10,7 @@ export default function VendorsPage() {
   const isInitialized = useMarketplaceStore(s => s.isInitialized);
 
   const LIVE_VENDORS = allBrands
-    .filter(brand => !brand.marketplace_type || brand.marketplace_type === 'fashion')
+    .filter(brand => !brand.marketplace_type || brand.marketplace_type === 'fashion' || brand.marketplace_type === 'normal')
     .map((brand) => {
       return {
         ...brand,

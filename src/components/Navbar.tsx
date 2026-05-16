@@ -239,7 +239,7 @@ export default function Navbar() {
                     {(user?.brand?.marketplace_type === 'normal' || user?.brand?.marketplace_type === 'both' || !user?.brand?.marketplace_type) && (
                       <Link href="/dashboard/vendor" className={styles.moduleItem}>
                         <Store size={18} />
-                        <span>Vendor Dashboard (Fashion)</span>
+                        <span>General Marketplace Dashboard</span>
                       </Link>
                     )}
                     {(user?.brand?.marketplace_type === 'delicacies' || user?.brand?.marketplace_type === 'both') && (
@@ -307,7 +307,7 @@ export default function Navbar() {
             🍔 Delicacies
           </Link>
 
-          {['All', 'Clothing', 'Footwear', 'Bags', 'Accessories', 'Jewelry', 'Makeup', 'Photography', 'Tailoring'].map(cat => (
+          {['All', 'Fashion', 'Electronics', 'Gadgets', 'Home Appliances', 'Computers', 'Stationery', 'Beauty', 'Services'].map(cat => (
             <Link key={cat} href={`/explore?category=${cat}`} className={styles.catPill}>
               {cat}
             </Link>

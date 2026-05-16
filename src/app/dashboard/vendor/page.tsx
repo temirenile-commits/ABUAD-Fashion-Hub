@@ -101,7 +101,7 @@ export default function VendorDashboard() {
   const [verifyingBank, setVerifyingBank] = useState(false);
   const [isSettingUpBank, setIsSettingUpBank] = useState(false);
 
-  // Dedicated Fashion Logic
+  // Dedicated General Marketplace Logic
   const products = brand ? allProducts.filter(p => p.brand_id === brand.id && (p.product_section === 'fashion' || !p.product_section)) : [];
   const filteredReels = brand ? reels.filter(r => (r.product_section === 'fashion' || !r.product_section)) : [];
 
@@ -1298,7 +1298,7 @@ export default function VendorDashboard() {
         <header className={styles.dashboardHeader}>
           <div className={styles.headerTitle}>
             <h1 className={styles.title}>Master Cart Marketplace</h1>
-            <p className={styles.subtitle}>Manage your fashion brand and general merchandise inventory.</p>
+            <p className={styles.subtitle}>Manage your products, electronics, gadgets and general merchandise inventory.</p>
           </div>
           
           <div className={styles.headerActions}>
@@ -1559,7 +1559,7 @@ export default function VendorDashboard() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
                 <div>
                   <p style={{ margin: 0, fontWeight: 600, color: '#fff' }}>
-                    Workspace: <span style={{ color: 'var(--primary)', textTransform: 'uppercase' }}>Fashion & General Dashboard</span>
+                    Workspace: <span style={{ color: 'var(--primary)', textTransform: 'uppercase' }}>General Marketplace Dashboard</span>
                   </p>
                   <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text-400)' }}>
                     You are in your dedicated marketplace management environment.
@@ -2210,13 +2210,16 @@ export default function VendorDashboard() {
                         onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                       >
                         <option>General</option>
-                        <option>Vintage Clothing</option>
-                        <option>Streetwear</option>
-                        <option>Corporate / Formal</option>
+                        <option>Electronics</option>
+                        <option>Gadgets</option>
+                        <option>Home Appliances</option>
+                        <option>Computers & IT</option>
+                        <option>Fashion & Clothing</option>
                         <option>Footwear</option>
                         <option>Jewelry & Accessories</option>
-                        <option>Fabrics & Textiles</option>
-                        <option>Beauty & Skincare</option>
+                        <option>Stationery & Office</option>
+                        <option>Beauty & Health</option>
+                        <option>Home & Living</option>
                       </select>
                     </div>
                     <div className={styles.inputGroup}>

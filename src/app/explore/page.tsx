@@ -8,13 +8,13 @@ import styles from './explore.module.css';
 
 const CATEGORIES = [
   { id: 'all', label: 'All Items', icon: <Sparkles size={16} /> },
-  { id: 'Fashion', label: "Marketplace", icon: <Shirt size={16} /> },
+  { id: 'Fashion', label: "Fashion", icon: <Shirt size={16} /> },
   { id: 'Electronics', label: "Electronics", icon: <Zap size={16} /> },
-  { id: 'Phones-Accessories', label: "Phones & Accessories", icon: <Watch size={16} /> },
-  { id: 'Beauty-Personal-Care', label: "Beauty & Care", icon: <Gem size={16} /> },
-  { id: 'Home-Living', label: "Home & Living", icon: <ShoppingBag size={16} /> },
   { id: 'Gadgets', label: "Gadgets", icon: <Camera size={16} /> },
-  { id: 'General-Merchandise', label: "General", icon: <Briefcase size={16} /> },
+  { id: 'Home', label: "Home & Appliances", icon: <ShoppingBag size={16} /> },
+  { id: 'Beauty', label: "Beauty & Care", icon: <Gem size={16} /> },
+  { id: 'Services', label: "Services", icon: <Scissors size={16} /> },
+  { id: 'General', label: "General", icon: <Briefcase size={16} /> },
 ];
 
 const SORT_OPTIONS = [
