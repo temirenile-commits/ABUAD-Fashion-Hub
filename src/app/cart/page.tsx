@@ -72,7 +72,7 @@ export default function CartPage() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', color: 'var(--text-200)' }}>
               <span>Shipping</span>
-              <span>Calculated at checkout</span>
+              <span>{cart.some(item => item.product_section === 'delicacies') ? 'Included' : 'Calculated at checkout'}</span>
             </div>
             <div style={{ height: '1px', background: 'var(--border)', margin: '1.5rem 0' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', fontSize: '1.25rem', fontWeight: 700 }}>

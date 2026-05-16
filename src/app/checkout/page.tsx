@@ -132,6 +132,11 @@ function CheckoutContent() {
         if (hasPlatform) {
           fee = hasOutSchool ? 3000 : 1500;
         }
+
+        // DELICACIES FIX: If any product is a delicacy, we use per-product delivery rates already in subtotal
+        const isDelicacyBatch = cart.some(item => item.product_section === 'delicacies');
+        if (isDelicacyBatch) fee = 0;
+
         setCalculatedDeliveryFee(fee);
         setDeliveryConfigs(vendorConfigs);
       }
@@ -299,11 +304,13 @@ function CheckoutContent() {
               <div className={styles.deliveryStatus}>
                 <div className={styles.deliveryBadge}>
                    <Truck size={16} /> 
-                   {deliveryFee > 0 ? (
-                     <span>Fixed Platform Delivery: {formatPrice(deliveryFee)}</span>
-                   ) : (
-                     <span>Vendor Managed Delivery: FREE</span>
-                   )}
+                    {deliveryFee > 0 ? (
+                      <span>Fixed Platform Delivery: {formatPrice(deliveryFee)}</span>
+                    ) : cart.some(item => item.product_section === 'delicacies') ? (
+                      <span>Delicacy Delivery: Included in Price</span>
+                    ) : (
+                      <span>Vendor Managed Delivery: FREE</span>
+                    )}
                 </div>
                 <p className={styles.deliveryNote}>
                   {deliveryFee > 0 
@@ -395,7 +402,7 @@ function CheckoutContent() {
                       </div>
                     )}
                   </div>
-                  <span className={styles.itemPrice}>{formatPrice(item.price * item.quantity)}</span>
+                  <span className={styles.itemPrice}>{formatPrice((Number(item.price) + Number(item.commission_price || 0) + Number(item.delivery_rate || 0)) * item.quantity)}</span>
                 </div>
               ))}
 

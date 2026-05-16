@@ -136,6 +136,12 @@ export async function POST(req: Request) {
       }
     }
 
+    // NEW: If we have per-product delivery rates (Delicacies), suppress the general platform delivery fee
+    const hasPerProductDelivery = liveProducts.some(p => Number(p.delivery_rate) > 0 || p.product_section === 'delicacies');
+    if (hasPerProductDelivery) {
+      totalDeliveryFee = 0;
+    }
+
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 30);
 
