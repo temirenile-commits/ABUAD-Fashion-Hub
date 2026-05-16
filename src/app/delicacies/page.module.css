@@ -323,6 +323,28 @@
   box-shadow: 0 12px 32px rgba(0,0,0,0.3);
 }
 
+.cardShared {
+  border: 2px solid #f59e0b !important;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+  transform: scale(1.02);
+}
+
+.sharedBadge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #f59e0b;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 999px;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  white-space: nowrap;
+}
+
 .cardImg {
   position: relative;
   height: 140px;
@@ -372,6 +394,28 @@
 
 .open { background: rgba(16,185,129,0.9); color: #fff; }
 .closed { background: rgba(239,68,68,0.9); color: #fff; }
+
+.shareOverlay {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  z-index: 5;
+}
+
+.cardShareBtn {
+  background: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  padding: 6px !important;
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.cardShareBtn:hover {
+  background: var(--primary) !important;
+  transform: scale(1.1);
+}
 
 .cardBody {
   padding: 0.75rem;

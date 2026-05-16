@@ -95,7 +95,11 @@ export default function Navbar() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/explore?q=${encodeURIComponent(searchQuery.trim())}`);
+      if (pathname.startsWith('/delicacies')) {
+        router.push(`/delicacies?q=${encodeURIComponent(searchQuery.trim())}`);
+      } else {
+        router.push(`/explore?q=${encodeURIComponent(searchQuery.trim())}`);
+      }
       setSearchQuery('');
     }
   };

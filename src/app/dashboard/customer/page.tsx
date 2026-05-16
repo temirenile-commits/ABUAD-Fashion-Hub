@@ -36,6 +36,10 @@ interface AppUser {
   id: string;
   email?: string;
   avatar_url?: string;
+  hostel?: string;
+  room_number?: string;
+  name?: string;
+  phone?: string;
 }
 
 export default function CustomerDashboard() {
@@ -44,6 +48,12 @@ export default function CustomerDashboard() {
   const [orders, setOrders] = useState<AppOrder[]>([]);
   const [enquiries, setEnquiries] = useState<AppEnquiry[]>([]);
   const [user, setUser] = useState<AppUser | null>(null);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [hostel, setHostel] = useState('');
+  const [roomNumber, setRoomNumber] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     async function fetchOrders() {
@@ -82,10 +92,47 @@ export default function CustomerDashboard() {
         .order('created_at', { ascending: false });
       
       setEnquiries((enqData as unknown as AppEnquiry[]) || []);
+      
+      // Fetch profile details
+      const { data: profile } = await supabase.from('users').select('*').eq('id', session.user.id).single();
+      if (profile) {
+        setUser({ ...session.user, ...profile });
+        setHostel(profile.hostel || '');
+        setRoomNumber(profile.room_number || '');
+        setName(profile.name || '');
+        setPhone(profile.phone || '');
+      }
+      
       setLoading(false);
     }
     fetchOrders();
   }, [router]);
+
+  const handleUpdateProfile = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          name,
+          phone,
+          hostel,
+          room_number: roomNumber
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      setUser({ ...user, name, phone, hostel, room_number: roomNumber });
+      setIsEditingAddress(false);
+      alert('Profile updated successfully!');
+    } catch (err: any) {
+      alert(err.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleConfirmDelivery = async (orderId: string) => {
     if (!window.confirm('Confirm that you have received this item? This will release payment to the vendor.')) return;
@@ -328,14 +375,59 @@ export default function CustomerDashboard() {
                </div>
             </div>
             
-            <h3>Account Summary</h3>
-            <div className={styles.statLine}>
-              <span>Purchases</span>
-              <span>{orders.length}</span>
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0, fontSize: '0.9rem' }}>Delivery Address</h3>
+                {!isEditingAddress ? (
+                  <button onClick={() => setIsEditingAddress(true)} style={{ fontSize: '0.75rem', color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>Edit</button>
+                ) : (
+                  <button onClick={() => setIsEditingAddress(false)} style={{ fontSize: '0.75rem', color: 'var(--text-400)', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
+                )}
+              </div>
+
+              {isEditingAddress ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-400)' }}>Hostel Name</label>
+                    <input className="form-input" style={{ fontSize: '0.8rem', padding: '6px 10px' }} value={hostel} onChange={e => setHostel(e.target.value)} placeholder="e.g. University Hall" />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-400)' }}>Room Number</label>
+                    <input className="form-input" style={{ fontSize: '0.8rem', padding: '6px 10px' }} value={roomNumber} onChange={e => setRoomNumber(e.target.value)} placeholder="e.g. Block A, Room 12" />
+                  </div>
+                  <button 
+                    className="btn btn-primary btn-sm" 
+                    onClick={handleUpdateProfile}
+                    disabled={saving}
+                    style={{ width: '100%', marginTop: '0.5rem' }}
+                  >
+                    {saving ? 'Saving...' : 'Save Address'}
+                  </button>
+                </div>
+              ) : (
+                <div style={{ background: 'var(--bg-200)', padding: '0.75rem', borderRadius: '8px', fontSize: '0.8rem' }}>
+                  {hostel ? (
+                    <>
+                      <div style={{ fontWeight: 600 }}>{hostel}</div>
+                      <div style={{ color: 'var(--text-400)' }}>{roomNumber || 'No room number set'}</div>
+                    </>
+                  ) : (
+                    <p style={{ margin: 0, color: 'var(--text-400)', fontStyle: 'italic' }}>No address saved yet.</p>
+                  )}
+                </div>
+              )}
             </div>
-            <div className={styles.statLine}>
-              <span>Total Spent</span>
-              <span>{formatPrice(orders.reduce((acc, curr) => acc + Number(curr.total_amount), 0))}</span>
+
+            <div style={{ marginTop: '2rem' }}>
+              <h3>Account Summary</h3>
+              <div className={styles.statLine}>
+                <span>Purchases</span>
+                <span>{orders.length}</span>
+              </div>
+              <div className={styles.statLine}>
+                <span>Total Spent</span>
+                <span>{formatPrice(orders.reduce((acc, curr) => acc + Number(curr.total_amount), 0))}</span>
+              </div>
             </div>
           </div>
           

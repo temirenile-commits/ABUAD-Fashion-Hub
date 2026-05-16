@@ -102,6 +102,13 @@ function CheckoutContent() {
       if (profile) {
         setName(profile.name || '');
         setPhone(profile.phone || '');
+        // Auto-fill address from hostel and room number
+        if (profile.hostel) {
+          const fullAddress = profile.room_number 
+            ? `${profile.hostel}, ${profile.room_number}`
+            : profile.hostel;
+          setAddress(fullAddress);
+        }
       }
 
       // 2. Check Cart

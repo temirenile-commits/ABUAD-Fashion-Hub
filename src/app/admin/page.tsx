@@ -164,6 +164,8 @@ interface PromoCode {
   max_uses: number;
   current_uses?: number;
   products?: { title: string };
+  subsidiary_capital?: number;
+  capital_used?: number;
 }
 
 interface TeamMember {
@@ -238,6 +240,12 @@ export default function AdminDashboard() {
   const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'paid' | 'pending' | 'cancelled'>('all');
   const [reviews, setReviews] = useState<Review[]>([]);
   const [payouts, setPayouts] = useState<PayoutRequest[]>([]);
+  const [payoutRecords, setPayoutRecords] = useState<any[]>([]);
+  const [payoutStats, setPayoutStats] = useState({ pendingCount: 0, totalPendingAmount: 0, totalPaidAmount: 0 });
+  const [payoutRecordModal, setPayoutRecordModal] = useState<any | null>(null);
+  const [payoutTransferRef, setPayoutTransferRef] = useState('');
+  const [payoutStatusFilter, setPayoutStatusFilter] = useState<'all' | 'pending' | 'transferred' | 'confirmed'>('all');
+  const [confirmingRecord, setConfirmingRecord] = useState('');
   const [marketData, setMarketData] = useState<MarketData[]>([]);
   const [deliveryAgents, setDeliveryAgents] = useState<DeliveryAgent[]>([]);
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
@@ -332,6 +340,8 @@ export default function AdminDashboard() {
       setOrders(ordersD.orders || []);
       setReviews(reviewsD.reviews || []);
       setPayouts(payoutsD.payouts || []);
+      setPayoutRecords(payoutsD.payoutRecords || []);
+      setPayoutStats(payoutsD.payoutStats || { pendingCount: 0, totalPendingAmount: 0, totalPaidAmount: 0 });
       setMarketData(marketD.chartData || []);
       setDeliveryAgents(agentsD.agents || []);
       setPromoCodes(promosD.promoCodes || []);
@@ -628,23 +638,23 @@ export default function AdminDashboard() {
                             <button className="btn btn-ghost btn-sm" onClick={() => setSelectedVendor(v)} title="Review Details"><Eye size={14} /></button>
                             <button className="btn btn-ghost btn-sm" style={{ color: '#f59e0b' }} onClick={() => { if(confirm('Reset this vendor to free mode?')) adminAction('reset_vendor_to_free', { brandId: v.id }) }} title="Reset to Free Mode"><RefreshCw size={14} /></button>
                             {/* Chief Chef grant/revoke */}
-                            {v.marketplace_type !== 'both' ? (
+                            {v.marketplace_type !== 'delicacies' ? (
                               <button
                                 className="btn btn-ghost btn-sm"
                                 style={{ color: '#eb0c7a', fontSize: '0.7rem', gap: '2px' }}
-                                title="Grant Chief Chef Access"
-                                onClick={() => { if(confirm(`Grant Chief Chef dashboard access to ${v.name}?`)) adminAction('grant_chef_access', { brandId: v.id }) }}
+                                title="Switch to MasterCart Delicacies"
+                                onClick={() => { if(confirm(`Switch ${v.name} to MasterCart Delicacies? They will lose access to the general marketplace.`)) adminAction('grant_chef_access', { brandId: v.id }) }}
                               >
-                                🍳 Grant Chef
+                                🍳 Switch to Delicacies
                               </button>
                             ) : (
                               <button
                                 className="btn btn-ghost btn-sm"
                                 style={{ color: '#94a3b8', fontSize: '0.7rem' }}
-                                title="Revoke Chief Chef Access"
-                                onClick={() => { if(confirm(`Revoke Chief Chef access from ${v.name}?`)) adminAction('revoke_chef_access', { brandId: v.id }) }}
+                                title="Switch to General Marketplace"
+                                onClick={() => { if(confirm(`Switch ${v.name} to General Marketplace? They will lose access to the Delicacies marketplace.`)) adminAction('revoke_chef_access', { brandId: v.id }) }}
                               >
-                                🚫 Revoke Chef
+                                🛍️ Switch to General
                               </button>
                             )}
                             <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => { if(confirm('Suspend this vendor?')) adminAction('suspend_vendor', { brandId: v.id }) }} title="Suspend Vendor"><Trash2 size={14} /></button>
@@ -852,6 +862,18 @@ export default function AdminDashboard() {
                         ))}
                       </select>
 
+                      <div className="mb-2">
+                         <label style={{ fontSize: '0.8rem', color: '#f59e0b', fontWeight: 600 }}>Subsidiary Capital / Budget (₦)</label>
+                         <input 
+                            type="number" 
+                            className="input" 
+                            placeholder="Optional max budget (e.g. 5000)" 
+                            value={(promoForm as any).subsidiary_capital || ''} 
+                            onChange={e => setPromoForm({ ...promoForm, subsidiary_capital: Number(e.target.value) } as any)} 
+                         />
+                         <p style={{ fontSize: '0.7rem', color: 'var(--text-400)', marginTop: '2px' }}>Promo automatically ends when this budget is exhausted. Leave blank for unlimited.</p>
+                      </div>
+
                       <div style={{ background: 'var(--bg-200)', padding: '1rem', borderRadius: '8px', marginTop: '1rem', marginBottom: '1rem' }}>
                          <h4 style={{ marginBottom: '0.5rem', color: 'var(--primary)' }}>Admin Subsidized Funding</h4>
                          <p style={{ fontSize: '0.75rem', color: 'var(--text-400)', marginBottom: '1rem' }}>You must authorize a payment source to subsidize this promo code for vendors.</p>
@@ -907,6 +929,11 @@ export default function AdminDashboard() {
                             </div>
                             <div className={styles.subText} style={{ fontSize: '0.8rem' }}>{pc.type === 'percentage' ? `${pc.value}% off` : `₦${pc.value} off`}</div>
                             <div style={{ fontSize: '0.7rem', marginTop: '4px' }}>Uses: <strong>{pc.current_uses || 0}</strong> / {pc.max_uses}</div>
+                            {pc.subsidiary_capital && pc.subsidiary_capital > 0 && (
+                              <div style={{ fontSize: '0.7rem', marginTop: '2px', color: '#f59e0b' }}>
+                                Budget: <strong>₦{Number(pc.capital_used || 0).toLocaleString()}</strong> / ₦{Number(pc.subsidiary_capital).toLocaleString()}
+                              </div>
+                            )}
                             {(pc as any).expires_at && <div style={{ fontSize: '0.7rem', color: 'var(--text-400)', marginTop: '2px' }}><Clock size={10} style={{ display: 'inline', marginRight: '2px' }} /> Expires: {new Date((pc as any).expires_at).toLocaleString()}</div>}
                             {(pc as any).min_purchase_amount > 0 && <div style={{ fontSize: '0.7rem', color: 'var(--text-400)', marginTop: '2px' }}>Min Spend: ₦{(pc as any).min_purchase_amount}</div>}
                             {pc.products && <div style={{ fontSize: '0.7rem', color: 'var(--primary)', marginTop: '2px' }}>Target Product: {pc.products.title.substring(0, 20)}...</div>}
@@ -1543,48 +1570,215 @@ export default function AdminDashboard() {
 
             {activeTab === 'financials' && (
                <div className={styles.sectionCard}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                    <div>
-                      <h2>Payout Requests</h2>
-                      <p className={styles.subText}>Manage withdrawals from vendors and delivery agents.</p>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div className={styles.subText}>Admin Promo Subsidies</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b' }}>₦{(stats.totalSubsidies || 0).toLocaleString()}</div>
-                    </div>
-                  </div>
-                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table} style={{ marginTop: '1rem' }}>
-                   <thead>
-                     <tr><th>ID</th><th>User</th><th>Role</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr>
-                   </thead>
-                   <tbody>
-                     {filterBy(payouts, ['role', 'status', 'users.name']).map(req => (
-                       <tr key={req.id}>
-                         <td className={styles.subText}>#{req.id.slice(0, 8)}</td>
-                         <td>
-                           <div>{req.users?.name || 'Unknown'}</div>
-                           <div className={styles.subText}>{req.users?.email}</div>
-                         </td>
-                         <td>
-                           <div style={{ display: 'flex', flexDirection: 'column' }}>
-                             <span className={`badge badge-${req.role}`}>{req.role}</span>
-                             <span className={styles.subText} style={{ fontSize: '0.65rem' }}>📍 {req.universities?.abbreviation || 'General'}</span>
-                           </div>
-                         </td>
-                         <td style={{ color: '#f59e0b', fontWeight: 'bold' }}>₦{Number(req.amount_requested).toLocaleString()}</td>
-                         <td><span className={`badge badge-${req.status}`}>{req.status}</span></td>
-                         <td className={styles.subText}>{new Date(req.created_at || '').toLocaleDateString()}</td>
-                         <td>
-                           {req.status === 'pending' || req.status === 'processing' ? (
-                             <button className="btn btn-primary btn-sm" onClick={() => setConfirmPayoutModal(req)}>Confirm</button>
-                           ) : req.proof_url ? (
-                             <a href={req.proof_url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">View Proof</a>
-                           ) : '—'}
-                         </td>
+                 {/* ── SUMMARY CARDS ── */}
+                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                   {[
+                     { label: 'Pending Payouts', val: payoutStats.pendingCount, color: '#f59e0b', sub: `₦${payoutStats.totalPendingAmount.toLocaleString()} owed` },
+                     { label: 'Total Confirmed', val: `₦${payoutStats.totalPaidAmount.toLocaleString()}`, color: '#10b981', sub: 'Successfully paid' },
+                     { label: 'Promo Subsidies', val: `₦${(stats.totalSubsidies || 0).toLocaleString()}`, color: '#8b5cf6', sub: 'Admin-funded discounts' },
+                   ].map(c => (
+                     <div key={c.label} style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem 1.25rem' }}>
+                       <div style={{ fontSize: '0.72rem', color: 'var(--text-400)', marginBottom: '0.25rem' }}>{c.label}</div>
+                       <div style={{ fontSize: '1.4rem', fontWeight: 900, color: c.color }}>{c.val}</div>
+                       <div style={{ fontSize: '0.7rem', color: 'var(--text-400)', marginTop: '0.25rem' }}>{c.sub}</div>
+                     </div>
+                   ))}
+                 </div>
+
+                 {/* ── FILTER BAR ── */}
+                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                   <div style={{ fontWeight: 700, marginRight: '0.5rem', alignSelf: 'center', fontSize: '0.85rem' }}>Engine Records:</div>
+                   {(['all', 'pending', 'transferred', 'confirmed'] as const).map(f => (
+                     <button
+                       key={f}
+                       onClick={() => setPayoutStatusFilter(f)}
+                       style={{
+                         padding: '4px 12px', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', border: 'none',
+                         background: payoutStatusFilter === f ? 'var(--primary)' : 'var(--bg-300)',
+                         color: payoutStatusFilter === f ? '#fff' : 'var(--text-200)'
+                       }}
+                     >{f.charAt(0).toUpperCase() + f.slice(1)}</button>
+                   ))}
+                 </div>
+
+                 {/* ── PAYOUT RECORDS TABLE (New Engine) ── */}
+                 <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '8px', marginBottom: '2rem' }}>
+                   <table className={styles.table}>
+                     <thead>
+                       <tr>
+                         <th>Vendor</th>
+                         <th>University</th>
+                         <th>Product Section</th>
+                         <th>Gross</th>
+                         <th>Commission</th>
+                         <th>Net Payout</th>
+                         <th>Status</th>
+                         <th>Date</th>
+                         <th>Actions</th>
                        </tr>
-                     ))}
-                   </tbody>
-                 </table></div>
+                     </thead>
+                     <tbody>
+                       {payoutRecords
+                         .filter(r => payoutStatusFilter === 'all' || r.status === payoutStatusFilter)
+                         .map(rec => {
+                           const brand: any = rec.brands;
+                           const order: any = rec.orders;
+                           return (
+                             <tr key={rec.id}>
+                               <td>
+                                 <div style={{ fontWeight: 700 }}>{brand?.name || '—'}</div>
+                                 <div className={styles.subText} style={{ fontSize: '0.65rem' }}>{brand?.bank_name} · {brand?.bank_account_number}</div>
+                               </td>
+                               <td className={styles.subText}>{brand?.universities?.abbreviation || 'General'}</td>
+                               <td>
+                                 <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '6px', background: rec.product_section === 'delicacies' ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)', color: rec.product_section === 'delicacies' ? '#f59e0b' : '#3b82f6', fontWeight: 700 }}>
+                                   {rec.product_section === 'delicacies' ? '🍴 Delicacies' : '👗 Fashion'}
+                                 </span>
+                               </td>
+                               <td>₦{Number(rec.gross_amount).toLocaleString()}</td>
+                               <td style={{ color: '#ef4444' }}>-₦{Number(rec.commission_deduction).toLocaleString()}</td>
+                               <td style={{ color: '#10b981', fontWeight: 800 }}>₦{Number(rec.net_payout).toLocaleString()}</td>
+                               <td>
+                                 <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700,
+                                   background: rec.status === 'confirmed' ? 'rgba(16,185,129,0.1)' : rec.status === 'transferred' ? 'rgba(59,130,246,0.1)' : 'rgba(245,158,11,0.1)',
+                                   color: rec.status === 'confirmed' ? '#10b981' : rec.status === 'transferred' ? '#3b82f6' : '#f59e0b'
+                                 }}>
+                                   {rec.status.toUpperCase()}
+                                 </span>
+                                 {rec.admin_transfer_reference && (
+                                   <div className={styles.subText} style={{ fontSize: '0.62rem', marginTop: '2px' }}>Ref: {rec.admin_transfer_reference}</div>
+                                 )}
+                               </td>
+                               <td className={styles.subText}>{new Date(rec.created_at).toLocaleDateString()}</td>
+                               <td>
+                                 <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                   {rec.status === 'pending' && (
+                                     <button
+                                       className="btn btn-primary btn-sm"
+                                       style={{ fontSize: '0.7rem' }}
+                                       onClick={() => { setPayoutRecordModal(rec); setPayoutTransferRef(''); }}
+                                     >
+                                       💸 Transfer
+                                     </button>
+                                   )}
+                                   {rec.status === 'transferred' && (
+                                     <button
+                                       className="btn btn-sm"
+                                       disabled={confirmingRecord === rec.id}
+                                       style={{ fontSize: '0.7rem', background: '#10b981', color: '#fff', border: 'none' }}
+                                       onClick={async () => {
+                                         setConfirmingRecord(rec.id);
+                                         await adminAction('confirm_payout_record', { recordId: rec.id });
+                                         setPayoutRecords(prev => prev.map(r => r.id === rec.id ? { ...r, status: 'confirmed', confirmed_at: new Date().toISOString() } : r));
+                                         setConfirmingRecord('');
+                                         addToast('Payout confirmed!', 'success');
+                                       }}
+                                     >
+                                       ✅ Confirm Done
+                                     </button>
+                                   )}
+                                   {rec.status === 'confirmed' && rec.admin_proof_url && (
+                                     <a href={rec.admin_proof_url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" style={{ fontSize: '0.7rem' }}>View Proof</a>
+                                   )}
+                                   <button
+                                     className="btn btn-ghost btn-sm"
+                                     style={{ fontSize: '0.7rem' }}
+                                     title={rec.calculation_notes}
+                                     onClick={() => alert(rec.calculation_notes || 'No notes')}
+                                   >
+                                     📋 Breakdown
+                                   </button>
+                                 </div>
+                               </td>
+                             </tr>
+                           );
+                         })}
+                       {payoutRecords.filter(r => payoutStatusFilter === 'all' || r.status === payoutStatusFilter).length === 0 && (
+                         <tr><td colSpan={9} style={{ textAlign: 'center', padding: '2rem' }} className={styles.subText}>No payout records found.</td></tr>
+                       )}
+                     </tbody>
+                   </table>
+                 </div>
+
+                 {/* ── LEGACY MANUAL PAYOUT REQUESTS ── */}
+                 <div style={{ marginTop: '1.5rem' }}>
+                   <h3 style={{ marginBottom: '0.75rem', fontSize: '0.95rem' }}>Legacy Payout Requests</h3>
+                   <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                     <table className={styles.table}>
+                       <thead>
+                         <tr><th>ID</th><th>User</th><th>Role</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+                       </thead>
+                       <tbody>
+                         {filterBy(payouts, ['role', 'status', 'users.name']).map(req => (
+                           <tr key={req.id}>
+                             <td className={styles.subText}>#{req.id.slice(0, 8)}</td>
+                             <td>
+                               <div>{req.users?.name || 'Unknown'}</div>
+                               <div className={styles.subText}>{req.users?.email}</div>
+                             </td>
+                             <td>
+                               <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                 <span className={`badge badge-${req.role}`}>{req.role}</span>
+                                 <span className={styles.subText} style={{ fontSize: '0.65rem' }}>📍 {req.universities?.abbreviation || 'General'}</span>
+                               </div>
+                             </td>
+                             <td style={{ color: '#f59e0b', fontWeight: 'bold' }}>₦{Number(req.amount_requested).toLocaleString()}</td>
+                             <td><span className={`badge badge-${req.status}`}>{req.status}</span></td>
+                             <td className={styles.subText}>{new Date(req.created_at || '').toLocaleDateString()}</td>
+                             <td>
+                               {req.status === 'pending' || req.status === 'processing' ? (
+                                 <button className="btn btn-primary btn-sm" onClick={() => setConfirmPayoutModal(req)}>Confirm</button>
+                               ) : req.proof_url ? (
+                                 <a href={req.proof_url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">View Proof</a>
+                               ) : '—'}
+                             </td>
+                           </tr>
+                         ))}
+                       </tbody>
+                     </table>
+                   </div>
+                 </div>
+
+                 {/* ── TRANSFER MODAL ── */}
+                 {payoutRecordModal && (
+                   <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                     <div style={{ background: 'var(--bg-100)', border: '1px solid var(--border)', borderRadius: '16px', padding: '2rem', maxWidth: '480px', width: '90%' }}>
+                       <h3 style={{ marginBottom: '1rem' }}>💸 Record Transfer</h3>
+                       <div style={{ background: 'var(--bg-200)', borderRadius: '10px', padding: '1rem', marginBottom: '1.25rem', fontSize: '0.85rem', lineHeight: 1.7 }}>
+                         <div><strong>Vendor:</strong> {payoutRecordModal.brands?.name}</div>
+                         <div><strong>Bank:</strong> {payoutRecordModal.brands?.bank_name} — {payoutRecordModal.brands?.bank_account_number}</div>
+                         <div><strong>Account Name:</strong> {payoutRecordModal.brands?.bank_account_name || payoutRecordModal.brands?.account_name || '—'}</div>
+                         <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#10b981', marginTop: '0.5rem' }}>Amount: ₦{Number(payoutRecordModal.net_payout).toLocaleString()}</div>
+                       </div>
+                       <div style={{ marginBottom: '1rem' }}>
+                         <label style={{ fontSize: '0.82rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>Bank Transfer Reference *</label>
+                         <input
+                           className="form-input"
+                           placeholder="e.g. TRF-20241501-001"
+                           value={payoutTransferRef}
+                           onChange={e => setPayoutTransferRef(e.target.value)}
+                         />
+                       </div>
+                       <div style={{ display: 'flex', gap: '0.75rem' }}>
+                         <button
+                           className="btn btn-primary"
+                           style={{ flex: 1 }}
+                           disabled={!payoutTransferRef.trim()}
+                           onClick={async () => {
+                             await adminAction('update_payout_record', { recordId: payoutRecordModal.id, transferReference: payoutTransferRef });
+                             setPayoutRecords(prev => prev.map(r => r.id === payoutRecordModal.id ? { ...r, status: 'transferred', admin_transfer_reference: payoutTransferRef } : r));
+                             setPayoutRecordModal(null);
+                             setPayoutTransferRef('');
+                             addToast('Transfer recorded! Vendor has been notified.', 'success');
+                           }}
+                         >
+                           Mark as Transferred
+                         </button>
+                         <button className="btn btn-ghost" onClick={() => setPayoutRecordModal(null)}>Cancel</button>
+                       </div>
+                     </div>
+                   </div>
+                 )}
                </div>
              )}
 

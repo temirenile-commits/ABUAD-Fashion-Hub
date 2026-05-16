@@ -261,6 +261,28 @@ export async function POST(req: Request) {
 
       await Promise.all(fulfillmentPromises);
 
+      // 5. PROMO CODE SUBSIDY & USAGE TRACKING
+      if (metadata.promo_code_id) {
+         const { data: promo } = await supabaseAdmin.from('promo_codes').select('capital_used, subsidiary_capital, current_uses').eq('id', metadata.promo_code_id).single();
+         if (promo) {
+            const newCapitalUsed = Number(promo.capital_used || 0) + Number(metadata.total_discount_applied || 0);
+            const newUses = Number(promo.current_uses || 0) + 1;
+            
+            const updatePayload: any = { 
+               capital_used: newCapitalUsed,
+               current_uses: newUses
+            };
+            
+            // Auto-deactivate if budget hit
+            if (promo.subsidiary_capital > 0 && newCapitalUsed >= promo.subsidiary_capital) {
+               updatePayload.is_active = false;
+               console.log(`[WEBHOOK] Promo ${metadata.promo_code_id} exhausted its capital and is now inactive.`);
+            }
+
+            await supabaseAdmin.from('promo_codes').update(updatePayload).eq('id', metadata.promo_code_id);
+         }
+      }
+
       console.log(`[WEBHOOK] ${orders.length} orders processed successfully for reference ${reference}`);
     }
 

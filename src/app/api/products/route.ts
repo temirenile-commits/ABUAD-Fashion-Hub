@@ -22,7 +22,8 @@ export async function POST(req: Request) {
       isDraft,
       isPreorder,
       preorderArrivalDate,
-      product_section // New field
+      product_section, // New field
+      location_availability
     } = await req.json();
 
     if (!title || !price || !brandId) {
@@ -42,13 +43,17 @@ export async function POST(req: Request) {
     // 0. Fetch Brand & Credit Check
     const { data: brand, error: brandError } = await supabaseAdmin
       .from('brands')
-      .select('free_listings_count, university_id')
+      .select('free_listings_count, university_id, marketplace_type')
       .eq('id', brandId)
       .single();
 
     if (brandError || !brand) {
       return NextResponse.json({ error: 'Brand not found' }, { status: 404 });
     }
+
+    // Determine section based on brand type
+    const brandType = brand.marketplace_type || 'fashion';
+    const effectiveSection = brandType === 'delicacies' ? 'delicacies' : 'fashion';
 
     if (!isDraft) {
       if (brand.free_listings_count <= 0) {
@@ -66,8 +71,8 @@ export async function POST(req: Request) {
         price: Number(price),
         original_price: originalPrice ? Number(originalPrice) : null,
         category,
-        product_section: product_section || 'fashion',
-        delicacy_category: product_section === 'delicacies' ? category : null,
+        product_section: effectiveSection,
+        delicacy_category: effectiveSection === 'delicacies' ? category : null,
         stock_count: typeof stockCount === 'number' ? stockCount : 10,
         media_urls: mediaUrls || [],
         image_url: imageUrl || (mediaUrls && mediaUrls[0]) || null,
@@ -84,7 +89,8 @@ export async function POST(req: Request) {
         sold: 0,
         views_count: 0,
         is_preorder: isPreorder || false,
-        preorder_arrival_date: isPreorder && preorderArrivalDate ? new Date(preorderArrivalDate).toISOString() : null
+        preorder_arrival_date: isPreorder && preorderArrivalDate ? new Date(preorderArrivalDate).toISOString() : null,
+        location_availability: location_availability || null
     };
 
     // 1. Create the Product record

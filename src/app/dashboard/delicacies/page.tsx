@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Image as ImageIcon, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Gift, Trash2, Edit3, Plus, ChevronDown, ChevronRight, Share2, ExternalLink, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera, MapPin, Navigation, Eye, ShoppingBag , Globe, Phone, UtensilsCrossed } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Trash2, Edit3, Plus, Share2, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera, MapPin, Navigation, Eye, ShoppingBag, Phone, UtensilsCrossed } from 'lucide-react';
 import PremiumChart from '@/components/PremiumChart';
 import Papa from 'papaparse';
 import { supabase } from '@/lib/supabase';
@@ -70,12 +70,11 @@ export default function VendorDashboard() {
 
   const productLimit = (userRole === 'admin' || isTrialActive) ? 999999 : (isSubActive ? (brand?.max_products || 10) : 0);
   const reelLimit = (userRole === 'admin' || isTrialActive) ? 999999 : (isSubActive ? (brand?.max_reels || 1) : 0);
+  // UI logic for tier-based features
 
-  const canAccessAnalytics = userRole === 'admin' || currentTier !== 'free';
-  const canAccessPromoCodes = userRole === 'admin' || ['half', 'full'].includes(currentTier);
 
   // Real-time states
-  const { products: allProducts, orders: allOrders, setOrders: setGlobalOrders, addProduct, updateOrder, updateProduct: updateGlobalProduct } = useMarketplaceStore();
+  const { products: allProducts, orders: allOrders, setOrders: setGlobalOrders, addProduct, removeProduct, updateOrder, updateProduct: updateGlobalProduct } = useMarketplaceStore();
   const [showDraftsOnly, setShowDraftsOnly] = useState(false);
 
   const orders = brand ? allOrders.filter(o => o.brand_id === brand.id).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
@@ -132,7 +131,9 @@ export default function VendorDashboard() {
     isDraft: false, 
     visibility_type: 'university',
     isPreorder: false,
-    preorderArrivalDate: ''
+    preorderArrivalDate: '',
+    location_availability: '',
+    delicacy_category: 'General'
   });
 
   const [isEditingName, setIsEditingName] = useState(false);
@@ -202,6 +203,12 @@ export default function VendorDashboard() {
         setActiveTab('activation_rejected');
         setBrand(brandData);
         setLoading(false);
+        return;
+      }
+
+      // ARCHITECTURAL WALL: Prevent General Vendors from accessing the Chief Chef Dashboard
+      if (brandData.marketplace_type !== 'delicacies') {
+        router.push('/dashboard/vendor');
         return;
       }
 
@@ -607,7 +614,8 @@ export default function VendorDashboard() {
             variants: newProduct.variants,
             is_draft: newProduct.isDraft,
             is_preorder: newProduct.isPreorder,
-            preorder_arrival_date: newProduct.isPreorder && newProduct.preorderArrivalDate ? new Date(newProduct.preorderArrivalDate).toISOString() : null
+            preorder_arrival_date: newProduct.isPreorder && newProduct.preorderArrivalDate ? new Date(newProduct.preorderArrivalDate).toISOString() : null,
+            location_availability: newProduct.location_availability
         };
         const { error } = await supabase
           .from('products')
@@ -620,7 +628,7 @@ export default function VendorDashboard() {
           setEditingProduct(null);
           setNewProduct({
             title: '', description: '', price: '', originalPrice: '', category: isChef ? 'snacks' : 'General',
-            stockCount: '10', mediaUrls: [], imageUrl: '', videoUrl: '', variants: [], isDraft: false, visibility_type: 'university', isPreorder: false, preorderArrivalDate: ''
+            stockCount: '10', mediaUrls: [], imageUrl: '', videoUrl: '', variants: [], isDraft: false, visibility_type: 'university', isPreorder: false, preorderArrivalDate: '', location_availability: '', delicacy_category: 'General'
           });
           alert('Product updated successfully!');
         } else {
@@ -661,7 +669,9 @@ export default function VendorDashboard() {
             isDraft: false,
             visibility_type: 'university',
             isPreorder: false,
-            preorderArrivalDate: ''
+            preorderArrivalDate: '',
+            location_availability: '',
+            delicacy_category: 'General'
           });
           alert('Product listed successfully!');
         } else {
@@ -1079,7 +1089,10 @@ export default function VendorDashboard() {
       target_customer_id: form.target_customer_id?.value || null,
       is_regular_patrons_only: form.is_regular_patrons_only?.checked || false,
       is_active: true,
-      is_funded: true // Vendor's own codes don't need admin funding validation
+      is_funded: true, // Vendor's own codes don't need admin funding validation
+      subsidiary_capital: Number(form.subsidiary_capital?.value) || 0,
+      creator_type: 'vendor',
+      creator_id: brand.id
     };
 
     try {
@@ -1683,7 +1696,7 @@ export default function VendorDashboard() {
                 </div>
 
                 {/* ── Category Suggestions Section (For Chefs) ───────────────────── */}
-                {(brand?.marketplace_type === 'both' || brand?.marketplace_type === 'delicacies') && (
+                {brand?.marketplace_type === 'delicacies' && (
                   <div className={styles.settingsSection} style={{ marginTop: '2rem', borderTop: '1px solid var(--border)', paddingTop: '2rem' }}>
                     <h3>Category Expansion</h3>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-400)', marginBottom: '1.5rem' }}>
@@ -2286,6 +2299,7 @@ export default function VendorDashboard() {
                                 <option>Size (Portion)</option>
                                 <option>Spice Level</option>
                                 <option>Add-ons</option>
+                                <option>Location / Hostel</option>
                               </>
                             ) : (
                               <>
@@ -2297,7 +2311,7 @@ export default function VendorDashboard() {
                           </select>
                           <input
                             type="text"
-                            placeholder="e.g. XL or Maroon"
+                            placeholder={v.type === 'Location / Hostel' ? "e.g. Talba, Whole University" : "e.g. XL or Maroon"}
                             value={v.value}
                             onChange={(e) => updateVariant(i, e.target.value)}
                           />
@@ -2325,10 +2339,10 @@ export default function VendorDashboard() {
                       <div className={styles.inputGroup} style={{ flex: 1 }}>
                         <label>Expected Arrival Date</label>
                         <input
-                          type="date"
+                          type="datetime-local"
                           required={newProduct.isPreorder}
                           value={newProduct.preorderArrivalDate}
-                          min={new Date().toISOString().split('T')[0]}
+                          min={new Date().toISOString().slice(0, 16)}
                           onChange={(e) => setNewProduct({ ...newProduct, preorderArrivalDate: e.target.value })}
                           style={{ padding: '0.75rem' }}
                         />
@@ -2337,13 +2351,24 @@ export default function VendorDashboard() {
                   </div>
 
                   <div className={styles.inputGroup}>
-                    <label>Description</label>
+                    <label>Description & Availability</label>
                     <textarea
-                      placeholder="Tell your customers about the material, fit, and style..."
+                      placeholder={isChef ? "Describe the meal, ingredients, prep time..." : "Tell your customers about the material, fit, and style..."}
                       rows={4}
                       value={newProduct.description}
                       onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                     ></textarea>
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label>{isChef ? 'Available At (Area / Hostel / Campus)' : 'Pickup Location'}</label>
+                    <input
+                      type="text"
+                      placeholder={isChef ? "e.g. ABUAD Talba Hostel, Whole Campus, Cafe 2 Area..." : "e.g. Main Gate, Shop 4..."}
+                      value={newProduct.location_availability}
+                      onChange={(e) => setNewProduct({ ...newProduct, location_availability: e.target.value })}
+                    />
+                    <p className={styles.formHint}>Let customers know where they can get this or where you deliver to.</p>
                   </div>
 
                   <div className={styles.inputGroup}>
@@ -2414,7 +2439,64 @@ export default function VendorDashboard() {
                        <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.stock_count || 0} <span style={{fontSize: '0.7rem', opacity: 0.7}}>{isChef ? 'Plates' : 'Units'}</span></span>
                        <button className="btn btn-ghost btn-sm" style={{ padding: '0 8px' }} onClick={() => updateStock(p.id, 1)}>+</button>
                     </div>
-                   </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <button className="btn btn-ghost btn-sm" style={{ border: '1px solid var(--border)' }} onClick={() => handleShareProduct(p.id)} title="Share Product Link"><Share2 size={14}/> Share</button>
+                      <button className="btn btn-ghost btn-sm" style={{ border: '1px solid var(--border)' }} onClick={() => {
+                        setEditingProduct(p);
+                        setNewProduct({
+                          title: p.title, description: p.description || '', price: p.price.toString(), originalPrice: p.original_price?.toString() || '',
+                          category: p.category, stockCount: p.stock_count.toString(), mediaUrls: p.media_urls || [],
+                          imageUrl: '', videoUrl: '', visibility_type: (p.visibility_type as string) || 'university',
+                          variants: (Array.isArray(p.variants) ? p.variants : []) as any[], isDraft: !!p.is_draft, isPreorder: !!p.is_preorder, preorderArrivalDate: (p.preorder_arrival_date as string)?.slice(0, 16) || '',
+                          delicacy_category: (p.delicacy_category as string) || 'General', location_availability: (p.location_availability as string) || 'Whole University'
+                        });
+                        setIsAddingProduct(true);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}>
+                        <Edit3 size={14} /> Edit
+                      </button>
+                      <button className="btn btn-ghost btn-sm" style={{ border: '1px solid var(--border)', color: '#ef4444' }} onClick={async () => {
+                        if (confirm('Are you sure you want to delete this delicacy?')) {
+                          // 1. Check for active orders
+                          const { count, error: checkError } = await supabase
+                            .from('orders')
+                            .select('id', { count: 'exact', head: true })
+                            .eq('product_id', p.id)
+                            .not('status', 'in', '("delivered", "received", "cancelled")');
+
+                          if (checkError) {
+                            console.error('Order check error:', checkError);
+                            alert('Could not verify active orders. Please try again.');
+                            return;
+                          }
+
+                          if (count && count > 0) {
+                            if (confirm(`This delicacy has ${count} active orders. It cannot be deleted until they are completed. Would you like to archive it to drafts and set stock to 0 instead?`)) {
+                              const { error: softError } = await supabase.from('products').update({ is_draft: true, stock_count: 0 }).eq('id', p.id);
+                              if (!softError) {
+                                updateGlobalProduct(p.id, { is_draft: true, stock_count: 0 });
+                                alert('Delicacy has been archived to drafts.');
+                              } else {
+                                alert('Error archiving delicacy: ' + softError.message);
+                              }
+                            }
+                            return;
+                          }
+
+                          // 2. Proceed with deletion
+                          const { error } = await supabase.from('products').delete().eq('id', p.id);
+                          if (!error) {
+                            removeProduct(p.id);
+                            alert('Delicacy deleted successfully.');
+                          } else {
+                            alert('Error deleting delicacy: ' + error.message);
+                          }
+                        }
+                      }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
                ))}
             </div>
@@ -2828,6 +2910,11 @@ export default function VendorDashboard() {
                       <div className="mb-2">
                          <label style={{ fontSize: '0.8rem' }}>Target Customer (Email or User UUID)</label>
                          <input name="target_customer_id" placeholder="Optional" className="input" />
+                      </div>
+                      <div className="mb-2">
+                         <label style={{ fontSize: '0.8rem', color: '#f59e0b', fontWeight: 600 }}>Subsidiary Capital / Budget (₦)</label>
+                         <input name="subsidiary_capital" type="number" placeholder="Optional max budget (e.g. 5000)" className="input" />
+                         <p style={{ fontSize: '0.7rem', color: 'var(--text-400)', marginTop: '2px' }}>Promo automatically ends when this budget is exhausted. Leave blank for unlimited.</p>
                       </div>
                       <label className="checkbox-label mb-2" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
                         <input type="checkbox" name="is_regular_patrons_only" />

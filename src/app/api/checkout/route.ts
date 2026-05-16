@@ -178,8 +178,21 @@ export async function POST(req: Request) {
       const finalItemTotal = discountedItemSubtotal + itemDeliveryFee;
       
       const baseCommission = baseItemSubtotal * dynamicCommissionRate;
-      const vendorEarning = baseItemSubtotal - baseCommission;
-      const adminCommission = baseCommission - itemDiscount;
+      
+      // SUBSIDY FUNDING LOGIC
+      // If the vendor created the promo code, they fund it (reduced earning)
+      // If admin created it, admin funds it (reduced commission)
+      let vendorEarning = baseItemSubtotal - baseCommission;
+      let adminCommission = baseCommission;
+
+      if (promoData?.creator_type === 'vendor') {
+          // Vendor funds the discount
+          vendorEarning -= itemDiscount;
+      } else {
+          // Admin or University Admin funds the discount
+          adminCommission -= itemDiscount;
+      }
+
       const totalCommissionForRecord = adminCommission + itemDeliveryFee;
 
       const deliveryCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -210,12 +223,20 @@ export async function POST(req: Request) {
     });
 
     const calculatedSubtotal = ordersToInsert.reduce((sum: number, o: any) => sum + Number(o.total_amount), 0);
+    const totalDiscountApplied = ordersToInsert.reduce((sum: number, o: any) => sum + Number(o.admin_discount), 0);
+    
+    // 2.5 SUBSIDIARY CAPITAL ENFORCEMENT
+    if (promoData && promoData.subsidiary_capital && Number(promoData.subsidiary_capital) > 0) {
+      if (Number(promoData.capital_used) + totalDiscountApplied > Number(promoData.subsidiary_capital)) {
+         return NextResponse.json({ error: 'PROMO_CAPITAL_EXHAUSTED', message: 'This promo code has exhausted its maximum budget and is no longer valid.' }, { status: 400 });
+      }
+    }
+
     const finalChargeAmount = calculatedSubtotal; 
     const batchReference = `BATCH-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     // Fill the reference
     ordersToInsert.forEach((o: any) => o.paystack_reference = batchReference);
-
 
     // 3. SECURE DATA PERSISTENCE: Save state before redirect
     const { error: orderError } = await supabaseAdmin.from('orders').insert(ordersToInsert);
@@ -235,7 +256,9 @@ export async function POST(req: Request) {
       metadata: {
         payment_type: 'customer_checkout',
         user_id: userId,
-        order_count: items.length
+        order_count: items.length,
+        promo_code_id: promoData?.id || null,
+        total_discount_applied: totalDiscountApplied || 0
       }
     });
 

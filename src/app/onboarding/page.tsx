@@ -158,6 +158,8 @@ export default function OnboardingPage() {
           free_listings_count: 5,
           terms_accepted: true,
           trial_started_at: new Date().toISOString(),
+          marketplace_type: vendorType,
+          active_dashboard_mode: vendorType === 'delicacies' ? 'chef' : 'normal'
         })
         .select()
         .single();
@@ -241,17 +243,20 @@ export default function OnboardingPage() {
         <div className={`card ${styles.card}`}>
           {step === 1 && (
             <div className={styles.stepContent}>
-              <h2 className={styles.stepTitle}>Choose your account type</h2>
+              <h2 className={styles.stepTitle}>Choose your marketplace type</h2>
               <div className={styles.typeGrid}>
-                {['Product Seller', 'Service Provider', 'Both'].map((label, i) => (
+                {[
+                  { id: 'fashion', label: 'General / Non-Edible (Fashion, Electronics, Services, etc)', emoji: '🛍️' },
+                  { id: 'delicacies', label: 'MasterCart Delicacies / Edible (Food, Snacks, Chief Chef)', emoji: '🍳' }
+                ].map((type) => (
                   <button
-                    key={label}
-                    className={`${styles.typeCard} ${vendorType === label ? styles.typeSelected : ''}`}
-                    onClick={() => setVendorType(label)}
+                    key={type.id}
+                    className={`${styles.typeCard} ${vendorType === type.id ? styles.typeSelected : ''}`}
+                    onClick={() => setVendorType(type.id)}
                   >
-                    <span className={styles.typeEmoji}>{i === 0 ? 'ðŸ›ï¸' : i === 1 ? '✨' : '🌟'}</span>
-                    <h3>{label}</h3>
-                    {vendorType === label && <div className={styles.typeCheck}><CheckCircle size={18} /></div>}
+                    <span className={styles.typeEmoji}>{type.emoji}</span>
+                    <h3>{type.label}</h3>
+                    {vendorType === type.id && <div className={styles.typeCheck}><CheckCircle size={18} /></div>}
                   </button>
                 ))}
               </div>

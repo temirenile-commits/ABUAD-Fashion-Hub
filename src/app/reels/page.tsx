@@ -9,7 +9,7 @@ import { useEffect, useState, useRef } from 'react';
 
 export default function ReelsPage() {
   const allReels = useMarketplaceStore(s => s.reels).filter(r => !r.product_section || r.product_section === 'fashion');
-  const allVendors = useMarketplaceStore(s => s.vendors);
+  const allVendors = useMarketplaceStore(s => s.vendors).filter(v => !v.marketplace_type || v.marketplace_type === 'fashion');
   
   // Mixed feed logic: [Reel, Reel, VendorRow, Reel, Reel, VendorRow...]
   const mixedFeed: { type: 'reel' | 'vendors', data: any }[] = [];

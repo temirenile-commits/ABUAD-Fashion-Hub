@@ -63,6 +63,7 @@ export default function NotificationsPage() {
           const { data: prodData } = await supabase
             .from('products')
             .select('category')
+            .eq('product_section', 'fashion')
             .in('title', enquiredTitles);
           
           const categories = [...new Set(prodData?.map(p => p.category))];
@@ -70,6 +71,7 @@ export default function NotificationsPage() {
             const { data: recs } = await supabase
               .from('products')
               .select('*')
+              .eq('product_section', 'fashion')
               .in('category', categories)
               .limit(3);
             

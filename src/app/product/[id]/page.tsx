@@ -5,12 +5,12 @@ import {
   MessageCircle,
   Star,
   Heart,
-  Share2,
   ShieldCheck,
   Package,
   CheckCircle,
   Eye,
 } from 'lucide-react';
+import ShareProductButton from '@/components/ShareProductButton';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
 import ProductInteraction from '@/components/ProductInteraction';
@@ -101,13 +101,14 @@ export default async function ProductPage({ params }: Props) {
     ? getDiscount(product.price, product.original_price)
     : null;
 
-  // Fetch related products (same category)
+  // Fetch related products (same category and same marketplace ecosystem)
   const { data: relatedData } = await supabaseAdmin
     .from('products')
     .select(`
       *,
       brands (id, owner_id, name, whatsapp_number)
     `)
+    .eq('product_section', productData.product_section)
     .eq('category', product.category)
     .neq('id', product.id)
     .limit(4);
@@ -147,44 +148,45 @@ export default async function ProductPage({ params }: Props) {
           {/* Image/Video Gallery */}
           <div className={styles.gallery}>
             <div className={styles.mainImg}>
-              {product.video_url ? (
-                <video 
-                  controls 
-                  className={styles.videoPlayer} 
-                  poster={mainImage}
-                  autoPlay
-                  muted
-                >
-                  <source src={product.video_url} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-              ) : (
-                <div className={styles.imageWrapper}>
-                  <Image
-                    src={mainImage}
-                    alt={product.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    priority
-                    className={styles.mainImgEl}
-                  />
-                  <a 
-                    href={mainImage} 
-                    download={`${product.title}.jpg`}
-                    target="_blank"
-                    className={styles.downloadBtn}
-                    title="Download high-res image"
+              <div className={styles.visualContainer} style={{ position: 'relative', width: '100%', height: '100%' }}>
+                {product.video_url ? (
+                  <video 
+                    controls 
+                    className={styles.videoPlayer} 
+                    poster={mainImage}
+                    autoPlay
+                    muted
                   >
-                    <Share2 size={16} /> Download
-                  </a>
-                </div>
-              )}
+                    <source src={product.video_url} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <div className={styles.imageWrapper}>
+                    <Image
+                      src={mainImage}
+                      alt={product.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      priority
+                      className={styles.mainImgEl}
+                    />
+                  </div>
+                )}
+                
+                <ShareProductButton
+                  productId={product.id}
+                  productTitle={product.title}
+                  className={styles.downloadBtn}
+                />
+              </div>
+
               {discount && discount > 0 ? (
                 <span className={`badge badge-flash ${styles.imgDiscount}`}>
                   -{discount}% OFF
                 </span>
               ) : null}
             </div>
+
             {allImages.length > 1 && (
               <div className={styles.thumbs}>
                 {allImages.map((img, i) => (
@@ -266,6 +268,15 @@ export default async function ProductPage({ params }: Props) {
 
             {/* Description */}
             <p className={styles.description}>{product.description}</p>
+
+            {/* Location Availability */}
+            {product.location_availability && (
+              <div className={styles.locationBadge} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0', color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 600 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(245, 158, 11, 0.1)', padding: '4px 10px', borderRadius: '6px' }}>
+                   📍 {product.location_availability}
+                </span>
+              </div>
+            )}
 
             {/* Trust badges */}
             <div className={styles.trustBadges}>

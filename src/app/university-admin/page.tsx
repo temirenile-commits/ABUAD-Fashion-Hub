@@ -54,7 +54,7 @@ export default function UniversityAdminPage() {
   const [orderFilter, setOrderFilter] = useState("all");
   const [homepageSections, setHomepageSections] = useState<any[]>([]);
   const [promoCodes, setPromoCodes] = useState<any[]>([]);
-  const [promoForm, setPromoForm] = useState({ code: '', type: 'fixed', value: '', max_uses: '100', product_id: '' });
+  const [promoForm, setPromoForm] = useState({ code: '', type: 'fixed', value: '', max_uses: '100', product_id: '', subsidiary_capital: '' });
   const [sectionForm, setSectionForm] = useState<any>({ title: '', type: 'manual', layout_type: 'horizontal_scroll', is_active: true, priority: 0, auto_rule: { criteria: 'limited_stock', threshold: 5, limit: 12 } });
   const [editingSection, setEditingSection] = useState<any>(null);
 
@@ -557,7 +557,14 @@ export default function UniversityAdminPage() {
                             <td>{p.type === 'percentage' ? `${p.value}% Off` : `₦${p.value} Off`}</td>
                             <td>{p.used_count || 0} / {p.max_uses}</td>
                             <td>{p.product_id ? <span className={styles.subText}>{p.products?.title}</span> : 'Entire Catalog'}</td>
-                            <td><span className={p.is_active ? styles.textGreen : styles.textRed}>{p.is_active ? 'Active' : 'Inactive'}</span></td>
+                            <td>
+                              <span className={p.is_active ? styles.textGreen : styles.textRed}>{p.is_active ? 'Active' : 'Inactive'}</span>
+                              {p.subsidiary_capital > 0 && (
+                                <div style={{ fontSize: '0.65rem', color: '#f59e0b', marginTop: '2px' }}>
+                                  Budget: ₦{Number(p.capital_used || 0).toLocaleString()} / ₦{Number(p.subsidiary_capital).toLocaleString()}
+                                </div>
+                              )}
+                            </td>
                             <td>
                               <button className={`${styles.btnSm} ${styles.btnReject}`} onClick={() => confirm('Delete promo code?') && action('delete_promo_code', { codeId: p.id })}>
                                 <Trash2 size={14} />
@@ -601,9 +608,20 @@ export default function UniversityAdminPage() {
                           <label className={styles.formLabel}>Max Uses</label>
                           <input type="number" className={styles.formInput} value={promoForm.max_uses} onChange={e => setPromoForm({...promoForm, max_uses: e.target.value})} />
                         </div>
+                        <div className="form-group mb-4">
+                          <label className={styles.formLabel} style={{ color: '#f59e0b' }}>Subsidiary Capital / Budget (₦)</label>
+                          <input 
+                             type="number" 
+                             className={styles.formInput} 
+                             placeholder="Optional budget limit" 
+                             value={promoForm.subsidiary_capital || ''} 
+                             onChange={e => setPromoForm({...promoForm, subsidiary_capital: e.target.value})} 
+                          />
+                          <p style={{ fontSize: '0.65rem', color: 'var(--text-400)', marginTop: '4px' }}>Promo ends when this budget is exhausted. Leave blank for unlimited.</p>
+                        </div>
                         <button className={styles.btnPrimary} style={{ width: '100%' }} onClick={async () => {
                           await action('create_promo_code', promoForm);
-                          setPromoForm({ code: '', type: 'fixed', value: '', max_uses: '100', product_id: '' });
+                          setPromoForm({ code: '', type: 'fixed', value: '', max_uses: '100', product_id: '', subsidiary_capital: '' });
                           (document.getElementById('promo-modal') as any)?.close();
                         }}>
                           Create Code

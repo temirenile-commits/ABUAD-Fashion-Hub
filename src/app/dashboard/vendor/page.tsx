@@ -75,7 +75,7 @@ export default function VendorDashboard() {
   const canAccessPromoCodes = userRole === 'admin' || ['half', 'full'].includes(currentTier);
 
   // Real-time states
-  const { products: allProducts, orders: allOrders, setOrders: setGlobalOrders, addProduct, updateOrder, updateProduct: updateGlobalProduct } = useMarketplaceStore();
+  const { products: allProducts, orders: allOrders, setOrders: setGlobalOrders, addProduct, removeProduct, updateOrder, updateProduct: updateGlobalProduct } = useMarketplaceStore();
   const [showDraftsOnly, setShowDraftsOnly] = useState(false);
 
   const orders = brand ? allOrders.filter(o => o.brand_id === brand.id).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
@@ -99,12 +99,8 @@ export default function VendorDashboard() {
   const [banks, setBanks] = useState<any[]>([]);
   const [verifyingBank, setVerifyingBank] = useState(false);
   const [isSettingUpBank, setIsSettingUpBank] = useState(false);
-  const [isKitchenOpen, setIsKitchenOpen] = useState(true);
-  const [isUpdatingKitchen, setIsUpdatingKitchen] = useState(false);
 
   // Dedicated Fashion Logic
-  const isChef = false;
-  const activeDashboardMode = 'normal';
   const products = brand ? allProducts.filter(p => p.brand_id === brand.id && (p.product_section === 'fashion' || !p.product_section)) : [];
   const filteredReels = brand ? reels.filter(r => (r.product_section === 'fashion' || !r.product_section)) : [];
 
@@ -199,6 +195,12 @@ export default function VendorDashboard() {
         setActiveTab('activation_rejected');
         setBrand(brandData);
         setLoading(false);
+        return;
+      }
+
+      // ARCHITECTURAL WALL: Prevent Chief Chefs from accessing the General Dashboard
+      if (brandData.marketplace_type === 'delicacies') {
+        router.push('/dashboard/delicacies');
         return;
       }
 
@@ -379,15 +381,7 @@ export default function VendorDashboard() {
 
 
 
-  useEffect(() => {
-    let mounted = true;
-    if (brand && mounted) {
-      setTimeout(() => {
-         if (mounted) setIsKitchenOpen(brand.is_available_now ?? true);
-      }, 0);
-    }
-    return () => { mounted = false; };
-  }, [brand]);
+
 
 
 
@@ -444,9 +438,7 @@ export default function VendorDashboard() {
 
     for (const file of files) {
       const isVideo = file.type.startsWith('video/');
-      const bucket = isChef 
-        ? (isVideo ? 'delicacies-videos' : 'delicacies-media')
-        : (isVideo ? 'product-videos' : 'product-media');
+      const bucket = isVideo ? 'product-videos' : 'product-media';
 
       const { url, error } = await uploadFile(file, bucket, `prod-${brand.id}`);
       if (url) {
@@ -497,7 +489,7 @@ export default function VendorDashboard() {
           brand_id: brand.id,
           visibility_type: newProduct.visibility_type,
           video_url: url,
-          product_section: isChef ? 'delicacies' : 'fashion'
+          product_section: 'fashion'
         });
 
       if (!dbError) {
@@ -568,8 +560,8 @@ export default function VendorDashboard() {
             price: Number(newProduct.price),
             original_price: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined,
             category: newProduct.category,
-            product_section: (isChef ? 'delicacies' : 'fashion') as 'delicacies' | 'fashion',
-            delicacy_category: isChef ? newProduct.category : null,
+            product_section: 'fashion' as const,
+            delicacy_category: null,
             stock_count: Number(newProduct.stockCount),
             media_urls: newProduct.mediaUrls,
             image_url: newProduct.imageUrl || undefined,
@@ -589,7 +581,7 @@ export default function VendorDashboard() {
           updateGlobalProduct(editingProduct.id, updates);
           setEditingProduct(null);
           setNewProduct({
-            title: '', description: '', price: '', originalPrice: '', category: isChef ? 'snacks' : 'General',
+            title: '', description: '', price: '', originalPrice: '', category: 'General',
             stockCount: '10', mediaUrls: [], imageUrl: '', videoUrl: '', variants: [], isDraft: false, visibility_type: 'university', isPreorder: false, preorderArrivalDate: ''
           });
           alert('Product updated successfully!');
@@ -604,7 +596,7 @@ export default function VendorDashboard() {
             ...newProduct,
             brandId: brand.id,
             ownerId: brand.owner_id,
-            product_section: isChef ? 'delicacies' : 'fashion'
+            product_section: 'fashion'
           })
         });
 
@@ -1016,7 +1008,10 @@ export default function VendorDashboard() {
       target_customer_id: form.target_customer_id?.value || null,
       is_regular_patrons_only: form.is_regular_patrons_only?.checked || false,
       is_active: true,
-      is_funded: true // Vendor's own codes don't need admin funding validation
+      is_funded: true, // Vendor's own codes don't need admin funding validation
+      subsidiary_capital: Number(form.subsidiary_capital?.value) || 0,
+      creator_type: 'vendor',
+      creator_id: brand.id
     };
 
     try {
@@ -1162,7 +1157,7 @@ export default function VendorDashboard() {
         </div>
       ) : (
         <>
-          <aside className={`${styles.sidebar} ${isChef ? styles.chefSidebar : ''}`}>
+          <aside className={styles.sidebar}>
             <div className={styles.sidebarHeader}>
               <div className={styles.brandInfo} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1.25rem' }}>
                 <div 
@@ -1196,45 +1191,45 @@ export default function VendorDashboard() {
               </Link>
               <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '1rem' }} />
 
-              <button className={`${styles.navItem} ${activeTab === 'overview' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('overview')}>
+              <button className={`${styles.navItem} ${activeTab === 'overview' ? styles.navActive : ''}`} onClick={() => setActiveTab('overview')}>
                 <TrendingUp size={18} /> Overview
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'inventory' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('inventory')}>
-                {isChef ? <UtensilsCrossed size={18} /> : <Package size={18} />} {isChef ? 'My Delicacies' : 'My Products'}
+              <button className={`${styles.navItem} ${activeTab === 'inventory' ? styles.navActive : ''}`} onClick={() => setActiveTab('inventory')}>
+                <Package size={18} /> My Products
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'orders' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('orders')}>
+              <button className={`${styles.navItem} ${activeTab === 'orders' ? styles.navActive : ''}`} onClick={() => setActiveTab('orders')}>
                 <ShoppingCart size={18} /> Orders & Fulfillment
                 {orders.filter(o => o.status === 'paid').length > 0 && <span className={styles.navBadge}>{orders.filter(o => o.status === 'paid').length}</span>}
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'payments' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('payments')}>
+              <button className={`${styles.navItem} ${activeTab === 'payments' ? styles.navActive : ''}`} onClick={() => setActiveTab('payments')}>
                 <Wallet size={18} /> Wallet & Payouts
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'enquiries' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('enquiries')}>
+              <button className={`${styles.navItem} ${activeTab === 'enquiries' ? styles.navActive : ''}`} onClick={() => setActiveTab('enquiries')}>
                 <Bell size={18} /> Notifications & Enquiries
                 {unreadCount > 0 && <span className={styles.navBadge}>{unreadCount}</span>}
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'reviews' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('reviews')}>
+              <button className={`${styles.navItem} ${activeTab === 'reviews' ? styles.navActive : ''}`} onClick={() => setActiveTab('reviews')}>
                 <Star size={18} /> Customer Reviews
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'marketing' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('marketing')}>
+              <button className={`${styles.navItem} ${activeTab === 'marketing' ? styles.navActive : ''}`} onClick={() => setActiveTab('marketing')}>
                 <Tag size={18} /> Marketing & Promos
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'services' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('services')}>
+              <button className={`${styles.navItem} ${activeTab === 'services' ? styles.navActive : ''}`} onClick={() => setActiveTab('services')}>
                 <Scissors size={18} /> Services
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'reels' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('reels')}>
+              <button className={`${styles.navItem} ${activeTab === 'reels' ? styles.navActive : ''}`} onClick={() => setActiveTab('reels')}>
                 <Video size={18} /> Collection Reels
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'analytics' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('analytics')}>
+              <button className={`${styles.navItem} ${activeTab === 'analytics' ? styles.navActive : ''}`} onClick={() => setActiveTab('analytics')}>
                 <BarChart3 size={18} /> Smart Analytics
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'settings' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('settings')}>
+              <button className={`${styles.navItem} ${activeTab === 'settings' ? styles.navActive : ''}`} onClick={() => setActiveTab('settings')}>
                 <Settings size={18} /> Store Settings
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'plans' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('plans')} style={{ color: 'var(--primary)', background: activeTab === 'plans' ? 'var(--primary-soft)' : 'transparent' }}>
+              <button className={`${styles.navItem} ${activeTab === 'plans' ? styles.navActive : ''}`} onClick={() => setActiveTab('plans')} style={{ color: 'var(--primary)', background: activeTab === 'plans' ? 'var(--primary-soft)' : 'transparent' }}>
                 <Crown size={18} /> Plans & Upgrade
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'ai' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('ai')} style={{ color: '#a78bfa', background: activeTab === 'ai' ? 'rgba(167,139,250,0.1)' : 'transparent' }}>
+              <button className={`${styles.navItem} ${activeTab === 'ai' ? styles.navActive : ''}`} onClick={() => setActiveTab('ai')} style={{ color: '#a78bfa', background: activeTab === 'ai' ? 'rgba(167,139,250,0.1)' : 'transparent' }}>
                 <Zap size={18} /> AI Assistant
               </button>
 
@@ -1532,6 +1527,21 @@ export default function VendorDashboard() {
                     You are in your dedicated marketplace management environment.
                   </p>
                 </div>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={async () => {
+                    const url = `${window.location.origin}/vendor/${brand.name.toLowerCase().replace(/\s+/g, '-')}?id=${brand.id}`;
+                    try {
+                      await navigator.clipboard.writeText(url);
+                      alert('✨ Store link copied to clipboard! Share it on WhatsApp or Instagram.');
+                    } catch (err) {
+                      alert('Failed to copy link.');
+                    }
+                  }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Share2 size={16} /> Share Store Link
+                </button>
               </div>
             </div>
 
@@ -1615,7 +1625,7 @@ export default function VendorDashboard() {
                 </div>
 
                 {/* ── Category Suggestions Section (For Chefs) ───────────────────── */}
-                {(brand?.marketplace_type === 'both' || brand?.marketplace_type === 'delicacies') && (
+                {brand?.marketplace_type === 'delicacies' && (
                   <div className={styles.settingsSection} style={{ marginTop: '2rem', borderTop: '1px solid var(--border)', paddingTop: '2rem' }}>
                     <h3>Category Expansion</h3>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-400)', marginBottom: '1.5rem' }}>
@@ -2122,10 +2132,10 @@ export default function VendorDashboard() {
                 <form onSubmit={handleProductSubmit} className={styles.productForm}>
                   <div className={styles.formRow}>
                     <div className={styles.inputGroup}>
-                      <label>{isChef ? 'Meal / Item Name' : 'Product Name'}</label>
+                      <label>Product Name</label>
                       <input
                         type="text"
-                        placeholder={isChef ? 'e.g. Special Jollof Rice' : 'e.g. Classic Vintage Denim Jacket'}
+                        placeholder="e.g. Classic Vintage Denim Jacket"
                         required
                         value={newProduct.title}
                         onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
@@ -2161,34 +2171,21 @@ export default function VendorDashboard() {
                         value={newProduct.category}
                         onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                       >
-                        {isChef ? (
-                          <>
-                            <option value="snacks">Snacks</option>
-                            <option value="small_chops">Small Chops</option>
-                            <option value="pastries">Pastries</option>
-                            <option value="main_dish">Main Dish</option>
-                            <option value="sides">Sides</option>
-                            <option value="beverages">Beverages</option>
-                            <option value="provisions">Provisions</option>
-                          </>
-                        ) : (
-                          <>
-                            <option>General</option>
-                            <option>Electronics</option>
-                            <option>Phones-Accessories</option>
-                            <option>Beauty-Personal-Care</option>
-                            <option>Home-Living</option>
-                            <option>Gadgets</option>
-                            <option>General-Merchandise</option>
-                          </>
-                        )}
+                        <option>General</option>
+                        <option>Vintage Clothing</option>
+                        <option>Streetwear</option>
+                        <option>Corporate / Formal</option>
+                        <option>Footwear</option>
+                        <option>Jewelry & Accessories</option>
+                        <option>Fabrics & Textiles</option>
+                        <option>Beauty & Skincare</option>
                       </select>
                     </div>
                     <div className={styles.inputGroup}>
-                      <label>{isChef ? 'Quantity (Plates / Pieces)' : 'Total Global Stock'}</label>
+                      <label>Total Global Stock</label>
                       <input
                         type="number"
-                        placeholder={isChef ? '50' : '10'}
+                        placeholder="10"
                         value={newProduct.stockCount}
                         onChange={(e) => setNewProduct({ ...newProduct, stockCount: e.target.value })}
                       />
@@ -2213,19 +2210,9 @@ export default function VendorDashboard() {
                               setNewProduct({ ...newProduct, variants: updated });
                             }}
                           >
-                            {isChef ? (
-                              <>
-                                <option>Size (Portion)</option>
-                                <option>Spice Level</option>
-                                <option>Add-ons</option>
-                              </>
-                            ) : (
-                              <>
                                 <option>Size</option>
                                 <option>Color</option>
                                 <option>Material</option>
-                              </>
-                            )}
                           </select>
                           <input
                             type="text"
@@ -2257,10 +2244,10 @@ export default function VendorDashboard() {
                       <div className={styles.inputGroup} style={{ flex: 1 }}>
                         <label>Expected Arrival Date</label>
                         <input
-                          type="date"
+                          type="datetime-local"
                           required={newProduct.isPreorder}
                           value={newProduct.preorderArrivalDate}
-                          min={new Date().toISOString().split('T')[0]}
+                          min={new Date().toISOString().slice(0, 16)}
                           onChange={(e) => setNewProduct({ ...newProduct, preorderArrivalDate: e.target.value })}
                           style={{ padding: '0.75rem' }}
                         />
@@ -2343,8 +2330,63 @@ export default function VendorDashboard() {
                     <span className={styles.invPrice}>{formatPrice(p.price)}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0', background: 'var(--bg-300)', padding: '4px', borderRadius: '4px' }}>
                        <button className="btn btn-ghost btn-sm" style={{ padding: '0 8px' }} onClick={() => updateStock(p.id, -1)}>-</button>
-                       <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.stock_count || 0} <span style={{fontSize: '0.7rem', opacity: 0.7}}>{isChef ? 'Plates' : 'Units'}</span></span>
+                       <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.stock_count || 0} <span style={{fontSize: '0.7rem', opacity: 0.7}}>Units</span></span>
                        <button className="btn btn-ghost btn-sm" style={{ padding: '0 8px' }} onClick={() => updateStock(p.id, 1)}>+</button>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <button className="btn btn-ghost btn-sm" style={{ flex: 1, border: '1px solid var(--border)' }} onClick={() => {
+                        setEditingProduct(p);
+                        setNewProduct({
+                          title: p.title, description: p.description || '', price: p.price.toString(), originalPrice: p.original_price?.toString() || '',
+                          category: p.category, stockCount: p.stock_count.toString(), mediaUrls: p.media_urls || [],
+                          imageUrl: '', videoUrl: '', visibility_type: (p.visibility_type as string) || 'university',
+                          variants: (Array.isArray(p.variants) ? p.variants : []) as any[], isDraft: !!p.is_draft, isPreorder: !!p.is_preorder, preorderArrivalDate: (p.preorder_arrival_date as string)?.slice(0, 16) || ''
+                        });
+                        setIsAddingProduct(true);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}>
+                        <Edit3 size={14} /> Edit
+                      </button>
+                      <button className="btn btn-ghost btn-sm" style={{ border: '1px solid var(--border)', color: '#ef4444' }} onClick={async () => {
+                        if (confirm('Are you sure you want to delete this product from your store?')) {
+                          // 1. Check for active orders
+                          const { count, error: checkError } = await supabase
+                            .from('orders')
+                            .select('id', { count: 'exact', head: true })
+                            .eq('product_id', p.id)
+                            .not('status', 'in', '("delivered", "received", "cancelled")');
+
+                          if (checkError) {
+                            console.error('Order check error:', checkError);
+                            alert('Could not verify active orders. Please try again.');
+                            return;
+                          }
+
+                          if (count && count > 0) {
+                            if (confirm(`This product has ${count} active orders. It cannot be deleted until they are completed. Would you like to archive it to drafts and set stock to 0 instead?`)) {
+                              const { error: softError } = await supabase.from('products').update({ is_draft: true, stock_count: 0 }).eq('id', p.id);
+                              if (!softError) {
+                                updateGlobalProduct(p.id, { is_draft: true, stock_count: 0 });
+                                alert('Product has been archived to drafts.');
+                              } else {
+                                alert('Error archiving product: ' + softError.message);
+                              }
+                            }
+                            return;
+                          }
+
+                          // 2. Proceed with deletion
+                          const { error } = await supabase.from('products').delete().eq('id', p.id);
+                          if (!error) {
+                            removeProduct(p.id);
+                            alert('Product deleted successfully.');
+                          } else {
+                            alert('Error deleting product: ' + error.message);
+                          }
+                        }
+                      }}>
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                    </div>
                 </div>
@@ -2715,6 +2757,11 @@ export default function VendorDashboard() {
                       <div className="mb-2">
                          <label style={{ fontSize: '0.8rem' }}>Target Customer (Email or User UUID)</label>
                          <input name="target_customer_id" placeholder="Optional" className="input" />
+                      </div>
+                      <div className="mb-2">
+                         <label style={{ fontSize: '0.8rem', color: '#f59e0b', fontWeight: 600 }}>Subsidiary Capital / Budget (₦)</label>
+                         <input name="subsidiary_capital" type="number" placeholder="Optional max budget (e.g. 5000)" className="input" />
+                         <p style={{ fontSize: '0.7rem', color: 'var(--text-400)', marginTop: '2px' }}>Promo automatically ends when this budget is exhausted. Leave blank for unlimited.</p>
                       </div>
                       <label className="checkbox-label mb-2" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
                         <input type="checkbox" name="is_regular_patrons_only" />

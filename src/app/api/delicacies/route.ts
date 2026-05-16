@@ -20,7 +20,7 @@ export async function GET(req: Request) {
         delicacy_category, media_urls, image_url,
         stock_count, views_count, sales_count, rating,
         available_from, is_draft, product_section,
-        brand_id,
+        brand_id, location_availability,
         brands (
           id, name, logo_url, verified, verification_status,
           avg_rating, marketplace_type, delicacies_approval_status,

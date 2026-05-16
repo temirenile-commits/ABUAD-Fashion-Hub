@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import {
   UtensilsCrossed, Star, ShoppingCart, Trophy,
@@ -8,6 +8,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import BatchWindowTimer from '@/components/BatchWindowTimer';
 import VendorAvailabilityTimer from '@/components/VendorAvailabilityTimer';
+import ShareProductButton from '@/components/ShareProductButton';
 import styles from './page.module.css';
 
 interface Category {
@@ -26,6 +27,7 @@ interface DelicacyProduct {
   rating?: number;
   delicacy_category: string;
   available_from?: string;
+  location_availability?: string;
   brands: any; // Can be object or array depending on join
 }
 
@@ -51,11 +53,13 @@ export default function DelicaciesPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [universityId, setUniversityId] = useState<string | null>(null);
+  const [userHostel, setUserHostel] = useState<string | null>(null);
   const [billboards, setBillboards] = useState<any[]>([]);
   const [billboardIdx, setBillboardIdx] = useState(0);
 
   // Advanced Filters
-  const [filterMode, setFilterMode] = useState<string>('all'); // all, available, preorder, top_rated
+  const [statusFilter, setStatusFilter] = useState<string>('all'); // all, available, preorder, top_rated
+  const [useLocationFilter, setUseLocationFilter] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
 
   // Fetch user university
@@ -65,10 +69,11 @@ export default function DelicaciesPage() {
       if (session) {
         const { data: profile } = await supabase
           .from('users')
-          .select('university_id')
+          .select('university_id, hostel')
           .eq('id', session.user.id)
           .single();
         setUniversityId(profile?.university_id || null);
+        setUserHostel(profile?.hostel || null);
       }
     };
     init();
@@ -101,6 +106,22 @@ export default function DelicaciesPage() {
     fetchAll();
   }, [universityId]);
 
+  const [sharedProductId, setSharedProductId] = useState<string | null>(null);
+  const hasSyncedParams = useRef(false);
+
+  // Sync Search & Deep Link with URL
+  useEffect(() => {
+    if (hasSyncedParams.current) return;
+    hasSyncedParams.current = true;
+
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    if (q) setSearch(q);
+    
+    const pId = params.get('product');
+    if (pId) setSharedProductId(pId);
+  }, []);
+
   // Billboard Auto-rotation
   useEffect(() => {
     if (billboards.length <= 1) return;
@@ -113,8 +134,18 @@ export default function DelicaciesPage() {
   const filtered = useMemo(() => {
     let list = [...products];
     
+    // Deep Link Logic: If a product is shared, put it at the very top and highlight it
+    if (sharedProductId) {
+      const sharedItem = list.find(p => p.id === sharedProductId);
+      if (sharedItem) {
+        list = [sharedItem, ...list.filter(p => p.id !== sharedProductId)];
+      }
+    }
+
     // Category Filter
-    if (selectedCat !== 'all') list = list.filter(p => p.delicacy_category === selectedCat);
+    if (selectedCat !== 'all' && !sharedProductId) {
+       list = list.filter(p => p.delicacy_category === selectedCat);
+    }
     
     // Search Filter
     if (search.trim()) {
@@ -125,20 +156,33 @@ export default function DelicaciesPage() {
       );
     }
 
-    // Advanced Mode Filters
-    if (filterMode === 'available') {
-      list = list.filter(p => (Array.isArray(p.brands) ? p.brands[0] : p.brands)?.is_available_now !== false);
-    } else if (filterMode === 'preorder') {
-      list = list.filter(p => p.available_from);
-    } else if (filterMode === 'top_rated') {
-      list = list.filter(p => (p.rating || 0) >= 4.5);
+    // Status Filters
+    if (!sharedProductId) {
+      if (statusFilter === 'available') {
+        list = list.filter(p => (Array.isArray(p.brands) ? p.brands[0] : p.brands)?.is_available_now !== false);
+      } else if (statusFilter === 'preorder') {
+        list = list.filter(p => p.available_from);
+      } else if (statusFilter === 'top_rated') {
+        list = list.filter(p => (p.rating || 0) >= 4.5);
+      }
+    }
+
+    // Location Filter (My Hostel) - COMBINABLE
+    if (useLocationFilter && userHostel && !sharedProductId) {
+       const h = userHostel.toLowerCase();
+       list = list.filter(p => {
+         const loc = (p.location_availability || '').toLowerCase();
+         return loc.includes(h) || loc.includes('whole university') || loc === 'all';
+       });
     }
 
     // Price Filter
-    list = list.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
+    if (!sharedProductId) {
+      list = list.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
+    }
 
     return list;
-  }, [products, selectedCat, search, filterMode, priceRange]);
+  }, [products, selectedCat, search, statusFilter, useLocationFilter, userHostel, priceRange, sharedProductId]);
 
   return (
     <main style={{ minHeight: '100vh', background: 'var(--bg-300)' }}>
@@ -169,10 +213,23 @@ export default function DelicaciesPage() {
         {/* ── FAST FILTERS & CATEGORIES ── */}
         <div className={styles.filterSection}>
           <div className={styles.fastFilters}>
-            <button className={`${styles.filterBtn} ${filterMode === 'all' ? styles.filterBtnActive : ''}`} onClick={() => setFilterMode('all')}>All Items</button>
-            <button className={`${styles.filterBtn} ${filterMode === 'available' ? styles.filterBtnActive : ''}`} onClick={() => setFilterMode('available')}>Available Now</button>
-            <button className={`${styles.filterBtn} ${filterMode === 'preorder' ? styles.filterBtnActive : ''}`} onClick={() => setFilterMode('preorder')}>Preorders</button>
-            <button className={`${styles.filterBtn} ${filterMode === 'top_rated' ? styles.filterBtnActive : ''}`} onClick={() => setFilterMode('top_rated')}>Top Rated</button>
+            <button className={`${styles.filterBtn} ${statusFilter === 'all' && !useLocationFilter ? styles.filterBtnActive : ''}`} onClick={() => { setStatusFilter('all'); setUseLocationFilter(false); }}>All Items</button>
+            
+            {userHostel && (
+              <button 
+                className={`${styles.filterBtn} ${useLocationFilter ? styles.filterBtnActive : ''}`} 
+                onClick={() => setUseLocationFilter(!useLocationFilter)}
+                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                📍 In {userHostel.split(' ')[0]}
+              </button>
+            )}
+
+            <div style={{ width: '1px', height: '24px', background: 'var(--border)', margin: '0 8px' }} />
+
+            <button className={`${styles.filterBtn} ${statusFilter === 'available' ? styles.filterBtnActive : ''}`} onClick={() => setStatusFilter('available')}>Available Now</button>
+            <button className={`${styles.filterBtn} ${statusFilter === 'preorder' ? styles.filterBtnActive : ''}`} onClick={() => setStatusFilter('preorder')}>Preorders</button>
+            <button className={`${styles.filterBtn} ${statusFilter === 'top_rated' ? styles.filterBtnActive : ''}`} onClick={() => setStatusFilter('top_rated')}>Top Rated</button>
           </div>
 
           <div className={styles.catTabs}>
@@ -208,7 +265,7 @@ export default function DelicaciesPage() {
                 <span style={{ fontSize: '3.5rem' }}>🍪</span>
                 <h3>No delicacies match your search</h3>
                 <p>Try different filters or browse all categories</p>
-                <button onClick={() => { setSelectedCat('all'); setFilterMode('all'); setSearch(''); }} className="btn btn-ghost" style={{ marginTop: '1rem' }}>Clear All Filters</button>
+                <button onClick={() => { setSelectedCat('all'); setStatusFilter('all'); setUseLocationFilter(false); setSearch(''); }} className="btn btn-ghost" style={{ marginTop: '1rem' }}>Clear All Filters</button>
               </div>
             ) : (
               <div className={styles.grid}>
@@ -222,7 +279,14 @@ export default function DelicaciesPage() {
                     : 0;
 
                   return (
-                    <Link key={item.id} href={`/product/${item.id}`} className={styles.card}>
+                    <Link 
+                      key={item.id} 
+                      href={`/product/${item.id}`} 
+                      className={`${styles.card} ${item.id === sharedProductId ? styles.cardShared : ''}`}
+                    >
+                      {item.id === sharedProductId && (
+                        <div className={styles.sharedBadge}>✨ Shared Selection</div>
+                      )}
                       <div className={styles.cardImg}>
                         {img ? (
                           <img src={img} alt={item.title} className={styles.cardImgEl} />
@@ -234,6 +298,20 @@ export default function DelicaciesPage() {
                           <Clock size={9} />
                           {isOpen ? 'OPEN' : 'CLOSED'}
                         </span>
+                        
+                        <div 
+                          className={styles.shareOverlay} 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                        >
+                          <ShareProductButton 
+                            productId={item.id} 
+                            productTitle={item.title} 
+                            className={styles.cardShareBtn}
+                          />
+                        </div>
                       </div>
                       <div className={styles.cardBody}>
                         <div className={styles.cardCategory}>{catMeta?.emoji || '🍽️'} {catMeta?.label || 'Delicacy'}</div>

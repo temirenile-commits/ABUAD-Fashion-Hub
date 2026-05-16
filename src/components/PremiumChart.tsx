@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -11,7 +13,7 @@ import styles from './PremiumChart.module.css';
 
 export interface MultiLineConfig {
   keys: { dataKey: string; color: string; label: string; isProjected?: boolean }[];
-  categorize: (row: any) => { dataKey: string; value: number }[];
+  categorize: (row: Record<string, any>) => { dataKey: string; value: number }[];
 }
 
 interface DataPoint {
@@ -83,7 +85,20 @@ const CustomDot = (props: Record<string, any>) => {
   return <LiveDotRenderer cx={cx} cy={cy} color={color} />;
 };
 
-const CustomTooltip = ({ active, payload, label, valuePrefix, valueSuffix, keys }: any) => {
+interface TooltipEntry {
+  dataKey: string;
+  color: string;
+  value: number;
+}
+
+const CustomTooltip = ({ active, payload, label, valuePrefix, valueSuffix, keys }: {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+  valuePrefix: string;
+  valueSuffix: string;
+  keys: { dataKey: string; label: string }[];
+}) => {
   if (!active || !payload?.length) return null;
   return (
     <div className={styles.tooltip}>
@@ -174,6 +189,7 @@ export default function PremiumChart({
 
   // ── Fetch historical data ──────────────────────────────────
   const realtimeConfigStr = JSON.stringify(realtimeConfig);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const initialDataLen = initialData.length;
 
   const fetchHistory = useCallback(async () => {

@@ -34,6 +34,7 @@ export interface LiveProduct {
   preorder_arrival_date?: string;
   variants?: any[];
   university_id?: string;
+  location_availability?: string;
   brands: {
     id: string;
     owner_id: string;

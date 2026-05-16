@@ -243,11 +243,19 @@ export async function GET(req: NextRequest) {
 
   // — Products (Catalog) in university ——————————————————————————————————————
   if (action === 'products') {
-    const { data, error } = await supabaseAdmin
+    const productSection = searchParams.get('product_section');
+    
+    let query = supabaseAdmin
       .from('products')
       .select('*, brands(name)')
       .eq('university_id', universityId)
       .order('created_at', { ascending: false });
+
+    if (productSection) {
+      query = query.eq('product_section', productSection);
+    }
+
+    const { data, error } = await query;
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ products: data || [] });

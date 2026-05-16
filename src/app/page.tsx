@@ -83,7 +83,9 @@ export default function Home() {
   }, []);
 
   const featuredVendors = useMemo(() => {
-     return [...allBrands].slice(0, 4) as unknown as LiveVendor[];
+     return [...allBrands]
+       .filter(v => !v.marketplace_type || v.marketplace_type === 'fashion')
+       .slice(0, 4) as unknown as LiveVendor[];
   }, [allBrands]);
 
   const genuineFlashSales = useMemo(() => {
@@ -178,7 +180,7 @@ export default function Home() {
         {flashSalesEvents.length > 0 ? flashSalesEvents.map((event, idx) => {
           // Map the event's product IDs to actual product data
           const eventItems = allProducts
-            .filter(p => event.product_ids?.includes(p.id) && !p.is_draft)
+            .filter(p => event.product_ids?.includes(p.id) && !p.is_draft && (!p.product_section || p.product_section === 'fashion'))
             .map(p => {
               const originalPrice = p.original_price || p.price;
               const price = p.price || 0;

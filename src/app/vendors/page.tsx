@@ -9,12 +9,14 @@ export default function VendorsPage() {
   const allBrands = useMarketplaceStore(s => s.vendors);
   const isInitialized = useMarketplaceStore(s => s.isInitialized);
 
-  const LIVE_VENDORS = allBrands.map((brand) => {
-    return {
-      ...brand,
-      verified: brand.verification_status === 'verified'
-    };
-  }) as any as LiveVendor[];
+  const LIVE_VENDORS = allBrands
+    .filter(brand => !brand.marketplace_type || brand.marketplace_type === 'fashion')
+    .map((brand) => {
+      return {
+        ...brand,
+        verified: brand.verification_status === 'verified'
+      };
+    }) as any as LiveVendor[];
 
   const verified = LIVE_VENDORS.filter((v) => v.verified);
   const unverified = LIVE_VENDORS.filter((v) => !v.verified);

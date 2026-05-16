@@ -69,7 +69,10 @@ export default async function VendorPage({ params, searchParams }: Props) {
 
   if (vendorError || !vendorData) notFound();
 
-  // Fetch vendor products
+  // Derive marketplace section from vendor type — enforces strict separation
+  const vendorSection = vendorData.marketplace_type === 'delicacies' ? 'delicacies' : 'fashion';
+
+  // Fetch vendor products — scoped to their marketplace only
   const { data: productsData } = await supabaseAdmin
     .from('products')
     .select(`
@@ -77,6 +80,7 @@ export default async function VendorPage({ params, searchParams }: Props) {
       brands (name, whatsapp_number)
     `)
     .eq('brand_id', id)
+    .eq('product_section', vendorSection)
     .eq('is_draft', false);
 
   // Fetch vendor reels

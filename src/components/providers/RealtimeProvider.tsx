@@ -31,9 +31,11 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
         }
 
         // Products joined with brands and universities
+        // ── MARKETPLACE WALL: Only fashion/general products enter this store ──
         let query = supabase
           .from('products')
           .select(`*, brands(*, universities(*))`)
+          .neq('product_section', 'delicacies') // 🔒 Hard exclusion of delicacies
           .order('created_at', { ascending: false });
 
         if (session?.user) {
@@ -122,6 +124,9 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
       { event: '*', schema: 'public', table: 'products' },
       async (payload: any) => {
         if (payload.eventType === 'INSERT') {
+          // ── MARKETPLACE WALL: Reject delicacies from the fashion store ──
+          if (payload.new.product_section === 'delicacies') return;
+
           // Verify university scope before adding to store
           const { data: userProfile } = await supabase.from('users').select('university_id').eq('id', (await supabase.auth.getSession()).data.session?.user.id).single();
           const userUniId = userProfile?.university_id;

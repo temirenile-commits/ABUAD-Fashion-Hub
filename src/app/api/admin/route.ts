@@ -131,6 +131,8 @@ export async function GET(req: NextRequest) {
   }
 
   if (action === 'products') {
+    const marketplaceType = searchParams.get('marketplace_type');
+    
     let query = supabaseAdmin
       .from('products')
       .select('*, brands(name, logo_url, university_id), universities(name, abbreviation)')
@@ -138,6 +140,10 @@ export async function GET(req: NextRequest) {
       
     if (admin && !admin.isFullAdmin && admin.university_id) {
       query = query.eq('university_id', admin.university_id);
+    }
+    
+    if (marketplaceType) {
+      query = query.eq('product_section', marketplaceType);
     }
     
     const { data, error } = await query;
@@ -280,13 +286,44 @@ export async function GET(req: NextRequest) {
   }
 
   if (action === 'payouts') {
-    const { data, error } = await supabaseAdmin
-      .from('payout_requests')
-      .select('*, users:user_id(name, email, university_id), universities(name, abbreviation)')
-      .order('created_at', { ascending: false });
+    const [legacyRes, engineRes] = await Promise.all([
+      supabaseAdmin
+        .from('payout_requests')
+        .select('*, users:user_id(name, email, university_id), universities(name, abbreviation)')
+        .order('created_at', { ascending: false }),
+      supabaseAdmin
+        .from('payout_records')
+        .select(`
+          *,
+          brands(
+            id, name, logo_url, bank_name, bank_account_number,
+            bank_account_name, account_name, recipient_code,
+            universities(name, abbreviation)
+          ),
+          orders(id, total_amount, vendor_earning, product_id, products(title))
+        `)
+        .order('created_at', { ascending: false })
+        .limit(200)
+    ]);
 
-    if (error) { console.error('[Payouts]', error.message); return NextResponse.json({ payouts: [] }); }
-    return NextResponse.json({ payouts: data || [] });
+    if (legacyRes.error) console.error('[Payouts/legacy]', legacyRes.error.message);
+    if (engineRes.error) console.error('[Payouts/engine]', engineRes.error.message);
+
+    // Aggregate stats for the payout_records
+    const engineData = engineRes.data || [];
+    const pendingPayouts = engineData.filter(r => r.status === 'pending');
+    const totalPendingAmount = pendingPayouts.reduce((s, r) => s + Number(r.net_payout), 0);
+    const totalPaidAmount = engineData.filter(r => r.status === 'confirmed').reduce((s, r) => s + Number(r.net_payout), 0);
+
+    return NextResponse.json({ 
+      payouts: legacyRes.data || [],
+      payoutRecords: engineData,
+      payoutStats: {
+        pendingCount: pendingPayouts.length,
+        totalPendingAmount,
+        totalPaidAmount,
+      }
+    });
   }
 
   if (action === 'market_analytics') {
@@ -819,6 +856,67 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  // ─── NEW ENGINE: Mark a payout record as transferred (admin enters bank ref)
+  if (action === 'update_payout_record') {
+    const { recordId, transferReference, proofUrl } = body;
+    const admin = await verifyAdmin(req);
+    if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { error } = await supabaseAdmin
+      .from('payout_records')
+      .update({
+        status: 'transferred',
+        admin_transfer_reference: transferReference,
+        admin_proof_url: proofUrl || null,
+        transferred_by: admin.id,
+        transferred_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', recordId)
+      .eq('status', 'pending'); // Safety: only update pending records
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Notify vendor
+    const { data: rec } = await supabaseAdmin
+      .from('payout_records')
+      .select('net_payout, brands(owner_id, name)')
+      .eq('id', recordId)
+      .single();
+
+    if (rec?.brands) {
+      const brand: any = rec.brands;
+      await supabaseAdmin.from('notifications').insert({
+        user_id: brand.owner_id,
+        title: '💸 Payout Transferred!',
+        content: `₦${Number(rec.net_payout).toLocaleString()} has been transferred to your bank account. Reference: ${transferReference}`,
+        is_read: false,
+        link: '/dashboard/vendor'
+      });
+    }
+
+    return NextResponse.json({ success: true });
+  }
+
+  // ─── NEW ENGINE: Admin toggles final confirmation (after transfer is verified)
+  if (action === 'confirm_payout_record') {
+    const { recordId } = body;
+    const admin = await verifyAdmin(req);
+    if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { error } = await supabaseAdmin
+      .from('payout_records')
+      .update({
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', recordId);
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
   if (action === 'reject_payout') {
     const { requestId } = body;
     const admin = await verifyAdmin(req);
@@ -870,11 +968,11 @@ export async function POST(req: NextRequest) {
     const { brandId } = body;
     const { error } = await supabaseAdmin
       .from('brands')
-      .update({ marketplace_type: 'both' })
+      .update({ marketplace_type: 'delicacies', active_dashboard_mode: 'chef' })
       .eq('id', brandId);
     
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true, message: 'Chief Chef access granted.' });
+    return NextResponse.json({ success: true, message: 'Vendor switched to MasterCart Delicacies.' });
   }
 
   if (action === 'revoke_chef_access') {
@@ -885,7 +983,7 @@ export async function POST(req: NextRequest) {
       .eq('id', brandId);
     
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true, message: 'Chief Chef access revoked.' });
+    return NextResponse.json({ success: true, message: 'Vendor switched back to General Marketplace.' });
   }
 
 
