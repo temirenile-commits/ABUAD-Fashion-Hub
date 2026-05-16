@@ -268,12 +268,15 @@ export default function VendorDashboard() {
         .eq('brand_id', brandData.id)
         .order('created_at', { ascending: false });
 
-      // Products are heavily fetched by RealtimeProvider so no need to refetch here
       // But we still fetch them to ensure we catch any missed products in edge cases
       const { data: productData } = await supabase
         .from('products')
         .select('*')
         .eq('brand_id', brandData.id);
+
+      if (productData) {
+        productData.forEach(p => addProduct({ ...p, brands: brandData } as any));
+      }
 
       setReels(reelData || []);
 

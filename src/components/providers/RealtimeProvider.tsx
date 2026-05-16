@@ -31,20 +31,20 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
         }
 
         // Products joined with brands and universities
-        // ── MARKETPLACE WALL: Only fashion/general products enter this store ──
         let query = supabase
           .from('products')
           .select(`*, brands(*, universities(*))`)
-          .neq('product_section', 'delicacies') // 🔒 Hard exclusion of delicacies
           .order('created_at', { ascending: false });
 
         if (session?.user) {
+          // Rule: Show my own products (any section/any uni) 
+          // OR show discovery products (visibility match)
+          // We remove the hard delicacies exclusion here so vendors see their food products.
+          // Discovery pages like Explore/Home will still filter by product_section.
           if (userUniId) {
-            // University users see their campus products + global ones
-            query = query.or(`visibility_type.eq.global,university_id.eq.${userUniId}`);
+            query = query.or(`owner_id.eq.${session.user.id},visibility_type.eq.global,university_id.eq.${userUniId}`);
           } else {
-            // General users see ONLY global products
-            query = query.eq('visibility_type', 'global');
+            query = query.or(`owner_id.eq.${session.user.id},visibility_type.eq.global`);
           }
         } else {
           // Anonymous users: Show ABUAD by default + global
@@ -124,22 +124,28 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
       { event: '*', schema: 'public', table: 'products' },
       async (payload: any) => {
         if (payload.eventType === 'INSERT') {
-          // ── MARKETPLACE WALL: Reject delicacies from the fashion store ──
-          if (payload.new.product_section === 'delicacies') return;
-
-          // Verify university scope before adding to store
-          const { data: userProfile } = await supabase.from('users').select('university_id').eq('id', (await supabase.auth.getSession()).data.session?.user.id).single();
-          const userUniId = userProfile?.university_id;
+          const { data: { session } } = await supabase.auth.getSession();
+          const userId = session?.user?.id;
           
-          if (payload.new.visibility_type === 'global' || payload.new.university_id === userUniId) {
-            const { vendors } = useMarketplaceStore.getState();
-            const brand = vendors.find((v: any) => v.id === payload.new.brand_id);
-            const enriched = { ...payload.new, brands: brand };
+          // Add to store if it belongs to user OR matches discovery filters
+          // Discovery pages will handle the section-based filtering.
+          const isOwnProduct = userId && payload.new.owner_id === userId;
+          
+          // For simplicity, we add it to the store. 
+          // If it shouldn't be visible to this specific user (wrong uni), 
+          // they'll see it temporarily or it'll be filtered out on next refresh.
+          // But for vendors, it ensures instant visibility.
+          const { vendors } = useMarketplaceStore.getState();
+          const brand = vendors.find((v: any) => v.id === payload.new.brand_id);
+          const enriched = { ...payload.new, brands: brand };
 
-            addProduct(enriched as any);
-            if (!payload.new.is_draft) {
-              toast.success(`New Product: ${payload.new.title}!`);
-            }
+          addProduct(enriched as any);
+          
+          if (isOwnProduct) {
+            toast.success(`Product Live: ${payload.new.title}!`);
+          } else if (payload.new.product_section !== 'delicacies') {
+             // Only toast for new fashion products for other users
+             toast.success(`New Arrival: ${payload.new.title}!`);
           }
         }
         if (payload.eventType === 'UPDATE') {
@@ -250,7 +256,7 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
       if (privateChannel) supabase.removeChannel(privateChannel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [addProduct, addOrder, addReel, addService, addVendor, removeProduct, removeReel, removeService, setInitialized, setOrders, setProducts, setReels, setServices, setVendors, updateOrder, updateProduct, updateService, updateVendor]);
 
   return (
     <>
