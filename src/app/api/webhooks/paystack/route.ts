@@ -162,7 +162,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Orders not found' }, { status: 404 });
       }
 
-      // 2. Update all these orders to 'paid' (Securing Escrow)
+      // 2. Update all these orders - split by type for correct status routing
       const totalExpected = orders.reduce((sum, o) => sum + Number(o.total_amount), 0);
       const paidAmount = verification.data.amount / 100;
 
@@ -175,14 +175,32 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Amount mismatch' }, { status: 400 });
       }
 
-      const { error: updateError } = await supabaseAdmin
-        .from('orders')
-        .update({ 
-          status: 'paid',
-          delivery_code: deliveryCode,
-          expires_at: null // Clear timer once paid
-        })
-        .eq('paystack_reference', reference);
+      // Separate normal orders from pre-orders
+      const normalOrderIds = orders.filter(o => o.status === 'pending').map(o => o.id);
+      const preorderIds = orders.filter(o => o.status === 'preorder_pending').map(o => o.id);
+
+      const updatePromises = [];
+      if (normalOrderIds.length > 0) {
+        updatePromises.push(
+          supabaseAdmin.from('orders').update({ 
+            status: 'paid',
+            delivery_code: deliveryCode,
+            expires_at: null
+          }).in('id', normalOrderIds)
+        );
+      }
+      if (preorderIds.length > 0) {
+        updatePromises.push(
+          supabaseAdmin.from('orders').update({ 
+            status: 'preorder_paid',
+            delivery_code: deliveryCode,
+            expires_at: null
+          }).in('id', preorderIds)
+        );
+      }
+
+      const results = await Promise.all(updatePromises);
+      const updateError = results.find(r => r.error)?.error;
 
       if (updateError) {
         console.error('Error updating orders batch:', updateError);

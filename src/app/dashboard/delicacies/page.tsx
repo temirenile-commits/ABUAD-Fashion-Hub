@@ -1319,7 +1319,7 @@ export default function VendorDashboard() {
               </button>
               <button className={`${styles.navItem} ${activeTab === 'orders' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('orders')}>
                 <ShoppingCart size={18} /> Orders & Fulfillment
-                {orders.filter(o => o.status === 'paid').length > 0 && <span className={styles.navBadge}>{orders.filter(o => o.status === 'paid').length}</span>}
+                {orders.filter(o => o.status === 'paid' || o.status === 'preorder_paid').length > 0 && <span className={styles.navBadge}>{orders.filter(o => o.status === 'paid' || o.status === 'preorder_paid').length}</span>}
               </button>
               <button className={`${styles.navItem} ${activeTab === 'payments' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('payments')}>
                 <Wallet size={18} /> Wallet & Payouts
@@ -2033,6 +2033,26 @@ export default function VendorDashboard() {
                                 if (reason) updateOrderStatus(order.id, 'cancelled', { rejectionReason: reason });
                               }}>Reject</button>
                             </div>
+                          </div>
+                        )}
+                        {order.status === 'preorder_paid' && (
+                          <div className={styles.statusBox}>
+                            <div style={{ marginBottom: '0.5rem', padding: '0.4rem 0.75rem', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <Clock size={12} /> Pre-order Received & Secured
+                            </div>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-400)', marginBottom: '0.5rem', margin: '0 0 0.5rem 0' }}>
+                              Prepare this order. When it&apos;s ready, tap below to dispatch the delivery agent.
+                            </p>
+                            <button className="btn btn-primary btn-sm" style={{ width: '100%', background: '#f59e0b', borderColor: '#f59e0b' }} onClick={() => updateOrderStatus(order.id, 'ready_for_pickup')}>
+                              <CheckCircle size={14} /> Mark as Ready for Pickup
+                            </button>
+                          </div>
+                        )}
+                        {order.status === 'ready_for_pickup' && (
+                          <div className={styles.statusBox}>
+                            <span className={`${styles.statusBadge} ${styles.statusWarning}`}>
+                              <Truck size={14} /> Awaiting Delivery Agent
+                            </span>
                           </div>
                         )}
                         {order.status === 'accepted' && (

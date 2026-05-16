@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
     const liveProducts = productsResult.data;
     const userProfile = profileResult.data;
-    let promoData = promoResult?.data;
+    const promoData = promoResult?.data;
 
     if (!liveProducts || liveProducts.length === 0) {
       return NextResponse.json({ error: 'STALE_CART_ITEMS' }, { status: 400 });
@@ -137,7 +137,7 @@ export async function POST(req: Request) {
     }
 
     // NEW: If we have per-product delivery rates (Delicacies), suppress the general platform delivery fee
-    const hasPerProductDelivery = liveProducts.some(p => Number(p.delivery_rate) > 0 || p.product_section === 'delicacies');
+    const hasPerProductDelivery = (liveProducts as any[]).some(p => Number(p.delivery_rate) > 0 || p.product_section === 'delicacies');
     if (hasPerProductDelivery) {
       totalDeliveryFee = 0;
     }
@@ -217,7 +217,7 @@ export async function POST(req: Request) {
         total_amount: finalItemTotal, 
         commission_amount: totalCommissionForRecord,
         vendor_earning: vendorEarning,
-        status: 'pending',
+        status: item.is_preorder ? 'preorder_pending' : 'pending',
         delivery_method: vendorSystem,
         delivery_scope: vendorScope,
         assigned_delivery_system: vendorSystem,

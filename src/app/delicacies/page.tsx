@@ -3,11 +3,9 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import {
   UtensilsCrossed, Star, ShoppingCart, Trophy,
-  Search, ArrowRight, Clock, ChevronRight
+  Search, ArrowRight, Clock
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import BatchWindowTimer from '@/components/BatchWindowTimer';
-import VendorAvailabilityTimer from '@/components/VendorAvailabilityTimer';
 import ShareProductButton from '@/components/ShareProductButton';
 import styles from './page.module.css';
 
@@ -54,13 +52,14 @@ export default function DelicaciesPage() {
   const [loading, setLoading] = useState(true);
   const [universityId, setUniversityId] = useState<string | null>(null);
   const [userHostel, setUserHostel] = useState<string | null>(null);
-  const [billboards, setBillboards] = useState<any[]>([]);
+  const [billboards, setBillboards] = useState<{id: string; image_url: string; brand_id: string}[]>([]);
   const [billboardIdx, setBillboardIdx] = useState(0);
+  void billboardIdx; void setBillboardIdx; // Used by billboard auto-rotation below
 
   // Advanced Filters
   const [statusFilter, setStatusFilter] = useState<string>('all'); // all, available, preorder, top_rated
   const [useLocationFilter, setUseLocationFilter] = useState(false);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const priceRange: [number, number] = [0, 10000]; // Static range (no UI slider currently)
 
   // Fetch user university
   useEffect(() => {
@@ -182,7 +181,7 @@ export default function DelicaciesPage() {
     }
 
     return list;
-  }, [products, selectedCat, search, statusFilter, useLocationFilter, userHostel, priceRange, sharedProductId]);
+  }, [products, selectedCat, search, statusFilter, useLocationFilter, userHostel, sharedProductId]);
 
   return (
     <main style={{ minHeight: '100vh', background: 'var(--bg-300)' }}>

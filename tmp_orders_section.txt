@@ -1,0 +1,410 @@
+﻿
+> src\app\dashboard\delicacies\page.tsx:1320:              <button className={`${styles.navItem} ${activeTab === 
+'orders' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('orders')}>
+  src\app\dashboard\delicacies\page.tsx:1321:                <ShoppingCart size={18} /> Orders & Fulfillment
+  src\app\dashboard\delicacies\page.tsx:1322:                {orders.filter(o => o.status === 'paid').length > 0 && 
+<span className={styles.navBadge}>{orders.filter(o => o.status === 'paid').length}</span>}
+  src\app\dashboard\delicacies\page.tsx:1323:              </button>
+  src\app\dashboard\delicacies\page.tsx:1324:              <button className={`${styles.navItem} ${activeTab === 
+'payments' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('payments')}>
+  src\app\dashboard\delicacies\page.tsx:1325:                <Wallet size={18} /> Wallet & Payouts
+  src\app\dashboard\delicacies\page.tsx:1326:              </button>
+  src\app\dashboard\delicacies\page.tsx:1327:              <button className={`${styles.navItem} ${activeTab === 
+'enquiries' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('enquiries')}>
+  src\app\dashboard\delicacies\page.tsx:1328:                <Bell size={18} /> Notifications & Enquiries
+  src\app\dashboard\delicacies\page.tsx:1329:                {unreadCount > 0 && <span 
+className={styles.navBadge}>{unreadCount}</span>}
+  src\app\dashboard\delicacies\page.tsx:1330:              </button>
+  src\app\dashboard\delicacies\page.tsx:1331:              <button className={`${styles.navItem} ${activeTab === 
+'reviews' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('reviews')}>
+  src\app\dashboard\delicacies\page.tsx:1332:                <Star size={18} /> Customer Reviews
+  src\app\dashboard\delicacies\page.tsx:1333:              </button>
+  src\app\dashboard\delicacies\page.tsx:1334:              <button className={`${styles.navItem} ${activeTab === 
+'marketing' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('marketing')}>
+  src\app\dashboard\delicacies\page.tsx:1335:                <Tag size={18} /> Marketing & Promos
+  src\app\dashboard\delicacies\page.tsx:1336:              </button>
+  src\app\dashboard\delicacies\page.tsx:1337:              <button className={`${styles.navItem} ${activeTab === 
+'services' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('services')}>
+  src\app\dashboard\delicacies\page.tsx:1338:                <Scissors size={18} /> Services
+  src\app\dashboard\delicacies\page.tsx:1339:              </button>
+  src\app\dashboard\delicacies\page.tsx:1340:              <button className={`${styles.navItem} ${activeTab === 
+'reels' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('reels')}>
+  src\app\dashboard\delicacies\page.tsx:1341:                <Video size={18} /> Collection Reels
+  src\app\dashboard\delicacies\page.tsx:1342:              </button>
+  src\app\dashboard\delicacies\page.tsx:1343:              <button className={`${styles.navItem} ${activeTab === 
+'analytics' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('analytics')}>
+  src\app\dashboard\delicacies\page.tsx:1344:                <BarChart3 size={18} /> Smart Analytics
+  src\app\dashboard\delicacies\page.tsx:1345:              </button>
+  src\app\dashboard\delicacies\page.tsx:1346:              <button className={`${styles.navItem} ${activeTab === 
+'settings' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('settings')}>
+  src\app\dashboard\delicacies\page.tsx:1347:                <Settings size={18} /> Store Settings
+  src\app\dashboard\delicacies\page.tsx:1348:              </button>
+  src\app\dashboard\delicacies\page.tsx:1349:              <button className={`${styles.navItem} ${activeTab === 
+'plans' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('plans')} style={{ 
+color: 'var(--primary)', background: activeTab === 'plans' ? 'var(--primary-soft)' : 'transparent' }}>
+  src\app\dashboard\delicacies\page.tsx:1350:                <Crown size={18} /> Plans & Upgrade
+  src\app\dashboard\delicacies\page.tsx:1351:              </button>
+  src\app\dashboard\delicacies\page.tsx:1352:              <button className={`${styles.navItem} ${activeTab === 'ai' 
+? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('ai')} style={{ color: 
+'#a78bfa', background: activeTab === 'ai' ? 'rgba(167,139,250,0.1)' : 'transparent' }}>
+  src\app\dashboard\delicacies\page.tsx:1353:                <Zap size={18} /> AI Assistant
+  src\app\dashboard\delicacies\page.tsx:1354:              </button>
+  src\app\dashboard\delicacies\page.tsx:1355:
+  src\app\dashboard\delicacies\page.tsx:1356:              {userRole === 'admin' && (
+  src\app\dashboard\delicacies\page.tsx:1357:                <Link href="/admin" className={styles.navItem} style={{ 
+color: 'var(--accent-gold)', marginTop: '0.5rem', background: 'rgba(212, 175, 55, 0.05)' }}>
+  src\app\dashboard\delicacies\page.tsx:1358:                  <ShieldCheck size={18} /> Admin Control Panel
+  src\app\dashboard\delicacies\page.tsx:1359:                </Link>
+  src\app\dashboard\delicacies\page.tsx:1360:              )}
+  src\app\dashboard\delicacies\page.tsx:1361:
+  src\app\dashboard\delicacies\page.tsx:1362:              <div className={styles.navDivider} style={{ height: '1px', 
+background: 'rgba(255,255,255,0.05)', margin: '1rem 0' }} />
+  src\app\dashboard\delicacies\page.tsx:1363:              
+  src\app\dashboard\delicacies\page.tsx:1364:              <div className={styles.navDivider} style={{ height: '1px', 
+background: 'rgba(255,255,255,0.05)', margin: '1rem 0' }} />
+  src\app\dashboard\delicacies\page.tsx:1365:
+  src\app\dashboard\delicacies\page.tsx:1366:              <button
+  src\app\dashboard\delicacies\page.tsx:1367:                className={styles.navItem}
+  src\app\dashboard\delicacies\page.tsx:1368:                style={{ color: '#ef4444' }}
+  src\app\dashboard\delicacies\page.tsx:1369:                onClick={async () => {
+  src\app\dashboard\delicacies\page.tsx:1370:                  await supabase.auth.signOut();
+  src\app\dashboard\delicacies\page.tsx:1371:                  router.push('/');
+  src\app\dashboard\delicacies\page.tsx:1372:                }}
+  src\app\dashboard\delicacies\page.tsx:1373:              >
+  src\app\dashboard\delicacies\page.tsx:1374:                <LogOut size={18} /> Sign Out
+  src\app\dashboard\delicacies\page.tsx:1375:              </button>
+  src\app\dashboard\delicacies\page.tsx:1376:            </nav>
+  src\app\dashboard\delicacies\page.tsx:1377:          </aside>
+  src\app\dashboard\delicacies\page.tsx:1378:
+  src\app\dashboard\delicacies\page.tsx:1379:      <main className={styles.main}>
+  src\app\dashboard\delicacies\page.tsx:1380:        <header className={styles.dashboardHeader}>
+  src\app\dashboard\delicacies\page.tsx:1381:          <div className={styles.headerTitle}>
+  src\app\dashboard\delicacies\page.tsx:1382:            <h1 className={styles.title} style={{ color: isChef ? 
+'var(--primary)' : 'inherit' }}>{isChef ? 'Master Cart Delicacies' : 'Master Cart Marketplace'}</h1>
+  src\app\dashboard\delicacies\page.tsx:1383:            <p className={styles.subtitle}>{isChef ? 'Manage your 
+kitchen, edible delicacies, and fast-track food orders.' : 'Manage your fashion brand and general merchandise 
+inventory.'}</p>
+  src\app\dashboard\delicacies\page.tsx:1384:          </div>
+  src\app\dashboard\delicacies\page.tsx:1385:          
+  src\app\dashboard\delicacies\page.tsx:1386:          <div className={styles.headerActions}>
+  src\app\dashboard\delicacies\page.tsx:1387:            <div style={{ display: 'flex', alignItems: 'center', gap: 
+'8px', padding: '6px 12px', background: isChef ? 'var(--primary-soft)' : 'var(--bg-200)', borderRadius: '20px', 
+border: `1px solid ${isChef ? 'var(--primary)' : 'var(--border)'}` }}>
+  src\app\dashboard\delicacies\page.tsx:1388:              <div style={{ width: 8, height: 8, borderRadius: '50%', 
+background: isChef ? 'var(--primary)' : '#10b981' }} />
+  src\app\dashboard\delicacies\page.tsx:1389:              <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 
+isChef ? 'var(--primary)' : 'inherit' }}>{isChef ? 'DELICACIES MODE' : 'MARKETPLACE MODE'}</span>
+  src\app\dashboard\delicacies\page.tsx:1390:            </div>
+  src\app\dashboard\delicacies\page.tsx:1391:            {isChef && (
+  src\app\dashboard\delicacies\page.tsx:1392:              <div className={`${styles.kitchenToggle} ${isKitchenOpen ? 
+styles.kitchenOpen : styles.kitchenClosed}`} onClick={toggleKitchenStatus}>
+  src\app\dashboard\delicacies\page.tsx:1393:                <div className={styles.toggleDot} />
+  src\app\dashboard\delicacies\page.tsx:1394:                <span>{isKitchenOpen ? 'KITCHEN OPEN' : 'KITCHEN 
+CLOSED'}</span>
+  src\app\dashboard\delicacies\page.tsx:1395:                {isUpdatingKitchen && <Loader2 size={12} 
+className="anim-spin" />}
+  src\app\dashboard\delicacies\page.tsx:1396:              </div>
+  src\app\dashboard\delicacies\page.tsx:1397:            )}
+  src\app\dashboard\delicacies\page.tsx:1398:            <button className={styles.notifBtn} onClick={() => 
+setActiveTab('enquiries')}>
+  src\app\dashboard\delicacies\page.tsx:1399:              <Bell size={20} />
+  src\app\dashboard\delicacies\page.tsx:1400:              {unreadCount > 0 && <span 
+className={styles.badgeCount}>{unreadCount}</span>}
+  src\app\dashboard\delicacies\page.tsx:1401:            </button>
+  src\app\dashboard\delicacies\page.tsx:1402:          </div>
+  src\app\dashboard\delicacies\page.tsx:1403:        </header>
+  src\app\dashboard\delicacies\page.tsx:1404:        {activeTab === 'no_brand' && (
+  src\app\dashboard\delicacies\page.tsx:1405:          <div className={styles.activationNotice}>
+  src\app\dashboard\delicacies\page.tsx:1406:            <Store size={48} color="var(--primary)" />
+  src\app\dashboard\delicacies\page.tsx:1407:            <h2>Welcome to your Vendor Portal</h2>
+  src\app\dashboard\delicacies\page.tsx:1408:            <p>You have been granted Vendor access! To start uploading 
+products and tracking orders, you first need to set up your official Brand Profile.</p>
+  src\app\dashboard\delicacies\page.tsx:1409:            <Link href="/onboarding" className="btn btn-primary btn-lg 
+mt-4">
+  src\app\dashboard\delicacies\page.tsx:1410:              Setup My Store Now <ArrowRight size={18} />
+  src\app\dashboard\delicacies\page.tsx:1411:            </Link>
+  src\app\dashboard\delicacies\page.tsx:1412:          </div>
+  src\app\dashboard\delicacies\page.tsx:1413:        )}
+  src\app\dashboard\delicacies\page.tsx:1414:
+  src\app\dashboard\delicacies\page.tsx:1415:        {activeTab === 'activation_pending' && (
+  src\app\dashboard\delicacies\page.tsx:1416:          <div className={styles.activationNotice}>
+  src\app\dashboard\delicacies\page.tsx:1417:            <Clock size={48} color="var(--primary)" />
+  src\app\dashboard\delicacies\page.tsx:1418:            <h2>Application Under Review</h2>
+  src\app\dashboard\delicacies\page.tsx:1419:            <p>Your brand registration is being reviewed by our admin 
+team. This usually takes 24-48 hours. You will be notified once you are approved to pay the Ã¢â€šÂ¦2,000 activation 
+fee.</p>
+  src\app\dashboard\delicacies\page.tsx:1420:            <Link href="/" className="btn btn-primary">Back to Hub</Link>
+> src\app\dashboard\delicacies\page.tsx:1998:        {activeTab === 'orders' && (
+  src\app\dashboard\delicacies\page.tsx:1999:          <div className={styles.tabContent}>
+  src\app\dashboard\delicacies\page.tsx:2000:            <h1 className={styles.title}>Order Management</h1>
+  src\app\dashboard\delicacies\page.tsx:2001:            <p className={styles.subtitle}>Process orders quickly to get 
+your escrow funds released faster.</p>
+  src\app\dashboard\delicacies\page.tsx:2002:
+  src\app\dashboard\delicacies\page.tsx:2003:            <div className={styles.orderList}>
+  src\app\dashboard\delicacies\page.tsx:2004:              {orders.length > 0 ? (
+  src\app\dashboard\delicacies\page.tsx:2005:                orders.map((order) => (
+  src\app\dashboard\delicacies\page.tsx:2006:                  <div key={order.id} className={styles.orderCard}>
+  src\app\dashboard\delicacies\page.tsx:2007:                    <div className={styles.orderHeader}>
+  src\app\dashboard\delicacies\page.tsx:2008:                      <div>
+  src\app\dashboard\delicacies\page.tsx:2009:                        <span 
+className={styles.orderId}>#{order.id.slice(0, 8).toUpperCase()}</span>
+  src\app\dashboard\delicacies\page.tsx:2010:                        <span className={styles.orderDate}>{new 
+Date(order.created_at).toLocaleDateString()}</span>
+  src\app\dashboard\delicacies\page.tsx:2011:                        <span style={{ marginLeft: '0.75rem', fontSize: 
+'0.8rem', color: 'var(--text-400)' }}>
+  src\app\dashboard\delicacies\page.tsx:2012:                          ?? {order.users?.name || order.users?.email || 
+`Customer ${order.customer_id?.slice(0, 6)}`}
+  src\app\dashboard\delicacies\page.tsx:2013:                        </span>
+  src\app\dashboard\delicacies\page.tsx:2014:                      </div>
+  src\app\dashboard\delicacies\page.tsx:2015:                      <button className="btn btn-ghost btn-sm" 
+onClick={() => handlePrintInvoice(order)}>
+  src\app\dashboard\delicacies\page.tsx:2016:                        <FileText size={14} /> Print Invoice
+  src\app\dashboard\delicacies\page.tsx:2017:                      </button>
+  src\app\dashboard\delicacies\page.tsx:2018:                    </div>
+  src\app\dashboard\delicacies\page.tsx:2019:
+  src\app\dashboard\delicacies\page.tsx:2020:                    <div className={styles.orderBody}>
+  src\app\dashboard\delicacies\page.tsx:2021:                      <div className={styles.orderInfo}>
+  src\app\dashboard\delicacies\page.tsx:2022:                        <h3>{order.products?.title || 'Fashion Item'}</h3>
+  src\app\dashboard\delicacies\page.tsx:2023:                        <span 
+className={styles.orderPrice}>{formatPrice(Number(order.total_amount))}</span>
+  src\app\dashboard\delicacies\page.tsx:2024:                      </div>
+  src\app\dashboard\delicacies\page.tsx:2025:
+  src\app\dashboard\delicacies\page.tsx:2026:                      <div className={styles.statusCol}>
+  src\app\dashboard\delicacies\page.tsx:2027:                        {order.status === 'paid' && (
+  src\app\dashboard\delicacies\page.tsx:2028:                          <div className={styles.statusBox}>
+  src\app\dashboard\delicacies\page.tsx:2029:                            <div className={styles.actionRow}>
+  src\app\dashboard\delicacies\page.tsx:2030:                              <button className="btn btn-primary btn-sm" 
+onClick={() => updateOrderStatus(order.id, 'accepted')}>Accept Order</button>
+  src\app\dashboard\delicacies\page.tsx:2031:                              <button className="btn btn-ghost btn-sm" 
+style={{ color: 'var(--primary)' }} onClick={() => {
+  src\app\dashboard\delicacies\page.tsx:2032:                                const reason = prompt('Please provide a 
+reason for rejection:');
+  src\app\dashboard\delicacies\page.tsx:2033:                                if (reason) updateOrderStatus(order.id, 
+'cancelled', { rejectionReason: reason });
+  src\app\dashboard\delicacies\page.tsx:2034:                              }}>Reject</button>
+  src\app\dashboard\delicacies\page.tsx:2035:                            </div>
+  src\app\dashboard\delicacies\page.tsx:2036:                          </div>
+  src\app\dashboard\delicacies\page.tsx:2037:                        )}
+  src\app\dashboard\delicacies\page.tsx:2038:                        {order.status === 'accepted' && (
+  src\app\dashboard\delicacies\page.tsx:2039:                          <div className={styles.statusBox}>
+  src\app\dashboard\delicacies\page.tsx:2040:                            <button className="btn btn-secondary btn-sm" 
+onClick={() => updateOrderStatus(order.id, 'processing')}>Start Processing</button>
+  src\app\dashboard\delicacies\page.tsx:2041:                          </div>
+  src\app\dashboard\delicacies\page.tsx:2042:                        )}
+  src\app\dashboard\delicacies\page.tsx:2043:                        {order.status === 'processing' && (
+  src\app\dashboard\delicacies\page.tsx:2044:                          <div className={styles.statusBox}>
+  src\app\dashboard\delicacies\page.tsx:2045:                            <div className={styles.deliverySelector}>
+  src\app\dashboard\delicacies\page.tsx:2046:                              <p>Dispatch Delivery Agent:</p>
+  src\app\dashboard\delicacies\page.tsx:2047:                              <button className="btn btn-primary btn-sm" 
+style={{ width: '100%' }} onClick={() => updateOrderStatus(order.id, 'ready')}>Use Platform Delivery Agent</button>
+  src\app\dashboard\delicacies\page.tsx:2048:                            </div>
+  src\app\dashboard\delicacies\page.tsx:2049:                          </div>
+  src\app\dashboard\delicacies\page.tsx:2050:                        )}
+  src\app\dashboard\delicacies\page.tsx:2051:                        {order.status === 'in_transit' && 
+order.delivery_method !== 'platform' && (
+  src\app\dashboard\delicacies\page.tsx:2052:                          <div className={styles.statusBox}>
+  src\app\dashboard\delicacies\page.tsx:2053:                            <button className="btn btn-secondary btn-sm" 
+onClick={() => updateOrderStatus(order.id, 'delivered')}>Mark as Delivered</button>
+  src\app\dashboard\delicacies\page.tsx:2054:                          </div>
+  src\app\dashboard\delicacies\page.tsx:2055:                        )}
+  src\app\dashboard\delicacies\page.tsx:2056:                        {order.delivery_code && (
+  src\app\dashboard\delicacies\page.tsx:2057:                          <div className={styles.codeBox} style={{ 
+marginBottom: '0.75rem', background: 'var(--bg-300)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px dashed 
+var(--primary)' }}>
+  src\app\dashboard\delicacies\page.tsx:2058:                            <p style={{ margin: 0, fontSize: '0.7rem', 
+color: 'var(--text-400)', textTransform: 'uppercase' }}>Verification Code</p>
+  src\app\dashboard\delicacies\page.tsx:2059:                            <span style={{ fontSize: '1.1rem', 
+fontWeight: 800, color: 'var(--primary)', letterSpacing: '2px' }}>{order.delivery_code}</span>
+  src\app\dashboard\delicacies\page.tsx:2060:                          </div>
+  src\app\dashboard\delicacies\page.tsx:2061:                        )}
+  src\app\dashboard\delicacies\page.tsx:2062:
+  src\app\dashboard\delicacies\page.tsx:2063:                        {order.status === 'ready' && (
+  src\app\dashboard\delicacies\page.tsx:2064:                          <div className={styles.statusBox}>
+  src\app\dashboard\delicacies\page.tsx:2065:                            <span className={`${styles.statusBadge} 
+${styles.statusWarning}`}>
+  src\app\dashboard\delicacies\page.tsx:2066:                              <Clock size={14} /> Awaiting Pickup
+  src\app\dashboard\delicacies\page.tsx:2067:                            </span>
+  src\app\dashboard\delicacies\page.tsx:2068:                          </div>
+  src\app\dashboard\delicacies\page.tsx:2069:                        )}
+  src\app\dashboard\delicacies\page.tsx:2070:                        {(order.status === 'ready' || order.status === 
+'picked_up' || order.status === 'in_transit') && order.deliveries?.[0] && (
+  src\app\dashboard\delicacies\page.tsx:2071:                          <div className={styles.agentInfo} style={{ 
+marginTop: '0.5rem', background: 'var(--bg-200)', padding: '1rem', borderRadius: '12px', border: '1px solid 
+var(--border)' }}>
+  src\app\dashboard\delicacies\page.tsx:2072:                            <div style={{ display: 'flex', alignItems: 
+'center', gap: '0.75rem' }}>
+  src\app\dashboard\delicacies\page.tsx:2073:                              <div style={{ width: 32, height: 32, 
+borderRadius: '50%', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 
+'center', color: 'var(--primary)' }}>
+  src\app\dashboard\delicacies\page.tsx:2074:                                <Truck size={16} />
+  src\app\dashboard\delicacies\page.tsx:2075:                              </div>
+  src\app\dashboard\delicacies\page.tsx:2076:                              <div style={{ flex: 1 }}>
+  src\app\dashboard\delicacies\page.tsx:2077:                                <p style={{ margin: 0, fontSize: 
+'0.7rem', color: 'var(--text-400)', fontWeight: 700 }}>LOGISTIC AGENT</p>
+  src\app\dashboard\delicacies\page.tsx:2078:                                <p style={{ margin: 0, fontWeight: 700, 
+fontSize: '0.9rem' }}>{order.deliveries[0].users?.name || 'Assigning...'}</p>
+  src\app\dashboard\delicacies\page.tsx:2079:                              </div>
+  src\app\dashboard\delicacies\page.tsx:2080:                              {order.deliveries[0].users?.phone && (
+  src\app\dashboard\delicacies\page.tsx:2081:                                <a 
+href={`tel:${order.deliveries[0].users.phone}`} className="btn btn-ghost btn-sm" style={{ padding: '6px' }}>
+  src\app\dashboard\delicacies\page.tsx:2082:                                  <Phone size={14} />
+  src\app\dashboard\delicacies\page.tsx:2083:                                </a>
+  src\app\dashboard\delicacies\page.tsx:2084:                              )}
+  src\app\dashboard\delicacies\page.tsx:2085:                            </div>
+  src\app\dashboard\delicacies\page.tsx:2086:                            {order.deliveries[0].status === 'picked_up' 
+&& (
+  src\app\dashboard\delicacies\page.tsx:2087:                              <p style={{ marginTop: '0.75rem', fontSize: 
+'0.75rem', color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+  src\app\dashboard\delicacies\page.tsx:2088:                                <CheckCircle size={12} /> Successfully 
+Picked Up
+  src\app\dashboard\delicacies\page.tsx:2089:                              </p>
+  src\app\dashboard\delicacies\page.tsx:2090:                            )}
+  src\app\dashboard\delicacies\page.tsx:2091:                          </div>
+  src\app\dashboard\delicacies\page.tsx:2092:                        )}
+  src\app\dashboard\delicacies\page.tsx:2093:                        {(order.status === 'picked_up' || order.status 
+=== 'in_transit') && (
+  src\app\dashboard\delicacies\page.tsx:2094:                          <div className={styles.statusBox}>
+  src\app\dashboard\delicacies\page.tsx:2095:                            <span className={`${styles.statusBadge} 
+${styles.statusInfo}`}>
+  src\app\dashboard\delicacies\page.tsx:2096:                              <Truck size={14} /> 
+{order.status.replace('_', ' ').toUpperCase()}
+  src\app\dashboard\delicacies\page.tsx:2097:                            </span>
+  src\app\dashboard\delicacies\page.tsx:2098:                          </div>
+> src\app\dashboard\delicacies\page.tsx:3377:        <button className={`${styles.mobNavItem} ${activeTab === 'orders' 
+? styles.mobNavActive : ''}`} onClick={() => setActiveTab('orders')}>
+  src\app\dashboard\delicacies\page.tsx:3378:          <ShoppingCart className={styles.mobNavIcon} />
+  src\app\dashboard\delicacies\page.tsx:3379:          <span>Orders</span>
+  src\app\dashboard\delicacies\page.tsx:3380:        </button>
+  src\app\dashboard\delicacies\page.tsx:3381:        <button className={`${styles.mobNavItem} ${activeTab === 
+'inventory' ? styles.mobNavActive : ''}`} onClick={() => setActiveTab('inventory')}>
+  src\app\dashboard\delicacies\page.tsx:3382:          <Package className={styles.mobNavIcon} />
+  src\app\dashboard\delicacies\page.tsx:3383:          <span>Inv</span>
+  src\app\dashboard\delicacies\page.tsx:3384:        </button>
+  src\app\dashboard\delicacies\page.tsx:3385:        <button className={`${styles.mobNavItem} ${activeTab === 'plans' 
+? styles.mobNavActive : ''}`} onClick={() => setActiveTab('plans')}>
+  src\app\dashboard\delicacies\page.tsx:3386:          <Crown className={styles.mobNavIcon} />
+  src\app\dashboard\delicacies\page.tsx:3387:          <span>Plans</span>
+  src\app\dashboard\delicacies\page.tsx:3388:        </button>
+  src\app\dashboard\delicacies\page.tsx:3389:        <button className={`${styles.mobNavItem} ${activeTab === 
+'settings' ? styles.mobNavActive : ''}`} onClick={() => setActiveTab('settings')}>
+  src\app\dashboard\delicacies\page.tsx:3390:          <Settings className={styles.mobNavIcon} />
+  src\app\dashboard\delicacies\page.tsx:3391:          <span>Config</span>
+  src\app\dashboard\delicacies\page.tsx:3392:        </button>
+  src\app\dashboard\delicacies\page.tsx:3393:      </nav>
+  src\app\dashboard\delicacies\page.tsx:3394:
+  src\app\dashboard\delicacies\page.tsx:3395:      {/* --- AI Copilot Floating Widget --- */}
+  src\app\dashboard\delicacies\page.tsx:3396:      {showCopilot && (
+  src\app\dashboard\delicacies\page.tsx:3397:        <div style={{
+  src\app\dashboard\delicacies\page.tsx:3398:          position: 'fixed', bottom: '6rem', right: '1.5rem', width: 
+'360px', maxHeight: '500px',
+  src\app\dashboard\delicacies\page.tsx:3399:          background: 'var(--bg-200)', border: '1px solid 
+rgba(167,139,250,0.35)', borderRadius: '20px',
+  src\app\dashboard\delicacies\page.tsx:3400:          boxShadow: '0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px 
+rgba(167,139,250,0.12)',
+  src\app\dashboard\delicacies\page.tsx:3401:          display: 'flex', flexDirection: 'column', overflow: 'hidden', 
+zIndex: 9999,
+  src\app\dashboard\delicacies\page.tsx:3402:          backdropFilter: 'blur(24px)'
+  src\app\dashboard\delicacies\page.tsx:3403:        }}>
+  src\app\dashboard\delicacies\page.tsx:3404:          {/* Header */}
+  src\app\dashboard\delicacies\page.tsx:3405:          <div style={{ padding: '1rem 1.25rem', background: 
+'linear-gradient(135deg,rgba(167,139,250,0.2),rgba(139,92,246,0.1))', borderBottom: '1px solid 
+rgba(167,139,250,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+  src\app\dashboard\delicacies\page.tsx:3406:            <div style={{ display: 'flex', alignItems: 'center', gap: 
+'0.6rem' }}>
+  src\app\dashboard\delicacies\page.tsx:3407:              <div style={{ width: 32, height: 32, borderRadius: '50%', 
+background: 'linear-gradient(135deg,#a78bfa,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 
+'center', fontSize: '1rem' }}>?</div>
+  src\app\dashboard\delicacies\page.tsx:3408:              <div>
+  src\app\dashboard\delicacies\page.tsx:3409:                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>AI 
+Copilot</div>
+  src\app\dashboard\delicacies\page.tsx:3410:                <div style={{ fontSize: '0.7rem', color: '#a78bfa' 
+}}>Powered by Gemini</div>
+  src\app\dashboard\delicacies\page.tsx:3411:              </div>
+  src\app\dashboard\delicacies\page.tsx:3412:            </div>
+  src\app\dashboard\delicacies\page.tsx:3413:            <button onClick={() => setShowCopilot(false)} style={{ 
+background: 'none', border: 'none', color: 'var(--text-400)', cursor: 'pointer', padding: '4px' }}><X size={16} 
+/></button>
+  src\app\dashboard\delicacies\page.tsx:3414:          </div>
+  src\app\dashboard\delicacies\page.tsx:3415:
+  src\app\dashboard\delicacies\page.tsx:3416:          {/* Messages */}
+  src\app\dashboard\delicacies\page.tsx:3417:          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', 
+display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+  src\app\dashboard\delicacies\page.tsx:3418:            {copilotMsgs.map((msg, i) => (
+  src\app\dashboard\delicacies\page.tsx:3419:              <div key={i} style={{ display: 'flex', justifyContent: 
+msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+  src\app\dashboard\delicacies\page.tsx:3420:                <div style={{
+  src\app\dashboard\delicacies\page.tsx:3421:                  maxWidth: '85%', padding: '0.65rem 0.9rem', 
+borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+  src\app\dashboard\delicacies\page.tsx:3422:                  background: msg.role === 'user' ? 
+'linear-gradient(135deg,#7c3aed,#6d28d9)' : 'var(--bg-300)',
+  src\app\dashboard\delicacies\page.tsx:3423:                  fontSize: '0.83rem', lineHeight: 1.5, whiteSpace: 
+'pre-wrap'
+  src\app\dashboard\delicacies\page.tsx:3424:                }}>
+  src\app\dashboard\delicacies\page.tsx:3425:                  {msg.content}
+  src\app\dashboard\delicacies\page.tsx:3426:                </div>
+  src\app\dashboard\delicacies\page.tsx:3427:              </div>
+  src\app\dashboard\delicacies\page.tsx:3428:            ))}
+  src\app\dashboard\delicacies\page.tsx:3429:            {copilotLoading && (
+  src\app\dashboard\delicacies\page.tsx:3430:              <div style={{ display: 'flex', gap: '4px', padding: 
+'0.5rem' }}>
+  src\app\dashboard\delicacies\page.tsx:3431:                {[0,1,2].map(i => <div key={i} style={{ width: 7, height: 
+7, borderRadius: '50%', background: '#a78bfa', animation: `bounce 1.2s ${i * 0.2}s infinite` }} />)}
+  src\app\dashboard\delicacies\page.tsx:3432:              </div>
+  src\app\dashboard\delicacies\page.tsx:3433:            )}
+  src\app\dashboard\delicacies\page.tsx:3434:          </div>
+  src\app\dashboard\delicacies\page.tsx:3435:
+  src\app\dashboard\delicacies\page.tsx:3436:          {/* Input */}
+  src\app\dashboard\delicacies\page.tsx:3437:          <form onSubmit={handleCopilotSubmit} style={{ padding: 
+'0.75rem', borderTop: '1px solid rgba(167,139,250,0.15)', display: 'flex', gap: '0.5rem' }}>
+  src\app\dashboard\delicacies\page.tsx:3438:            <input
+  src\app\dashboard\delicacies\page.tsx:3439:              value={copilotInput}
+  src\app\dashboard\delicacies\page.tsx:3440:              onChange={e => setCopilotInput(e.target.value)}
+  src\app\dashboard\delicacies\page.tsx:3441:              placeholder="Ask your AI anything..."
+  src\app\dashboard\delicacies\page.tsx:3442:              disabled={copilotLoading}
+  src\app\dashboard\delicacies\page.tsx:3443:              style={{ flex: 1, background: 'var(--bg-300)', border: '1px 
+solid rgba(167,139,250,0.2)', borderRadius: '999px', padding: '0.55rem 1rem', fontSize: '0.83rem', color: '#fff', 
+outline: 'none' }}
+  src\app\dashboard\delicacies\page.tsx:3444:            />
+  src\app\dashboard\delicacies\page.tsx:3445:            <button type="submit" disabled={copilotLoading || 
+!copilotInput.trim()} style={{ width: 36, height: 36, borderRadius: '50%', background: 
+'linear-gradient(135deg,#7c3aed,#6d28d9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', 
+justifyContent: 'center', flexShrink: 0 }}>
+  src\app\dashboard\delicacies\page.tsx:3446:              {copilotLoading ? <Loader2 size={14} className="anim-spin" 
+color="#fff" /> : <ArrowRight size={14} color="#fff" />}
+  src\app\dashboard\delicacies\page.tsx:3447:            </button>
+  src\app\dashboard\delicacies\page.tsx:3448:          </form>
+  src\app\dashboard\delicacies\page.tsx:3449:        </div>
+  src\app\dashboard\delicacies\page.tsx:3450:      )}
+  src\app\dashboard\delicacies\page.tsx:3451:
+  src\app\dashboard\delicacies\page.tsx:3452:      {/* Floating AI Copilot Button */}
+  src\app\dashboard\delicacies\page.tsx:3453:      <button
+  src\app\dashboard\delicacies\page.tsx:3454:        onClick={() => setShowCopilot(v => !v)}
+  src\app\dashboard\delicacies\page.tsx:3455:        title="Open AI Copilot"
+  src\app\dashboard\delicacies\page.tsx:3456:        style={{
+  src\app\dashboard\delicacies\page.tsx:3457:          position: 'fixed', bottom: '1.5rem', right: '1.5rem', width: 
+'56px', height: '56px',
+  src\app\dashboard\delicacies\page.tsx:3458:          borderRadius: '50%', background: 
+'linear-gradient(135deg,#7c3aed,#a78bfa)',
+  src\app\dashboard\delicacies\page.tsx:3459:          border: 'none', cursor: 'pointer', display: 'flex', alignItems: 
+'center', justifyContent: 'center',
+  src\app\dashboard\delicacies\page.tsx:3460:          boxShadow: '0 8px 32px rgba(124,58,237,0.5)', zIndex: 10000,
+  src\app\dashboard\delicacies\page.tsx:3461:        }}
+  src\app\dashboard\delicacies\page.tsx:3462:        onMouseEnter={e => (e.currentTarget.style.transform = 
+'scale(1.1)')}
+  src\app\dashboard\delicacies\page.tsx:3463:        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+  src\app\dashboard\delicacies\page.tsx:3464:      >?</button>
+  src\app\dashboard\delicacies\page.tsx:3465:      </>
+  src\app\dashboard\delicacies\page.tsx:3466:      )}
+  src\app\dashboard\delicacies\page.tsx:3467:    </div>
+  src\app\dashboard\delicacies\page.tsx:3468:  );
+  src\app\dashboard\delicacies\page.tsx:3469:}
+  src\app\dashboard\delicacies\page.tsx:3470:
+  src\app\dashboard\delicacies\page.tsx:3471:
+  src\app\dashboard\delicacies\page.tsx:3472:
+  src\app\dashboard\delicacies\page.tsx:3473:
+  src\app\dashboard\delicacies\page.tsx:3474:
+  src\app\dashboard\delicacies\page.tsx:3475:
+  src\app\dashboard\delicacies\page.tsx:3476:
+  src\app\dashboard\delicacies\page.tsx:3477:
+
+
