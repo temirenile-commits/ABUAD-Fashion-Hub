@@ -381,7 +381,7 @@ function CheckoutContent() {
             <div className={`card ${styles.summaryCard}`}>
               <h2>Order Summary</h2>
               
-              {cart.map((item: LiveProduct & { quantity: number; variants_selected?: Record<string, string> }) => (
+              {cart.map((item: any) => (
                 <div key={item.id} className={styles.summaryItem}>
                   <div className={styles.itemImage}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -402,7 +402,16 @@ function CheckoutContent() {
                       </div>
                     )}
                   </div>
-                  <span className={styles.itemPrice}>{formatPrice((Number(item.price) + Number(item.commission_price || 0) + Number(item.delivery_rate || 0)) * item.quantity)}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                    <span className={styles.itemPrice}>{formatPrice((Number(item.price) + Number(item.commission_price || 0) + Number(item.delivery_rate || 0)) * item.quantity)}</span>
+                    {item.product_section === 'delicacies' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', fontSize: '0.7rem', color: 'var(--text-300)', marginTop: '2px' }}>
+                        <span>Item: {formatPrice(Number(item.price) * item.quantity)}</span>
+                        {Number(item.commission_price) > 0 && <span>Platform Fee: {formatPrice(Number(item.commission_price) * item.quantity)}</span>}
+                        {Number(item.delivery_rate) > 0 && <span>Delivery: {formatPrice(Number(item.delivery_rate) * item.quantity)}</span>}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
 

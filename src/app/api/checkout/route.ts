@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const [productsResult, profileResult, settingsResult, promoResult] = await Promise.all([
       supabaseAdmin
         .from('products')
-        .select('id, title, brand_id, price, commission_price, delivery_rate, stock_count, university_id, visibility_type, brands(verified, fee_paid, delivery_scope, assigned_delivery_system)')
+        .select('id, title, brand_id, price, commission_price, delivery_rate, product_section, stock_count, university_id, visibility_type, brands(verified, fee_paid, delivery_scope, assigned_delivery_system)')
         .in('id', productIds),
       supabaseAdmin
         .from('users')
