@@ -24,7 +24,8 @@ const BADGE_CONFIG: Record<string, { emoji: string; color: string; bg: string }>
 };
 
 export default function DelicaciesRankingsPage() {
-  const [rankings, setRankings] = useState<RankEntry[]>([]);
+  const [activeTab, setActiveTab] = useState<'vendors' | 'products'>('vendors');
+  const [rankings, setRankings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [universityId, setUniversityId] = useState<string | null>(null);
   const [weekStart, setWeekStart] = useState('');
@@ -42,24 +43,23 @@ export default function DelicaciesRankingsPage() {
   }, []);
 
   useEffect(() => {
-    if (!universityId) return;
     const fetchRankings = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/delicacies/rankings?universityId=${universityId}`);
+        const res = await fetch(`/api/delicacies/rankings?universityId=${universityId}&type=${activeTab}`);
         const data = await res.json();
         setRankings(data.rankings || []);
-        if (data.rankings?.[0]?.week_start) {
+        if (activeTab === 'vendors' && data.rankings?.[0]?.week_start) {
           setWeekStart(new Date(data.rankings[0].week_start).toLocaleDateString('en-NG', { month: 'long', day: 'numeric' }));
         }
       } catch { /* silent */ }
       finally { setLoading(false); }
     };
     fetchRankings();
-  }, [universityId]);
+  }, [universityId, activeTab]);
 
-  const top3 = rankings.slice(0, 3);
-  const rest = rankings.slice(3);
+  const top3 = activeTab === 'vendors' ? rankings.slice(0, 3) : [];
+  const rest = activeTab === 'vendors' ? rankings.slice(3) : rankings;
 
   return (
     <main style={{ minHeight: '100vh', background: 'var(--bg-300)', paddingBottom: '3rem' }}>
@@ -80,10 +80,12 @@ export default function DelicaciesRankingsPage() {
             <Trophy size={28} style={{ color: '#f59e0b' }} />
             <div>
               <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 900, color: '#fff' }}>
-                Delicacies Leaderboard
+                Delicacies Hub Leaderboard
               </h1>
               <p style={{ margin: 0, fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)' }}>
-                {weekStart ? `Week of ${weekStart} · Your University` : 'Loading rankings...'}
+                {activeTab === 'vendors' 
+                  ? (weekStart ? `Top performing chefs week of ${weekStart}` : 'Real-time Top Chefs') 
+                  : 'Most popular dishes on the system'}
               </p>
             </div>
           </div>
@@ -91,6 +93,28 @@ export default function DelicaciesRankingsPage() {
       </div>
 
       <div style={{ maxWidth: 800, margin: '2rem auto', padding: '0 1rem' }}>
+        {/* TABS */}
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+           <button 
+             onClick={() => setActiveTab('vendors')}
+             style={{ 
+               background: 'none', border: 'none', color: activeTab === 'vendors' ? '#f59e0b' : 'var(--text-400)', 
+               fontWeight: 700, padding: '0.5rem 1rem', cursor: 'pointer', borderBottom: activeTab === 'vendors' ? '2px solid #f59e0b' : 'none'
+             }}
+           >
+             👨‍🍳 Top Chefs
+           </button>
+           <button 
+             onClick={() => setActiveTab('products')}
+             style={{ 
+               background: 'none', border: 'none', color: activeTab === 'products' ? '#f59e0b' : 'var(--text-400)', 
+               fontWeight: 700, padding: '0.5rem 1rem', cursor: 'pointer', borderBottom: activeTab === 'products' ? '2px solid #f59e0b' : 'none'
+             }}
+           >
+             🍲 Top Dishes
+           </button>
+        </div>
+
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {[...Array(5)].map((_, i) => (
@@ -100,13 +124,13 @@ export default function DelicaciesRankingsPage() {
         ) : rankings.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-400)' }}>
             <Trophy size={48} style={{ opacity: 0.2, margin: '0 auto 1rem', display: 'block' }} />
-            <h3 style={{ color: 'var(--text-200)' }}>No Rankings Yet</h3>
-            <p>Rankings are calculated every Monday based on the previous week&apos;s performance.</p>
+            <h3 style={{ color: 'var(--text-200)' }}>No Data Yet</h3>
+            <p>We are still collecting sales data for this category.</p>
           </div>
         ) : (
           <>
-            {/* ── TOP 3 PODIUM ── */}
-            {top3.length > 0 && (
+            {/* ── TOP 3 PODIUM (Vendors Only) ── */}
+            {activeTab === 'vendors' && top3.length > 0 && (
               <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                 {top3.map((r) => {
                   const brand = Array.isArray(r.brands) ? r.brands[0] : r.brands;
@@ -138,27 +162,24 @@ export default function DelicaciesRankingsPage() {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: '0.72rem', color: '#facc15', marginBottom: '0.25rem' }}>
                         <Star size={11} fill="currentColor" /> {r.avg_rating.toFixed(1)}
                       </div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-400)' }}>{r.orders_completed} orders</div>
-                      {r.reward_amount > 0 && (
-                        <div style={{ marginTop: '0.5rem', fontSize: '0.72rem', fontWeight: 700, color: '#10b981' }}>
-                          🎁 ₦{r.reward_amount.toLocaleString()} reward
-                        </div>
-                      )}
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-400)' }}>{r.orders_completed || 0} orders</div>
                     </div>
                   );
                 })}
               </div>
             )}
 
-            {/* ── REMAINING RANKINGS ── */}
-            {rest.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {/* ── REMAINING RANKINGS / PRODUCTS ── */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                   <TrendingUp size={16} style={{ color: '#f59e0b' }} />
-                  <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>Full Rankings</span>
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>
+                    {activeTab === 'vendors' ? 'Full Rankings' : 'Top 10 Most Bought'}
+                  </span>
                 </div>
-                {rest.map((r) => {
-                  const brand = Array.isArray(r.brands) ? r.brands[0] : r.brands;
+                {rest.map((r, i) => {
+                  const brand = activeTab === 'vendors' ? (Array.isArray(r.brands) ? r.brands[0] : r.brands) : r.brands;
+                  const isProduct = activeTab === 'products';
                   return (
                     <div key={r.id} style={{
                       display: 'flex', alignItems: 'center', gap: '0.75rem',
@@ -166,40 +187,40 @@ export default function DelicaciesRankingsPage() {
                       borderRadius: 12, padding: '0.85rem 1rem'
                     }}>
                       <div style={{ width: 28, textAlign: 'center', fontWeight: 800, color: 'var(--text-400)', fontSize: '0.9rem' }}>
-                        #{r.rank}
+                        #{isProduct ? i + 1 : r.rank}
                       </div>
-                      {brand?.logo_url ? (
-                        <img src={brand.logo_url} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
+                      {isProduct ? (
+                         <img src={r.media_urls?.[0] || '/placeholder.png'} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
                       ) : (
-                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--bg-200)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
-                          {brand?.name?.substring(0, 1) || '?'}
-                        </div>
+                        brand?.logo_url ? (
+                            <img src={brand.logo_url} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--bg-200)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
+                                {brand?.name?.substring(0, 1) || '?'}
+                            </div>
+                        )
                       )}
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{brand?.name || 'Unknown'}</div>
+                        <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{isProduct ? r.title : (brand?.name || 'Unknown')}</div>
                         <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.7rem', color: 'var(--text-400)', marginTop: 2 }}>
                           <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#facc15' }}>
-                            <Star size={10} fill="currentColor" /> {r.avg_rating.toFixed(1)}
+                            <Star size={10} fill="currentColor" /> {r.avg_rating?.toFixed(1) || '0.0'}
                           </span>
-                          <span>{r.orders_completed} orders</span>
-                          {r.complaints > 0 && <span style={{ color: '#ef4444' }}>{r.complaints} complaints</span>}
+                          <span>{isProduct ? `${r.sold || 0} sold` : `${r.orders_completed || 0} orders`}</span>
+                          {isProduct && <span style={{ color: '#10b981', fontWeight: 700 }}>₦{r.price?.toLocaleString()}</span>}
                         </div>
                       </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#f59e0b' }}>
-                          {r.score.toFixed(1)} pts
+                      {!isProduct && r.score && (
+                        <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#f59e0b' }}>
+                            {r.score.toFixed(1)} pts
+                            </div>
                         </div>
-                        {r.reward_amount > 0 && (
-                          <div style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: 700 }}>
-                            🎁 ₦{r.reward_amount.toLocaleString()}
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
-            )}
           </>
         )}
       </div>

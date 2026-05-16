@@ -534,7 +534,38 @@ export async function POST(req: NextRequest) {
       }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: 'Product deleted successfully.' });
+  }
+
+  if (action === 'delete_brand') {
+    const { brandId } = body;
+    await supabaseAdmin.from('products').delete().eq('brand_id', brandId);
+    const { error } = await supabaseAdmin
+      .from('brands')
+      .delete()
+      .eq('id', brandId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Brand and its products deleted successfully.' });
+  }
+
+  if (action === 'remove_billboard') {
+    const { brandId } = body;
+    const { error } = await supabaseAdmin
+      .from('brands')
+      .update({ billboard_boost_expires_at: null })
+      .eq('id', brandId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Billboard removed successfully.' });
+  }
+
+  if (action === 'remove_flash_sale') {
+    const { productId } = body;
+    const { error } = await supabaseAdmin
+      .from('products')
+      .update({ is_flash_sale: false, flash_sale_price: null })
+      .eq('id', productId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Flash sale removed successfully.' });
   }
 
   if (action === 'create_homepage_section') {
@@ -700,6 +731,7 @@ export async function POST(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }
+
 
   if (action === 'feature_product') {
     const { productId, featured } = body;
