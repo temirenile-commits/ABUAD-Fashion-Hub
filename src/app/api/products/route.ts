@@ -43,16 +43,18 @@ export async function POST(req: Request) {
     // 0. Fetch Brand & Credit Check
     const { data: brand, error: brandError } = await supabaseAdmin
       .from('brands')
-      .select('free_listings_count, university_id, marketplace_type, subscription_status, subscription_expires_at, is_trial_active')
+      .select('free_listings_count, university_id, marketplace_type, subscription_expires_at, trial_started_at')
       .eq('id', brandId)
       .single();
 
     if (brandError || !brand) {
+      console.error('[API PRODUCTS] Brand Error:', brandError, 'ID:', brandId);
       return NextResponse.json({ error: 'Brand not found' }, { status: 404 });
     }
 
-    const isSubActive = brand.subscription_status === 'active' && brand.subscription_expires_at && new Date(brand.subscription_expires_at) > new Date();
-    const isTrialActive = !!brand.is_trial_active;
+    const isSubActive = brand.subscription_expires_at && new Date(brand.subscription_expires_at) > new Date();
+    const isTrialActive = brand.trial_started_at && 
+      (new Date().getTime() - new Date(brand.trial_started_at).getTime()) < (7 * 24 * 60 * 60 * 1000);
 
     if (!isDraft) {
       // If not trial and not active sub, check credits
