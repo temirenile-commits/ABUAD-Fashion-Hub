@@ -79,7 +79,7 @@ export async function POST(req: Request) {
         category,
         product_section: effectiveSection,
         delicacy_category: effectiveSection === 'delicacies' ? category : null,
-        stock_count: typeof stockCount === 'number' ? stockCount : 10,
+        stock_count: stockCount ? Number(stockCount) : 0,
         media_urls: mediaUrls || [],
         image_url: imageUrl || (mediaUrls && mediaUrls[0]) || null,
         video_url: videoUrl || null,

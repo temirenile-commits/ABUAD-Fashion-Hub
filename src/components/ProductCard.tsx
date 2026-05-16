@@ -260,6 +260,14 @@ export default function ProductCard({ product }: Props) {
                 <Eye size={12} />
                 <span style={{ fontSize: '0.75rem' }}>{product.views_count || 0}</span>
               </div>
+              <div style={{ 
+                marginLeft: 'auto', 
+                fontSize: '0.75rem', 
+                fontWeight: 700, 
+                color: (product.stock_count || 0) > 0 ? '#10b981' : '#ef4444' 
+              }}>
+                {(product.stock_count || 0) > 0 ? `${product.stock_count} In Stock` : 'Out of Stock'}
+              </div>
             </div>
             {product.stock_count > 0 ? (
               <button

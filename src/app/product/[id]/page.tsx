@@ -254,6 +254,17 @@ export default async function ProductPage({ params }: Props) {
               <span className={styles.views} style={{ display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.6 }}>
                 <Eye size={14} /> {product.views_count || 0} views
               </span>
+              <span style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '4px', 
+                color: (product.stock_count || 0) > 0 ? '#10b981' : '#ef4444', 
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                marginLeft: '8px'
+              }}>
+                {(product.stock_count || 0) > 0 ? `?? ${product.stock_count} in stock` : '?? Out of stock'}
+              </span>
             </div>
 
             {/* Price */}
