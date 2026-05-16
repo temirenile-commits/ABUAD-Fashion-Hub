@@ -982,7 +982,7 @@ export async function POST(req: NextRequest) {
     const { brandId } = body;
     const { error } = await supabaseAdmin
       .from('brands')
-      .update({ marketplace_type: 'delicacies', active_dashboard_mode: 'chef' })
+      .update({ marketplace_type: 'delicacies', active_dashboard_mode: 'chief_chef' })
       .eq('id', brandId);
     
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

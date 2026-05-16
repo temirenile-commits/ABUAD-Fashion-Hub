@@ -159,7 +159,7 @@ export default function OnboardingPage() {
           terms_accepted: true,
           trial_started_at: new Date().toISOString(),
           marketplace_type: vendorType,
-          active_dashboard_mode: vendorType === 'delicacies' ? 'chef' : 'normal'
+          active_dashboard_mode: vendorType === 'delicacies' ? 'chief_chef' : 'normal'
         })
         .select()
         .single();

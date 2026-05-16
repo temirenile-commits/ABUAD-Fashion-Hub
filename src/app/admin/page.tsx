@@ -1911,8 +1911,8 @@ export default function AdminDashboard() {
                         <h3>Power Plans & Credit Rates</h3>
                         <p className={styles.subText}>Configure subscription plans specifically for this campus.</p>
                         
-                        <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '500px' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem' }}>
+                        <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '100%' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
                             <div>
                               <label className={styles.subText}>Credit Listing Price (₦)</label>
                               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
