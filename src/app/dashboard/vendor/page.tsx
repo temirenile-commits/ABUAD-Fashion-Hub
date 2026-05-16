@@ -11,6 +11,7 @@ import { uploadFile } from '@/lib/storage';
 import { useNotifications } from '@/context/NotificationContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarketplaceStore } from '@/store/marketplaceStore';
+import CountdownTimer from '@/components/CountdownTimer';
 import styles from './dashboard.module.css';
 
 // Icons mapper for dynamic rates
@@ -378,6 +379,33 @@ export default function VendorDashboard() {
     fetchVendorData();
   }, [router, setGlobalOrders]);
 
+  // Auto-Cleanup Expired Drafts (24h rule)
+  useEffect(() => {
+    if (products.length > 0) {
+      const cleanupExpiredDrafts = async () => {
+        const now = new Date().getTime();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        
+        const expired = products.filter(p => 
+          p.is_draft && 
+          p.stock_count === 0 && 
+          p.updated_at && 
+          (now - new Date(p.updated_at).getTime() > twentyFourHours)
+        );
+        
+        if (expired.length > 0) {
+          const ids = expired.map(p => p.id);
+          const { error } = await supabase.from('products').delete().in('id', ids);
+          if (!error) {
+            ids.forEach(id => removeProduct(id));
+            console.log(`Cleaned up ${ids.length} expired drafts.`);
+          }
+        }
+      };
+      cleanupExpiredDrafts();
+    }
+  }, [products, removeProduct]);
+
 
 
 
@@ -520,7 +548,14 @@ export default function VendorDashboard() {
         .eq('id', productId);
       
       if (!error) {
-        updateGlobalProduct(productId, { stock_count: newStock });
+        const updates: any = { stock_count: newStock };
+        if (newStock === 0) {
+          updates.is_draft = true;
+          updates.updated_at = new Date().toISOString();
+          await supabase.from('products').update({ is_draft: true, updated_at: updates.updated_at }).eq('id', productId);
+        }
+        updateGlobalProduct(productId, updates);
+        if (newStock === 0) alert('Product out of stock! It has been moved to Drafts and will be deleted in 24 hours if not restocked.');
       }
     } catch (err) {
       console.error('Stock update failed:', err);
@@ -2333,6 +2368,15 @@ export default function VendorDashboard() {
                        <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.stock_count || 0} <span style={{fontSize: '0.7rem', opacity: 0.7}}>Units</span></span>
                        <button className="btn btn-ghost btn-sm" style={{ padding: '0 8px' }} onClick={() => updateStock(p.id, 1)}>+</button>
                     </div>
+                    {p.is_draft && p.stock_count === 0 && p.updated_at && (
+                       <div style={{ marginBottom: '0.5rem', padding: '8px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                         <div style={{ fontSize: '0.65rem', color: '#ef4444', fontWeight: 800, marginBottom: '4px', textTransform: 'uppercase' }}>Auto-Delete In:</div>
+                         <CountdownTimer 
+                           expiryDate={new Date(new Date(p.updated_at).getTime() + 24 * 60 * 60 * 1000).toISOString()} 
+                           compact 
+                         />
+                       </div>
+                    )}
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                       <button className="btn btn-ghost btn-sm" style={{ flex: 1, border: '1px solid var(--border)' }} onClick={() => {
                         setEditingProduct(p);

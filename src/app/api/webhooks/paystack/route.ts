@@ -213,6 +213,15 @@ export async function POST(req: Request) {
           supabaseAdmin.rpc('decrement_product_stock', { prod_id: order.product_id, qty: order.quantity || 1 })
         ]);
 
+        // Auto-Drafting: Check if stock hit zero
+        const { data: updatedProd } = await supabaseAdmin.from('products').select('stock_count').eq('id', order.product_id).single();
+        if (updatedProd && updatedProd.stock_count <= 0) {
+          await supabaseAdmin.from('products').update({ 
+            is_draft: true,
+            updated_at: new Date().toISOString() 
+          }).eq('id', order.product_id);
+        }
+
         const vendorUserId = brandData?.owner_id;
 
         // B. Update Brand Metrics (for Trendy Ranking)

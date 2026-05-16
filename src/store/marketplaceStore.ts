@@ -22,6 +22,7 @@ export interface Product {
   sales_count: number;
   boost_level: number;
   created_at: string;
+  updated_at?: string;
   brands: {
     id: string;
     owner_id: string;
