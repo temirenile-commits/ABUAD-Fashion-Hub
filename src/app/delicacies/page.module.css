@@ -626,3 +626,43 @@
 }
 
 .ctaBtn:hover { opacity: 0.88; }
+.viewFullLink {
+  display: block;
+  text-align: center;
+  font-size: 0.72rem;
+  color: #f59e0b;
+  font-weight: 700;
+  text-decoration: none;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.viewFullLink:hover {
+  background: rgba(245, 158, 11, 0.05);
+  text-decoration: underline;
+}
+
+.dishRankRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.dishRankRow:hover {
+  background: var(--bg-200);
+}
+
+.dishRankImg {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}

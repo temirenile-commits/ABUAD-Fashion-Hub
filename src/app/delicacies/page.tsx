@@ -46,6 +46,7 @@ const BADGE_CONFIG: Record<string, { label: string; emoji: string }> = {
 export default function DelicaciesPage() {
   const [products, setProducts] = useState<DelicacyProduct[]>([]);
   const [rankings, setRankings] = useState<RankingEntry[]>([]);
+  const [topDishes, setTopDishes] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCat, setSelectedCat] = useState<string>('all');
   const [search, setSearch] = useState('');
@@ -84,19 +85,21 @@ export default function DelicaciesPage() {
     const fetchAll = async () => {
       setLoading(true);
       try {
-        const [prodRes, rankRes, catRes, billRes] = await Promise.all([
+        const [prodRes, rankRes, dishesRes, catRes, billRes] = await Promise.all([
           fetch(`/api/delicacies?universityId=${universityId}&limit=100`),
           fetch(`/api/delicacies/rankings?universityId=${universityId}`),
+          fetch(`/api/delicacies/rankings?universityId=${universityId}&type=products`),
           fetch('/api/delicacies/categories'),
           fetch(`/api/delicacies/billboard?universityId=${universityId}`),
         ]);
 
-        const [prodData, rankData, catData, billData] = await Promise.all([
-          prodRes.json(), rankRes.json(), catRes.json(), billRes.json()
+        const [prodData, rankData, dishesData, catData, billData] = await Promise.all([
+          prodRes.json(), rankRes.json(), dishesRes.json(), catRes.json(), billRes.json()
         ]);
 
         setProducts(prodData.products || []);
         setRankings(rankData.rankings || []);
+        setTopDishes(dishesData.rankings || []);
         setCategories(catData.categories || []);
         setBillboards(billData.billboards || []);
       } catch (err) { console.error('Fetch error:', err); }
@@ -344,7 +347,7 @@ export default function DelicaciesPage() {
                 <span>Weekly Hall of Fame</span>
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-400)', marginBottom: '1rem', padding: '0 0.5rem' }}>Top vendors awarded badges of honor & boosts.</p>
-              {rankings.slice(0, 5).map((r, i) => {
+              {rankings.slice(0, 3).map((r, i) => {
                 const brand = Array.isArray(r.brands) ? r.brands[0] : r.brands;
                 const badge = r.badge ? BADGE_CONFIG[r.badge] : null;
                 return (
@@ -355,11 +358,31 @@ export default function DelicaciesPage() {
                     </div>
                     <div className={styles.rankInfo}>
                       <div className={styles.rankName}>{brand?.name}</div>
-                      <div className={styles.rankStats}>{r.orders_completed} orders · {r.avg_rating?.toFixed(1)} ⭐</div>
+                      <div className={styles.rankStats}>{r.orders_completed || 0} orders · {r.avg_rating?.toFixed(1)} ⭐</div>
                     </div>
                   </div>
                 );
               })}
+              <Link href="/delicacies/rankings" className={styles.viewFullLink}>View Full Hall of Fame →</Link>
+
+              {/* Top Dishes Sub-section */}
+              <div className={styles.rankingsHeader} style={{ marginTop: '2rem' }}>
+                <Star size={16} style={{ color: '#facc15' }} />
+                <span>Top Rated Dishes</span>
+              </div>
+              <div style={{ marginTop: '1rem' }}>
+                {topDishes.slice(0, 3).map((d, i) => (
+                  <Link key={d.id} href={`/product/${d.id}`} className={styles.dishRankRow}>
+                    <div className={styles.rankNum} style={{ color: 'var(--primary)' }}>#{i+1}</div>
+                    <img src={d.media_urls?.[0] || '/placeholder.png'} alt="" className={styles.dishRankImg} />
+                    <div className={styles.rankInfo}>
+                      <div className={styles.rankName}>{d.title}</div>
+                      <div className={styles.rankStats}>₦{d.price.toLocaleString()} · {d.sold || 0} sold</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <Link href="/delicacies/rankings?tab=products" className={styles.viewFullLink}>Explore Best Sellers →</Link>
             </div>
           </aside>
         </div>

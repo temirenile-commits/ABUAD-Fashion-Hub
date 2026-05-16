@@ -18,9 +18,19 @@ export async function GET(req: Request) {
         `)
         .eq('product_section', 'delicacies')
         .order('sold', { ascending: false })
-        .limit(10);
+        .limit(20);
       if (error) throw error;
       return NextResponse.json({ rankings: data || [] });
+    }
+
+    if (type === 'all_vendors') {
+        const { data, error } = await supabaseAdmin
+            .from('brands')
+            .select('id, name, logo_url, avg_rating, description')
+            .eq('marketplace_type', 'delicacies')
+            .order('name', { ascending: true });
+        if (error) throw error;
+        return NextResponse.json({ vendors: data || [] });
     }
 
     let query = supabaseAdmin
@@ -34,7 +44,7 @@ export async function GET(req: Request) {
         )
       `)
       .order('rank', { ascending: true })
-      .limit(20);
+      .limit(10);
 
     if (universityId) query = query.eq('university_id', universityId);
     if (weekStart) query = query.eq('week_start', weekStart);
