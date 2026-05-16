@@ -331,7 +331,8 @@ export default function VendorDashboard() {
             { id: 'visibility_month', name: '30-Day Market Domination', price: 5000, duration: '30 Days', popular: true }
         ];
         let finalActivationFee = settingsData.find(s => s.key === 'activation_fee')?.value?.amount || 2000;
-        const delicaciesCreditPriceVal = settingsData.find(s => s.key === 'delicacies_credit_price')?.value?.price || 50;
+        const delPriceSetting = settingsData.find(s => s.key === 'delicacies_credit_price')?.value;
+        const delicaciesCreditPriceVal = typeof delPriceSetting === 'number' ? delPriceSetting : (delPriceSetting?.price || 50);
         setDelicaciesCreditPrice(delicaciesCreditPriceVal);
 
         if (brandData.university_id) {

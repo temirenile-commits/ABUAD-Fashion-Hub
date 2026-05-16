@@ -1127,6 +1127,8 @@ export async function POST(req: NextRequest) {
     if (universityId === 'global') {
        if (key === 'credit_price') {
           await supabaseAdmin.from('platform_settings').upsert({ key: 'credit_price', value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+       } else if (key === 'delicacies_credit_price') {
+          await supabaseAdmin.from('platform_settings').upsert({ key: 'delicacies_credit_price', value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
        } else if (key === 'plans') {
           // Map plans dict back to subscription_rates array
           const { data: existRates } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'subscription_rates').single();
