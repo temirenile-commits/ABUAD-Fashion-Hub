@@ -1150,6 +1150,47 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  if (action === 'close_weekly_hall_of_fame') {
+    // 1. Find Top Chef (Brand) in Delicacies
+    const { data: topChef } = await supabaseAdmin
+      .from('brands')
+      .select('id, name, award_history')
+      .eq('marketplace_type', 'delicacies')
+      .order('weekly_orders', { ascending: false })
+      .limit(1)
+      .single();
+
+    // 2. Find Top Dish (Product) in Delicacies
+    const { data: topDish } = await supabaseAdmin
+      .from('products')
+      .select('id, title, award_history')
+      .eq('product_section', 'delicacies')
+      .order('weekly_sold', { ascending: false })
+      .limit(1)
+      .single();
+
+    const weekLabel = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    // 3. Update Award History
+    if (topChef) {
+      const history = (topChef.award_history as any[]) || [];
+      history.push({ week: weekLabel, title: 'Weekly Top Chef', rank: 1 });
+      await supabaseAdmin.from('brands').update({ award_history: history }).eq('id', topChef.id);
+    }
+
+    if (topDish) {
+      const history = (topDish.award_history as any[]) || [];
+      history.push({ week: weekLabel, title: 'Dish of the Week', rank: 1 });
+      await supabaseAdmin.from('products').update({ award_history: history }).eq('id', topDish.id);
+    }
+
+    // 4. Reset ALL weekly stats
+    await supabaseAdmin.from('brands').update({ weekly_orders: 0 }).eq('marketplace_type', 'delicacies');
+    await supabaseAdmin.from('products').update({ weekly_sold: 0 }).eq('product_section', 'delicacies');
+
+    return NextResponse.json({ success: true, winner_chef: topChef?.name, winner_dish: topDish?.title });
+  }
+
   if (action === 'add_manual_billboard') {
     const { title, description, link, cover_url, university_id } = body;
     const { data: exist } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'manual_billboards').single();

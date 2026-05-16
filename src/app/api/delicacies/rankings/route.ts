@@ -13,11 +13,11 @@ export async function GET(req: Request) {
       const { data, error } = await supabaseAdmin
         .from('products')
         .select(`
-          id, title, price, sold, avg_rating, media_urls,
+          id, title, price, sold, weekly_sold, avg_rating, media_urls, award_history,
           brands ( id, name, logo_url )
         `)
         .eq('product_section', 'delicacies')
-        .order('sold', { ascending: false })
+        .order('weekly_sold', { ascending: false })
         .limit(20);
       if (error) throw error;
       return NextResponse.json({ rankings: data || [] });
@@ -55,8 +55,9 @@ export async function GET(req: Request) {
       // Fallback to real-time rankings based on products sold
       const { data: realTime, error: rtError } = await supabaseAdmin
         .from('brands')
-        .select('id, name, logo_url, avg_rating')
+        .select('id, name, logo_url, avg_rating, weekly_orders, award_history')
         .eq('marketplace_type', 'delicacies')
+        .order('weekly_orders', { ascending: false })
         .limit(10);
       
       if (rtError) throw rtError;
@@ -66,9 +67,10 @@ export async function GET(req: Request) {
       const rankings = realTime.map((v, i) => ({
         id: v.id,
         rank: i + 1,
-        score: (v.avg_rating || 0) * 20, // Simplified real-time score
+        score: (v.weekly_orders || 0) * 10 + (v.avg_rating || 0) * 5,
         avg_rating: v.avg_rating || 0,
-        orders_completed: 0, 
+        orders_completed: v.weekly_orders || 0, 
+        award_history: v.award_history || [],
         brands: v
       })).sort((a, b) => b.score - a.score);
 

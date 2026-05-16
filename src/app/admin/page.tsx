@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   Users, Store, ShoppingBag, TrendingUp, XCircle,
   Search, RefreshCw, Trash2, Star, Eye, ShoppingCart, Loader2, CreditCard, AlertTriangle, Settings, Bell,
-  BarChart3, Activity, ExternalLink, MapPin, Tag, ArrowLeft, ShieldAlert, ShieldCheck, Clock, UtensilsCrossed
+  BarChart3, Activity, ExternalLink, MapPin, Tag, ArrowLeft, ShieldAlert, ShieldCheck, Clock, UtensilsCrossed, Trophy
 } from 'lucide-react';
 import { uploadFile } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
@@ -966,16 +966,16 @@ export default function AdminDashboard() {
                    <div className={styles.promoSubSection}>
                       <h3>🏠 Active Billboards</h3>
                       <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
-                         <thead><tr><th>Brand</th><th>Expires</th></tr></thead>
+                         <thead><tr><th>Brand</th><th>Expires</th><th>Action</th></tr></thead>
                          <tbody>
                             {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at!) > new Date()).map(v => (
                                <tr key={v.id}>
                                   <td>{v.name}</td>
-                                  <td>{new Date(v.billboard_boost_expires_at!).toLocaleDateString()}</td>
+                                  <td>{new Date(v.billboard_boost_expires_at!).toLocaleDateString()}</td><td><button className="btn btn-ghost btn-sm" style={{ color: "#ef4444" }} onClick={() => confirm("Remove from billboard?") && adminAction("remove_billboard", { brandId: v.id })}><Trash2 size={14} /></button></td>
                                </tr>
                             ))}
                             {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at!) > new Date()).length === 0 && (
-                               <tr><td colSpan={2} style={{ textAlign: 'center' }} className={styles.subText}>No active billboards</td></tr>
+                               <tr><td colSpan={3} style={{ textAlign: 'center' }} className={styles.subText}>No active billboards</td></tr>
                             )}
                          </tbody>
                       </table></div>
@@ -983,17 +983,17 @@ export default function AdminDashboard() {
                    <div className={styles.promoSubSection}>
                       <h3>⚡ Active Flash Sales</h3>
                       <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
-                         <thead><tr><th>Product</th><th>Price</th><th>Brand</th></tr></thead>
+                         <thead><tr><th>Product</th><th>Price</th><th>Brand</th><th>Action</th></tr></thead>
                          <tbody>
                             {products.filter(p => p.is_flash_sale).map(p => (
                                <tr key={p.id}>
                                   <td>{p.title}</td>
                                   <td style={{ color: 'var(--primary)', fontWeight: 700 }}>₦{Number(p.flash_sale_price || p.price).toLocaleString()}</td>
-                                  <td>{p.brands?.name}</td>
+                                  <td>{p.brands?.name}</td><td><button className="btn btn-ghost btn-sm" style={{ color: "#ef4444" }} onClick={() => confirm("End flash sale?") && adminAction("remove_flash_sale", { productId: p.id })}><Trash2 size={14} /></button></td>
                                </tr>
                             ))}
                             {products.filter(p => p.is_flash_sale).length === 0 && (
-                               <tr><td colSpan={3} style={{ textAlign: 'center' }} className={styles.subText}>No active flash sales</td></tr>
+                               <tr><td colSpan={4} style={{ textAlign: 'center' }} className={styles.subText}>No active flash sales</td></tr>
                             )}
                          </tbody>
                       </table></div>
@@ -1136,8 +1136,8 @@ export default function AdminDashboard() {
                                   <ShoppingBag size={14} />
                                 </button>
                               )}
-                              <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => confirm('Delete this section?') && adminAction('delete_homepage_section', { id: sec.id })}>
-                                <Trash2 size={14} />
+                              <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444', gap: '4px' }} onClick={() => confirm('Delete this section?') && adminAction('delete_homepage_section', { id: sec.id })}>
+                                <Trash2 size={14} /> <span>Delete</span>
                               </button>
                             </div>
                           </td>
@@ -1522,6 +1522,21 @@ export default function AdminDashboard() {
                   <div>
                     <h2>Delicacies Financials Management</h2>
                     <p className={styles.subText}>Configure commission and delivery rates for food products. These charges are added to the vendor price and paid by customers.</p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button 
+                      className="btn btn-secondary" 
+                      onClick={async () => {
+                        if (!confirm('Are you sure you want to close the current weekly Hall of Fame? This will award badges to the current top chef/dish and RESET all weekly scores to 0.')) return;
+                        const res = await adminAction('close_weekly_hall_of_fame', {});
+                        if (res.success) {
+                          alert(`Week Closed Successfully!\n\nTop Chef: ${res.winner_chef}\nTop Dish: ${res.winner_dish}`);
+                          window.location.reload();
+                        }
+                      }}
+                    >
+                      <Trophy size={16} /> Close Weekly Cycle
+                    </button>
                   </div>
                 </div>
                 <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '8px' }}>

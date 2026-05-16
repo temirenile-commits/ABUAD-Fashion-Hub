@@ -9,6 +9,7 @@ import {
   Package,
   CheckCircle,
   Eye,
+  Trophy,
 } from 'lucide-react';
 import ShareProductButton from '@/components/ShareProductButton';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -224,6 +225,11 @@ export default async function ProductPage({ params }: Props) {
                 <span className="badge" style={{ background: 'var(--primary)', color: '#000', fontWeight: 700, padding: '4px 8px', borderRadius: '4px' }}>
                   PRE-ORDER
                 </span>
+              )}
+              {product.award_history && (product.award_history as any[]).length > 0 && (
+                <div className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px' }}>
+                  <Trophy size={12} /> {(product.award_history as any[])[0].title}
+                </div>
               )}
             </div>
             

@@ -227,7 +227,7 @@ export async function POST(req: Request) {
       const fulfillmentPromises = orders.map(async (order) => {
         // A. Parallel Fetch: Vendor Data & Stock Decrement
         const [{ data: brandData }, _] = await Promise.all([
-          supabaseAdmin.from('brands').select('owner_id, sales_count, latitude, longitude').eq('id', order.brand_id).single(),
+          supabaseAdmin.from('brands').select('owner_id, sales_count, weekly_orders, latitude, longitude').eq('id', order.brand_id).single(),
           supabaseAdmin.rpc('decrement_product_stock', { prod_id: order.product_id, qty: order.quantity || 1 })
         ]);
 
@@ -240,11 +240,15 @@ export async function POST(req: Request) {
           }).eq('id', order.product_id);
         }
 
+        // Increment weekly_sold for product
+        await supabaseAdmin.rpc('increment_product_weekly_sold', { prod_id: order.product_id, qty: order.quantity || 1 });
+
         const vendorUserId = brandData?.owner_id;
 
         // B. Update Brand Metrics (for Trendy Ranking)
         await supabaseAdmin.from('brands').update({ 
-          sales_count: (brandData?.sales_count || 0) + (order.quantity || 1) 
+          sales_count: (brandData?.sales_count || 0) + (order.quantity || 1),
+          weekly_orders: (brandData?.weekly_orders || 0) + (order.quantity || 1)
         }).eq('id', order.brand_id);
 
         // C. Record Financial Transaction (Escrow) & Update Wallet

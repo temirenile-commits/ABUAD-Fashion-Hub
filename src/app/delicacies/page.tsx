@@ -213,6 +213,7 @@ export default function DelicaciesPage() {
 
       <div className={styles.container}>
         {/* ── FAST FILTERS & CATEGORIES ── */}
+        {/* ── FAST FILTERS & CATEGORIES ── */}
         <div className={styles.filterSection}>
           <div className={styles.fastFilters}>
             <button className={`${styles.filterBtn} ${statusFilter === 'all' && !useLocationFilter ? styles.filterBtnActive : ''}`} onClick={() => { setStatusFilter('all'); setUseLocationFilter(false); }}>All Items</button>
@@ -250,6 +251,67 @@ export default function DelicaciesPage() {
                 {cat.emoji} {cat.label}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* ── BILLBOARD SLIDER ── */}
+        {billboards.length > 0 && (
+          <div className={styles.billboard}>
+            <Link href={billboards[billboardIdx].brand_id ? `/vendor/${billboards[billboardIdx].brand_id}` : '#'}>
+              <img src={billboards[billboardIdx].image_url} alt="Promotion" className={styles.billboardImg} />
+            </Link>
+            {billboards.length > 1 && (
+              <div className={styles.billboardDots}>
+                {billboards.map((_, i) => (
+                  <div key={i} className={`${styles.dot} ${i === billboardIdx ? styles.dotActive : ''}`} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── HORIZONTAL HALL OF FAME ── */}
+        <div className={styles.hallOfFame}>
+          {/* Top Chefs Section */}
+          <div className={styles.hofSection}>
+            <div className={styles.hofHeader}>
+              <Trophy size={20} style={{ color: '#f59e0b' }} />
+              <span>Weekly Hall of Fame (Top Chefs)</span>
+              <Link href="/delicacies/rankings" className={styles.viewFullLink} style={{ margin: 0, padding: 0, fontSize: '0.8rem' }}>View Full →</Link>
+            </div>
+            <div className={styles.hofScroll}>
+              {rankings.map((r, i) => {
+                const brand = Array.isArray(r.brands) ? r.brands[0] : r.brands;
+                return (
+                  <Link key={i} href={`/vendor/${brand?.id}`} className={styles.vendorCircle}>
+                    <div className={styles.circleFrame}>
+                      {brand?.logo_url ? <img src={brand.logo_url} alt="" /> : <span>{brand?.name?.[0]}</span>}
+                    </div>
+                    <div className={styles.vendorName}>{brand?.name}</div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Top Dishes Section */}
+          <div className={styles.hofSection}>
+            <div className={styles.hofHeader}>
+              <Star size={20} style={{ color: '#facc15' }} />
+              <span>Dish of the Week (Top Rated)</span>
+              <Link href="/delicacies/rankings?tab=products" className={styles.viewFullLink} style={{ margin: 0, padding: 0, fontSize: '0.8rem' }}>View All →</Link>
+            </div>
+            <div className={styles.hofScroll}>
+              {topDishes.map((d, i) => (
+                <Link key={d.id} href={`/product/${d.id}`} className={styles.dishVertical}>
+                  <div className={styles.dishRank}>#{i+1}</div>
+                  <img src={d.media_urls?.[0] || '/placeholder.png'} alt="" className={styles.dishImg} />
+                  <div className={styles.dishOverlay}>
+                    <div className={styles.dishName}>{d.title}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -339,52 +401,6 @@ export default function DelicaciesPage() {
             )}
           </div>
 
-          {/* ── SIDEBAR: WEEKLY RANKINGS ── */}
-          <aside className={styles.sidebar}>
-            <div className={styles.rankingsCard}>
-              <div className={styles.rankingsHeader}>
-                <Trophy size={16} style={{ color: '#f59e0b' }} />
-                <span>Weekly Hall of Fame</span>
-              </div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-400)', marginBottom: '1rem', padding: '0 0.5rem' }}>Top vendors awarded badges of honor & boosts.</p>
-              {rankings.slice(0, 3).map((r, i) => {
-                const brand = Array.isArray(r.brands) ? r.brands[0] : r.brands;
-                const badge = r.badge ? BADGE_CONFIG[r.badge] : null;
-                return (
-                  <div key={i} className={styles.rankRow}>
-                    <div className={styles.rankNum}>{badge ? badge.emoji : `#${r.rank}`}</div>
-                    <div className={styles.rankAvatar}>
-                      {brand?.logo_url ? <img src={brand.logo_url} alt="" /> : <span>{brand?.name?.[0]}</span>}
-                    </div>
-                    <div className={styles.rankInfo}>
-                      <div className={styles.rankName}>{brand?.name}</div>
-                      <div className={styles.rankStats}>{r.orders_completed || 0} orders · {r.avg_rating?.toFixed(1)} ⭐</div>
-                    </div>
-                  </div>
-                );
-              })}
-              <Link href="/delicacies/rankings" className={styles.viewFullLink}>View Full Hall of Fame →</Link>
-
-              {/* Top Dishes Sub-section */}
-              <div className={styles.rankingsHeader} style={{ marginTop: '2rem' }}>
-                <Star size={16} style={{ color: '#facc15' }} />
-                <span>Top Rated Dishes</span>
-              </div>
-              <div style={{ marginTop: '1rem' }}>
-                {topDishes.slice(0, 3).map((d, i) => (
-                  <Link key={d.id} href={`/product/${d.id}`} className={styles.dishRankRow}>
-                    <div className={styles.rankNum} style={{ color: 'var(--primary)' }}>#{i+1}</div>
-                    <img src={d.media_urls?.[0] || '/placeholder.png'} alt="" className={styles.dishRankImg} />
-                    <div className={styles.rankInfo}>
-                      <div className={styles.rankName}>{d.title}</div>
-                      <div className={styles.rankStats}>₦{d.price.toLocaleString()} · {d.sold || 0} sold</div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-              <Link href="/delicacies/rankings?tab=products" className={styles.viewFullLink}>Explore Best Sellers →</Link>
-            </div>
-          </aside>
         </div>
 
         {/* ── CTA: BECOME A DELICACIES VENDOR ── */}

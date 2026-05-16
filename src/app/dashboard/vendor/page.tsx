@@ -2706,6 +2706,20 @@ export default function VendorDashboard() {
                     >
                       <Edit3 size={14} /> Customize Billboard
                     </button>
+                    <button 
+                      className="btn btn-ghost btn-sm"
+                      style={{ color: '#ef4444', marginTop: '0.5rem' }}
+                      onClick={async () => {
+                        if (!confirm('Remove your store from the billboard? This will not refund any credits.')) return;
+                        const { error } = await supabase.from('brands').update({ billboard_boost_expires_at: null }).eq('id', brand.id);
+                        if (!error) {
+                          setBrand((prev: any) => ({ ...prev, billboard_boost_expires_at: null }));
+                          alert('Billboard removed.');
+                        }
+                      }}
+                    >
+                      <Trash2 size={14} /> Remove Billboard
+                    </button>
                   </div>
                 ) : (
                   <button 
@@ -2873,39 +2887,71 @@ export default function VendorDashboard() {
                           </td>
                           <td>
                             {p.is_flash_sale ? (
-                              <button 
-                                className="btn btn-ghost btn-sm"
-                                onClick={async () => {
-                                   const { error } = await supabase.from('products').update({ is_flash_sale: false, flash_sale_price: null }).eq('id', p.id);
-                                   if (!error) {
-                                      updateGlobalProduct(p.id, { is_flash_sale: false, flash_sale_price: null });
-                                   }
-                                }}
-                              >
-                                End Sale
-                              </button>
-                            ) : (
-                              <button 
-                                className="btn btn-secondary btn-sm"
-                                onClick={async () => {
-                                  const price = prompt(`Enter Flash Sale Price for ${p.title} (Must be lower than ${p.price}):`);
-                                  if (price && Number(price) < p.price) {
-                                     const { error } = await supabase.from('products').update({ 
-                                       is_flash_sale: true, 
-                                       flash_sale_price: Number(price),
-                                       original_price: p.price // backup current price
-                                     }).eq('id', p.id);
+                              <>
+                                <button 
+                                  className="btn btn-ghost btn-sm"
+                                  onClick={async () => {
+                                     const { error } = await supabase.from('products').update({ is_flash_sale: false, flash_sale_price: null }).eq('id', p.id);
                                      if (!error) {
-                                        updateGlobalProduct(p.id, { is_flash_sale: true, flash_sale_price: Number(price), original_price: p.price });
-                                        alert('Product added to Flash Sales!');
+                                        updateGlobalProduct(p.id, { is_flash_sale: false, flash_sale_price: null });
                                      }
-                                  } else if (price) {
-                                    alert('Flash price must be lower than original price.');
-                                  }
-                                }}
-                              >
-                                Start Flash Sale
-                              </button>
+                                  }}
+                                >
+                                  End Sale
+                                </button>
+                                <button 
+                                  className="btn btn-ghost btn-sm"
+                                  style={{ color: '#ef4444' }}
+                                  onClick={async () => {
+                                    if (!confirm('Permanently delete this product?')) return;
+                                    const { error } = await supabase.from('products').delete().eq('id', p.id);
+                                    if (!error) {
+                                      removeProduct(p.id);
+                                      alert('Product deleted.');
+                                    }
+                                  }}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button 
+                                  className="btn btn-secondary btn-sm"
+                                  onClick={async () => {
+                                    const price = prompt(`Enter Flash Sale Price for ${p.title} (Must be lower than ${p.price}):`);
+                                    if (price && Number(price) < p.price) {
+                                       const { error } = await supabase.from('products').update({ 
+                                         is_flash_sale: true, 
+                                         flash_sale_price: Number(price),
+                                         original_price: p.price // backup current price
+                                       }).eq('id', p.id);
+                                       if (!error) {
+                                          updateGlobalProduct(p.id, { is_flash_sale: true, flash_sale_price: Number(price), original_price: p.price });
+                                          alert('Product added to Flash Sales!');
+                                       }
+                                    } else if (price) {
+                                      alert('Flash price must be lower than original price.');
+                                    }
+                                  }}
+                                >
+                                  Start Flash Sale
+                                </button>
+                                <button 
+                                  className="btn btn-ghost btn-sm"
+                                  style={{ color: '#ef4444' }}
+                                  onClick={async () => {
+                                    if (!confirm('Permanently delete this product?')) return;
+                                    const { error } = await supabase.from('products').delete().eq('id', p.id);
+                                    if (!error) {
+                                      removeProduct(p.id);
+                                      alert('Product deleted.');
+                                    }
+                                  }}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </>
                             )}
                           </td>
                         </tr>

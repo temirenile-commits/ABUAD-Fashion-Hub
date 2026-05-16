@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { CheckCircle, MessageCircle, Star, Package, Users, Calendar, Eye } from 'lucide-react';
+import { CheckCircle, MessageCircle, Star, Package, Users, Calendar, Eye, Trophy } from 'lucide-react';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
 import VividVideo from '@/components/VividVideo';
@@ -135,6 +135,17 @@ export default async function VendorPage({ params, searchParams }: Props) {
             </div>
             <span className={`badge badge-teal`}>{vendor.brand_type || 'General / Non-Edibles'}</span>
             <p className={styles.description}>{vendor.description}</p>
+            
+            {/* Award History Badges */}
+            {vendor.award_history && (vendor.award_history as any[]).length > 0 && (
+              <div className={styles.awardHistory} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                {(vendor.award_history as any[]).map((award, i) => (
+                  <div key={i} className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px' }}>
+                    <Trophy size={12} /> {award.title} • {award.week}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className={styles.profileActions}>

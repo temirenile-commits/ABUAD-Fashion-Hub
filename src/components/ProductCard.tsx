@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Star, MessageCircle, ShoppingBag, ShieldCheck, Download, Play, MoreVertical, Share2, Eye } from 'lucide-react';
+import { Heart, Star, MessageCircle, ShoppingBag, ShieldCheck, Download, Play, MoreVertical, Share2, Eye, Trophy } from 'lucide-react';
 import styles from './ProductCard.module.css';
 
 import { formatPrice, getDiscount } from '@/lib/utils';
@@ -54,6 +54,7 @@ export interface LiveProduct {
   product_section?: 'fashion' | 'delicacies';
   commission_price?: number;
   delivery_rate?: number;
+  award_history?: any[];
 }
 interface Props {
   product: LiveProduct;
@@ -163,6 +164,25 @@ export default function ProductCard({ product }: Props) {
         {product.visibility_type === 'global' && (
           <div className={styles.globalBadge}>
             Global Market
+          </div>
+        )}
+
+        {product.award_history && product.award_history.length > 0 && (
+          <div className={styles.awardBadge} style={{ 
+            position: 'absolute', 
+            top: '8px', 
+            right: '40px', 
+            background: 'var(--primary)', 
+            color: 'white', 
+            padding: '4px', 
+            borderRadius: '50%', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            zIndex: 5
+          }}>
+            <Trophy size={12} fill="currentColor" />
           </div>
         )}
 
