@@ -78,7 +78,9 @@ export async function POST(req: Request) {
         original_price: originalPrice ? Number(originalPrice) : null,
         category,
         product_section: effectiveSection,
-        delicacy_category: effectiveSection === 'delicacies' ? category : null,
+        delicacy_category: effectiveSection === 'delicacies' 
+          ? (['snacks', 'small_chops', 'pastries_baked', 'drinks_beverages', 'provisions', 'combo_packages', 'frozen_chilled', 'seasonal_trending', 'other'].includes(category) ? category : 'other')
+          : null,
         stock_count: stockCount ? Number(stockCount) : 0,
         media_urls: mediaUrls || [],
         image_url: imageUrl || (mediaUrls && mediaUrls[0]) || null,

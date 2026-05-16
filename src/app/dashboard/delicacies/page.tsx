@@ -123,7 +123,7 @@ export default function VendorDashboard() {
     description: '',
     price: '',
     originalPrice: '',
-    category: 'General',
+    category: 'snacks',
     stockCount: '10',
     mediaUrls: [] as string[],
     imageUrl: '',
@@ -134,7 +134,7 @@ export default function VendorDashboard() {
     isPreorder: false,
     preorderArrivalDate: '',
     location_availability: '',
-    delicacy_category: 'General'
+    delicacy_category: 'snacks'
   });
 
   const [isEditingName, setIsEditingName] = useState(false);
@@ -688,8 +688,8 @@ export default function VendorDashboard() {
           updateGlobalProduct(editingProduct.id, updates);
           setEditingProduct(null);
           setNewProduct({
-            title: '', description: '', price: '', originalPrice: '', category: isChef ? 'snacks' : 'General',
-            stockCount: '10', mediaUrls: [], imageUrl: '', videoUrl: '', variants: [], isDraft: false, visibility_type: 'university', isPreorder: false, preorderArrivalDate: '', location_availability: '', delicacy_category: 'General'
+            title: '', description: '', price: '', originalPrice: '', category: 'snacks',
+            stockCount: '10', mediaUrls: [], imageUrl: '', videoUrl: '', variants: [], isDraft: false, visibility_type: 'university', isPreorder: false, preorderArrivalDate: '', location_availability: '', delicacy_category: 'snacks'
           });
           alert('Product updated successfully!');
         } else {
@@ -721,8 +721,8 @@ export default function VendorDashboard() {
             description: '',
             price: '',
             originalPrice: '',
-            category: 'input category type',
-            stockCount: 'input required if not pre-order',
+            category: 'snacks',
+            stockCount: '10',
             mediaUrls: [],
             imageUrl: '',
             videoUrl: '',
@@ -732,7 +732,7 @@ export default function VendorDashboard() {
             isPreorder: false,
             preorderArrivalDate: '',
             location_availability: '',
-            delicacy_category: 'General'
+            delicacy_category: 'snacks'
           });
           alert('Product listed successfully!');
         } else {
@@ -2327,11 +2327,13 @@ export default function VendorDashboard() {
                           <>
                             <option value="snacks">Snacks</option>
                             <option value="small_chops">Small Chops</option>
-                            <option value="pastries">Pastries</option>
-                            <option value="main_dish">Main Dish</option>
-                            <option value="sides">Sides</option>
-                            <option value="beverages">Beverages</option>
+                            <option value="pastries_baked">Pastries & Baked Items</option>
+                            <option value="drinks_beverages">Drinks & Beverages</option>
                             <option value="provisions">Provisions</option>
+                            <option value="combo_packages">Combo Packages</option>
+                            <option value="frozen_chilled">Frozen & Chilled</option>
+                            <option value="seasonal_trending">Seasonal / Trending</option>
+                            <option value="other">Other / Not Listed</option>
                           </>
                         ) : (
                           <>
@@ -2538,7 +2540,7 @@ export default function VendorDashboard() {
                           category: p.category, stockCount: p.stock_count.toString(), mediaUrls: p.media_urls || [],
                           imageUrl: '', videoUrl: '', visibility_type: (p.visibility_type as string) || 'university',
                           variants: (Array.isArray(p.variants) ? p.variants : []) as any[], isDraft: !!p.is_draft, isPreorder: !!p.is_preorder, preorderArrivalDate: (p.preorder_arrival_date as string)?.slice(0, 16) || '',
-                          delicacy_category: (p.delicacy_category as string) || 'General', location_availability: (p.location_availability as string) || 'Whole University'
+                          delicacy_category: ['snacks', 'small_chops', 'pastries_baked', 'drinks_beverages', 'provisions', 'combo_packages', 'frozen_chilled', 'seasonal_trending', 'other'].includes(p.delicacy_category as string) ? (p.delicacy_category as string) : 'other', location_availability: (p.location_availability as string) || 'Whole University'
                         });
                         setIsAddingProduct(true);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
