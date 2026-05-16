@@ -199,8 +199,31 @@ export async function POST(req: Request) {
         );
       }
 
-      const results = await Promise.all(updatePromises);
-      const updateError = results.find(r => r.error)?.error;
+      let results = await Promise.all(updatePromises);
+      let updateError = results.find(r => r.error)?.error;
+
+      if (updateError && updateError.message.includes('schema cache')) {
+        console.warn('[WEBHOOK] Schema cache error during order update. Retrying without delivery_code.');
+        const retryPromises = [];
+        if (normalOrderIds.length > 0) {
+          retryPromises.push(
+            supabaseAdmin.from('orders').update({ 
+              status: 'paid',
+              expires_at: null
+            }).in('id', normalOrderIds)
+          );
+        }
+        if (preorderIds.length > 0) {
+          retryPromises.push(
+            supabaseAdmin.from('orders').update({ 
+              status: 'preorder_paid',
+              expires_at: null
+            }).in('id', preorderIds)
+          );
+        }
+        results = await Promise.all(retryPromises);
+        updateError = results.find(r => r.error)?.error;
+      }
 
       if (updateError) {
         console.error('Error updating orders batch:', updateError);

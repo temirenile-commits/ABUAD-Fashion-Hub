@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     if (updateError) throw updateError;
 
     // 3. Sync Delivery Visibility
-    if (status === 'ready' && order.delivery_method === 'platform') {
+    if ((status === 'ready' || status === 'ready_for_pickup') && order.delivery_method === 'platform') {
       await supabaseAdmin.from('deliveries')
         .update({ status: 'pending' })
         .eq('order_id', orderId);
