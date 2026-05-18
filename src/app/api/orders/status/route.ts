@@ -31,6 +31,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized to manage this order' }, { status: 403 });
     }
 
+    // 2a. Guard: validate status transitions to prevent DB constraint violations
+    const currentStatus = order.status;
+    const validTransitions: Record<string, string[]> = {
+      paid:             ['accepted', 'cancelled'],
+      preorder_paid:    ['ready_for_pickup', 'cancelled'],
+      accepted:         ['processing', 'cancelled'],
+      processing:       ['ready', 'cancelled'],
+      ready:            ['in_transit', 'cancelled'],
+      ready_for_pickup: ['in_transit', 'cancelled'],
+      in_transit:       ['delivered', 'cancelled'],
+      picked_up:        ['in_transit', 'delivered'],
+    };
+    const allowed = validTransitions[currentStatus];
+    if (allowed && !allowed.includes(status)) {
+      return NextResponse.json(
+        { error: `Cannot move order from "${currentStatus}" to "${status}". ${currentStatus === 'pending' ? 'This order has not been paid yet.' : `Valid next steps are: ${allowed.join(', ')}.`}` },
+        { status: 400 }
+      );
+    }
+
     // 2. Update Status
     const updateData: any = { status: status };
     

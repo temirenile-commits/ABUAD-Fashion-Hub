@@ -79,7 +79,14 @@ export default function VendorDashboard() {
   const { products: allProducts, orders: allOrders, setOrders: setGlobalOrders, addProduct, removeProduct, updateOrder, updateProduct: updateGlobalProduct } = useMarketplaceStore();
   const [showDraftsOnly, setShowDraftsOnly] = useState(false);
 
-  const orders = brand ? allOrders.filter(o => o.brand_id === brand.id).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
+  // Exclude expired pending orders (ghost carts that were never paid)
+  const orders = brand ? allOrders
+    .filter(o => {
+      if (o.brand_id !== brand.id) return false;
+      if (o.status === 'pending' && o.expires_at && new Date(o.expires_at) < new Date()) return false;
+      return true;
+    })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
 
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
