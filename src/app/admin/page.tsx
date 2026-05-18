@@ -80,6 +80,7 @@ interface Product {
   product_section?: string;
   commission_price?: number;
   delivery_rate?: number;
+  payment_system?: string;
 }
 
 interface PayoutRequest {
@@ -1857,6 +1858,7 @@ export default function AdminDashboard() {
                         <th>Commission (Admin)</th>
                         <th>Delivery Rate</th>
                         <th>Customer Pays</th>
+                        <th>Checkout System</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
@@ -1911,6 +1913,17 @@ export default function AdminDashboard() {
                              </td>
                              <td style={{ fontWeight: 800, color: 'var(--primary)' }}>
                                ₦{customerPrice.toLocaleString()}
+                             </td>
+                             <td>
+                               <select
+                                 className="form-input"
+                                 style={{ fontSize: '0.75rem', padding: '0.2rem', height: 'auto', width: '130px', background: 'var(--bg-300)', color: 'var(--text-100)', border: '1px solid var(--border)' }}
+                                 value={p.payment_system || 'paystack'}
+                                 onChange={(e) => adminAction('update_product_payment_system', { productId: p.id, paymentSystem: e.target.value })}
+                               >
+                                 <option value="paystack">💳 Paystack</option>
+                                 <option value="manual">🏦 Manual GTB/Acc</option>
+                               </select>
                              </td>
                              <td>
                                <button className="btn btn-ghost btn-sm" onClick={() => addToast('Auto-saves on change', 'info')}>
