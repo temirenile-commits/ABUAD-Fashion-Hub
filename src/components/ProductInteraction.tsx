@@ -19,6 +19,18 @@ export default function ProductInteraction({ product }: Props) {
 
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
 
+  // Get active price based on selected variants
+  let activePrice = Number(product.price);
+  let hasCustomVariantPrice = false;
+  
+  Object.entries(selectedVariants).forEach(([type, val]) => {
+    const match = (product.variants || []).find((v: any) => v.type === type && v.value === val);
+    if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
+      activePrice = Number(match.price);
+      hasCustomVariantPrice = true;
+    }
+  });
+
   // Group variants by type (e.g. Size: ["S", "M", "L"], Color: ["Red", "Blue"])
   const variantsByType = (product.variants || []).reduce((acc: Record<string, string[]>, v: any) => {
     if (!acc[v.type]) acc[v.type] = [];
@@ -84,6 +96,29 @@ export default function ProductInteraction({ product }: Props) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Selected Variant Price Preview */}
+      {hasCustomVariantPrice && (
+        <div style={{
+          background: 'rgba(235, 12, 122, 0.05)',
+          border: '1px solid rgba(235, 12, 122, 0.15)',
+          borderRadius: '12px',
+          padding: '1rem',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          boxShadow: '0 4px 20px rgba(235, 12, 122, 0.03)'
+        }}>
+          <div>
+            <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-400)', fontWeight: 600, letterSpacing: '0.5px' }}>Selected Option Price</span>
+            <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: 'var(--text-300)' }}>Pricing varies based on your selection</p>
+          </div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
+            {formatPrice(activePrice)}
+          </div>
         </div>
       )}
 

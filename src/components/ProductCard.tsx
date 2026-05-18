@@ -52,6 +52,7 @@ export interface LiveProduct {
   reviews?: number;
   sold?: number;
   product_section?: 'fashion' | 'delicacies';
+  payment_system?: string;
   commission_price?: number;
   delivery_rate?: number;
   award_history?: any[];

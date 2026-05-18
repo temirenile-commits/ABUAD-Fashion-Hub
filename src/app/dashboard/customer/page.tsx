@@ -15,6 +15,9 @@ interface AppOrder {
   total_amount: string | number;
   delivery_method?: string;
   delivery_code?: string;
+  payment_system?: string;
+  manual_payment_status?: string;
+  manual_payment_details?: any;
   products?: { title: string; media_urls?: string[] };
   brands?: { name: string };
   deliveries?: { 
@@ -208,11 +211,11 @@ export default function CustomerDashboard() {
                       <span className={styles.orderId}>Order #{order.id.slice(0, 8).toUpperCase()}</span>
                       <span className={styles.orderDate}>{new Date(order.created_at).toLocaleDateString()}</span>
                     </div>
-                    <div className={`${styles.statusBadge} ${styles[order.status]}`}>
-                       {order.status === 'paid' && <Clock size={14} />}
+                    <div className={`${styles.statusBadge} ${order.payment_system === 'manual' && order.status === 'pending' ? styles.pending_verification : styles[order.status]}`} style={order.payment_system === 'manual' && order.status === 'pending' ? { background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)' } : undefined}>
+                       {(order.status === 'paid' || order.status === 'pending') && <Clock size={14} />}
                        {order.status === 'in_transit' && <Truck size={14} />}
                        {order.status === 'delivered' && <CheckCircle size={14} />}
-                       {order.status.replace('_', ' ').toUpperCase()}
+                       {order.payment_system === 'manual' && order.status === 'pending' ? 'PENDING VERIFICATION' : order.status.replace('_', ' ').toUpperCase()}
                     </div>
                   </div>
 
@@ -240,6 +243,17 @@ export default function CustomerDashboard() {
                       )}
                     </div>
                   </div>
+
+                  {order.payment_system === 'manual' && order.status === 'pending' && (
+                    <div style={{ margin: '0 1.5rem 1.rem', background: 'rgba(245, 158, 11, 0.04)', border: '1px dashed rgba(245, 158, 11, 0.3)', padding: '1rem', borderRadius: '12px', marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontWeight: 600, fontSize: '0.85rem', marginBottom: '4px' }}>
+                        <Clock size={16} /> Manual Payment Verification Pending
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-300)', lineHeight: 1.5 }}>
+                        You submitted a manual transfer of <strong>{formatPrice(Number(order.total_amount))}</strong> via <strong>{((order as any).manual_payment_details as any)?.sender_bank || 'Unknown Bank'}</strong>. The super admin is currently checking this transaction.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Live Status Timeline */}
                   <div className={styles.timelineContainer} style={{ padding: '0 1.5rem 1rem' }}>

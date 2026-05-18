@@ -1133,6 +1133,14 @@ export default function VendorDashboard() {
     });
   };
 
+  const updateVariantPrice = (index: number, priceStr: string) => {
+    setNewProduct(prev => {
+      const updated = [...prev.variants];
+      updated[index].price = priceStr ? Number(priceStr) : undefined;
+      return { ...prev, variants: updated };
+    });
+  };
+
   const handleReviewReply = async (reviewId: string, reply: string) => {
     try {
       const { error } = await supabase
@@ -2416,6 +2424,13 @@ export default function VendorDashboard() {
                             placeholder={v.type === 'Location / Hostel' ? "e.g. Talba, Whole University" : "e.g. XL or Maroon"}
                             value={v.value}
                             onChange={(e) => updateVariant(i, e.target.value)}
+                          />
+                          <input
+                            type="number"
+                            placeholder="Price override (₦)"
+                            value={v.price || ''}
+                            onChange={(e) => updateVariantPrice(i, e.target.value)}
+                            style={{ maxWidth: '160px', marginLeft: '0.5rem' }}
                           />
                           <button type="button" onClick={() => removeVariant(i)} className={styles.removeBtn}><X size={14} /></button>
                         </div>

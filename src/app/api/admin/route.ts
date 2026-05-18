@@ -537,6 +537,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, message: 'Product deleted successfully.' });
   }
 
+  if (action === 'update_product_payment_system') {
+    const { productId, paymentSystem } = body;
+    const { error } = await supabaseAdmin
+      .from('products')
+      .update({ payment_system: paymentSystem })
+      .eq('id', productId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Product payment system updated successfully.' });
+  }
+
+  if (action === 'update_settings') {
+    const { key, value } = body;
+    const { error } = await supabaseAdmin
+      .from('platform_settings')
+      .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Platform settings updated successfully.' });
+  }
+
   if (action === 'delete_brand') {
     const { brandId } = body;
     await supabaseAdmin.from('products').delete().eq('brand_id', brandId);
@@ -1313,6 +1332,97 @@ export async function POST(req: NextRequest) {
       .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
+  }
+
+  if (action === 'approve_manual_payment') {
+    const { orderId } = body;
+    
+    // 1. Fetch order details
+    const { data: order, error: orderErr } = await supabaseAdmin
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
+      
+    if (orderErr || !order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    // 2. Mark order as paid
+    const { error: updateErr } = await supabaseAdmin
+      .from('orders')
+      .update({
+        status: 'paid',
+        manual_payment_status: 'approved'
+      })
+      .eq('id', orderId);
+
+    if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
+
+    // 3. Record transaction ledger
+    await supabaseAdmin.from('transactions').insert({
+      user_id: order.customer_id,
+      brand_id: order.brand_id,
+      amount: order.total_amount,
+      type: 'purchase',
+      status: 'completed',
+      reference: order.paystack_reference || `MANUAL-${orderId}`,
+      description: `Manual Bank Payment Approved for Order #${orderId.slice(0, 8)}`
+    });
+
+    // 4. Dispatch in-app notification
+    await supabaseAdmin.from('notifications').insert({
+      user_id: order.customer_id,
+      title: '💰 Manual Payment Approved!',
+      content: `Your bank transfer payment for Order #${orderId.slice(0, 8).toUpperCase()} was verified. Preparation has started!`,
+      is_read: false,
+      type: 'direct'
+    });
+
+    return NextResponse.json({ success: true, message: 'Manual payment approved successfully.' });
+  }
+
+  if (action === 'reject_manual_payment') {
+    const { orderId, reason } = body;
+
+    // 1. Fetch order details
+    const { data: order, error: orderErr } = await supabaseAdmin
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
+
+    if (orderErr || !order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    // 2. Mark order as cancelled and update details
+    const updatedDetails = {
+      ...(order.manual_payment_details || {}),
+      rejection_reason: reason || 'Transaction could not be verified.'
+    };
+
+    const { error: updateErr } = await supabaseAdmin
+      .from('orders')
+      .update({
+        status: 'cancelled',
+        manual_payment_status: 'rejected',
+        manual_payment_details: updatedDetails
+      })
+      .eq('id', orderId);
+
+    if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
+
+    // 3. Dispatch rejection in-app notification
+    await supabaseAdmin.from('notifications').insert({
+      user_id: order.customer_id,
+      title: '❌ Payment Verification Failed',
+      content: `Your bank transfer payment for Order #${orderId.slice(0, 8).toUpperCase()} was rejected: ${reason || 'Transaction could not be verified.'}`,
+      is_read: false,
+      type: 'direct'
+    });
+
+    return NextResponse.json({ success: true, message: 'Manual payment rejected.' });
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

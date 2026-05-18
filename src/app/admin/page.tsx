@@ -13,7 +13,7 @@ import styles from './admin.module.css';
 import PremiumChart from '@/components/PremiumChart'; 
 import { useToast } from '@/context/ToastContext';
 
-type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds' | 'preorders' | 'delicacies';
+type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds' | 'preorders' | 'delicacies' | 'manual_payments';
 
 interface University {
   id: string;
@@ -115,8 +115,17 @@ interface Order {
   delivery_fee_charged?: number;
   users?: { name: string; email: string };
   products?: { title: string };
+  brands?: { name: string; university_id?: string };
   brand_id?: string;
   university_id?: string;
+  payment_system?: string;
+  manual_payment_status?: string;
+  manual_payment_details?: {
+    sender_bank?: string;
+    account_name?: string;
+    receipt_code?: string;
+    rejection_reason?: string;
+  };
 }
 
 interface Review {
@@ -222,6 +231,7 @@ async function adminFetch(path: string, options: RequestInit = {}) {
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [refundOrders, setRefundOrders] = useState<Order[]>([]);
+  const [manualQueueSubTab, setManualQueueSubTab] = useState<'pending' | 'history'>('pending');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState('');
   const [search, setSearch] = useState('');
@@ -273,6 +283,12 @@ export default function AdminDashboard() {
   const [uniConfig, setUniConfig] = useState<UniConfig>({});
   const [uniLoading, setUniLoading] = useState(false);
 
+  const [manualBankCode, setManualBankCode] = useState('');
+  const [manualAccountNumber, setManualAccountNumber] = useState('');
+  const [manualAccountName, setManualAccountName] = useState('');
+  const [resolvingManualAccount, setResolvingManualAccount] = useState(false);
+  const [availableBanks, setAvailableBanks] = useState<any[]>([]);
+
   const [manualBillboards, setManualBillboards] = useState<ManualBillboard[]>([]);
   const [billboardUpload, setBillboardUpload] = useState({ title: '', sub: '', link: '', file: null as File | null });
   const [uploadingBillboard, setUploadingBillboard] = useState(false);
@@ -284,6 +300,54 @@ export default function AdminDashboard() {
   const [addingAgent, setAddingAgent] = useState(false);
   const { addToast } = useToast();
   const fetchedRef = useRef(false);
+
+  // Load available banks on component mount
+  useEffect(() => {
+    const loadBanks = async () => {
+      try {
+        const res = await fetch('/api/paystack/banks');
+        const d = await res.json();
+        if (d.success) setAvailableBanks(d.data || []);
+      } catch (err) {
+        console.error('Failed to load banks', err);
+      }
+    };
+    loadBanks();
+  }, []);
+
+  // Autofill bank settings when platformSettings load
+  useEffect(() => {
+    if (platformSettings?.manual_payment_settings) {
+      const bankData = platformSettings.manual_payment_settings;
+      setManualBankCode(bankData.bank_code || '');
+      setManualAccountNumber(bankData.account_number || '');
+      setManualAccountName(bankData.account_name || '');
+    }
+  }, [platformSettings]);
+
+  // Auto-resolve bank account details
+  useEffect(() => {
+    const resolveAccount = async () => {
+      if (manualAccountNumber.length === 10 && manualBankCode) {
+        setResolvingManualAccount(true);
+        setManualAccountName('');
+        try {
+          const res = await fetch(`/api/paystack/resolve?accountNumber=${manualAccountNumber}&bankCode=${manualBankCode}`);
+          const d = await res.json();
+          if (d.success && d.data?.account_name) {
+            setManualAccountName(d.data.account_name);
+            addToast('Bank account resolved successfully!', 'success');
+          } else {
+            addToast('Could not resolve bank account details.', 'error');
+          }
+        } catch (err) {
+          addToast('Error resolving bank account details.', 'error');
+        }
+        setResolvingManualAccount(false);
+      }
+    };
+    resolveAccount();
+  }, [manualAccountNumber, manualBankCode, addToast]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -537,6 +601,7 @@ export default function AdminDashboard() {
             ['delivery_agents', 'Fleet ', Activity],
             ['universities', 'Universities', MapPin],
             ['delicacies', 'Delicacies', UtensilsCrossed],
+            ['manual_payments', 'Manual Transfers', ShieldCheck],
           ] as [Tab, string, React.ElementType][]).map(([id, label, Icon]) => (
             <button
               key={id}
@@ -600,6 +665,235 @@ export default function AdminDashboard() {
                     <div className={styles.statIcon} style={{ color }}><Icon size={22} /></div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {activeTab === 'manual_payments' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+                {/* Segmented Controls */}
+                <div style={{ display: 'flex', gap: '0.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+                  <button 
+                    onClick={() => setManualQueueSubTab('pending')}
+                    className={`btn ${manualQueueSubTab === 'pending' ? 'btn-primary' : 'btn-ghost'}`}
+                    style={{ position: 'relative' }}
+                  >
+                    Pending Transfers
+                    {orders.filter(o => o.payment_system === 'manual' && o.status === 'pending' && o.manual_payment_status === 'pending').length > 0 && (
+                      <span className={styles.badgeCount} style={{ background: '#f59e0b', color: '#fff', marginLeft: '6px', fontSize: '0.65rem' }}>
+                        {orders.filter(o => o.payment_system === 'manual' && o.status === 'pending' && o.manual_payment_status === 'pending').length}
+                      </span>
+                    )}
+                  </button>
+                  <button 
+                    onClick={() => setManualQueueSubTab('history')}
+                    className={`btn ${manualQueueSubTab === 'history' ? 'btn-primary' : 'btn-ghost'}`}
+                  >
+                    Verification History
+                  </button>
+                </div>
+
+                {/* Sub Tab: Pending */}
+                {manualQueueSubTab === 'pending' && (
+                  <div className={styles.sectionCard}>
+                    <div className={styles.sectionHeader}>
+                      <h3>Pending Manual Bank Transfers</h3>
+                      <p className={styles.subText}>Review and verify customers GTB transfer receipts to authorize culinary orders.</p>
+                    </div>
+
+                    {orders.filter(o => o.payment_system === 'manual' && o.status === 'pending' && o.manual_payment_status === 'pending').length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-400)' }}>
+                        <ShieldCheck size={48} style={{ color: '#10b981', marginBottom: '1rem', opacity: 0.6 }} />
+                        <h4 style={{ margin: 0, color: '#fff', fontWeight: 600 }}>All Clear!</h4>
+                        <p className={styles.subText} style={{ marginTop: '0.25rem' }}>No pending manual transfers waiting to be verified.</p>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.25rem' }}>
+                        {orders.filter(o => o.payment_system === 'manual' && o.status === 'pending' && o.manual_payment_status === 'pending').map((o) => (
+                          <div 
+                            key={o.id} 
+                            style={{ 
+                              background: 'var(--bg-200)', 
+                              border: '1px solid var(--border)', 
+                              borderRadius: '12px', 
+                              padding: '1.5rem', 
+                              display: 'grid', 
+                              gridTemplateColumns: '1fr auto',
+                              gap: '1.5rem',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--primary)', background: 'rgba(235,12,122,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem' }}>
+                                  ORDER #{o.id.slice(0, 8).toUpperCase()}
+                                </span>
+                                <span className={styles.subText} style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <Clock size={12} /> {new Date(o.created_at).toLocaleString()}
+                                </span>
+                              </div>
+
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '0.25rem' }}>
+                                <div>
+                                  <span className={styles.subText} style={{ fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Customer</span>
+                                  <strong style={{ fontSize: '0.9rem', color: '#fff' }}>{o.users?.name || 'Customer'}</strong>
+                                  <span className={styles.subText} style={{ display: 'block', fontSize: '0.8rem' }}>{o.users?.email}</span>
+                                </div>
+                                <div>
+                                  <span className={styles.subText} style={{ fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Vendor / Store</span>
+                                  <strong style={{ fontSize: '0.9rem', color: '#fff' }}>{o.brands?.name || 'Culinary Vendor'}</strong>
+                                </div>
+                                <div>
+                                  <span className={styles.subText} style={{ fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Submitted Bank Details</span>
+                                  <div style={{ background: 'var(--bg-300)', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                                    <div>🏛️ <strong style={{ color: '#fff' }}>{o.manual_payment_details?.sender_bank || '—'}</strong></div>
+                                    <div style={{ margin: '2px 0' }}>👤 {o.manual_payment_details?.account_name || '—'}</div>
+                                    <div style={{ fontFamily: 'monospace', color: 'var(--primary)', fontWeight: 600 }}>🔑 Ref: {o.manual_payment_details?.receipt_code || '—'}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1rem' }}>
+                              <div style={{ textAlign: 'right' }}>
+                                <span className={styles.subText} style={{ fontSize: '0.75rem' }}>Total Amount</span>
+                                <h3 style={{ color: '#10b981', margin: 0, fontWeight: 800, fontSize: '1.5rem' }}>₦{o.total_amount.toLocaleString()}</h3>
+                              </div>
+
+                              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                <button 
+                                  className="btn btn-ghost" 
+                                  style={{ color: '#ef4444', border: '1px solid #ef4444', height: '38px', fontSize: '0.85rem' }}
+                                  disabled={!!actionLoading}
+                                  onClick={async () => {
+                                    const reason = prompt('Please enter the reason for rejecting this manual payment receipt:');
+                                    if (reason === null) return; // cancelled
+                                    setActionLoading(o.id);
+                                    try {
+                                      const res = await adminFetch('/api/admin', {
+                                        method: 'POST',
+                                        body: JSON.stringify({ action: 'reject_manual_payment', orderId: o.id, reason })
+                                      });
+                                      const data = await res.json();
+                                      if (data.success) {
+                                        addToast('Transfer receipt rejected and order cancelled.', 'success');
+                                        await fetchAll();
+                                      } else {
+                                        addToast(data.error || 'Failed to reject transfer', 'error');
+                                      }
+                                    } catch {
+                                      addToast('Network error', 'error');
+                                    }
+                                    setActionLoading('');
+                                  }}
+                                >
+                                  Reject Receipt
+                                </button>
+                                <button 
+                                  className="btn btn-primary" 
+                                  style={{ background: '#10b981', borderColor: '#10b981', height: '38px', fontSize: '0.85rem', color: '#fff', fontWeight: 700 }}
+                                  disabled={!!actionLoading}
+                                  onClick={async () => {
+                                    if (!confirm(`Are you absolutely sure you want to approve this GTB manual transfer of ₦${o.total_amount.toLocaleString()}? This will notify the kitchen to start cooking.`)) return;
+                                    setActionLoading(o.id);
+                                    try {
+                                      const res = await adminFetch('/api/admin', {
+                                        method: 'POST',
+                                        body: JSON.stringify({ action: 'approve_manual_payment', orderId: o.id })
+                                      });
+                                      const data = await res.json();
+                                      if (data.success) {
+                                        addToast('Transfer receipt successfully verified! Kitchen has been authorized.', 'success');
+                                        await fetchAll();
+                                      } else {
+                                        addToast(data.error || 'Failed to approve transfer', 'error');
+                                      }
+                                    } catch {
+                                      addToast('Network error', 'error');
+                                    }
+                                    setActionLoading('');
+                                  }}
+                                >
+                                  {actionLoading === o.id ? 'Verifying...' : 'Approve Payment'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Sub Tab: History */}
+                {manualQueueSubTab === 'history' && (
+                  <div className={styles.sectionCard}>
+                    <div className={styles.sectionHeader}>
+                      <h3>Verification Log & Archives</h3>
+                      <p className={styles.subText}>Historical records of approved and rejected manual bank transfers.</p>
+                    </div>
+
+                    {orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status !== 'pending').length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-400)' }}>
+                        <Clock size={48} style={{ color: 'var(--primary)', marginBottom: '1rem', opacity: 0.6 }} />
+                        <h4 style={{ margin: 0, color: '#fff', fontWeight: 600 }}>Log is Empty</h4>
+                        <p className={styles.subText} style={{ marginTop: '0.25rem' }}>No historical verifications recorded yet.</p>
+                      </div>
+                    ) : (
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                        <table className={styles.table}>
+                          <thead>
+                            <tr>
+                              <th>Order Info</th>
+                              <th>Customer</th>
+                              <th>Submitted Bank details</th>
+                              <th>Amount</th>
+                              <th>Verification Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status !== 'pending').map((o) => (
+                              <tr key={o.id}>
+                                <td>
+                                  <div style={{ fontWeight: 700, color: 'var(--primary)', fontFamily: 'monospace' }}>
+                                    #{o.id.slice(0, 8).toUpperCase()}
+                                  </div>
+                                  <div className={styles.subText} style={{ fontSize: '0.7rem' }}>
+                                    {new Date(o.created_at).toLocaleString()}
+                                  </div>
+                                </td>
+                                <td>
+                                  <div style={{ fontWeight: 600 }}>{o.users?.name || 'Customer'}</div>
+                                  <div className={styles.subText}>{o.users?.email}</div>
+                                </td>
+                                <td>
+                                  <div style={{ fontSize: '0.8rem' }}>
+                                    <strong>{o.manual_payment_details?.sender_bank || '—'}</strong> ({o.manual_payment_details?.account_name || '—'})
+                                  </div>
+                                  <div className={styles.subText} style={{ fontFamily: 'monospace' }}>Ref: {o.manual_payment_details?.receipt_code || '—'}</div>
+                                </td>
+                                <td>
+                                  <strong style={{ color: '#fff' }}>₦{o.total_amount.toLocaleString()}</strong>
+                                </td>
+                                <td>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                    <span className={`badge`} style={{ width: 'fit-content', textTransform: 'uppercase', background: o.manual_payment_status === 'approved' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: o.manual_payment_status === 'approved' ? '#10b981' : '#ef4444' }}>
+                                      {o.manual_payment_status === 'approved' ? '✓ Verified' : '✗ Rejected'}
+                                    </span>
+                                    {o.manual_payment_status === 'rejected' && o.manual_payment_details?.rejection_reason && (
+                                      <span className={styles.subText} style={{ color: '#ef4444', fontSize: '0.75rem', maxWidth: '200px' }}>
+                                        Reason: {o.manual_payment_details.rejection_reason}
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -766,7 +1060,7 @@ export default function AdminDashboard() {
               <div className={styles.sectionCard}>
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                   <thead>
-                    <tr><th>Product</th><th>Brand & Campus</th><th>Price</th><th>Visibility</th><th>Stock</th><th>Actions</th></tr>
+                    <tr><th>Product</th><th>Brand & Campus</th><th>Price</th><th>Visibility</th><th>Stock</th><th>Payment System</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {filterBy(products, ['title']).map(p => (
@@ -798,6 +1092,21 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td>{p.stock_count === -1 ? '∞' : p.stock_count}</td>
+                        <td>
+                          {p.product_section === 'delicacies' ? (
+                            <select
+                              className="form-input"
+                              style={{ fontSize: '0.75rem', padding: '0.2rem', height: 'auto', width: '130px', background: 'var(--bg-300)', color: 'var(--text-100)', border: '1px solid var(--border)' }}
+                              value={p.payment_system || 'paystack'}
+                              onChange={(e) => adminAction('update_product_payment_system', { productId: p.id, paymentSystem: e.target.value })}
+                            >
+                              <option value="paystack">💳 Paystack</option>
+                              <option value="manual">🏦 Manual GTB/Acc</option>
+                            </select>
+                          ) : (
+                            <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>💳 Standard Paystack</span>
+                          )}
+                        </td>
                         <td>
                           <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => confirm('Delete this product?') && adminAction('delete_product', { productId: p.id })}>
                             <Trash2 size={14} />
@@ -2116,6 +2425,76 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Global Manual Bank Transfer Configuration */}
+                      {selectedUniId === 'global' && (
+                        <div style={{ marginTop: '3rem', borderTop: '1px solid var(--border)', paddingTop: '2.5rem' }}>
+                          <h3>Global Manual Bank Transfer Configuration (For Edibles/Delicacies)</h3>
+                          <p className={styles.subText}>Configure the platform bank account details that customers will see when checking out delicacies marked for manual payments.</p>
+                          
+                          <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }} className={styles.settingsBox}>
+                            <div className="form-group">
+                              <label style={{ fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Select Platform Bank</label>
+                              <select 
+                                className="form-input" 
+                                value={manualBankCode} 
+                                onChange={(e) => setManualBankCode(e.target.value)}
+                              >
+                                <option value="">-- Choose Bank --</option>
+                                {availableBanks.map(b => (
+                                  <option key={b.code} value={b.code}>{b.name}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="form-group">
+                              <label style={{ fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Account Number (10 digits)</label>
+                              <input 
+                                type="text" 
+                                className="form-input" 
+                                placeholder="e.g. 0123456789"
+                                maxLength={10}
+                                value={manualAccountNumber} 
+                                onChange={(e) => setManualAccountNumber(e.target.value.replace(/\D/g, ''))}
+                              />
+                            </div>
+
+                            <div className="form-group">
+                              <label style={{ fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
+                                Resolved Account Name {resolvingManualAccount && <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>(resolving...)</span>}
+                              </label>
+                              <input 
+                                type="text" 
+                                className="form-input" 
+                                style={{ background: 'var(--bg-300)', cursor: 'not-allowed', color: 'var(--primary)', fontWeight: 'bold' }}
+                                value={manualAccountName || 'Not Resolved'} 
+                                readOnly 
+                              />
+                            </div>
+                          </div>
+
+                          <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button 
+                              className="btn btn-primary"
+                              disabled={!manualBankCode || manualAccountNumber.length !== 10 || !manualAccountName || resolvingManualAccount}
+                              onClick={async () => {
+                                const selectedBankObj = availableBanks.find(b => b.code === manualBankCode);
+                                await adminAction('update_settings', {
+                                  key: 'manual_payment_settings',
+                                  value: {
+                                    bank_name: selectedBankObj?.name || '',
+                                    bank_code: manualBankCode,
+                                    account_number: manualAccountNumber,
+                                    account_name: manualAccountName
+                                  }
+                                });
+                              }}
+                            >
+                              Save Manual Payment Bank Account
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
                     </div>
                   )}

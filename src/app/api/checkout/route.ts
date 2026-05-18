@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const [productsResult, profileResult, settingsResult, promoResult] = await Promise.all([
       supabaseAdmin
         .from('products')
-        .select('id, title, brand_id, price, commission_price, delivery_rate, product_section, stock_count, university_id, visibility_type, brands(verified, fee_paid, delivery_scope, assigned_delivery_system)')
+        .select('id, title, brand_id, price, commission_price, delivery_rate, product_section, stock_count, university_id, visibility_type, variants, payment_system, brands(verified, fee_paid, delivery_scope, assigned_delivery_system)')
         .in('id', productIds),
       supabaseAdmin
         .from('users')
@@ -41,6 +41,15 @@ export async function POST(req: Request) {
 
     if (!liveProducts || liveProducts.length === 0) {
       return NextResponse.json({ error: 'STALE_CART_ITEMS' }, { status: 400 });
+    }
+
+    // Verify payment systems
+    const hasManual = liveProducts.some((p: any) => p.payment_system === 'manual');
+    if (hasManual) {
+      return NextResponse.json({ 
+        error: 'MANUAL_CHECKOUT_REQUIRED', 
+        message: 'Some delicacies in your cart require manual bank transfer. Please check out using manual payment.'
+      }, { status: 400 });
     }
 
     // --- PROMO CODE VALIDATION ---
@@ -147,7 +156,18 @@ export async function POST(req: Request) {
 
     const ordersToInsert = items.map((item: { productId: string; quantity: number; price: number; brandId: string; is_preorder?: boolean; preorder_arrival_date?: string; variants_selected?: Record<string, string> }, index: number) => {
       const liveProduct = liveProducts.find(p => p.id === item.productId);
-      const originalPrice = liveProduct?.price || item.price;
+      
+      // Calculate active base price from selected variants if applicable
+      let originalPrice = liveProduct?.price || item.price;
+      if (item.variants_selected && liveProduct?.variants) {
+        Object.entries(item.variants_selected).forEach(([type, val]) => {
+          const match = (liveProduct.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
+          if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
+            originalPrice = Number(match.price);
+          }
+        });
+      }
+      
       const isFirst = index === 0;
       
       const brandData = (Array.isArray(liveProduct?.brands) ? liveProduct.brands[0] : liveProduct?.brands) as any;

@@ -17,6 +17,12 @@ function CheckoutContent() {
   const [dataLoading, setDataLoading] = useState(true);
   const [user, setUser] = useState<any>(null); // Supabase user type is complex, keeping any for now but could use User from @supabase/supabase-js
 
+  // Manual payment states
+  const [manualBankSettings, setManualBankSettings] = useState<any>(null);
+  const [senderBank, setSenderBank] = useState('');
+  const [senderAccount, setSenderAccount] = useState('');
+  const [transferReference, setTransferReference] = useState('');
+
   // Form State
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -29,6 +35,7 @@ function CheckoutContent() {
   const [calculatedDeliveryFee, setCalculatedDeliveryFee] = useState(1500);
   const [, setDeliveryConfigs] = useState<{ id: string; delivery_scope: string; assigned_delivery_system: string }[]>([]);
 
+  const hasManual = cart.some(item => item.payment_system === 'manual');
   const deliveryFee = calculatedDeliveryFee;
   const orderTotal = getCartTotal();
   const calculatePromoSavings = () => {
@@ -111,6 +118,16 @@ function CheckoutContent() {
         }
       }
 
+      // Fetch platform settings to get bank transfer details if configured
+      const { data: settingsData } = await supabase
+        .from('platform_settings')
+        .select('value')
+        .eq('key', 'manual_payment_settings')
+        .maybeSingle();
+      if (settingsData?.value) {
+        setManualBankSettings(settingsData.value);
+      }
+
       // 2. Check Cart
       if (cart.length === 0) {
         setDataLoading(false);
@@ -165,6 +182,56 @@ function CheckoutContent() {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleManualCheckout = async () => {
+    if (cart.length === 0 || !user) return;
+    if (!address || !phone) {
+      alert('Please fill in your delivery details.');
+      return;
+    }
+    if (!senderBank || !senderAccount || !transferReference) {
+      alert('Please fill in all transaction confirmation details.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await fetch('/api/checkout/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          totalAmount: finalTotal,
+          shippingAddress: address,
+          promoCode: promoApplied,
+          senderBank,
+          senderAccount,
+          transferReference,
+          items: cart.map((item: any) => ({
+            brandId: item.brand_id,
+            productId: item.id,
+            quantity: item.quantity,
+            price: item.price,
+            variants_selected: item.variants_selected || null,
+            is_preorder: item.is_preorder || false,
+            preorder_arrival_date: item.preorder_arrival_date || null
+          }))
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        clearCart(); 
+        router.push(`/checkout/success?ref=${data.reference}&system=manual`);
+      } else {
+        alert(data.message || data.error || 'Failed to submit manual checkout.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('A connection error occurred.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePaystackCheckout = async () => {
@@ -323,13 +390,77 @@ function CheckoutContent() {
 
             <section className="card">
               <h2 className={styles.sectionTitle}><CreditCard size={18} /> Payment Information</h2>
-              <div className={styles.escrowNotice}>
-                <Lock size={16} />
-                <p>
-                  <strong>Escrow Protection:</strong> Your payment is held securely by Master Cart. 
-                  Vendors do not receive funds until you confirm delivery.
-                </p>
-              </div>
+              
+              {hasManual ? (
+                <div style={{ marginBottom: '1.5rem', padding: '1.25rem', background: 'rgba(245, 158, 11, 0.04)', borderRadius: 12, border: '1px dashed #f59e0b' }}>
+                  <h3 style={{ fontSize: '1rem', color: '#f59e0b', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <ShieldCheck size={18} /> Manual Bank Transfer Required
+                  </h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-300)', marginBottom: '1rem' }}>
+                    Some delicacy items in your cart require manual payment verification. Please make a bank transfer of <strong style={{ color: 'var(--primary)' }}>{formatPrice(finalTotal)}</strong> to the official platform account below:
+                  </p>
+
+                  <div style={{ background: 'var(--bg-300)', padding: '1rem', borderRadius: 8, border: '1px solid var(--border)', marginBottom: '1.25rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                      <span style={{ opacity: 0.7 }}>Bank Name:</span>
+                      <strong style={{ color: 'var(--text-100)' }}>{manualBankSettings?.bank_name || 'Guaranty Trust Bank (GTB)'}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                      <span style={{ opacity: 0.7 }}>Account Number:</span>
+                      <strong style={{ color: 'var(--primary)', letterSpacing: '0.05em' }}>{manualBankSettings?.account_number || '0123456789'}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                      <span style={{ opacity: 0.7 }}>Account Name:</span>
+                      <strong style={{ color: 'var(--text-100)' }}>{manualBankSettings?.account_name || 'MasterCart Platforms'}</strong>
+                    </div>
+                  </div>
+
+                  <h4 style={{ fontSize: '0.85rem', marginBottom: '0.75rem', fontWeight: 600 }}>Submit Your Transfer Details:</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div className="form-group">
+                      <label style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block', marginBottom: '0.25rem' }}>Your Bank Name (Sender Bank) *</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        placeholder="e.g. Access Bank, Zenith, Kuda" 
+                        value={senderBank} 
+                        onChange={e => setSenderBank(e.target.value)} 
+                        required 
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block', marginBottom: '0.25rem' }}>Your Account Name *</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        placeholder="Name on your bank account" 
+                        value={senderAccount} 
+                        onChange={e => setSenderAccount(e.target.value)} 
+                        required 
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block', marginBottom: '0.25rem' }}>Transfer Reference / Receipt Code *</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        placeholder="e.g. Session ID or description" 
+                        value={transferReference} 
+                        onChange={e => setTransferReference(e.target.value)} 
+                        required 
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.escrowNotice}>
+                  <Lock size={16} />
+                  <p>
+                    <strong>Escrow Protection:</strong> Your payment is held securely by Master Cart. 
+                    Vendors do not receive funds until you confirm delivery.
+                  </p>
+                </div>
+              )}
 
               {/* Promo Code */}
               <div style={{ marginBottom: '1.25rem', padding: '1rem', background: 'var(--bg-200)', borderRadius: 12, border: '1px solid var(--border)' }}>
@@ -356,22 +487,41 @@ function CheckoutContent() {
                 )}
               </div>
               
-              <button 
-                className={`btn btn-primary btn-lg ${styles.payBtn}`}
-                onClick={handlePaystackCheckout}
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="anim-spin" size={18} />
-                    Initializing Secure Gateway...
-                  </>
-                ) : (
-                  `Pay ${formatPrice(finalTotal)} with Paystack`
-                )}
-              </button>
+              {hasManual ? (
+                <button 
+                  className={`btn btn-primary btn-lg ${styles.payBtn}`}
+                  onClick={handleManualCheckout}
+                  disabled={loading || !senderBank || !senderAccount || !transferReference}
+                  style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', borderColor: '#d97706' }}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="anim-spin" size={18} />
+                      Submitting for Admin Verification...
+                    </>
+                  ) : (
+                    `Submit ${formatPrice(finalTotal)} Manual Transfer`
+                  )}
+                </button>
+              ) : (
+                <button 
+                  className={`btn btn-primary btn-lg ${styles.payBtn}`}
+                  onClick={handlePaystackCheckout}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="anim-spin" size={18} />
+                      Initializing Secure Gateway...
+                    </>
+                  ) : (
+                    `Pay ${formatPrice(finalTotal)} with Paystack`
+                  )}
+                </button>
+              )}
+              
               <p className={styles.termsNote}>
-                By clicking &quot;Pay&quot;, you agree to the Master Cart <Link href="/terms">Terms of Service</Link> and recognize that funds will be held in escrow until delivery is confirmed.
+                By clicking &quot;Pay&quot; or &quot;Submit&quot;, you agree to the Master Cart <Link href="/terms">Terms of Service</Link> and recognize that funds will be held in escrow until delivery is confirmed.
               </p>
             </section>
           </div>
