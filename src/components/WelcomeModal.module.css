@@ -23,8 +23,8 @@
   width: 100%;
   max-width: 400px;
   /* KEY: constrain height and allow scroll within modal */
-  max-height: 85dvh;
-  max-height: 85vh; /* fallback */
+  max-height: 70dvh;
+  max-height: 70vh; /* fallback */
   position: relative;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
