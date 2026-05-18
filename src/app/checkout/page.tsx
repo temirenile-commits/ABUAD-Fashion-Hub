@@ -81,17 +81,71 @@ function CheckoutContent() {
   const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
   const [calculatedDeliveryFee, setCalculatedDeliveryFee] = useState(1500);
   const [, setDeliveryConfigs] = useState<{ id: string; delivery_scope: string; assigned_delivery_system: string }[]>([]);
+  const [liveProductsMap, setLiveProductsMap] = useState<Record<string, any>>({});
 
 
   const deliveryFee = calculatedDeliveryFee;
-  const orderTotal = getCartTotal();
+
+  const calculateLiveCartTotal = () => {
+    return cart.reduce((total, item) => {
+      const live = liveProductsMap[item.id];
+      let basePrice = live ? Number(live.price) : Number(item.price);
+      
+      if (item.variants_selected && live?.variants) {
+        Object.entries(item.variants_selected).forEach(([type, val]) => {
+          const match = (live.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
+          if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
+            basePrice = Number(match.price);
+          }
+        });
+      } else if (item.variants_selected && item.variants) {
+        Object.entries(item.variants_selected).forEach(([type, val]) => {
+          const match = (item.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
+          if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
+            basePrice = Number(match.price);
+          }
+        });
+      }
+
+      const commission = live ? Number(live.commission_price || 0) : Number(item.commission_price || 0);
+      const delivery = live ? Number(live.delivery_rate || 0) : Number(item.delivery_rate || 0);
+      const effectivePrice = basePrice + commission + delivery;
+      return total + effectivePrice * item.quantity;
+    }, 0);
+  };
+
+  const orderTotal = calculateLiveCartTotal();
+
   const calculatePromoSavings = () => {
     if (!promoAppliedData) return 0;
     let savings = 0;
     cart.forEach(item => {
       // If general promo OR specific to this product
       if (!promoAppliedData.product_id || promoAppliedData.product_id === item.id) {
-        const itemSubtotal = item.price * (item.quantity || 1);
+        const live = liveProductsMap[item.id];
+        let basePrice = live ? Number(live.price) : Number(item.price);
+        
+        if (item.variants_selected && live?.variants) {
+          Object.entries(item.variants_selected).forEach(([type, val]) => {
+            const match = (live.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
+            if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
+              basePrice = Number(match.price);
+            }
+          });
+        } else if (item.variants_selected && item.variants) {
+          Object.entries(item.variants_selected).forEach(([type, val]) => {
+            const match = (item.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
+            if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
+              basePrice = Number(match.price);
+            }
+          });
+        }
+
+        const commission = live ? Number(live.commission_price || 0) : Number(item.commission_price || 0);
+        const delivery = live ? Number(live.delivery_rate || 0) : Number(item.delivery_rate || 0);
+        const effectivePrice = basePrice + commission + delivery;
+        const itemSubtotal = effectivePrice * (item.quantity || 1);
+
         if (promoAppliedData.type === 'percentage') {
           savings += itemSubtotal * (Number(promoAppliedData.value) / 100);
         } else if (promoAppliedData.type === 'fixed') {
@@ -187,6 +241,23 @@ function CheckoutContent() {
         .from('brands')
         .select('id, delivery_scope, assigned_delivery_system')
         .in('id', brandIds);
+
+      // Fetch live product details to override stale local cart pricing
+      const productIds = Array.from(new Set(cart.map(item => item.id)));
+      if (productIds.length > 0) {
+        const { data: liveProductsData } = await supabase
+          .from('products')
+          .select('id, price, commission_price, delivery_rate, variants')
+          .in('id', productIds);
+        
+        if (liveProductsData) {
+          const map: Record<string, any> = {};
+          liveProductsData.forEach(p => {
+            map[p.id] = p;
+          });
+          setLiveProductsMap(map);
+        }
+      }
 
       if (vendorConfigs) {
         const hasOutSchool = vendorConfigs.some(v => v.delivery_scope === 'out-school');
@@ -584,10 +655,30 @@ function CheckoutContent() {
               <h2>Order Summary</h2>
               
               {cart.map((item: any) => {
-                const commission = Number(item.commission_price || 0);
-                const deliveryRate = Number(item.delivery_rate || 0);
+                const live = liveProductsMap[item.id];
+                const basePrice = live ? Number(live.price) : Number(item.price);
+                const commission = live ? Number(live.commission_price || 0) : Number(item.commission_price || 0);
+                const deliveryRate = live ? Number(live.delivery_rate || 0) : Number(item.delivery_rate || 0);
                 const isDelicacy = item.product_section === 'delicacies';
-                const totalItemPrice = (Number(item.price) + commission + deliveryRate) * item.quantity;
+                
+                let activePrice = basePrice;
+                if (item.variants_selected && live?.variants) {
+                  Object.entries(item.variants_selected).forEach(([type, val]) => {
+                    const match = (live.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
+                    if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
+                      activePrice = Number(match.price);
+                    }
+                  });
+                } else if (item.variants_selected && item.variants) {
+                  Object.entries(item.variants_selected).forEach(([type, val]) => {
+                    const match = (item.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
+                    if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
+                      activePrice = Number(match.price);
+                    }
+                  });
+                }
+
+                const totalItemPrice = (activePrice + commission + deliveryRate) * item.quantity;
                 return (
                   <div key={item.id} className={styles.summaryItem}>
                     <div className={styles.itemImage}>
@@ -613,7 +704,7 @@ function CheckoutContent() {
                       <span className={styles.itemPrice}>{formatPrice(totalItemPrice)}</span>
                       {isDelicacy && (commission > 0 || deliveryRate > 0) && (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', fontSize: '0.68rem', color: 'var(--text-400)', lineHeight: 1.5, marginTop: '2px' }}>
-                          <span>Item: {formatPrice(Number(item.price) * item.quantity)}</span>
+                          <span>Item: {formatPrice(activePrice * item.quantity)}</span>
                           {commission > 0 && <span style={{ color: '#f59e0b' }}>Comm: +{formatPrice(commission * item.quantity)}</span>}
                           {deliveryRate > 0 && <span style={{ color: '#3b82f6' }}>Delivery: +{formatPrice(deliveryRate * item.quantity)}</span>}
                         </div>
