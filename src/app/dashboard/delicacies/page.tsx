@@ -677,6 +677,17 @@ export default function VendorDashboard() {
           .update(updates)
           .eq('id', editingProduct.id);
         
+        if (error && error.message.includes('product_delicacy_category_check')) {
+          console.warn('Frontend Product Edit check constraint violated, retrying with fallback...');
+          let fallbackCat = 'other';
+          if (newProduct.category === 'drinks_beverages') fallbackCat = 'drinks';
+          else if (newProduct.category === 'pastries_baked') fallbackCat = 'snacks';
+          
+          updates.delicacy_category = fallbackCat as any;
+          const retry = await supabase.from('products').update(updates).eq('id', editingProduct.id);
+          error = retry.error;
+        }
+
         if (error && error.message.includes('schema cache')) {
           const fallbackUpdates = { ...updates };
           delete (fallbackUpdates as any).is_preorder;

@@ -118,6 +118,19 @@ export async function POST(req: Request) {
       .select()
       .single();
 
+    // Fallback: If DB constraint product_delicacy_category_check is violated (e.g. outdated DB schema)
+    if (productError && productError.message.includes('product_delicacy_category_check')) {
+      console.warn('[API PRODUCTS] Check constraint violated, retrying with fallback category...');
+      let fallbackCat = 'other';
+      if (category === 'drinks_beverages') fallbackCat = 'drinks';
+      else if (category === 'pastries_baked') fallbackCat = 'snacks';
+      
+      insertPayload.delicacy_category = fallbackCat;
+      const retry = await supabaseAdmin.from('products').insert(insertPayload).select().single();
+      product = retry.data;
+      productError = retry.error;
+    }
+
     if (productError && (productError.message.includes('schema cache') || productError.message.includes('column'))) {
       delete insertPayload.is_preorder;
       delete insertPayload.preorder_arrival_date;
@@ -205,7 +218,18 @@ export async function PATCH(req: Request) {
     if (commission_rate !== undefined) updatePayload.commission_rate = commission_rate != null ? Number(commission_rate) : null;
     if (delivery_rate !== undefined) updatePayload.delivery_rate = delivery_rate != null ? Number(delivery_rate) : null;
 
-    const { error: updateError } = await supabaseAdmin.from('products').update(updatePayload).eq('id', productId);
+    let { error: updateError } = await supabaseAdmin.from('products').update(updatePayload).eq('id', productId);
+
+    if (updateError && updateError.message.includes('product_delicacy_category_check')) {
+      console.warn('[API PRODUCTS] PATCH check constraint violated, retrying with fallback category...');
+      let fallbackCat = 'other';
+      if (category === 'drinks_beverages') fallbackCat = 'drinks';
+      else if (category === 'pastries_baked') fallbackCat = 'snacks';
+      
+      updatePayload.delicacy_category = fallbackCat;
+      const retry = await supabaseAdmin.from('products').update(updatePayload).eq('id', productId);
+      updateError = retry.error;
+    }
 
     if (updateError) {
       if (updateError.message.includes('schema cache') || updateError.message.includes('column')) {
