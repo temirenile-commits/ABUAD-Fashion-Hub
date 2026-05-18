@@ -494,6 +494,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, message: 'Vendor approved and verified manually.' });
   }
 
+  if (action === 'verify_manual_payment') {
+    const { orderId } = body;
+    const { error } = await supabaseAdmin
+      .from('orders')
+      .update({
+        manual_payment_status: 'approved',
+        status: 'paid'
+      })
+      .eq('id', orderId);
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Transfer verified and order marked as paid.' });
+  }
+
   if (action === 'reject_vendor') {
     const { brandId, reason } = body;
     const { error } = await supabaseAdmin

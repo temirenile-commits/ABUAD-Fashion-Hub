@@ -23,6 +23,53 @@ function CheckoutContent() {
   const [senderAccount, setSenderAccount] = useState('');
   const [transferReference, setTransferReference] = useState('');
 
+  // Dynamic bank lookup states
+  const [senderBankCode, setSenderBankCode] = useState('');
+  const [senderAccountNumber, setSenderAccountNumber] = useState('');
+  const [resolvingSenderAccount, setResolvingSenderAccount] = useState(false);
+  const [availableBanks, setAvailableBanks] = useState<any[]>([]);
+  const hasManual = cart.some(item => item.payment_system === 'manual');
+  // Fetch bank list if manual payment is needed
+  useEffect(() => {
+    if (!hasManual) return;
+    const loadBanks = async () => {
+      try {
+        const res = await fetch('/api/paystack/banks');
+        const d = await res.json();
+        if (d.success) setAvailableBanks(d.data || []);
+      } catch (err) {
+        console.error('Failed to load banks', err);
+      }
+    };
+    loadBanks();
+  }, [hasManual]);
+
+  // Auto-resolve customer's bank details
+  useEffect(() => {
+    const resolveAccount = async () => {
+      if (senderAccountNumber.length === 10 && senderBankCode) {
+        setResolvingSenderAccount(true);
+        setSenderAccount('');
+        try {
+          const res = await fetch(`/api/paystack/resolve?accountNumber=${senderAccountNumber}&bankCode=${senderBankCode}`);
+          const d = await res.json();
+          if (d.success && d.data?.account_name) {
+            setSenderAccount(d.data.account_name);
+            const selectedBankObj = availableBanks.find(b => b.code === senderBankCode);
+            setSenderBank(selectedBankObj?.name || '');
+            setTransferReference(senderAccountNumber); // Account number acts as the unique reference
+          } else {
+            alert('Could not resolve bank account details. Please check the account number and bank.');
+          }
+        } catch (err) {
+          console.error('Error resolving bank account', err);
+        }
+        setResolvingSenderAccount(false);
+      }
+    };
+    resolveAccount();
+  }, [senderAccountNumber, senderBankCode, availableBanks]);
+
   // Form State
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -35,7 +82,7 @@ function CheckoutContent() {
   const [calculatedDeliveryFee, setCalculatedDeliveryFee] = useState(1500);
   const [, setDeliveryConfigs] = useState<{ id: string; delivery_scope: string; assigned_delivery_system: string }[]>([]);
 
-  const hasManual = cart.some(item => item.payment_system === 'manual');
+
   const deliveryFee = calculatedDeliveryFee;
   const orderTotal = getCartTotal();
   const calculatePromoSavings = () => {
@@ -418,38 +465,43 @@ function CheckoutContent() {
                   <h4 style={{ fontSize: '0.85rem', marginBottom: '0.75rem', fontWeight: 600 }}>Submit Your Transfer Details:</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <div className="form-group">
-                      <label style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block', marginBottom: '0.25rem' }}>Your Bank Name (Sender Bank) *</label>
-                      <input 
-                        type="text" 
+                      <label style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block', marginBottom: '0.25rem' }}>Select Your Bank *</label>
+                      <select 
                         className="form-input" 
-                        placeholder="e.g. Access Bank, Zenith, Kuda" 
-                        value={senderBank} 
-                        onChange={e => setSenderBank(e.target.value)} 
-                        required 
-                      />
+                        value={senderBankCode} 
+                        onChange={e => setSenderBankCode(e.target.value)} 
+                        required
+                        style={{ background: 'var(--bg-100)', color: 'var(--text-100)' }}
+                      >
+                        <option value="">-- Choose Your Bank --</option>
+                        {availableBanks.map((b: any) => (
+                          <option key={b.code} value={b.code}>{b.name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div className="form-group">
-                      <label style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block', marginBottom: '0.25rem' }}>Your Account Name *</label>
+                      <label style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block', marginBottom: '0.25rem' }}>Your Account Number *</label>
                       <input 
                         type="text" 
+                        maxLength={10}
                         className="form-input" 
-                        placeholder="Name on your bank account" 
-                        value={senderAccount} 
-                        onChange={e => setSenderAccount(e.target.value)} 
+                        placeholder="Enter 10-digit account number" 
+                        value={senderAccountNumber} 
+                        onChange={e => setSenderAccountNumber(e.target.value.replace(/\D/g, ''))} 
                         required 
                       />
                     </div>
-                    <div className="form-group">
-                      <label style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block', marginBottom: '0.25rem' }}>Transfer Reference / Receipt Code *</label>
-                      <input 
-                        type="text" 
-                        className="form-input" 
-                        placeholder="e.g. Session ID or description" 
-                        value={transferReference} 
-                        onChange={e => setTransferReference(e.target.value)} 
-                        required 
-                      />
-                    </div>
+                    {resolvingSenderAccount && (
+                      <div style={{ fontSize: '0.8rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <Loader2 size={12} className="anim-spin" /> Resolving account name...
+                      </div>
+                    )}
+                    {senderAccount && (
+                      <div style={{ padding: '0.75rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '8px', fontSize: '0.85rem' }}>
+                        <span style={{ opacity: 0.7, display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '0.15rem', color: '#10b981' }}>Verified Account Name</span>
+                        <strong style={{ color: '#10b981' }}>{senderAccount}</strong>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (

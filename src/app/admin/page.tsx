@@ -289,6 +289,8 @@ export default function AdminDashboard() {
   const [manualAccountName, setManualAccountName] = useState('');
   const [resolvingManualAccount, setResolvingManualAccount] = useState(false);
   const [availableBanks, setAvailableBanks] = useState<any[]>([]);
+  const [showBankEditForm, setShowBankEditForm] = useState(false);
+  const [manualBankSettings, setManualBankSettings] = useState<any>(null);
 
   const [manualBillboards, setManualBillboards] = useState<ManualBillboard[]>([]);
   const [billboardUpload, setBillboardUpload] = useState({ title: '', sub: '', link: '', file: null as File | null });
@@ -323,6 +325,7 @@ export default function AdminDashboard() {
       setManualBankCode(bankData.bank_code || '');
       setManualAccountNumber(bankData.account_number || '');
       setManualAccountName(bankData.account_name || '');
+      setManualBankSettings(bankData);
     }
   }, [platformSettings]);
 
@@ -671,6 +674,163 @@ export default function AdminDashboard() {
 
             {activeTab === 'manual_payments' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+                
+                {/* 1. TOP METRICS HEADER */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                  
+                  {/* Daily Manual Transactions Sum */}
+                  <div style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.5px' }}>📅 Daily Manual Sales (Today)</span>
+                      <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#10b981', margin: '0.5rem 0 0.25rem' }}>
+                        ₦{orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status === 'approved' && new Date(o.created_at).toDateString() === new Date().toDateString()).reduce((sum, o) => sum + Number(o.total_amount), 0).toLocaleString()}
+                      </h2>
+                    </div>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>
+                      {orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status === 'approved' && new Date(o.created_at).toDateString() === new Date().toDateString()).length} verified orders today
+                    </span>
+                  </div>
+
+                  {/* Pending Manual Queue Count */}
+                  <div style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.5px' }}>⏳ Pending Verification Queue</span>
+                      <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#f59e0b', margin: '0.5rem 0 0.25rem' }}>
+                        {orders.filter(o => o.payment_system === 'manual' && o.status === 'pending' && o.manual_payment_status === 'pending').length}
+                      </h2>
+                    </div>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>Needs manual approval</span>
+                  </div>
+
+                  {/* All-time Manual Sales */}
+                  <div style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.5px' }}>🏛️ Total Manual Sales (All-time)</span>
+                      <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)', margin: '0.5rem 0 0.25rem' }}>
+                        ₦{orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status === 'approved').reduce((sum, o) => sum + Number(o.total_amount), 0).toLocaleString()}
+                      </h2>
+                    </div>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>
+                      {orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status === 'approved').length} total orders verified
+                    </span>
+                  </div>
+                </div>
+
+                {/* 2. PLATFORM BANK ACCOUNT CONFIGURATION CARD */}
+                <div style={{ background: 'linear-gradient(135deg, var(--bg-200), rgba(235,12,122,0.03))', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        🏦 Official Platform Account Details
+                      </h3>
+                      <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', opacity: 0.7 }}>
+                        This is the bank account that customers will pay into during delicacies manual checkout.
+                      </p>
+                    </div>
+                    <button 
+                      className={`btn ${showBankEditForm ? 'btn-secondary' : 'btn-primary'}`}
+                      onClick={() => setShowBankEditForm(!showBankEditForm)}
+                    >
+                      {showBankEditForm ? 'Cancel Edit' : '🔧 Change Account Details'}
+                    </button>
+                  </div>
+
+                  {!showBankEditForm ? (
+                    <div style={{ display: 'flex', gap: '2rem', marginTop: '1.25rem', flexWrap: 'wrap', background: 'var(--bg-300)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                      <div>
+                        <span style={{ fontSize: '0.7rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>BANK NAME</span>
+                        <strong style={{ color: '#fff', fontSize: '1rem' }}>{manualBankSettings?.bank_name || 'ACCESS BANK'}</strong>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.7rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>ACCOUNT NUMBER</span>
+                        <strong style={{ color: 'var(--primary)', fontSize: '1rem', letterSpacing: '0.05em' }}>{manualBankSettings?.account_number || '1883669647'}</strong>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.7rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>ACCOUNT NAME</span>
+                        <strong style={{ color: '#fff', fontSize: '1rem' }}>{manualBankSettings?.account_name || 'Enioluwa Temitope Olaide'}</strong>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: '1.5rem', background: 'var(--bg-300)', padding: '1.5rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                      <h4 style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'var(--primary)' }}>Update Platform Account Number</h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                        
+                        <div className="form-group">
+                          <label style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block', marginBottom: '0.25rem' }}>Select Bank</label>
+                          <select 
+                            className="form-input" 
+                            value={manualBankCode} 
+                            onChange={(e) => setManualBankCode(e.target.value)}
+                          >
+                            <option value="">-- Choose Bank --</option>
+                            {availableBanks.map(b => (
+                              <option key={b.code} value={b.code}>{b.name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="form-group">
+                          <label style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block', marginBottom: '0.25rem' }}>Account Number (10 digits)</label>
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            placeholder="e.g. 0123456789"
+                            maxLength={10}
+                            value={manualAccountNumber} 
+                            onChange={(e) => setManualAccountNumber(e.target.value.replace(/\D/g, ''))}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block', marginBottom: '0.25rem' }}>
+                            Account Name {resolvingManualAccount && <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>(resolving...)</span>}
+                          </label>
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            style={{ color: 'var(--primary)', fontWeight: 'bold' }}
+                            value={manualAccountName} 
+                            onChange={(e) => setManualAccountName(e.target.value)}
+                            placeholder="Resolved or custom account name"
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                        <button className="btn btn-ghost" onClick={() => setShowBankEditForm(false)}>Cancel</button>
+                        <button 
+                          className="btn btn-primary"
+                          disabled={!manualBankCode || manualAccountNumber.length !== 10 || !manualAccountName || resolvingManualAccount}
+                          onClick={async () => {
+                            const selectedBankObj = availableBanks.find(b => b.code === manualBankCode);
+                            const success = await adminAction('update_settings', {
+                              key: 'manual_payment_settings',
+                              value: {
+                                bank_name: selectedBankObj?.name || '',
+                                bank_code: manualBankCode,
+                                account_number: manualAccountNumber,
+                                account_name: manualAccountName
+                              }
+                            });
+                            if (success) {
+                              setManualBankSettings({
+                                bank_name: selectedBankObj?.name || '',
+                                bank_code: manualBankCode,
+                                account_number: manualAccountNumber,
+                                account_name: manualAccountName
+                              });
+                              setShowBankEditForm(false);
+                              addToast('Platform bank details updated successfully!', 'success');
+                            }
+                          }}
+                        >
+                          Save New Account
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Segmented Controls */}
                 <div style={{ display: 'flex', gap: '0.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
                   <button 
@@ -2434,84 +2594,12 @@ export default function AdminDashboard() {
                               value={uniConfig.billboard_price || ''} 
                               onChange={(e) => setUniConfig({ ...uniConfig, billboard_price: Number(e.target.value) })}
                             />
-                            <button className="btn btn-primary btn-sm" onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'billboard_price', value: uniConfig.billboard_price })}>Save</button>
+                            </div>
                           </div>
                         </div>
                       </div>
+                    )}
 
-                      {/* Global Manual Bank Transfer Configuration */}
-                      {selectedUniId === 'global' && (
-                        <div style={{ marginTop: '3rem', borderTop: '1px solid var(--border)', paddingTop: '2.5rem' }}>
-                          <h3>Global Manual Bank Transfer Configuration (For Edibles/Delicacies)</h3>
-                          <p className={styles.subText}>Configure the platform bank account details that customers will see when checking out delicacies marked for manual payments.</p>
-                          
-                          <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }} className={styles.settingsBox}>
-                            <div className="form-group">
-                              <label style={{ fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Select Platform Bank</label>
-                              <select 
-                                className="form-input" 
-                                value={manualBankCode} 
-                                onChange={(e) => setManualBankCode(e.target.value)}
-                              >
-                                <option value="">-- Choose Bank --</option>
-                                {availableBanks.map(b => (
-                                  <option key={b.code} value={b.code}>{b.name}</option>
-                                ))}
-                              </select>
-                            </div>
-
-                            <div className="form-group">
-                              <label style={{ fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Account Number (10 digits)</label>
-                              <input 
-                                type="text" 
-                                className="form-input" 
-                                placeholder="e.g. 0123456789"
-                                maxLength={10}
-                                value={manualAccountNumber} 
-                                onChange={(e) => setManualAccountNumber(e.target.value.replace(/\D/g, ''))}
-                              />
-                            </div>
-
-                            <div className="form-group">
-                              <label style={{ fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
-                                Account Name (Auto-resolved or Custom) {resolvingManualAccount && <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>(resolving...)</span>}
-                              </label>
-                              <input 
-                                type="text" 
-                                className="form-input" 
-                                style={{ color: 'var(--primary)', fontWeight: 'bold' }}
-                                value={manualAccountName} 
-                                onChange={(e) => setManualAccountName(e.target.value)}
-                                placeholder="Enter account name"
-                              />
-                            </div>
-                          </div>
-
-                          <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
-                            <button 
-                              className="btn btn-primary"
-                              disabled={!manualBankCode || manualAccountNumber.length !== 10 || !manualAccountName || resolvingManualAccount}
-                              onClick={async () => {
-                                const selectedBankObj = availableBanks.find(b => b.code === manualBankCode);
-                                await adminAction('update_settings', {
-                                  key: 'manual_payment_settings',
-                                  value: {
-                                    bank_name: selectedBankObj?.name || '',
-                                    bank_code: manualBankCode,
-                                    account_number: manualAccountNumber,
-                                    account_name: manualAccountName
-                                  }
-                                });
-                              }}
-                            >
-                              Save Manual Payment Bank Account
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                    </div>
-                  )}
                   
                   {!selectedUniId && (
                     <div style={{ marginTop: '2rem', padding: '2rem', textAlign: 'center', background: 'var(--bg-200)', borderRadius: '12px', border: '1px dashed var(--border)' }}>

@@ -46,8 +46,8 @@ FOR EACH ROW EXECUTE FUNCTION public.update_brand_rating();
 CREATE OR REPLACE FUNCTION public.notify_vendor_on_order()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.notifications (user_id, title, content, link)
-    SELECT owner_id, '💰 New Sale!', 'You just received a new order for ₦' || NEW.total_amount, '/dashboard/vendor'
+    INSERT INTO public.notifications (user_id, title, content, link, type)
+    SELECT owner_id, '💰 New Sale!', 'You just received a new order for ₦' || NEW.total_amount, '/dashboard/vendor', 'direct'
     FROM public.brands WHERE id = NEW.brand_id;
     RETURN NEW;
 END;

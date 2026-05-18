@@ -197,7 +197,9 @@ export async function POST(req: NextRequest) {
         manual_payment_details: {
           sender_bank: senderBank,
           sender_account: senderAccount,
+          account_name: senderAccount,
           transfer_reference: transferReference,
+          receipt_code: transferReference,
           submitted_at: new Date().toISOString()
         },
         delivery_method: vendorSystem,
