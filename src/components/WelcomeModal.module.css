@@ -1,36 +1,68 @@
+/* WelcomeModal — compact, scrollable, all-device safe */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
-  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 1rem;
+  /* iOS safe area */
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  animation: fadeIn 0.3s ease;
 }
 
 .modal {
   background: var(--bg-100);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: 20px;
   width: 100%;
-  max-width: 480px;
+  max-width: 400px;
+  /* KEY: constrain height and allow scroll within modal */
+  max-height: 85dvh;
+  max-height: 85vh; /* fallback */
   position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Scrollable inner area */
+.scrollArea {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 1.75rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0;
+}
+
+.scrollArea::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollArea::-webkit-scrollbar-track { background: transparent; }
+.scrollArea::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
 }
 
 .closeBtn {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 0.75rem;
+  right: 0.75rem;
   background: var(--bg-200);
   border: none;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -39,6 +71,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   z-index: 2;
+  flex-shrink: 0;
 }
 
 .closeBtn:hover {
@@ -46,62 +79,57 @@
   color: var(--text-100);
 }
 
-.content {
-  padding: 2.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
 .iconBox {
-  width: 64px;
-  height: 64px;
+  width: 52px;
+  height: 52px;
   background: var(--primary-soft);
-  border-radius: 20px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
 }
 
 .title {
   font-family: var(--font-serif);
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 800;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
   color: var(--text-100);
 }
 
 .subtitle {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   color: var(--text-400);
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.4;
 }
 
 .featureList {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  margin-bottom: 2rem;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
   text-align: left;
 }
 
 .featureItem {
   display: flex;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 0.75rem;
+  padding: 0.75rem;
   background: var(--bg-200);
-  border-radius: 16px;
+  border-radius: 12px;
   border: 1px solid var(--border);
+  align-items: flex-start;
 }
 
 .featureIcon {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   background: var(--bg-300);
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,57 +138,58 @@
 }
 
 .featureItem h4 {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.1rem;
 }
 
 .featureItem p {
-  font-size: 0.78rem;
+  font-size: 0.73rem;
   color: var(--text-400);
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .policySummary {
   background: rgba(255, 255, 255, 0.03);
   border: 1px dashed var(--border);
-  border-radius: 12px;
-  padding: 1rem;
+  border-radius: 10px;
+  padding: 0.85rem;
   width: 100%;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
   text-align: left;
 }
 
 .policySummary h4 {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   color: var(--primary);
 }
 
 .policySummary ul {
   list-style: none;
   padding: 0;
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.3rem;
 }
 
 .policySummary li {
-  font-size: 0.75rem;
+  font-size: 0.71rem;
   color: var(--text-300);
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  align-items: flex-start;
+  gap: 0.3rem;
+  line-height: 1.3;
 }
 
 .policySummary p {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-400);
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
   border-top: 1px solid var(--border);
-  padding-top: 0.5rem;
+  padding-top: 0.4rem;
 }
 
 .policySummary a {
@@ -173,34 +202,38 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
 }
 
 .primaryBtn {
   background: var(--primary);
   color: #000;
-  padding: 0.85rem;
-  border-radius: 12px;
+  padding: 0.75rem;
+  border-radius: 10px;
   font-weight: 700;
+  font-size: 0.88rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   text-decoration: none;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, opacity 0.2s;
 }
 
 .primaryBtn:hover {
   transform: translateY(-2px);
+  opacity: 0.92;
 }
 
 .secondaryBtn {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-300);
-  padding: 0.85rem;
-  border-radius: 12px;
+  padding: 0.7rem;
+  border-radius: 10px;
   font-weight: 600;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -211,12 +244,12 @@
 }
 
 .sponsor {
-  margin-top: 1.5rem;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--text-400);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   font-weight: 600;
+  margin-top: 0.25rem;
 }
 
 @keyframes fadeIn {
@@ -225,6 +258,16 @@
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Extra small screens (very small phones) */
+@media (max-height: 600px) {
+  .modal {
+    max-height: 92vh;
+  }
+  .iconBox { display: none; }
+  .scrollArea { padding: 1.25rem 1rem 1rem; }
+  .title { font-size: 1.1rem; }
 }

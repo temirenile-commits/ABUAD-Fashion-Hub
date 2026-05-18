@@ -267,7 +267,7 @@ export default function UniversityAdminPage() {
             <>
               {tab==="overview"&&(
                 <>
-                  <div className={styles.statsGrid}>
+                  <div className={styles.statsGrid} id="tour-uni-admin-overview">
                     {[
                       {label:"Vendors",val:stats.totalVendors||0,color:"#7c3aed",bg:"rgba(124,58,237,0.1)"},
                       {label:"Customers",val:stats.totalUsers||0,color:"#3b82f6",bg:"rgba(59,130,246,0.1)"},
@@ -299,7 +299,7 @@ export default function UniversityAdminPage() {
               )}
 
               {tab==="vendors"&&(
-                <div className={styles.sectionCard}>
+                <div className={styles.sectionCard} id="tour-uni-admin-vendors">
                   <div className={styles.sectionHeader}><div><h2>Vendor Management</h2><p>Approve, reject, and monitor vendors in your university</p></div></div>
                   <div className={styles.tableWrap}>
                     <table className={styles.table}>
@@ -438,7 +438,7 @@ export default function UniversityAdminPage() {
                   </div>
                 </div>
 
-                <div className={styles.sectionCard} style={{ marginTop: '2rem' }}>
+                <div className={styles.sectionCard} style={{ marginTop: '2rem' }} id="tour-uni-admin-notices">
                   <div className={styles.sectionHeader}><div><h2>Manual Homepage Billboard</h2><p>Feature a custom promotional banner for your students</p></div></div>
                   <div className={styles.notifForm}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', width: '100%' }}>

@@ -1367,7 +1367,7 @@ export default function AdminDashboard() {
                   </tbody>
                 </table></div>
 
-                <div style={{ marginTop: '3rem', padding: '2rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                <div style={{ marginTop: '3rem', padding: '2rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border)' }} id="tour-admin-delivery">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                     <Activity size={20} color="var(--primary)" />
                     <h3 style={{ margin: 0 }}>Logistics & Delivery Configuration</h3>
@@ -1621,7 +1621,7 @@ export default function AdminDashboard() {
             )}
 
             {activeTab === 'refunds' && (
-              <div className={styles.sectionCard}>
+              <div className={styles.sectionCard} id="tour-admin-refunds">
                 <div style={{ marginBottom: '2rem' }}>
                   <h2>Refund Queue (Unconfirmed Deliveries)</h2>
                   <p className={styles.subText}>Orders that have been paid but not confirmed by the customer for over 24 hours.</p>
@@ -1679,7 +1679,7 @@ export default function AdminDashboard() {
             )}
 
             {activeTab === 'financials' && (
-               <div className={styles.sectionCard}>
+               <div className={styles.sectionCard} id="tour-admin-finances">
                  {/* ── SUMMARY CARDS ── */}
                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
                    {[
@@ -1893,7 +1893,7 @@ export default function AdminDashboard() {
              )}
 
               {activeTab === 'settings' && (
-                <div className={styles.sectionCard}>
+                <div className={styles.sectionCard} id="tour-admin-settings">
                   <h2>Campus Configuration & Subscription Settings</h2>
                   <p className={styles.subText}>Select a university to configure its specific subscription rates, feature availability, and booster plans.</p>
 

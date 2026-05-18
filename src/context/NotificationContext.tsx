@@ -12,6 +12,26 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
+function playChime() {
+  if (typeof window === 'undefined') return;
+  try {
+    // Short notification beep using Web Audio API (no file needed)
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime); // A5
+    oscillator.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.35, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.3);
+  } catch {
+    // Audio not available, silently fail
+  }
+}
+
 function firePushNotification(title: string, body: string, url?: string) {
   if (typeof window === 'undefined' || !('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
@@ -49,8 +69,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const handleIncoming = useCallback((title: string, body: string, url?: string) => {
     setUnreadCount(c => c + 1);
-    // Native push (this will trigger the device's native notification sound)
+    // Native push notification (triggers device sound)
     firePushNotification(title, body, url);
+    // In-app audio chime (works even without push permission)
+    playChime();
   }, []);
 
   const markAllRead = useCallback(() => setUnreadCount(0), []);

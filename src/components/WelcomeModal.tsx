@@ -13,7 +13,7 @@ export default function WelcomeModal() {
     if (!hasVisited) {
       const timer = setTimeout(() => {
         setIsOpen(true);
-      }, 1500); // Show after 1.5 seconds
+      }, 1200);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -26,15 +26,16 @@ export default function WelcomeModal() {
   if (!isOpen) return null;
 
   return (
-    <div className={styles.overlay}>
-      <div className={styles.modal}>
-        <button className={styles.closeBtn} onClick={handleClose}>
-          <X size={20} />
+    <div className={styles.overlay} onClick={handleClose}>
+      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <button className={styles.closeBtn} onClick={handleClose} aria-label="Close">
+          <X size={18} />
         </button>
 
-        <div className={styles.content}>
+        {/* Scrollable inner content */}
+        <div className={styles.scrollArea}>
           <div className={styles.iconBox}>
-            <Sparkles size={32} color="var(--primary)" />
+            <Sparkles size={28} color="var(--primary)" />
           </div>
           
           <h2 className={styles.title}>Welcome to Master Cart</h2>
@@ -42,27 +43,26 @@ export default function WelcomeModal() {
 
           <div className={styles.featureList}>
             <div className={styles.featureItem}>
-              <div className={styles.featureIcon}><ShieldCheck size={18} /></div>
+              <div className={styles.featureIcon}><ShieldCheck size={16} /></div>
               <div>
-                <h4>Escrow Protected Payments</h4>
+                <h4>Escrow Protected</h4>
                 <p>Your money is safe. Vendors only get paid when you confirm delivery.</p>
               </div>
             </div>
             <div className={styles.featureItem}>
-              <div className={styles.featureIcon}><ShoppingBag size={18} /></div>
+              <div className={styles.featureIcon}><ShoppingBag size={16} /></div>
               <div>
                 <h4>Verified Campus Vendors</h4>
-                <p>Shop from your fellow students with 100% verification and trust.</p>
+                <p>Shop from fellow students with 100% verification and trust.</p>
               </div>
             </div>
           </div>
 
           <div className={styles.policySummary}>
-            <h4>Terms at a Glance:</h4>
+            <h4>Quick Terms:</h4>
             <ul>
-              <li>✅ <strong>Escrow Protected</strong>: Payments held until delivery is confirmed.</li>
+              <li>✅ <strong>Escrow Protected</strong>: Payments held until delivery confirmed.</li>
               <li>✅ <strong>24h Release</strong>: Funds released to vendors after 24 hours.</li>
-              <li>✅ <strong>Vendor Rule</strong>: Profile must be completed in 48 hours.</li>
               <li>✅ <strong>Sponsored By</strong>: MIGHTY SEEDS EXCEL INVESTMENT LTD.</li>
             </ul>
             <p>By using the platform, you agree to our <Link href="/terms" onClick={handleClose}>Full Terms of Service</Link>.</p>
@@ -70,7 +70,7 @@ export default function WelcomeModal() {
 
           <div className={styles.actions}>
             <Link href="/auth/register" onClick={handleClose} className={styles.primaryBtn}>
-              Create Account <ArrowRight size={16} />
+              Create Account <ArrowRight size={15} />
             </Link>
             <button onClick={handleClose} className={styles.secondaryBtn}>
               Just Browsing

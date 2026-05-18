@@ -10,13 +10,15 @@ export async function GET(req: Request) {
     const type = searchParams.get('type') || 'vendors';
 
     if (type === 'products') {
+      if (!universityId) return NextResponse.json({ error: 'universityId required' }, { status: 400 });
       const { data, error } = await supabaseAdmin
         .from('products')
         .select(`
           id, title, price, sold, weekly_sold, avg_rating, media_urls, award_history,
-          brands ( id, name, logo_url )
+          brands ( id, name, logo_url, university_id )
         `)
         .eq('product_section', 'delicacies')
+        .eq('university_id', universityId)
         .order('weekly_sold', { ascending: false })
         .limit(20);
       if (error) throw error;
@@ -24,13 +26,20 @@ export async function GET(req: Request) {
     }
 
     if (type === 'all_vendors') {
+        if (!universityId) return NextResponse.json({ error: 'universityId required' }, { status: 400 });
         const { data, error } = await supabaseAdmin
             .from('brands')
             .select('id, name, logo_url, avg_rating, description')
             .eq('marketplace_type', 'delicacies')
+            .eq('university_id', universityId)
             .order('name', { ascending: true });
         if (error) throw error;
         return NextResponse.json({ vendors: data || [] });
+    }
+
+    // ISOLATION FIX: Require universityId for vendor rankings
+    if (!universityId) {
+      return NextResponse.json({ error: 'universityId is required for rankings' }, { status: 400 });
     }
 
     let query = supabaseAdmin
@@ -43,20 +52,21 @@ export async function GET(req: Request) {
           id, name, logo_url, avg_rating, university_id
         )
       `)
+      .eq('university_id', universityId)
       .order('rank', { ascending: true })
       .limit(10);
 
-    if (universityId) query = query.eq('university_id', universityId);
     if (weekStart) query = query.eq('week_start', weekStart);
 
     const { data, error } = await query;
     
     if (error || !data || data.length === 0) {
-      // Fallback to real-time rankings based on products sold
+      // Fallback: real-time rankings scoped to this university
       const { data: realTime, error: rtError } = await supabaseAdmin
         .from('brands')
-        .select('id, name, logo_url, avg_rating, weekly_orders, award_history')
+        .select('id, name, logo_url, avg_rating, weekly_orders, award_history, university_id')
         .eq('marketplace_type', 'delicacies')
+        .eq('university_id', universityId)
         .order('weekly_orders', { ascending: false })
         .limit(10);
       

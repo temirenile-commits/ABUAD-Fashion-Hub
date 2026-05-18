@@ -189,7 +189,7 @@ export default function CustomerDashboard() {
 
       <div className={styles.dashboardGrid}>
         {/* Main: Orders */}
-        <div className={styles.mainCol}>
+        <div className={styles.mainCol} id="tour-customer-orders">
           <h2 className={styles.sectionTitle}>Your Orders</h2>
           
           {orders.length === 0 ? (

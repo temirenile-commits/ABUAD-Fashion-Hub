@@ -1350,7 +1350,7 @@ export default function VendorDashboard() {
         )}
 
         {activeTab === 'overview' && (
-          <div className={styles.tabContent}>
+          <div className={styles.tabContent} id="tour-vendor-overview">
             <h1 className={styles.title}>Business Overview</h1>
 
             {isTrialActive && (
@@ -1424,7 +1424,7 @@ export default function VendorDashboard() {
               </div>
             )}
             <div className={styles.statsGrid}>
-              <div className={`${styles.statCard} ${styles.statCardVibrant}`}>
+              <div className={`${styles.statCard} ${styles.statCardVibrant}`} id="tour-vendor-wallet">
                 <div className={styles.statHead}>
                   <Wallet size={20} color="var(--primary)" />
                   <span>Available Balance</span>
@@ -1498,7 +1498,7 @@ export default function VendorDashboard() {
             </div>
 
             <div className={styles.dashboardSplit}>
-              <div className={styles.splitMain}>
+              <div className={styles.splitMain} id="tour-vendor-orders-tab">
                 <div className={`${styles.sectionHeader} ${styles.hasAction}`}>
                   <h2>Recent Orders</h2>
                   <button className="btn btn-ghost btn-sm" onClick={() => setActiveTab('orders')}>View All</button>
@@ -1523,7 +1523,7 @@ export default function VendorDashboard() {
               <div className={styles.splitSide}>
                 <div className={styles.quickActions}>
                   <h3>Quick Actions</h3>
-                  <button className={styles.actionBtn} onClick={() => setActiveTab('inventory')}>Add New Product</button>
+                  <button className={styles.actionBtn} onClick={() => setActiveTab('inventory')} id="tour-vendor-add-product">Add New Product</button>
                   <button className={styles.actionBtn} onClick={() => setActiveTab('services')}>Add Service</button>
                   <button className={styles.actionBtn} onClick={() => setActiveTab('reels')}>Upload Reel</button>
                   <button className={styles.actionBtn} onClick={() => setActiveTab('payments')}>Request Payout</button>

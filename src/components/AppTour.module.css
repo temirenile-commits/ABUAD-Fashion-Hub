@@ -1,0 +1,207 @@
+/* AppTour — role-aware guided onboarding overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  animation: fadeIn 0.35s ease;
+}
+
+.card {
+  background: var(--bg-100);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 420px;
+  padding: 0 1.75rem 1.5rem;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  /* touch */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Top progress bar */
+.progressBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--bg-300);
+  border-radius: 3px 3px 0 0;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 3px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stepCounter {
+  padding-top: 1.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-400);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 1rem;
+}
+
+.stepIcon {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 1rem;
+  animation: bounce 0.5s ease;
+}
+
+.stepTitle {
+  font-family: var(--font-serif, system-ui);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-100);
+  margin-bottom: 0.75rem;
+  line-height: 1.25;
+}
+
+.stepDesc {
+  font-size: 0.9rem;
+  color: var(--text-300);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+/* Step dots */
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 1.5rem;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bg-300);
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  padding: 0;
+}
+
+.dotActive {
+  background: var(--primary);
+  width: 20px;
+  border-radius: 4px;
+}
+
+/* Navigation */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.skipBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-400);
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  transition: color 0.2s;
+}
+
+.skipBtn:hover {
+  color: var(--text-200);
+}
+
+.backBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-300);
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.backBtn:hover {
+  background: var(--bg-200);
+}
+
+.nextBtn {
+  background: var(--primary);
+  color: #000;
+  border: none;
+  padding: 0.7rem 1.4rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.nextBtn:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+.nextBtn:active {
+  transform: scale(0.97);
+}
+
+.swipeHint {
+  font-size: 0.65rem;
+  color: var(--text-400);
+  margin-top: 1rem;
+  opacity: 0.6;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .card {
+    padding: 0 1.25rem 1.25rem;
+    border-radius: 20px;
+  }
+  .stepTitle { font-size: 1.1rem; }
+  .stepDesc { font-size: 0.83rem; }
+  .stepIcon { font-size: 2.5rem; }
+}

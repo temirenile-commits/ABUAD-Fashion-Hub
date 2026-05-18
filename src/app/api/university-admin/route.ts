@@ -180,19 +180,44 @@ export async function GET(req: NextRequest) {
 
   // â”€â”€ Analytics — trend data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (action === 'analytics') {
-    const { data: ordersData } = await supabaseAdmin
+    const period = searchParams.get('period') || '30d';
+    const paidStatuses = ['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered', 'received'];
+
+    // Calculate start date from period
+    const now = new Date();
+    let startDate: Date | null = null;
+    if (period === '7d') startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    else if (period === '30d') startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    else if (period === '90d') startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    // 'all' = no date filter
+
+    let query = supabaseAdmin
       .from('orders')
       .select('created_at, total_amount, status')
       .eq('university_id', universityId)
       .order('created_at', { ascending: true });
 
-    // Aggregate by date
+    if (startDate) query = query.gte('created_at', startDate.toISOString());
+
+    const { data: ordersData } = await query;
+
+    // Group by day (7d/30d) or by week (90d/all)
+    const groupByWeek = period === '90d' || period === 'all';
+
     const aggregated = (ordersData || []).reduce((acc: any, curr: any) => {
-      const date = new Date(curr.created_at).toLocaleDateString('en-NG', { day: '2-digit', month: 'short' });
-      if (!acc[date]) acc[date] = { orders: 0, revenue: 0 };
-      acc[date].orders += 1;
-      const paidStatuses = ['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered', 'received'];
-      if (paidStatuses.includes(curr.status)) acc[date].revenue += Number(curr.total_amount || 0);
+      let key: string;
+      const d = new Date(curr.created_at);
+      if (groupByWeek) {
+        // Group by week: "Week of DD MMM"
+        const weekStart = new Date(d);
+        weekStart.setDate(d.getDate() - d.getDay());
+        key = 'W/C ' + weekStart.toLocaleDateString('en-NG', { day: '2-digit', month: 'short' });
+      } else {
+        key = d.toLocaleDateString('en-NG', { day: '2-digit', month: 'short' });
+      }
+      if (!acc[key]) acc[key] = { orders: 0, revenue: 0 };
+      acc[key].orders += 1;
+      if (paidStatuses.includes(curr.status)) acc[key].revenue += Number(curr.total_amount || 0);
       return acc;
     }, {});
 
@@ -202,7 +227,13 @@ export async function GET(req: NextRequest) {
       revenue: val.revenue,
     }));
 
-    return NextResponse.json({ chartData });
+    // Summary stats
+    const allOrders = ordersData || [];
+    const totalRevenue = allOrders.filter((o: any) => paidStatuses.includes(o.status)).reduce((s: number, o: any) => s + Number(o.total_amount || 0), 0);
+    const totalOrders = allOrders.length;
+    const paidOrdersCount = allOrders.filter((o: any) => paidStatuses.includes(o.status)).length;
+
+    return NextResponse.json({ chartData, summary: { totalRevenue, totalOrders, paidOrdersCount, period } });
   }
 
   // â”€â”€ Cross-university insights (AGGREGATED ONLY — no raw data) â”€
@@ -273,20 +304,54 @@ export async function GET(req: NextRequest) {
   }
 
   if (action === 'promo_codes') {
-    const { data, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('promo_codes')
       .select('*, brands(name), products(title)')
-      .eq('university_id', universityId)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      // Fallback for missing column during migration phase
-      if (error.message.includes('column promo_codes.university_id does not exist')) {
-        return NextResponse.json({ promoCodes: [] });
+    // Try university_id filter — fallback gracefully if column missing
+    try {
+      const { data, error } = await query.eq('university_id', universityId);
+      if (error && error.message.includes('column')) {
+        const { data: fallbackData } = await supabaseAdmin.from('promo_codes').select('*, brands(name), products(title)').order('created_at', { ascending: false });
+        return NextResponse.json({ promoCodes: fallbackData || [] });
       }
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ promoCodes: data || [] });
+    } catch {
+      return NextResponse.json({ promoCodes: [] });
+    }
+  }
+
+  if (action === 'notices') {
+    const { data, error } = await supabaseAdmin
+      .from('university_notices')
+      .select('*')
+      .eq('university_id', universityId)
+      .order('created_at', { ascending: false });
+    if (error) {
+      if (error.message.includes('does not exist')) return NextResponse.json({ notices: [] });
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    return NextResponse.json({ promoCodes: data || [] });
+    return NextResponse.json({ notices: data || [] });
+  }
+
+  if (action === 'billboards') {
+    // Fetch from dedicated table first, fall back to platform_settings
+    const { data: tableData, error: tableErr } = await supabaseAdmin
+      .from('manual_billboards')
+      .select('*')
+      .eq('university_id', universityId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+    
+    if (!tableErr) return NextResponse.json({ billboards: tableData || [] });
+    
+    // Fallback: platform_settings
+    const { data: settingData } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'manual_billboards').single();
+    const all = (settingData?.value as any[]) || [];
+    const filtered = all.filter((b: any) => !b.university_id || b.university_id === universityId);
+    return NextResponse.json({ billboards: filtered });
   }
 
   if (action === 'university_config') {
@@ -698,24 +763,92 @@ export async function POST(req: NextRequest) {
 
   // ─── Promo Codes Management ────────────────────────────────────────────────
   if (action === 'create_promo_code') {
-    const { code, type, value, max_uses, product_id } = body;
+    const { code, type, value, max_uses, product_id, brand_id } = body;
     if (!code || !type || value === undefined) return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
 
-    const { error } = await supabaseAdmin.from('promo_codes').insert({
+    // brand_id is now OPTIONAL (nullable in DB after migration)
+    const insertData: any = {
       code: code.toUpperCase(),
       type,
-      value,
-      max_uses,
+      value: Number(value),
+      max_uses: max_uses || null,
       product_id: product_id || null,
-      university_id: ctx.universityId, // Enforced scope
-      is_active: true
-    });
+      brand_id: brand_id || null, // nullable — platform-wide codes have no brand
+      university_id: ctx.universityId,
+      is_active: true,
+      created_by: ctx.userId,
+    };
+
+    const { error } = await supabaseAdmin.from('promo_codes').insert(insertData);
     if (error) {
-      if (error.message.includes('column "university_id" of relation "promo_codes" does not exist')) {
-        return NextResponse.json({ error: 'System update required: Please run the promo_codes migration in Supabase dashboard.' }, { status: 500 });
+      // Fallback: drop optional fields if schema is old
+      if (error.message.includes('column') || error.message.includes('schema cache')) {
+        delete insertData.university_id;
+        delete insertData.created_by;
+        const { error: fallbackErr } = await supabaseAdmin.from('promo_codes').insert(insertData);
+        if (fallbackErr) return NextResponse.json({ error: fallbackErr.message }, { status: 500 });
+        return NextResponse.json({ success: true });
       }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+    return NextResponse.json({ success: true });
+  }
+
+  // ─── Create University Notice ────────────────────────────────────────────────
+  if (action === 'create_notice') {
+    const { title, content, notice_type, expires_at } = body;
+    if (!title || !content) return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
+    
+    const { error } = await supabaseAdmin.from('university_notices').insert({
+      title,
+      content,
+      notice_type: notice_type || 'general',
+      university_id: universityId,
+      created_by: ctx.userId,
+      is_active: true,
+      expires_at: expires_at || null,
+    });
+    if (error) {
+      if (error.message.includes('does not exist')) {
+        return NextResponse.json({ error: 'Please run the mega_patch_migrations.sql in Supabase dashboard first.' }, { status: 500 });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ success: true });
+  }
+
+  // ─── Delete Notice ─────────────────────────────────────────────────────────
+  if (action === 'delete_notice') {
+    const { noticeId } = body;
+    const { error } = await supabaseAdmin.from('university_notices').delete().eq('id', noticeId).eq('university_id', universityId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // ─── Manual Billboard (scoped table) ──────────────────────────────────────
+  if (action === 'add_manual_billboard') {
+    const { title, description, link, cover_url } = body;
+    if (!title) return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    
+    // Try dedicated table first
+    const { error: tableErr } = await supabaseAdmin.from('manual_billboards').insert({
+      title,
+      description,
+      link,
+      cover_url,
+      university_id: ctx.universityId,
+      created_by: ctx.userId,
+      is_active: true,
+    });
+    
+    if (!tableErr) return NextResponse.json({ success: true });
+    
+    // Fallback: platform_settings JSON array
+    const { data: exist } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'manual_billboards').single();
+    const list = (exist?.value as any[]) || [];
+    list.push({ id: `mb_${Date.now()}`, title, description, link, cover_url, university_id: ctx.universityId });
+    const { error } = await supabaseAdmin.from('platform_settings').upsert({ key: 'manual_billboards', value: list, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }
 

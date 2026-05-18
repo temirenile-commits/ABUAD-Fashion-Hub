@@ -8,7 +8,7 @@ import { useCart } from '@/context/CartContext';
 import { useNotifications } from '@/context/NotificationContext';
 import { useTheme } from '@/context/ThemeContext';
 import CartDrawer from './CartDrawer';
-import SupportModal from './SupportModal';
+import HelpCenter from './HelpCenter';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
@@ -124,12 +124,12 @@ export default function Navbar() {
     <header className={styles.header}>
       <nav className={`container-wide ${styles.nav}`}>
         {/* Logo */}
-        <Link href="/" className={styles.logo}>
+        <Link href="/" className={styles.logo} id="tour-navbar-logo">
           <img src="/logo.png" alt="Logo" className={styles.logoImg} />
         </Link>
 
         {/* Search Bar (Jumia Style - Center) */}
-        <form className={styles.searchBar} onSubmit={handleSearch}>
+        <form className={styles.searchBar} onSubmit={handleSearch} id="tour-search-bar">
           <Search size={18} className={styles.searchIcon} />
           <input 
             type="text" 
@@ -172,7 +172,7 @@ export default function Navbar() {
               </div>
 
               {/* Account Profile Pic (Always Visible) */}
-              <div className={styles.actionItem}>
+              <div className={styles.actionItem} id="tour-user-account">
                 <Link href={dashboardLink} className={styles.actionLink} title="Account" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div className={styles.universityLabel}>
                     <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', textAlign: 'right' }}>
@@ -266,6 +266,7 @@ export default function Navbar() {
                 <button 
                   onClick={(e) => { e.stopPropagation(); setCartOpen(true); setMenuOpen(false); }} 
                   className={styles.moduleItem}
+                  id="tour-cart-btn"
                 >
                   <div className={styles.iconWrap}>
                     <ShoppingBag size={18} />
@@ -298,12 +299,12 @@ export default function Navbar() {
       </nav>
 
       <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
-      <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
+      <HelpCenter isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
 
       {/* Category Quick Bar */}
       <div className={styles.categoryBar}>
         <div className={`container-wide ${styles.categoryInner}`}>
-          <Link href="/delicacies" className={styles.catPill} style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: '#fff', border: 'none', fontWeight: 700 }}>
+          <Link href="/delicacies" className={styles.catPill} id="tour-category-delicacies" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: '#fff', border: 'none', fontWeight: 700 }}>
             🍔 Delicacies
           </Link>
 

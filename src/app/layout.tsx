@@ -2,10 +2,10 @@ import type { Metadata, Viewport } from 'next';
 import { CartProvider } from '@/context/CartContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import { ToastProvider } from '@/context/ToastContext';
+import { TourProvider } from '@/context/TourContext';
 import RealtimeProvider from '@/components/providers/RealtimeProvider';
 import LayoutWrapper from '@/components/LayoutWrapper';
 import { ThemeProvider } from '@/context/ThemeContext';
-import UpdatePrompt from '@/components/UpdatePrompt';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -51,10 +51,11 @@ export default function RootLayout({
             <RealtimeProvider>
               <CartProvider>
                 <NotificationProvider>
-                  <UpdatePrompt />
-                  <LayoutWrapper>
-                    {children}
-                  </LayoutWrapper>
+                  <TourProvider>
+                    <LayoutWrapper>
+                      {children}
+                    </LayoutWrapper>
+                  </TourProvider>
                 </NotificationProvider>
               </CartProvider>
             </RealtimeProvider>
