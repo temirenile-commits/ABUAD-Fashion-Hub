@@ -2016,10 +2016,12 @@ export default function VendorDashboard() {
                               </div>
                               <div style={{ flex: 1 }}>
                                 <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-400)', fontWeight: 700 }}>LOGISTIC AGENT</p>
-                                <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem' }}>{order.deliveries[0].users?.name || 'Assigning...'}</p>
+                                <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem' }}>
+                                  {order.deliveries[0].agent_name || order.deliveries[0].users?.name || 'Assigning...'}
+                                </p>
                               </div>
-                              {order.deliveries[0].users?.phone && (
-                                <a href={`tel:${order.deliveries[0].users.phone}`} className="btn btn-ghost btn-sm" style={{ padding: '6px' }}>
+                              {(order.deliveries[0].agent_phone || order.deliveries[0].users?.phone) && (
+                                <a href={`tel:${order.deliveries[0].agent_phone || order.deliveries[0].users?.phone}`} className="btn btn-ghost btn-sm" style={{ padding: '6px' }}>
                                   <Phone size={14} />
                                 </a>
                               )}

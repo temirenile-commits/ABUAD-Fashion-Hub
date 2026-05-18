@@ -496,6 +496,18 @@ export async function POST(req: NextRequest) {
 
   if (action === 'verify_manual_payment') {
     const { orderId } = body;
+    
+    // Fetch order first to check delivery_method
+    const { data: order, error: orderErr } = await supabaseAdmin
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
+      
+    if (orderErr || !order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
     const { error } = await supabaseAdmin
       .from('orders')
       .update({
@@ -505,6 +517,35 @@ export async function POST(req: NextRequest) {
       .eq('id', orderId);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // F. LOGISTICS: Create delivery record for manual checkouts
+    if (order.delivery_method === 'platform') {
+      const { data: existingDelivery } = await supabaseAdmin
+        .from('deliveries')
+        .select('id')
+        .eq('order_id', orderId)
+        .single();
+        
+      if (!existingDelivery) {
+        await supabaseAdmin.from('deliveries').insert({
+          order_id: orderId,
+          status: 'waiting_for_vendor'
+        });
+
+        // Auto-assign agent
+        const { data: brand } = await supabaseAdmin
+          .from('brands')
+          .select('latitude, longitude')
+          .eq('id', order.brand_id)
+          .single();
+
+        if (brand?.latitude && brand?.longitude) {
+          const { autoAssignDelivery } = await import('@/lib/logistics');
+          await autoAssignDelivery(orderId, Number(brand.latitude), Number(brand.longitude));
+        }
+      }
+    }
+
     return NextResponse.json({ success: true, message: 'Transfer verified and order marked as paid.' });
   }
 
@@ -1372,6 +1413,34 @@ export async function POST(req: NextRequest) {
       .eq('id', orderId);
 
     if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
+
+    // F. LOGISTICS: Create delivery record for manual checkouts
+    if (order.delivery_method === 'platform') {
+      const { data: existingDelivery } = await supabaseAdmin
+        .from('deliveries')
+        .select('id')
+        .eq('order_id', orderId)
+        .single();
+        
+      if (!existingDelivery) {
+        await supabaseAdmin.from('deliveries').insert({
+          order_id: orderId,
+          status: 'waiting_for_vendor'
+        });
+
+        // Auto-assign agent
+        const { data: brand } = await supabaseAdmin
+          .from('brands')
+          .select('latitude, longitude')
+          .eq('id', order.brand_id)
+          .single();
+
+        if (brand?.latitude && brand?.longitude) {
+          const { autoAssignDelivery } = await import('@/lib/logistics');
+          await autoAssignDelivery(orderId, Number(brand.latitude), Number(brand.longitude));
+        }
+      }
+    }
 
     // 3. Record transaction ledger
     await supabaseAdmin.from('transactions').insert({

@@ -222,6 +222,7 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
 
     // --- PRIVATE (AUTHED) SYNC ---
     let privateChannel: any;
+    let deliveriesChannel: any;
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user && active) {
@@ -247,6 +248,43 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
             }
           }
         ).subscribe();
+
+        // Deliveries subscription for real-time agent/delivery status sync
+        deliveriesChannel = supabase.channel(`private:deliveries:${session.user.id}`);
+        deliveriesChannel.on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'deliveries' },
+          (payload: any) => {
+            if (payload.eventType === 'UPDATE') {
+              const delivery = payload.new;
+              const { orders } = useMarketplaceStore.getState();
+              const existingOrder = orders.find((o: any) => o.id === delivery.order_id);
+              if (existingOrder) {
+                // Construct the updated delivery object
+                const updatedDelivery = {
+                  id: delivery.id,
+                  status: delivery.status,
+                  agent_id: delivery.agent_id,
+                  delivery_code: delivery.delivery_code,
+                  agent_name: delivery.agent_name,
+                  agent_phone: delivery.agent_phone,
+                  users: delivery.agent_id ? {
+                    id: delivery.agent_id,
+                    name: delivery.agent_name || delivery.rider_name,
+                    phone: delivery.agent_phone || delivery.rider_phone
+                  } : null
+                };
+
+                // Merge into existing deliveries array
+                updateOrder(delivery.order_id, {
+                  deliveries: [updatedDelivery]
+                });
+                
+                toast('Delivery status updated!', { icon: '🛵' });
+              }
+            }
+          }
+        ).subscribe();
       }
     });
 
@@ -254,6 +292,7 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
       active = false;
       supabase.removeChannel(publicChannel);
       if (privateChannel) supabase.removeChannel(privateChannel);
+      if (deliveriesChannel) supabase.removeChannel(deliveriesChannel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addProduct, addOrder, addReel, addService, addVendor, removeProduct, removeReel, removeService, setInitialized, setOrders, setProducts, setReels, setServices, setVendors, updateOrder, updateProduct, updateService, updateVendor]);

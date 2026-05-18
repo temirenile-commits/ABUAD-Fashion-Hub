@@ -83,13 +83,14 @@ export default function DeliveryDashboard() {
       .neq('status', 'delivered')
       .order('created_at', { ascending: false });
 
-    // Fetch Available Deliveries (Pending and no agent)
+    // Fetch Available Deliveries (Pending and no agent, and order is ready/ready_for_pickup)
     const { data: availData } = await supabase
       .from('deliveries')
       .select(`
         *,
-        orders (
+        orders!inner (
           id,
+          status,
           total_amount,
           shipping_address,
           brands (name, location_name)
@@ -97,6 +98,7 @@ export default function DeliveryDashboard() {
       `)
       .is('agent_id', null)
       .eq('status', 'pending')
+      .in('orders.status', ['ready', 'ready_for_pickup'])
       .order('created_at', { ascending: false });
 
     setDeliveries(myData || []);

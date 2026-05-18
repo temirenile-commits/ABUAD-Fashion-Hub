@@ -123,6 +123,38 @@ export async function POST(req: Request) {
         } catch (e) {
           // non-fatal
         }
+
+        // F. LOGISTICS: Create delivery record for manually synced orders
+        if (order.delivery_method === 'platform') {
+          try {
+            const { data: existingDelivery } = await supabaseAdmin
+              .from('deliveries')
+              .select('id')
+              .eq('order_id', order.id)
+              .single();
+              
+            if (!existingDelivery) {
+              await supabaseAdmin.from('deliveries').insert({
+                order_id: order.id,
+                status: 'waiting_for_vendor'
+              });
+
+              // Auto-assign agent
+              const { data: brand } = await supabaseAdmin
+                .from('brands')
+                .select('latitude, longitude')
+                .eq('id', order.brand_id)
+                .single();
+
+              if (brand?.latitude && brand?.longitude) {
+                const { autoAssignDelivery } = await import('@/lib/logistics');
+                await autoAssignDelivery(order.id, Number(brand.latitude), Number(brand.longitude));
+              }
+            }
+          } catch (e) {
+            console.error('[SYNC-PAYMENT] Logistics error:', e);
+          }
+        }
       }
     }
 

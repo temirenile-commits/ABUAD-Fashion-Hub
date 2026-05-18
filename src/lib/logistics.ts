@@ -21,10 +21,10 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
  */
 export async function autoAssignDelivery(orderId: string, vendorLat: number, vendorLong: number) {
   try {
-    // 1. Fetch all active agents
+    // 1. Fetch all active agents with their names/phones from users
     const { data: agents, error } = await supabaseAdmin
       .from('delivery_agents')
-      .select('*, deliveries!left(id)')
+      .select('*, users:id(name, phone), deliveries!left(id)')
       .eq('is_active', true);
 
     if (error || !agents || agents.length === 0) {
@@ -65,6 +65,8 @@ export async function autoAssignDelivery(orderId: string, vendorLat: number, ven
       .from('deliveries')
       .update({
         agent_id: nearestAgent.id,
+        agent_name: (nearestAgent.users as any)?.name || null,
+        agent_phone: (nearestAgent.users as any)?.phone || null,
         status: 'assigned',
         pickup_code: pickupCode,
         delivery_code: deliveryCode,

@@ -92,6 +92,8 @@ export interface Order {
     status: string;
     agent_id?: string;
     delivery_code?: string;
+    agent_name?: string;
+    agent_phone?: string;
     users?: { id?: string; name?: string; phone?: string } | null;
   }> | null;
   [key: string]: unknown;
