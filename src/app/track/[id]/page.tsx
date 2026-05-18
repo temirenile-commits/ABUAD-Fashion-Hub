@@ -1,15 +1,65 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  Package, Truck, CheckCircle, Clock, MapPin, 
-  ChevronLeft, Loader2, AlertTriangle, ShieldCheck
+import {
+  Package, Truck, CheckCircle, Clock, MapPin,
+  ChevronLeft, Loader2, AlertTriangle, ShieldCheck,
+  UtensilsCrossed, Star, Bell
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
-import DeliveryMap from '@/components/DeliveryMap';
 import styles from './track.module.css';
+
+/* Full ordered list of steps the order can pass through */
+const ALL_STEPS = [
+  { key: 'pending',          label: 'Order Placed',        desc: 'Your order has been received.' },
+  { key: 'paid',             label: 'Payment Secured',      desc: 'Payment confirmed & held in escrow.' },
+  { key: 'preorder_paid',    label: 'Pre-Order Secured',    desc: 'Pre-order payment received & secured.' },
+  { key: 'accepted',         label: 'Vendor Accepted',      desc: 'The vendor has accepted your order.' },
+  { key: 'processing',       label: 'Being Prepared',       desc: 'Your order is being prepared.' },
+  { key: 'ready',            label: 'Ready for Pickup',     desc: 'Awaiting a delivery agent.' },
+  { key: 'ready_for_pickup', label: 'Ready for Pickup',     desc: 'Awaiting a delivery agent.' },
+  { key: 'picked_up',        label: 'Picked Up',            desc: 'Delivery agent has your order.' },
+  { key: 'in_transit',       label: 'On the Way',           desc: 'Your order is on its way to you!' },
+  { key: 'delivered',        label: 'Delivered',            desc: 'Order has been delivered.' },
+  { key: 'confirmed',        label: 'Confirmed',            desc: 'Delivery confirmed. Escrow released.' },
+  { key: 'completed',        label: 'Completed',            desc: 'Order complete. Thank you!' },
+];
+
+const STATUS_ORDER = ALL_STEPS.map(s => s.key);
+
+function getVisibleSteps(currentStatus: string, isPreorder: boolean) {
+  // Build a clean, deduplicated step list based on order type
+  let keys: string[];
+  if (isPreorder) {
+    keys = ['pending', 'preorder_paid', 'accepted', 'processing', 'ready_for_pickup', 'picked_up', 'in_transit', 'delivered', 'completed'];
+  } else {
+    keys = ['pending', 'paid', 'accepted', 'processing', 'ready', 'picked_up', 'in_transit', 'delivered', 'completed'];
+  }
+  // If current status is not in the list, inject it
+  if (!keys.includes(currentStatus) && STATUS_ORDER.includes(currentStatus)) {
+    const idx = STATUS_ORDER.indexOf(currentStatus);
+    const insertAfter = keys.filter(k => STATUS_ORDER.indexOf(k) < idx).pop();
+    const insertIdx = insertAfter ? keys.indexOf(insertAfter) + 1 : 0;
+    keys.splice(insertIdx, 0, currentStatus);
+  }
+  return keys.map(k => ALL_STEPS.find(s => s.key === k)!).filter(Boolean);
+}
+
+function getCurrentStepIndex(steps: typeof ALL_STEPS, currentStatus: string) {
+  const idx = steps.findIndex(s => s.key === currentStatus);
+  return idx >= 0 ? idx : 0;
+}
+
+function getStatusColor(status: string) {
+  if (['completed', 'confirmed', 'delivered'].includes(status)) return 'var(--success, #22c55e)';
+  if (['in_transit', 'picked_up'].includes(status)) return '#3b82f6';
+  if (['ready', 'ready_for_pickup', 'processing', 'accepted'].includes(status)) return '#f59e0b';
+  if (['paid', 'preorder_paid'].includes(status)) return 'var(--primary)';
+  if (['cancelled', 'failed'].includes(status)) return '#ef4444';
+  return 'var(--text-400)';
+}
 
 export default function TrackingPage() {
   const { id } = useParams();
@@ -18,158 +68,291 @@ export default function TrackingPage() {
   const [order, setOrder] = useState<any>(null);
   const [delivery, setDelivery] = useState<any>(null);
   const [error, setError] = useState('');
+  const [lastStatus, setLastStatus] = useState<string>('');
+  const [justUpdated, setJustUpdated] = useState(false);
+  const notifSent = useRef<Set<string>>(new Set());
 
+  const fetchOrder = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { router.push(`/auth/login?redirect=/track/${id}`); return; }
+
+    const { data, error: err } = await supabase
+      .from('orders')
+      .select('*, products(title, media_urls), brands(name, logo_url, whatsapp_number)')
+      .eq('id', id)
+      .single();
+
+    if (err || !data) { setError('Order not found or access denied.'); setLoading(false); return; }
+
+    setOrder(data);
+
+    const { data: delivData } = await supabase
+      .from('deliveries')
+      .select('*, users:agent_id(name, phone)')
+      .eq('order_id', id)
+      .single();
+    if (delivData) setDelivery(delivData);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchOrder(); }, [id]);
+
+  // ── Real-time subscription ──────────────────────────────────────────────────
   useEffect(() => {
-    async function fetchTrack() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push(`/auth/login?redirect=/track/${id}`);
-        return;
-      }
+    const channel = supabase
+      .channel(`track-order-${id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` },
+        (payload) => {
+          const updated = payload.new as any;
+          setOrder((prev: any) => ({ ...prev, ...updated }));
 
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          products(title, media_urls),
-          brands(name, logo_url)
-        `)
-        .eq('id', id)
-        .single();
+          // Trigger pulse animation
+          setJustUpdated(true);
+          setTimeout(() => setJustUpdated(false), 3000);
 
-      if (error || !data) {
-        setError('Order not found or access denied.');
-      } else {
-        setOrder(data);
-        // Fetch delivery info
-        const { data: delivData } = await supabase
-          .from('deliveries')
-          .select('*')
-          .eq('order_id', id)
-          .single();
-        if (delivData) setDelivery(delivData);
-      }
-      setLoading(false);
+          // Browser notification (if permission granted)
+          const newStatus = updated.status;
+          if (!notifSent.current.has(newStatus)) {
+            notifSent.current.add(newStatus);
+            const step = ALL_STEPS.find(s => s.key === newStatus);
+            if (step && 'Notification' in window && Notification.permission === 'granted') {
+              new Notification(`Order Update: ${step.label}`, {
+                body: step.desc,
+                icon: '/favicon.ico',
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [id]);
+
+  // ── Request notification permission once ───────────────────────────────────
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
     }
-    fetchTrack();
-  }, [id, router]);
+  }, []);
 
-  if (loading) {
-    return (
-      <div className={styles.loading}>
-        <Loader2 className="anim-spin" size={32} />
-        <p>Locating your package...</p>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className={styles.loading}>
+      <Loader2 className="anim-spin" size={32} color="var(--primary)" />
+      <p>Tracking your order...</p>
+    </div>
+  );
 
-  if (error || !order) {
-    return (
-      <div className="container" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-        <AlertTriangle size={48} color="#ef4444" style={{ margin: '0 auto 1.5rem' }} />
-        <h2>Tracking Error</h2>
-        <p>{error}</p>
-        <Link href="/dashboard/customer" className="btn btn-primary mt-4">Back to Dashboard</Link>
-      </div>
-    );
-  }
+  if (error || !order) return (
+    <div className={styles.errorPage}>
+      <AlertTriangle size={48} color="#ef4444" />
+      <h2>Tracking Error</h2>
+      <p>{error}</p>
+      <Link href="/dashboard/customer" className="btn btn-primary">Back to Dashboard</Link>
+    </div>
+  );
 
-  const steps = [
-    { label: 'Order Placed', status: 'pending', done: true, date: order.created_at },
-    { label: 'Payment Secured', status: 'paid', done: ['paid', 'ready', 'picked_up', 'in_transit', 'delivered', 'confirmed', 'completed'].includes(order.status) },
-    { label: 'Ready for Pickup', status: 'ready', done: ['ready', 'picked_up', 'in_transit', 'delivered', 'confirmed', 'completed'].includes(order.status) },
-    { label: 'In Transit', status: 'in_transit', done: ['in_transit', 'delivered', 'confirmed', 'completed'].includes(order.status) },
-    { label: 'Delivered', status: 'delivered', done: ['delivered', 'confirmed', 'completed'].includes(order.status) },
-  ];
+  const steps = getVisibleSteps(order.status, !!order.is_preorder);
+  const activeIdx = getCurrentStepIndex(steps, order.status);
+  const isCancelled = ['cancelled', 'failed'].includes(order.status);
+  const accentColor = getStatusColor(order.status);
 
   return (
-    <div className={`container ${styles.page}`}>
+    <div className={styles.page}>
+      {/* ── Header ── */}
       <div className={styles.header}>
         <Link href="/dashboard/customer" className={styles.backLink}>
-          <ChevronLeft size={16} /> Dashboard
+          <ChevronLeft size={16} /> My Orders
         </Link>
-        <h1>Track Delivery</h1>
-        <p className={styles.orderId}>Order #{order.id.slice(0, 12).toUpperCase()}</p>
+        <div className={styles.headerMeta}>
+          <h1 className={styles.pageTitle}>Live Order Tracking</h1>
+          <span className={styles.orderId}>#{order.id.slice(0, 12).toUpperCase()}</span>
+        </div>
       </div>
 
-      <div className={styles.grid}>
-        {/* Progress Tracker */}
-        <div className={styles.colMain}>
-          <div className={`card ${styles.trackCard}`}>
-            <div className={styles.statusBanner}>
-              <div className={styles.statusIcon}>
-                <Truck size={24} />
-              </div>
-              <div>
-                <h3>{order.status.replace('_', ' ').toUpperCase()}</h3>
-                <p>Status updated on {new Date().toLocaleDateString()}</p>
-              </div>
-            </div>
+      {/* ── Status Hero Banner ── */}
+      <div className={styles.heroBanner} style={{ borderColor: accentColor }}>
+        <div className={styles.heroLeft}>
+          <div className={styles.heroIcon} style={{ background: `${accentColor}18`, color: accentColor }}>
+            {['delivered', 'confirmed', 'completed'].includes(order.status)
+              ? <CheckCircle size={28} />
+              : ['in_transit', 'picked_up'].includes(order.status)
+              ? <Truck size={28} />
+              : <Package size={28} />}
+          </div>
+          <div>
+            <p className={styles.heroLabel}>Current Status</p>
+            <h2 className={styles.heroStatus} style={{ color: accentColor }}>
+              {order.status.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+            </h2>
+            <p className={styles.heroDesc}>
+              {ALL_STEPS.find(s => s.key === order.status)?.desc || 'Processing your order...'}
+            </p>
+          </div>
+        </div>
+        {/* Live pulse indicator */}
+        {!isCancelled && (
+          <div className={`${styles.livePill} ${justUpdated ? styles.livePillFlash : ''}`}>
+            <span className={styles.liveDot} style={{ background: accentColor }} />
+            LIVE
+          </div>
+        )}
+      </div>
 
+      <div className={styles.layout}>
+        {/* ── LEFT: Stepper + Details ── */}
+        <div className={styles.mainCol}>
+
+          {/* Step tracker */}
+          <div className={`card ${styles.stepperCard} ${justUpdated ? styles.updatedGlow : ''}`}>
+            <h3 className={styles.stepperTitle}>Order Journey</h3>
             <div className={styles.stepper}>
-              {steps.map((step, idx) => (
-                <div key={idx} className={`${styles.step} ${step.done ? styles.stepDone : ''} ${order.status === step.status ? styles.stepActive : ''}`}>
-                  <div className={styles.stepMarker}>
-                    {step.done ? <CheckCircle size={16} /> : <div className={styles.dot} />}
-                  </div>
-                  <div className={styles.stepInfo}>
-                    <h4>{step.label}</h4>
-                    {step.date && <p>{new Date(step.date).toLocaleString()}</p>}
-                  </div>
-                  {idx < steps.length - 1 && <div className={styles.stepLine} />}
-                </div>
-              ))}
-            </div>
-            </div>
+              {steps.map((step, idx) => {
+                const isDone = idx < activeIdx;
+                const isActive = idx === activeIdx && !isCancelled;
+                const isFuture = idx > activeIdx && !isCancelled;
 
-          {(order.status === 'in_transit' || order.status === 'delivered') && (
-            <div className={`card ${styles.mapCard}`} style={{ height: '350px', padding: 0, overflow: 'hidden', position: 'relative' }}>
-                <DeliveryMap 
-                    lat={delivery?.live_location_lat || 7.6125} 
-                    lng={delivery?.live_location_lng || 5.2345} 
-                    riderName={delivery?.rider_name}
-                />
+                return (
+                  <div
+                    key={step.key}
+                    className={`${styles.step}
+                      ${isDone ? styles.stepDone : ''}
+                      ${isActive ? styles.stepActive : ''}
+                      ${isFuture ? styles.stepFuture : ''}`}
+                  >
+                    {/* Connector line */}
+                    {idx < steps.length - 1 && (
+                      <div
+                        className={styles.connector}
+                        style={{ background: isDone ? accentColor : 'var(--border)' }}
+                      />
+                    )}
+
+                    {/* Marker */}
+                    <div
+                      className={styles.marker}
+                      style={{
+                        background: isDone ? accentColor : isActive ? `${accentColor}20` : 'var(--bg-300)',
+                        borderColor: isDone || isActive ? accentColor : 'var(--border)',
+                        color: isDone ? '#000' : isActive ? accentColor : 'var(--text-400)',
+                      }}
+                    >
+                      {isDone
+                        ? <CheckCircle size={14} />
+                        : isActive
+                        ? <span className={styles.activeDot} style={{ background: accentColor }} />
+                        : <span className={styles.futureDot} />}
+                    </div>
+
+                    {/* Label */}
+                    <div className={styles.stepBody}>
+                      <p
+                        className={styles.stepLabel}
+                        style={{ color: isDone || isActive ? 'var(--text-100)' : 'var(--text-400)' }}
+                      >
+                        {step.label}
+                        {isActive && <span className={styles.nowBadge}>NOW</span>}
+                      </p>
+                      <p className={styles.stepDesc}>{step.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {isCancelled && (
+                <div className={styles.cancelledNote}>
+                  <AlertTriangle size={16} color="#ef4444" />
+                  Order {order.status === 'failed' ? 'failed' : 'was cancelled'}.
+                  {order.rejection_reason && ` Reason: ${order.rejection_reason}`}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Delivery agent info */}
+          {delivery?.users && (
+            <div className={`card ${styles.agentCard}`}>
+              <h3 className={styles.sectionTitle}>Delivery Agent</h3>
+              <div className={styles.agentRow}>
+                <div className={styles.agentAvatar}>
+                  <Truck size={20} color="var(--primary)" />
+                </div>
+                <div className={styles.agentInfo}>
+                  <p className={styles.agentName}>{delivery.users.name || 'Agent Assigned'}</p>
+                  <p className={styles.agentSub}>Campus Logistics</p>
+                </div>
+                {delivery.users.phone && (
+                  <a href={`tel:${delivery.users.phone}`} className={`btn btn-ghost btn-sm ${styles.callBtn}`}>
+                    Call
+                  </a>
+                )}
+              </div>
+              {order.delivery_code && (
+                <div className={styles.codeBox}>
+                  <p className={styles.codeLabel}>Verification Code</p>
+                  <p className={styles.codeValue}>{order.delivery_code}</p>
+                  <p className={styles.codeHint}>Show this to the delivery agent upon arrival</p>
+                </div>
+              )}
             </div>
           )}
 
-          <div className={`card ${styles.detailsCard}`}>
-            <h3>Delivery Information</h3>
+          {/* Delivery info */}
+          <div className={`card ${styles.detailCard}`}>
+            <h3 className={styles.sectionTitle}>Delivery Info</h3>
             <div className={styles.detailRow}>
-              <MapPin size={18} />
+              <MapPin size={16} color="var(--primary)" />
               <div>
-                <strong>Shipping Address</strong>
-                <p>{order.shipping_address || 'Address not provided'}</p>
+                <p className={styles.detailKey}>Shipping Address</p>
+                <p className={styles.detailVal}>{order.shipping_address || 'Not provided'}</p>
               </div>
             </div>
             <div className={styles.detailRow}>
-              <Truck size={18} />
+              <Truck size={16} color="var(--primary)" />
               <div>
-                <strong>Method & Scope</strong>
-                <p>
-                    {order.delivery_method === 'platform' ? 'Campus Platform Logistics' : 'Vendor Self-Delivery'}
-                    {order.delivery_scope && (' \u2022 ' + (order.delivery_scope === 'in-school' ? 'In-School' : 'Out-School'))}
+                <p className={styles.detailKey}>Delivery Method</p>
+                <p className={styles.detailVal}>
+                  {order.delivery_method === 'platform' ? 'Platform Campus Logistics' : 'Vendor Self-Delivery'}
+                  {order.delivery_scope && ` • ${order.delivery_scope === 'in-school' ? 'In-School' : 'Out-of-School'}`}
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Sidebar: Item Info */}
-        <div className={styles.colSide}>
+        {/* ── RIGHT: Item card + Escrow ── */}
+        <div className={styles.sideCol}>
+          {/* Item */}
           <div className={`card ${styles.itemCard}`}>
-            <div className={styles.itemImage}>
-              <img src={order.products?.media_urls?.[0]} alt="" />
-            </div>
-            <div className={styles.itemInfo}>
-              <h3>{order.products?.title}</h3>
-              <p>Sold by {order.brands?.name}</p>
-              <span className={styles.price}>{formatPrice(Number(order.total_amount))}</span>
+            <img
+              src={order.products?.media_urls?.[0]}
+              alt={order.products?.title}
+              className={styles.itemImg}
+            />
+            <div className={styles.itemBody}>
+              <p className={styles.itemBrand}>{order.brands?.name}</p>
+              <h3 className={styles.itemTitle}>{order.products?.title}</h3>
+              <p className={styles.itemPrice}>{formatPrice(Number(order.total_amount))}</p>
+              {order.variants_selected && Object.keys(order.variants_selected).length > 0 && (
+                <p className={styles.itemVariants}>
+                  {Object.entries(order.variants_selected).map(([k, v]) => `${k}: ${v}`).join(' · ')}
+                </p>
+              )}
             </div>
           </div>
 
-          <div className={styles.escrowNotice}>
-            <ShieldCheck size={20} />
-            <p>Your money is safe in <strong>Escrow</strong>. We only release it to the vendor after you confirm delivery.</p>
+          {/* Escrow */}
+          <div className={styles.escrowBox}>
+            <ShieldCheck size={20} color="var(--primary)" />
+            <p>Your payment is held in <strong>Escrow</strong>. Funds are only released to the vendor after delivery is confirmed.</p>
+          </div>
+
+          {/* Notification permission nudge */}
+          <div className={styles.notifBox}>
+            <Bell size={16} color="var(--primary)" />
+            <p>Enable browser notifications to get instant alerts when your order status changes.</p>
           </div>
         </div>
       </div>

@@ -127,6 +127,35 @@ export async function POST(req: Request) {
       }
     }
 
+    // 5. Notify customer of the status change
+    try {
+      const statusMessages: Record<string, { title: string; content: string }> = {
+        accepted:         { title: '✅ Order Accepted!',       content: 'Your order has been accepted by the vendor and is being prepared.' },
+        processing:       { title: '👨‍🍳 Order Being Prepared',  content: 'The vendor is now preparing your order.' },
+        ready:            { title: '📦 Ready for Pickup',      content: 'Your order is ready and awaiting a delivery agent.' },
+        ready_for_pickup: { title: '📦 Ready for Pickup',      content: 'Your order is ready and awaiting a delivery agent.' },
+        picked_up:        { title: '🛵 Order Picked Up',       content: 'A delivery agent has picked up your order.' },
+        in_transit:       { title: '🚀 Order On the Way!',     content: 'Your order is on its way to you. Get ready!' },
+        delivered:        { title: '🎉 Order Delivered!',      content: 'Your order has been delivered. Please confirm receipt in your dashboard.' },
+        cancelled:        { title: '❌ Order Cancelled',        content: `Your order was cancelled.${order.rejection_reason ? ` Reason: ${order.rejection_reason}` : ''}` },
+      };
+
+      const notif = statusMessages[status];
+      if (notif && order.customer_id) {
+        await supabaseAdmin.from('notifications').insert({
+          user_id: order.customer_id,
+          title: notif.title,
+          content: notif.content,
+          link: `/track/${orderId}`,
+          type: 'direct',
+          is_read: false,
+        });
+      }
+    } catch (notifErr) {
+      // Non-fatal
+      console.error('[NOTIFY] Failed to send customer notification:', notifErr);
+    }
+
     return NextResponse.json({ success: true, message: `Status updated to ${status}` });
 
   } catch (error: any) {
