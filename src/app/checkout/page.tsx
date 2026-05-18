@@ -403,15 +403,15 @@ function CheckoutContent() {
                   <div style={{ background: 'var(--bg-300)', padding: '1rem', borderRadius: 8, border: '1px solid var(--border)', marginBottom: '1.25rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
                       <span style={{ opacity: 0.7 }}>Bank Name:</span>
-                      <strong style={{ color: 'var(--text-100)' }}>{manualBankSettings?.bank_name || 'Guaranty Trust Bank (GTB)'}</strong>
+                      <strong style={{ color: 'var(--text-100)' }}>{manualBankSettings?.bank_name || 'ACCESS BANK'}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
                       <span style={{ opacity: 0.7 }}>Account Number:</span>
-                      <strong style={{ color: 'var(--primary)', letterSpacing: '0.05em' }}>{manualBankSettings?.account_number || '0123456789'}</strong>
+                      <strong style={{ color: 'var(--primary)', letterSpacing: '0.05em' }}>{manualBankSettings?.account_number || '1883669647'}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
                       <span style={{ opacity: 0.7 }}>Account Name:</span>
-                      <strong style={{ color: 'var(--text-100)' }}>{manualBankSettings?.account_name || 'MasterCart Platforms'}</strong>
+                      <strong style={{ color: 'var(--text-100)' }}>{manualBankSettings?.account_name || 'Enioluwa Temitope Olaide'}</strong>
                     </div>
                   </div>
 

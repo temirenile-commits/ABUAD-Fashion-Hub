@@ -2474,14 +2474,15 @@ export default function AdminDashboard() {
 
                             <div className="form-group">
                               <label style={{ fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
-                                Resolved Account Name {resolvingManualAccount && <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>(resolving...)</span>}
+                                Account Name (Auto-resolved or Custom) {resolvingManualAccount && <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>(resolving...)</span>}
                               </label>
                               <input 
                                 type="text" 
                                 className="form-input" 
-                                style={{ background: 'var(--bg-300)', cursor: 'not-allowed', color: 'var(--primary)', fontWeight: 'bold' }}
-                                value={manualAccountName || 'Not Resolved'} 
-                                readOnly 
+                                style={{ color: 'var(--primary)', fontWeight: 'bold' }}
+                                value={manualAccountName} 
+                                onChange={(e) => setManualAccountName(e.target.value)}
+                                placeholder="Enter account name"
                               />
                             </div>
                           </div>
