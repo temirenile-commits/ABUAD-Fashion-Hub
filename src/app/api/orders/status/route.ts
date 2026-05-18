@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     // 1. Verify the vendor or assigned delivery agent owns/is assigned to this order
     const { data: order, error: fetchError } = await supabaseAdmin
       .from('orders')
-      .select('*, brands(owner_id, university_id, product_section), deliveries(agent_id)')
+      .select('*, brands(owner_id, university_id, marketplace_type), deliveries(agent_id)')
       .eq('id', orderId)
       .single();
 
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
           p_promo_deduction: promoDeduction,
           p_delivery_fee_allocation: deliveryFeeAllocation,
           p_net_payout: netPayout,
-          p_product_section: order.brands?.product_section || 'fashion',
+          p_product_section: order.brands?.marketplace_type || 'fashion',
           p_calculation_notes: calculationNotes,
         });
 
