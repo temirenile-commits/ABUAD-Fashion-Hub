@@ -210,6 +210,7 @@ interface UniConfig {
   commission_rate?: number;
   customer_service_whatsapp?: string;
   delivery_base_fee?: number;
+  delivery_rider_pay?: number;
   external_delivery_markup?: number;
   plans?: Record<string, PlanConfig>;
   boosters?: Record<string, BoosterConfig>;
@@ -3205,10 +3206,10 @@ export default function AdminDashboard() {
 
                         <div className={styles.settingsBox} style={{ background: 'var(--bg-200)', border: '1px solid var(--success)', marginTop: '1.5rem' }}>
                           <h4 style={{ color: 'var(--success)', marginBottom: '1rem' }}>In-Campus Logistics (Within University)</h4>
-                          <p className={styles.subText} style={{ marginBottom: '1rem' }}>Base fee charged to customers for deliveries within the campus.</p>
+                          <p className={styles.subText} style={{ marginBottom: '1rem' }}>Base fee charged to customers and pay allocated to delivery agents.</p>
                           
                           <div className="mb-3">
-                            <label className={styles.subText}>Base Fee (₦)</label>
+                            <label className={styles.subText}>Base Fee Charged to Customer (₦)</label>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                               <input 
                                 type="number" 
@@ -3220,6 +3221,25 @@ export default function AdminDashboard() {
                               <button 
                                 className="btn btn-primary btn-sm" 
                                 onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'delivery_base_fee', value: uniConfig.delivery_base_fee })}
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="mb-3" style={{ marginTop: '1rem' }}>
+                            <label className={styles.subText}>Rider Payout per Delivery (₦)</label>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <input 
+                                type="number" 
+                                className="form-input" 
+                                value={(uniConfig.delivery_rider_pay as number) || ''} 
+                                onChange={(e) => setUniConfig({ ...uniConfig, delivery_rider_pay: Number(e.target.value) })}
+                                placeholder="e.g. 400"
+                              />
+                              <button 
+                                className="btn btn-primary btn-sm" 
+                                onClick={() => adminAction('update_uni_config', { universityId: selectedUniId, key: 'delivery_rider_pay', value: uniConfig.delivery_rider_pay })}
                               >
                                 Save
                               </button>

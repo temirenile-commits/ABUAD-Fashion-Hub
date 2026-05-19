@@ -252,7 +252,7 @@ export default function VendorDashboard() {
             status,
             agent_id,
             delivery_code,
-            users:agent_id (id, name, phone)
+            users:agent_id (id, name, phone, avatar_url)
           )
         `)
         .eq('brand_id', brandData.id)
@@ -2141,12 +2141,16 @@ export default function VendorDashboard() {
                             </span>
                           </div>
                         )}
-                        {(order.status === 'ready' || order.status === 'picked_up' || order.status === 'in_transit') && order.deliveries?.[0] && (
+                        {order.deliveries?.[0] && order.deliveries[0].agent_id && (
                           <div className={styles.agentInfo} style={{ marginTop: '0.5rem', background: 'var(--bg-200)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
-                                <Truck size={16} />
-                              </div>
+                              {order.deliveries[0].users?.avatar_url ? (
+                                <img src={order.deliveries[0].users.avatar_url} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border)' }} />
+                              ) : (
+                                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontWeight: 700, fontSize: '0.8rem' }}>
+                                  {(order.deliveries[0].agent_name || order.deliveries[0].users?.name || 'A')[0].toUpperCase()}
+                                </div>
+                              )}
                               <div style={{ flex: 1 }}>
                                 <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-400)', fontWeight: 700 }}>LOGISTIC AGENT</p>
                                 <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem' }}>

@@ -94,7 +94,7 @@ export interface Order {
     delivery_code?: string;
     agent_name?: string;
     agent_phone?: string;
-    users?: { id?: string; name?: string; phone?: string } | null;
+    users?: { id?: string; name?: string; phone?: string; avatar_url?: string } | null;
   }> | null;
   [key: string]: unknown;
 }

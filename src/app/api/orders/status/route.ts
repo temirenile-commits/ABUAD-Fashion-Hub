@@ -81,10 +81,11 @@ export async function POST(req: Request) {
     if (updateError) throw updateError;
 
     // 3. Sync Delivery Visibility
-    if ((status === 'ready' || status === 'ready_for_pickup') && order.delivery_method === 'platform') {
+    if (['accepted', 'processing', 'ready', 'ready_for_pickup'].includes(status) && order.delivery_method === 'platform') {
       await supabaseAdmin.from('deliveries')
         .update({ status: 'pending' })
-        .eq('order_id', orderId);
+        .eq('order_id', orderId)
+        .eq('status', 'waiting_for_vendor');
     }
 
     // 4. AUTO PAYOUT RECORD: Create financial record when order is delivered

@@ -21,12 +21,15 @@ DECLARE
     v_order_record RECORD;
     v_vendor_earning DECIMAL;
     v_vendor_user_id UUID;
-    v_delivery_fee DECIMAL := 500.00;
+    v_delivery_fee DECIMAL;
     v_commission_rate DECIMAL := 0.00;
     v_commission_amount DECIMAL := 0.00;
 BEGIN
     IF (NEW.status = 'delivered' AND OLD.status != 'delivered') THEN
         SELECT * INTO v_order_record FROM public.orders WHERE id = NEW.order_id;
+        
+        -- Use the dynamic delivery fee stored in the delivery record, fallback to 500.00
+        v_delivery_fee := COALESCE(NEW.delivery_fee, 500.00);
         
         -- Try to fetch commission rate from settings (if it exists)
         BEGIN

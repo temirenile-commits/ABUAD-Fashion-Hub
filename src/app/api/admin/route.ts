@@ -527,9 +527,23 @@ export async function POST(req: NextRequest) {
         .single();
         
       if (!existingDelivery) {
+        // Fetch university config for dynamic rider payout
+        let riderPayout = 500;
+        if (order.university_id) {
+          const { data: uniConfigData } = await supabaseAdmin
+            .from('platform_settings')
+            .select('value')
+            .eq('key', `uni_config_${order.university_id}`)
+            .single();
+          if (uniConfigData && (uniConfigData.value as any)?.delivery_rider_pay) {
+            riderPayout = Number((uniConfigData.value as any).delivery_rider_pay);
+          }
+        }
+
         await supabaseAdmin.from('deliveries').insert({
           order_id: orderId,
-          status: 'waiting_for_vendor'
+          status: 'waiting_for_vendor',
+          delivery_fee: riderPayout
         });
 
         // Auto-assign agent
@@ -1423,9 +1437,23 @@ export async function POST(req: NextRequest) {
         .single();
         
       if (!existingDelivery) {
+        // Fetch university config for dynamic rider payout
+        let riderPayout = 500;
+        if (order.university_id) {
+          const { data: uniConfigData } = await supabaseAdmin
+            .from('platform_settings')
+            .select('value')
+            .eq('key', `uni_config_${order.university_id}`)
+            .single();
+          if (uniConfigData && (uniConfigData.value as any)?.delivery_rider_pay) {
+            riderPayout = Number((uniConfigData.value as any).delivery_rider_pay);
+          }
+        }
+
         await supabaseAdmin.from('deliveries').insert({
           order_id: orderId,
-          status: 'waiting_for_vendor'
+          status: 'waiting_for_vendor',
+          delivery_fee: riderPayout
         });
 
         // Auto-assign agent

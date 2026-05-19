@@ -320,10 +320,24 @@ export async function POST(req: Request) {
 
         // F. LOGISTICS: Auto-Assignment
         if (order.delivery_method === 'platform') {
-          // 1. Create the delivery record first, but hide it from agents until vendor marks 'ready'
+          // 1. Fetch university config for dynamic rider payout
+          let riderPayout = 500;
+          if (order.university_id) {
+            const { data: uniConfigData } = await supabaseAdmin
+              .from('platform_settings')
+              .select('value')
+              .eq('key', `uni_config_${order.university_id}`)
+              .single();
+            if (uniConfigData && (uniConfigData.value as any)?.delivery_rider_pay) {
+              riderPayout = Number((uniConfigData.value as any).delivery_rider_pay);
+            }
+          }
+
+          // 2. Create the delivery record first, but hide it from agents until vendor marks 'ready'
           await supabaseAdmin.from('deliveries').insert({
              order_id: order.id,
-             status: 'waiting_for_vendor'
+             status: 'waiting_for_vendor',
+             delivery_fee: riderPayout
           });
 
           // 2. Assign to nearest agent

@@ -83,7 +83,7 @@ export default function DeliveryDashboard() {
       .neq('status', 'delivered')
       .order('created_at', { ascending: false });
 
-    // Fetch Available Deliveries (Pending and no agent, and order is ready/ready_for_pickup)
+    // Fetch Available Deliveries (Pending and no agent, and order is accepted/processing/ready/ready_for_pickup)
     const { data: availData } = await supabase
       .from('deliveries')
       .select(`
@@ -98,7 +98,7 @@ export default function DeliveryDashboard() {
       `)
       .is('agent_id', null)
       .eq('status', 'pending')
-      .in('orders.status', ['ready', 'ready_for_pickup'])
+      .in('orders.status', ['accepted', 'processing', 'ready', 'ready_for_pickup'])
       .order('created_at', { ascending: false });
 
     setDeliveries(myData || []);
@@ -253,9 +253,11 @@ export default function DeliveryDashboard() {
       const data = await res.json();
       
       if (data.success) {
+        const completedDelivery = deliveries.find(d => d.id === deliveryId);
+        const earnedFee = completedDelivery?.delivery_fee || 500;
         setDeliveries(deliveries.filter(d => d.id !== deliveryId));
         setVerificationCode('');
-        alert(`Delivery successful! ${formatPrice(payoutAmount)} has been added to your wallet.`);
+        alert(`Delivery successful! ${formatPrice(earnedFee)} has been added to your wallet.`);
         fetchData(true);
       } else {
         alert(data.error || 'Failed to verify delivery.');
@@ -468,7 +470,7 @@ export default function DeliveryDashboard() {
                          <span className={styles.badge} style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)' }}>PLATFORM DELIVERY</span>
                       </div>
                     </div>
-                    <div className={styles.price}>{formatPrice(payoutAmount)} Earning</div>
+                    <div className={styles.price}>{formatPrice(delivery.delivery_fee || 500)} Earning</div>
                   </div>
                   
                   <div className={styles.grid}>
@@ -516,7 +518,7 @@ export default function DeliveryDashboard() {
                         <span className={`${styles.badge} ${styles.dropoff}`}>{delivery.status}</span>
                       </div>
                     </div>
-                    <div className={styles.price}>{formatPrice(payoutAmount)} Earning</div>
+                    <div className={styles.price}>{formatPrice(delivery.delivery_fee || 500)} Earning</div>
                   </div>
 
                   <div className={styles.grid}>
@@ -629,7 +631,7 @@ export default function DeliveryDashboard() {
                           <div className={styles.subText}>{item.orders?.brands?.name} → {item.orders?.id.slice(0,8)}</div>
                        </div>
                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontWeight: 700, color: 'var(--success)' }}>+{formatPrice(payoutAmount)}</div>
+                          <div style={{ fontWeight: 700, color: 'var(--success)' }}>+{formatPrice(item.delivery_fee || 500)}</div>
                           <div className={styles.subText}>{new Date(item.delivered_at || item.created_at).toLocaleDateString()}</div>
                        </div>
                     </div>

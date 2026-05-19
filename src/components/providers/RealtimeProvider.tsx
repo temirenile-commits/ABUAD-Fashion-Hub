@@ -249,7 +249,6 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
           }
         ).subscribe();
 
-        // Deliveries subscription for real-time agent/delivery status sync
         deliveriesChannel = supabase.channel(`private:deliveries:${session.user.id}`);
         deliveriesChannel.on(
           'postgres_changes',
@@ -260,27 +259,43 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
               const { orders } = useMarketplaceStore.getState();
               const existingOrder = orders.find((o: any) => o.id === delivery.order_id);
               if (existingOrder) {
-                // Construct the updated delivery object
-                const updatedDelivery = {
-                  id: delivery.id,
-                  status: delivery.status,
-                  agent_id: delivery.agent_id,
-                  delivery_code: delivery.delivery_code,
-                  agent_name: delivery.agent_name,
-                  agent_phone: delivery.agent_phone,
-                  users: delivery.agent_id ? {
-                    id: delivery.agent_id,
-                    name: delivery.agent_name || delivery.rider_name,
-                    phone: delivery.agent_phone || delivery.rider_phone
-                  } : null
-                };
+                const fetchAgentAvatar = async () => {
+                  let avatarUrl = undefined;
+                  if (delivery.agent_id) {
+                    const { data: userData } = await supabase
+                      .from('users')
+                      .select('avatar_url')
+                      .eq('id', delivery.agent_id)
+                      .single();
+                    if (userData) {
+                      avatarUrl = userData.avatar_url;
+                    }
+                  }
 
-                // Merge into existing deliveries array
-                updateOrder(delivery.order_id, {
-                  deliveries: [updatedDelivery]
-                });
+                  const updatedDelivery = {
+                    id: delivery.id,
+                    status: delivery.status,
+                    agent_id: delivery.agent_id,
+                    delivery_code: delivery.delivery_code,
+                    agent_name: delivery.agent_name,
+                    agent_phone: delivery.agent_phone,
+                    users: delivery.agent_id ? {
+                      id: delivery.agent_id,
+                      name: delivery.agent_name || delivery.rider_name,
+                      phone: delivery.agent_phone || delivery.rider_phone,
+                      avatar_url: avatarUrl
+                    } : null
+                  };
+
+                  // Merge into existing deliveries array
+                  updateOrder(delivery.order_id, {
+                    deliveries: [updatedDelivery]
+                  });
+                };
                 
-                toast('Delivery status updated!', { icon: '🛵' });
+                fetchAgentAvatar().then(() => {
+                  toast('Delivery status updated!', { icon: '🛵' });
+                });
               }
             }
           }
