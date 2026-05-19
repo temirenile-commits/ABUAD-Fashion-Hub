@@ -968,7 +968,7 @@ export async function POST(req: NextRequest) {
                 description: 'Manually initialized by admin.',
                 student_id_url: 'https://placeholder.com',
                 active_dashboard_mode: 'normal',
-                marketplace_type: 'normal',
+                marketplace_type: 'fashion',
                 subscription_tier: 'full',
                 trial_started_at: new Date().toISOString()
             });
