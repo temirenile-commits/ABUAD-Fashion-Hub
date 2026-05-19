@@ -17,7 +17,7 @@ ALTER TABLE public.users
 --    Comment out this block if you want to keep blocked users separate.
 
 -- UPDATE public.users 
--- SET status = 'deleted', deleted_at = updated_at
+-- SET status = 'deleted', deleted_at = created_at
 -- WHERE status = 'blocked' 
 --   AND deleted_at IS NULL;
 
