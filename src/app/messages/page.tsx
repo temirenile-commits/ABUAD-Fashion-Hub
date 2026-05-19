@@ -129,6 +129,16 @@ function MessagesContent() {
       console.error(error);
       alert('Error sending message: ' + (error.message.includes('permission') ? 'Unauthorized (Check RLS)' : error.message));
     } else {
+      // Create message notification
+      const senderName = user.user_metadata?.name || user.email?.split('@')[0] || 'User';
+      await supabase.from('notifications').insert({
+        user_id: activePartner.id,
+        title: `💬 New Message from ${senderName}`,
+        content: newMsg.content.substring(0, 100),
+        type: 'message',
+        link: `/messages?vendorId=${user.id}`
+      });
+
       if (activePartner.role === 'vendor') {
         fetch('/api/ai/auto-reply', {
           method: 'POST',

@@ -2033,9 +2033,14 @@ export default function VendorDashboard() {
                           ?? {order.users?.name || order.users?.email || `Customer ${order.customer_id?.slice(0, 6)}`}
                         </span>
                       </div>
-                      <button className="btn btn-ghost btn-sm" onClick={() => handlePrintInvoice(order)}>
-                        <FileText size={14} /> Print Invoice
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <Link href={`/messages?vendorId=${order.customer_id}`} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#fff', textDecoration: 'none' }}>
+                          <MessageCircle size={14} /> Chat with Customer
+                        </Link>
+                        <button className="btn btn-ghost btn-sm" onClick={() => handlePrintInvoice(order)}>
+                          <FileText size={14} /> Print Invoice
+                        </button>
+                      </div>
                     </div>
 
                     <div className={styles.orderBody}>

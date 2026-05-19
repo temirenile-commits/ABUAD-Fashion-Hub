@@ -19,7 +19,7 @@ interface AppOrder {
   manual_payment_status?: string;
   manual_payment_details?: any;
   products?: { title: string; media_urls?: string[] };
-  brands?: { name: string };
+  brands?: { owner_id?: string; name: string; delivery_scope?: string };
   deliveries?: { 
     id: string;
     status: string;
@@ -72,7 +72,7 @@ export default function CustomerDashboard() {
         .select(`
           *,
           products (title, media_urls),
-          brands (name, delivery_scope),
+          brands (owner_id, name, delivery_scope),
           deliveries (
             id,
             status,
@@ -153,7 +153,7 @@ export default function CustomerDashboard() {
         // Refresh orders
         const { data: updatedOrders } = await supabase
           .from('orders')
-          .select('*, products(title, media_urls), brands(name)')
+          .select('*, products(title, media_urls), brands(owner_id, name)')
           .eq('customer_id', user?.id)
           .order('created_at', { ascending: false });
         setOrders((updatedOrders as unknown as AppOrder[]) || []);
@@ -229,6 +229,11 @@ export default function CustomerDashboard() {
                       <span className={styles.price}>{formatPrice(Number(order.total_amount))}</span>
                     </div>
                     <div className={styles.actions}>
+                      {order.brands?.owner_id && (
+                        <Link href={`/messages?vendorId=${order.brands.owner_id}`} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#fff', textDecoration: 'none' }}>
+                          <MessageCircle size={14} /> Chat Seller
+                        </Link>
+                      )}
                       <Link href={`/track/${order.id}`} className="btn btn-ghost btn-sm">
                         Track Delivery
                       </Link>

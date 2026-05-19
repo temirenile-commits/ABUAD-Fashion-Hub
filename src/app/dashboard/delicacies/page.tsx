@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Trash2, Edit3, Plus, Share2, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera, MapPin, Navigation, Eye, ShoppingBag, Phone, UtensilsCrossed } from 'lucide-react';
+import { Package, Truck, CheckCircle, Wallet, Settings, TrendingUp, AlertTriangle, Loader2, MessageCircle, Video, Upload, Info, ShoppingCart, BarChart3, CreditCard, Star, Scissors, Clock, Zap, Bell, X, LogOut, ArrowUpRight, ShieldAlert, Tag, Trash2, Edit3, Plus, Share2, ShieldCheck, ArrowRight, FileText, Store, Crown, Target, Rocket, Home, Camera, MapPin, Navigation, Eye, ShoppingBag, Phone, UtensilsCrossed } from 'lucide-react';
 import PremiumChart from '@/components/PremiumChart';
 import Papa from 'papaparse';
 import { supabase } from '@/lib/supabase';
@@ -2066,9 +2066,14 @@ export default function VendorDashboard() {
                           ?? {order.users?.name || order.users?.email || `Customer ${order.customer_id?.slice(0, 6)}`}
                         </span>
                       </div>
-                      <button className="btn btn-ghost btn-sm" onClick={() => handlePrintInvoice(order)}>
-                        <FileText size={14} /> Print Invoice
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <Link href={`/messages?vendorId=${order.customer_id}`} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#fff', textDecoration: 'none' }}>
+                          <MessageCircle size={14} /> Chat with Customer
+                        </Link>
+                        <button className="btn btn-ghost btn-sm" onClick={() => handlePrintInvoice(order)}>
+                          <FileText size={14} /> Print Invoice
+                        </button>
+                      </div>
                     </div>
 
                     <div className={styles.orderBody}>
