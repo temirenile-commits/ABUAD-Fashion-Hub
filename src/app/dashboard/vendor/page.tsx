@@ -389,7 +389,53 @@ export default function VendorDashboard() {
     fetchVendorData();
   }, [router, setGlobalOrders]);
 
-  // Auto-Cleanup Expired Drafts (24h rule)
+  // ── Realtime: auto-refresh when admin verifies this brand ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!brand?.id) return;
+    // Subscribe to changes on this vendor's brand record
+    const channel = supabase
+      .channel(`brand-verification-${brand.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'brands', filter: `id=eq.${brand.id}` },
+        (payload) => {
+          const updated = payload.new as any;
+          // If admin just verified us, reload the full page to unlock dashboard
+          if (updated.verification_status === 'verified') {
+            window.location.reload();
+          } else {
+            // Update brand state for other changes
+            setBrand((prev: any) => prev ? { ...prev, ...updated } : updated);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [brand?.id]);
+
+  // Manual refresh handler for pending screen
+  const handleRefreshStatus = async () => {
+    setLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data: refreshedBrand } = await supabase
+        .from('brands')
+        .select('*')
+        .eq('owner_id', session.user.id)
+        .single();
+      if (refreshedBrand) {
+        setBrand(refreshedBrand);
+        if (refreshedBrand.verification_status === 'verified') {
+          window.location.reload();
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (products.length > 0) {
       const cleanupExpiredDrafts = async () => {
@@ -1187,28 +1233,62 @@ export default function VendorDashboard() {
         </div>
       )}
 
+      {/* ── PENDING / REJECTED / SUSPENDED GATE ── */}
       {brand?.verification_status !== 'verified' && userRole !== 'admin' ? (
-        <div className="container" style={{ padding: '4rem 2rem' }}>
+        <div className="container" style={{ padding: '4rem 2rem', maxWidth: '540px', margin: '0 auto' }}>
           <div className={styles.restrictedView}>
             <div className={styles.restrictedIcon}>
-              <ShieldAlert size={48} />
+              {brand?.verification_status === 'pending' ? (
+                <ShieldAlert size={48} style={{ color: '#f59e0b' }} />
+              ) : (
+                <ShieldAlert size={48} style={{ color: '#ef4444' }} />
+              )}
             </div>
-            <h2>Dashboard Restricted</h2>
-            <p>
-              {brand?.verification_status === 'pending' 
-                ? "Your brand application is currently being reviewed by our admin team. To maintain platform integrity, your dashboard tools will remain locked until your verification is approved."
+            <h2 style={{ marginTop: '1rem' }}>
+              {brand?.verification_status === 'pending' ? 'Verification In Progress' : 'Dashboard Restricted'}
+            </h2>
+            <p style={{ color: 'var(--text-300)', lineHeight: '1.6', margin: '0.75rem 0 1.5rem' }}>
+              {brand?.verification_status === 'pending'
+                ? 'Your brand application is under review by our admin team. Your dashboard will unlock automatically the moment your verification is approved — no need to log out and back in.'
                 : brand?.verification_status === 'rejected'
-                ? "Your brand application was unfortunately declined. Please contact the platform administrator to resolve any issues."
-                : "Your vendor account is currently suspended. Please contact support for assistance."}
+                ? `Your brand application was declined. Reason: "${brand?.rejection_reason || 'Did not meet requirements.'}". Please contact the admin to resolve this.`
+                : 'Your vendor account is currently suspended. Please contact support for assistance.'}
             </p>
-            
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-              <Link href="/" className="btn btn-primary">Return to Hub</Link>
+
+            {/* Store details recap */}
+            {brand && (
+              <div style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem 1.25rem', marginBottom: '1.5rem', textAlign: 'left' }}>
+                <p style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Your Application</p>
+                <p style={{ fontWeight: 700, margin: 0 }}>{brand.name}</p>
+                <p style={{ fontSize: '0.85rem', opacity: 0.7, margin: '0.25rem 0 0' }}>Submitted {new Date(brand.created_at).toLocaleDateString()}</p>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              {brand?.verification_status === 'pending' && (
+                <button
+                  className="btn btn-primary"
+                  onClick={handleRefreshStatus}
+                  disabled={loading}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  {loading ? <Loader2 size={16} className="anim-spin" /> : <CheckCircle size={16} />}
+                  {loading ? 'Checking...' : 'Check Verification Status'}
+                </button>
+              )}
+              <Link href="/" className="btn btn-ghost">Return to Hub</Link>
               <a href="https://wa.me/2348012345678" target="_blank" className="btn btn-ghost">Contact Admin</a>
             </div>
+
+            {brand?.verification_status === 'pending' && (
+              <p style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '1.5rem', textAlign: 'center' }}>
+                🔄 This page also updates automatically when your status changes. You do not need to keep refreshing.
+              </p>
+            )}
           </div>
         </div>
       ) : (
+
         <>
           <aside className={styles.sidebar}>
             <div className={styles.sidebarHeader}>

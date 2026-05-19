@@ -70,9 +70,11 @@ export async function GET(req: NextRequest) {
 
   if (action === 'users') {
     // Use public.users as the primary source — avoids auth.admin.listUsers() network call that times out
+    // Exclude soft-deleted users from normal list
     let query = supabaseAdmin
       .from('users')
       .select('*, universities(name, abbreviation)')
+      .neq('status', 'deleted')
       .order('created_at', { ascending: false });
       
     if (admin && !admin.isFullAdmin && admin.university_id) {
@@ -98,6 +100,42 @@ export async function GET(req: NextRequest) {
     }));
 
     return NextResponse.json({ users: merged });
+  }
+
+  // ─── Recycle Bin: fetch soft-deleted users ────────────────────────────────
+  if (action === 'deleted_users') {
+    // Return users in recycle bin (status='deleted') — always show to super admin
+    // University admins only see their own university's deleted users
+    let query = supabaseAdmin
+      .from('users')
+      .select('*, universities(name, abbreviation)')
+      .eq('status', 'deleted')
+      .order('deleted_at', { ascending: false });
+    
+    if (admin && !admin.isFullAdmin && admin.university_id) {
+      query = query.eq('university_id', admin.university_id);
+    }
+    
+    const { data, error: delErr } = await query;
+    if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const deletedUsers = (data || []).map((p: any) => ({
+      id: p.id,
+      email: p.email,
+      name: p.name || 'Unknown',
+      role: p.role || 'customer',
+      phone: p.phone || null,
+      status: p.status,
+      deleted_at: p.deleted_at,
+      deleted_by_super_admin: p.deleted_by_super_admin || false,
+      deleted_reason: p.deleted_reason || null,
+      created_at: p.created_at,
+      university_id: p.university_id,
+      universities: p.universities,
+    }));
+    
+    return NextResponse.json({ deletedUsers });
   }
 
   if (action === 'vendors') {
@@ -482,6 +520,8 @@ export async function POST(req: NextRequest) {
 
   if (action === 'approve_vendor') {
     const { brandId } = body;
+    
+    // 1. Update brand verification status
     const { error } = await supabaseAdmin
       .from('brands')
       .update({ 
@@ -491,6 +531,23 @@ export async function POST(req: NextRequest) {
       })
       .eq('id', brandId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    
+    // 2. Promote owner user role to 'vendor'
+    const { data: brand } = await supabaseAdmin.from('brands').select('owner_id').eq('id', brandId).single();
+    if (brand?.owner_id) {
+      await supabaseAdmin.from('users').update({ role: 'vendor' }).eq('id', brand.owner_id);
+      await supabaseAdmin.auth.admin.updateUserById(brand.owner_id, { user_metadata: { role: 'vendor' } });
+      // 3. Send in-app notification to vendor
+      await supabaseAdmin.from('notifications').insert({
+        user_id: brand.owner_id,
+        title: '🎉 Your Store Has Been Verified!',
+        content: 'Congratulations! Your vendor application has been approved. Your store is now live. Go to your dashboard to start listing products!',
+        is_read: false,
+        type: 'direct',
+        link: '/dashboard/vendor'
+      });
+    }
+    
     return NextResponse.json({ success: true, message: 'Vendor approved and verified manually.' });
   }
 
@@ -581,6 +638,22 @@ export async function POST(req: NextRequest) {
       .update({ verification_status: 'verified', verified: true })
       .eq('id', brandId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    
+    // Promote owner user role to 'vendor'
+    const { data: brand } = await supabaseAdmin.from('brands').select('owner_id').eq('id', brandId).single();
+    if (brand?.owner_id) {
+      await supabaseAdmin.from('users').update({ role: 'vendor' }).eq('id', brand.owner_id);
+      await supabaseAdmin.auth.admin.updateUserById(brand.owner_id, { user_metadata: { role: 'vendor' } });
+      await supabaseAdmin.from('notifications').insert({
+        user_id: brand.owner_id,
+        title: '🎉 Your Store Has Been Verified!',
+        content: 'Congratulations! Your vendor application has been approved. Your store is now live. Head to your vendor dashboard to start listing products!',
+        is_read: false,
+        type: 'direct',
+        link: '/dashboard/vendor'
+      });
+    }
+    
     return NextResponse.json({ success: true });
   }
 
@@ -733,27 +806,129 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'delete_user') {
-    const { userId } = body;
+    // ─── SOFT DELETE: Move user to Recycle Bin ────────────────────────────────
+    const { userId, reason } = body;
+    const requestingAdmin = await verifyAdmin(req);
+    const isSuperAdmin = requestingAdmin?.isFullAdmin || false;
     
-    // First try to delete from public.users (triggers FK errors if dependencies exist)
-    const { error: profileError } = await supabaseAdmin.from('users').delete().eq('id', userId);
+    // 1. Soft-delete in public.users (keeps all data intact)
+    const { error: profileError } = await supabaseAdmin
+      .from('users')
+      .update({ 
+        status: 'deleted',
+        deleted_at: new Date().toISOString(),
+        deleted_by_super_admin: isSuperAdmin,
+        deleted_reason: reason || null
+      })
+      .eq('id', userId);
     
-    if (profileError) {
-      if (profileError.message.includes('foreign key constraint')) {
-        // Fallback: Just block them if deletion fails due to history
-        await supabaseAdmin.from('users').update({ status: 'blocked' }).eq('id', userId);
-        return NextResponse.json({ 
-            success: true, 
-            message: 'User has active orders/brands and cannot be deleted. They have been BLOCKED instead to protect your records.' 
-        });
-      }
-      return NextResponse.json({ error: profileError.message }, { status: 500 });
+    if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 });
+    
+    // 2. Ban user in Supabase Auth to immediately revoke all active sessions
+    //    ban_duration: 'none' means permanent ban until explicitly lifted
+    try {
+      await supabaseAdmin.auth.admin.updateUserById(userId, {
+        ban_duration: '876000h' // ~100 years = permanent
+      });
+    } catch (authErr) {
+      // Non-fatal: user is still soft-deleted even if auth ban fails
+      console.warn('[ADMIN API] Auth ban failed for user', userId, authErr);
     }
     
-    // Then delete from auth
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true, message: 'User deleted successfully.' });
+    return NextResponse.json({ 
+      success: true, 
+      message: 'User moved to Recycle Bin. They can no longer log in. You can restore them from the Recycle Bin at any time.' 
+    });
+  }
+
+  if (action === 'restore_user') {
+    // ─── RESTORE: Move user out of Recycle Bin ────────────────────────────────
+    const { userId } = body;
+    const requestingAdmin = await verifyAdmin(req);
+    
+    // Check if deleted by super admin — only super admin can restore those
+    const { data: targetUser } = await supabaseAdmin
+      .from('users')
+      .select('deleted_by_super_admin')
+      .eq('id', userId)
+      .single();
+    
+    if (targetUser?.deleted_by_super_admin && !requestingAdmin?.isFullAdmin) {
+      return NextResponse.json({ 
+        error: 'Only the Super Admin can restore accounts deleted by the Super Admin.' 
+      }, { status: 403 });
+    }
+    
+    // 1. Restore in public.users
+    const { error: restoreError } = await supabaseAdmin
+      .from('users')
+      .update({ 
+        status: 'active',
+        deleted_at: null,
+        deleted_by_super_admin: false,
+        deleted_reason: null
+      })
+      .eq('id', userId);
+    
+    if (restoreError) return NextResponse.json({ error: restoreError.message }, { status: 500 });
+    
+    // 2. Lift Auth ban to restore login access
+    try {
+      await supabaseAdmin.auth.admin.updateUserById(userId, {
+        ban_duration: 'none'
+      });
+    } catch (authErr) {
+      console.warn('[ADMIN API] Auth unban failed for user', userId, authErr);
+    }
+    
+    // 3. Send notification to the restored user
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: userId,
+        title: '✅ Account Restored',
+        content: 'Your account has been restored by an administrator. You can now log in again.',
+        is_read: false,
+        type: 'direct'
+      });
+    } catch {}
+    
+    return NextResponse.json({ success: true, message: 'User account restored successfully. They can now log in.' });
+  }
+
+  if (action === 'permanent_delete_user') {
+    // ─── PERMANENT DELETE: Super Admin only ──────────────────────────────────
+    const { userId } = body;
+    const requestingAdmin = await verifyAdmin(req);
+    
+    if (!requestingAdmin?.isFullAdmin) {
+      return NextResponse.json({ error: 'Only the Super Admin can permanently delete accounts.' }, { status: 403 });
+    }
+    
+    // 1. Delete from public.users (may fail if FK constraints exist)
+    const { error: profileError } = await supabaseAdmin.from('users').delete().eq('id', userId);
+    
+    if (profileError && profileError.message.includes('foreign key constraint')) {
+      // Keep blocked/deleted status but remove from recycle bin view
+      await supabaseAdmin.from('users').update({ 
+        status: 'blocked',
+        deleted_at: null 
+      }).eq('id', userId);
+      return NextResponse.json({ 
+        success: true, 
+        message: 'User has active order history. Profile anonymized and permanently hidden from recycle bin.' 
+      });
+    }
+    
+    if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 });
+    
+    // 2. Delete from auth.users
+    try {
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+    } catch (authErr) {
+      console.warn('[ADMIN API] Auth delete failed for already-deleted user', userId);
+    }
+    
+    return NextResponse.json({ success: true, message: 'User permanently deleted from all systems.' });
   }
 
   if (action === 'update_user_role') {
@@ -800,6 +975,17 @@ export async function POST(req: NextRequest) {
             if (brandInsertError) {
               console.error('[ADMIN API] Failed to initialize brand for vendor:', brandInsertError);
               return NextResponse.json({ error: 'User role updated, but failed to initialize brand record: ' + brandInsertError.message }, { status: 500 });
+            }
+        } else {
+            // Update the existing brand to verified and active so they can immediately access their dashboard!
+            const { error: brandUpdateError } = await supabaseAdmin.from('brands').update({
+                verification_status: 'verified',
+                verified: true,
+                fee_paid: true
+            }).eq('owner_id', userId);
+            if (brandUpdateError) {
+              console.error('[ADMIN API] Failed to verify existing brand for vendor:', brandUpdateError);
+              return NextResponse.json({ error: 'User role updated, but failed to verify brand record: ' + brandUpdateError.message }, { status: 500 });
             }
         }
     }

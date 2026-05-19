@@ -166,8 +166,9 @@ export default function OnboardingPage() {
 
       if (brandError) throw brandError;
 
-      // 2. Update user role 
-      await supabase.from('users').update({ role: 'vendor', university_id: form.universityId || null }).eq('id', user.id);
+      // 2. Update university association ONLY — role stays 'customer' until admin approves.
+      //    Role is promoted to 'vendor' automatically when admin clicks Verify Vendor.
+      await supabase.from('users').update({ university_id: form.universityId || null }).eq('id', user.id);
 
       setIsSubmitted(true);
       

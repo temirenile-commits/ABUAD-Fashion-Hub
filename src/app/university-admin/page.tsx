@@ -36,6 +36,8 @@ export default function UniversityAdminPage() {
   const [stats, setStats] = useState<any>({});
   const [vendors, setVendors] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [deletedUsers, setDeletedUsers] = useState<any[]>([]);
+  const [customersSubTab, setCustomersSubTab] = useState<'all' | 'deleted'>('all');
   const [orders, setOrders] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [riders, setRiders] = useState<any[]>([]);
@@ -125,7 +127,7 @@ export default function UniversityAdminPage() {
   const fetchAll = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const actions = ["stats","vendors","customers","orders","reviews","riders","analytics","cross_university_insights","team","products", "merchandising", "promo_codes"];
+      const actions = ["stats","vendors","customers","orders","reviews","riders","analytics","cross_university_insights","team","products", "merchandising", "promo_codes", "deleted_users"];
       const results = await Promise.allSettled(actions.map(async a => {
         const r = await uaFetch(`/api/university-admin?action=${a}`);
         if (!r.ok) {
@@ -150,6 +152,7 @@ export default function UniversityAdminPage() {
       setProducts(g(9).products||[]);
       setHomepageSections(g(10).sections||[]);
       setPromoCodes(g(11).promoCodes||[]);
+      setDeletedUsers(g(12).deletedUsers||[]);
 
       // Identify most volatile university (example logic: highest growth or activity)
       const insightsData = g(7).insights || [];
@@ -183,7 +186,18 @@ export default function UniversityAdminPage() {
 
   const filter = (items: any[], fields: string[]) => {
     if (!search.trim()) return items;
-    return items.filter(i => fields.some(f => String(i[f]||"").toLowerCase().includes(search.toLowerCase())));
+    const term = search.toLowerCase();
+    return items.filter(i => {
+      const matchesFlat = fields.some(f => String(i[f]||"").toLowerCase().includes(term));
+      if (matchesFlat) return true;
+
+      // Handle vendor lists matching owner's name or email nested inside users
+      if (i.users) {
+        if (String(i.users.name || '').toLowerCase().includes(term)) return true;
+        if (String(i.users.email || '').toLowerCase().includes(term)) return true;
+      }
+      return false;
+    });
   };
 
   const pendingVendors = vendors.filter(v => v.verification_status==="pending");
@@ -267,6 +281,51 @@ export default function UniversityAdminPage() {
             <>
               {tab==="overview"&&(
                 <>
+                  {vendors.filter((v: any) => v.verification_status === "pending").length > 0 && (
+                    <div style={{
+                      background: 'rgba(245, 158, 11, 0.1)',
+                      border: '1px solid rgba(245, 158, 11, 0.3)',
+                      borderRadius: '12px',
+                      padding: '1.25rem',
+                      marginBottom: '1.5rem',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '1rem',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{
+                          background: '#f59e0b',
+                          color: '#fff',
+                          borderRadius: '50%',
+                          width: '40px',
+                          height: '40px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 800,
+                          fontSize: '1.2rem',
+                        }}>
+                          ⚠️
+                        </div>
+                        <div>
+                          <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: '#f59e0b' }}>
+                            Pending Vendor Verifications ({vendors.filter((v: any) => v.verification_status === "pending").length})
+                          </h4>
+                          <p style={{ margin: '4px 0 0', fontSize: '0.85rem', opacity: 0.8, color: '#fff' }}>
+                            There are currently {vendors.filter((v: any) => v.verification_status === "pending").length} brand applications waiting for university verification. Review and approve them.
+                          </p>
+                        </div>
+                      </div>
+                      <button 
+                        className={styles.btnSm}
+                        style={{ background: '#f59e0b', color: '#fff', border: 'none', fontWeight: 600, padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
+                        onClick={() => setTab('vendors')}
+                      >
+                        Review Now
+                      </button>
+                    </div>
+                  )}
                   <div className={styles.statsGrid} id="tour-uni-admin-overview">
                     {[
                       {label:"Vendors",val:stats.totalVendors||0,color:"#7c3aed",bg:"rgba(124,58,237,0.1)"},
@@ -328,24 +387,121 @@ export default function UniversityAdminPage() {
 
               {tab==="customers"&&(
                 <div className={styles.sectionCard}>
-                  <div className={styles.sectionHeader}><div><h2>Customers</h2><p>All users enrolled in your university</p></div></div>
+                  <div className={styles.sectionHeader} style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+                    <div>
+                      <h2>Customers & Recycle Bin</h2>
+                      <p>Manage users and restore soft-deleted profiles in your university</p>
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <button 
+                      className={`${styles.btnSm} ${customersSubTab === 'all' ? styles.btnApprove : styles.btnReject}`}
+                      style={{ background: customersSubTab === 'all' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--border)' }}
+                      onClick={() => setCustomersSubTab('all')}
+                    >
+                      Active Users ({filter(customers, ["name", "email", "display_name"]).length})
+                    </button>
+                    <button 
+                      className={`${styles.btnSm} ${customersSubTab === 'deleted' ? styles.btnApprove : styles.btnReject}`}
+                      style={{ background: customersSubTab === 'deleted' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--border)', position: 'relative' }}
+                      onClick={() => setCustomersSubTab('deleted')}
+                    >
+                      Recycle Bin ({filter(deletedUsers, ["name", "email"]).length})
+                      {deletedUsers.length > 0 && (
+                        <span style={{
+                          background: '#ef4444',
+                          color: '#fff',
+                          borderRadius: '10px',
+                          padding: '2px 6px',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          marginLeft: '6px'
+                        }}>
+                          {deletedUsers.length}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+
                   <div className={styles.tableWrap}>
                     <table className={styles.table}>
-                      <thead><tr><th>Customer</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+                      <thead>
+                        {customersSubTab === 'deleted' ? (
+                          <tr><th>Deleted User</th><th>Role</th><th>Deletion Info</th><th>Actions</th></tr>
+                        ) : (
+                          <tr><th>Customer</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
+                        )}
+                      </thead>
                       <tbody>
-                        {filter(customers,["name","email","display_name"]).map((c:any)=>(
-                          <tr key={c.id}>
-                            <td><div style={{fontWeight:600}}>{c.display_name || c.name || c.email?.split('@')[0]}</div><div className={styles.subText}>{c.email}</div></td>
-                            <td><span className={styles.badge}>{c.role}</span></td>
-                            <td><span className={c.status==="active"?styles.badgeActive:styles.badgeOffline}>{c.status||"active"}</span></td>
-                            <td>{new Date(c.created_at).toLocaleDateString()}</td>
-                            <td>
-                              <button className={styles.btnSm} onClick={()=>action("toggle_user_status",{userId:c.id,status:c.status==="active"?"suspended":"active"})}>
-                                {c.status==="active"?"Suspend":"Activate"}
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
+                        {customersSubTab === 'deleted' ? (
+                          filter(deletedUsers, ["name", "email"]).map((c: any) => (
+                            <tr key={c.id}>
+                              <td>
+                                <div style={{ fontWeight: 600 }}>{c.name || '—'}</div>
+                                <div className={styles.subText}>{c.email}</div>
+                              </td>
+                              <td><span className={styles.badge}>{c.role}</span></td>
+                              <td>
+                                <div style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 600 }}>
+                                  🗓️ {c.deleted_at ? new Date(c.deleted_at).toLocaleString() : 'N/A'}
+                                </div>
+                                {c.deleted_reason && (
+                                  <div className={styles.subText} style={{ fontStyle: 'italic', maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.deleted_reason}>
+                                    Reason: {c.deleted_reason}
+                                  </div>
+                                )}
+                              </td>
+                              <td>
+                                <div className={styles.actionRow} style={{ gap: '0.5rem' }}>
+                                  <button 
+                                    className={styles.btnSm} 
+                                    style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 10px' }}
+                                    onClick={() => { if (confirm('Restore this user account?')) action('restore_user', { userId: c.id }) }}
+                                  >
+                                    Restore
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          filter(customers, ["name", "email", "display_name"]).map((c: any) => (
+                            <tr key={c.id}>
+                              <td>
+                                <div style={{ fontWeight: 600 }}>{c.display_name || c.name || c.email?.split('@')[0]}</div>
+                                <div className={styles.subText}>{c.email}</div>
+                              </td>
+                              <td><span className={styles.badge}>{c.role}</span></td>
+                              <td><span className={c.status === "active" ? styles.badgeActive : styles.badgeOffline}>{c.status || "active"}</span></td>
+                              <td>{new Date(c.created_at).toLocaleDateString()}</td>
+                              <td>
+                                <div className={styles.actionRow} style={{ gap: '0.5rem' }}>
+                                  <button 
+                                    className={styles.btnSm} 
+                                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}
+                                    onClick={() => action("toggle_user_status", { userId: c.id, status: c.status === "active" ? "suspended" : "active" })}
+                                  >
+                                    {c.status === "active" ? "Suspend" : "Activate"}
+                                  </button>
+                                  <button 
+                                    className={styles.btnSm} 
+                                    style={{ background: '#ef4444', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    onClick={() => {
+                                      const reason = prompt('Reason for soft-deleting this user:');
+                                      if (reason !== null) {
+                                        action('delete_user', { userId: c.id, reason });
+                                      }
+                                    }}
+                                    title="Move to Recycle Bin"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>

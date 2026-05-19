@@ -252,6 +252,8 @@ export default function AdminDashboard() {
   const [vendors, setVendors] = useState<Brand[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [deletedUsers, setDeletedUsers] = useState<User[]>([]);
+  const [usersSubTab, setUsersSubTab] = useState<'all' | 'deleted'>('all');
   const [orders, setOrders] = useState<Order[]>([]);
   const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'paid' | 'pending' | 'cancelled'>('all');
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -359,7 +361,7 @@ export default function AdminDashboard() {
     setError(null);
     try {
       // Step 1: Fire all requests simultaneously
-      const keys = ['stats','vendors','products','users','transactions','orders','reviews','payouts','settings','market_analytics','delivery_agents','promo_codes', 'universities_list'] as const;
+      const keys = ['stats','vendors','products','users','transactions','orders','reviews','payouts','settings','market_analytics','delivery_agents','promo_codes', 'universities_list', 'deleted_users'] as const;
       const fetchResults = await Promise.allSettled(
         keys.map(k => adminFetch(`/api/admin?action=${k}`))
       );
@@ -405,11 +407,13 @@ export default function AdminDashboard() {
       const agentsD = getData(10);
       const promosD = getData(11);
       const unisD = getData(12);
+      const deletedUsersD = getData(13);
 
       setStats(prev => statsD.stats || prev);
       setVendors(vendorsD.vendors || []);
       setProducts(productsD.products || []);
       setUsers(usersD.users || []);
+      setDeletedUsers(deletedUsersD.deletedUsers || []);
       setOrders(ordersD.orders || []);
       setReviews(reviewsD.reviews || []);
       setPayouts(payoutsD.payouts || []);
@@ -573,9 +577,18 @@ export default function AdminDashboard() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const filterBy = (items: any[], fields: string[]): any[] => {
     if (!search.trim()) return items;
-    return items.filter(item =>
-      fields.some(f => String(item[f] || '').toLowerCase().includes(search.toLowerCase()))
-    );
+    const term = search.toLowerCase();
+    return items.filter(item => {
+      const matchesFlat = fields.some(f => String(item[f] || '').toLowerCase().includes(term));
+      if (matchesFlat) return true;
+
+      // Handle vendor lists matching owner's name or email nested inside users
+      if (item.users) {
+        if (String(item.users.name || '').toLowerCase().includes(term)) return true;
+        if (String(item.users.email || '').toLowerCase().includes(term)) return true;
+      }
+      return false;
+    });
   };
 
   const pendingVendors = vendors.filter(v => v.verification_status === 'pending');
@@ -655,7 +668,53 @@ export default function AdminDashboard() {
               </div>
             )}
             {activeTab === 'overview' && (
-              <div className={styles.statsGrid}>
+              <>
+                {pendingVendors.length > 0 && (
+                  <div style={{
+                    background: 'rgba(245, 158, 11, 0.1)',
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    borderRadius: '12px',
+                    padding: '1.25rem',
+                    marginBottom: '1.5rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '1rem',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div style={{
+                        background: '#f59e0b',
+                        color: '#fff',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '1.2rem',
+                      }}>
+                        ⚠️
+                      </div>
+                      <div>
+                        <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: '#f59e0b' }}>
+                          Pending Vendor Verifications ({pendingVendors.length})
+                        </h4>
+                        <p style={{ margin: '4px 0 0', fontSize: '0.85rem', opacity: 0.8 }}>
+                          There are currently {pendingVendors.length} vendor store applications waiting for verification. Review and approve them to launch their storefronts.
+                        </p>
+                      </div>
+                    </div>
+                    <button 
+                      className="btn btn-sm btn-warning"
+                      style={{ background: '#f59e0b', borderColor: '#f59e0b', color: '#fff', fontWeight: 600 }}
+                      onClick={() => setActiveTab('vendors')}
+                    >
+                      Review Now
+                    </button>
+                  </div>
+                )}
+                <div className={styles.statsGrid}>
                 {[
                   { label: 'Users', val: stats.userCount, color: '#3b82f6', Icon: Users },
                   { label: 'Brands', val: stats.brandCount, color: '#10b981', Icon: Store },
@@ -671,6 +730,7 @@ export default function AdminDashboard() {
                   </div>
                 ))}
               </div>
+              </>
             )}
 
             {activeTab === 'manual_payments' && (
@@ -1131,90 +1191,180 @@ export default function AdminDashboard() {
 
             {activeTab === 'users' && (
               <div className={styles.sectionCard}>
-                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
-                  <thead>
-                    <tr><th>User</th><th>Campus</th><th>Role & Permissions</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
-                  </thead>
-                  <tbody>
-                    {filterBy(users, ['name', 'email']).map(u => (
-                      <tr key={u.id}>
-                        <td>
-                          <div style={{ fontWeight: 600 }}>{u.name || '—'}</div>
-                          <div className={styles.subText}>{u.email}</div>
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: 600, color: 'var(--primary)' }}>
-                            {u.universities?.abbreviation || (u.university_id === '00000000-0000-0000-0000-000000000001' ? 'ABUAD' : 'General')}
-                          </div>
-                          <div className={styles.subText} style={{ fontSize: '0.7rem' }}>
-                            {u.universities?.name || (u.university_id ? 'Unknown Campus' : 'General Student/User')}
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                             <select 
-                               className="input input-sm" 
-                               style={{ width: '120px', fontSize: '0.75rem' }}
-                               value={u.role}
-                               onChange={(e) => adminAction('update_user_role', { userId: u.id, newRole: e.target.value })}
-                               disabled={actionLoading === 'update_user_role' + u.id}
-                             >
-                               <option value="customer">Customer</option>
-                               <option value="vendor">Vendor</option>
-                               <option value="delivery">Delivery</option>
-                               <option value="admin">Admin</option>
-                               <option value="sub_admin">Sub-Admin</option>
-                             </select>
-                             
-                             {u.role === 'sub_admin' && (
-                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
-                                 {[
-                                   { id: 'payouts', label: '💰', title: 'Payouts' },
-                                   { id: 'customer_service', label: '🎧', title: 'Support' },
-                                   { id: 'delivery', label: '🚚', title: 'Fleet' },
-                                   { id: 'promotions', label: '📢', title: 'Adverts' },
-                                   { id: 'orders', label: '📦', title: 'Orders' },
-                                   { id: 'verification', label: '🛡️', title: 'Verify' },
-                                   { id: 'reviews', label: '⭐', title: 'Reviews' }
-                                 ].map(p => (
+                <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+                  <button 
+                    className={`btn btn-sm ${usersSubTab === 'all' ? 'btn-primary' : 'btn-ghost'}`}
+                    onClick={() => setUsersSubTab('all')}
+                  >
+                    Active Users ({filterBy(users, ['name', 'email']).length})
+                  </button>
+                  <button 
+                    className={`btn btn-sm ${usersSubTab === 'deleted' ? 'btn-primary' : 'btn-ghost'}`}
+                    onClick={() => setUsersSubTab('deleted')}
+                    style={{ position: 'relative' }}
+                  >
+                    Recycle Bin ({filterBy(deletedUsers, ['name', 'email']).length})
+                    {deletedUsers.length > 0 && (
+                      <span style={{
+                        background: '#ef4444',
+                        color: '#fff',
+                        borderRadius: '10px',
+                        padding: '2px 6px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        marginLeft: '6px'
+                      }}>
+                        {deletedUsers.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                  <table className={styles.table}>
+                    <thead>
+                      {usersSubTab === 'deleted' ? (
+                        <tr><th>Deleted User</th><th>Campus</th><th>Role</th><th>Deletion Info</th><th>Actions</th></tr>
+                      ) : (
+                        <tr><th>User</th><th>Campus</th><th>Role & Permissions</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
+                      )}
+                    </thead>
+                    <tbody>
+                      {usersSubTab === 'deleted' ? (
+                        filterBy(deletedUsers, ['name', 'email']).map(u => (
+                          <tr key={u.id}>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{u.name || '—'}</div>
+                              <div className={styles.subText}>{u.email}</div>
+                            </td>
+                            <td>
+                              <div style={{ fontWeight: 600, color: 'var(--primary)' }}>
+                                {u.universities?.abbreviation || (u.university_id === '00000000-0000-0000-0000-000000000001' ? 'ABUAD' : 'General')}
+                              </div>
+                              <div className={styles.subText} style={{ fontSize: '0.7rem' }}>
+                                {u.universities?.name || (u.university_id ? 'Unknown Campus' : 'General Student/User')}
+                              </div>
+                            </td>
+                            <td>
+                              <span className="badge badge-outline" style={{ textTransform: 'capitalize' }}>{u.role}</span>
+                            </td>
+                            <td>
+                              <div style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 600 }}>
+                                🗓️ {u.deleted_at ? new Date(u.deleted_at).toLocaleString() : 'N/A'}
+                              </div>
+                              {u.deleted_reason && (
+                                <div className={styles.subText} style={{ fontStyle: 'italic', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={u.deleted_reason}>
+                                  Reason: {u.deleted_reason}
+                                </div>
+                              )}
+                            </td>
+                            <td>
+                              <div className={styles.actionRow} style={{ gap: '0.5rem' }}>
+                                <button 
+                                  className="btn btn-xs" 
+                                  style={{ background: '#10b981', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                                  onClick={() => { if(confirm('Restore this user account?')) adminAction('restore_user', { userId: u.id }) }}
+                                >
+                                  Restore
+                                </button>
+                                <button 
+                                  className="btn btn-xs" 
+                                  style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                                  onClick={() => { if(confirm('PERMANENTLY delete this user? This cannot be undone.')) adminAction('permanent_delete_user', { userId: u.id }) }}
+                                >
+                                  Hard Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        filterBy(users, ['name', 'email']).map(u => (
+                          <tr key={u.id}>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{u.name || '—'}</div>
+                              <div className={styles.subText}>{u.email}</div>
+                            </td>
+                            <td>
+                              <div style={{ fontWeight: 600, color: 'var(--primary)' }}>
+                                {u.universities?.abbreviation || (u.university_id === '00000000-0000-0000-0000-000000000001' ? 'ABUAD' : 'General')}
+                              </div>
+                              <div className={styles.subText} style={{ fontSize: '0.7rem' }}>
+                                {u.universities?.name || (u.university_id ? 'Unknown Campus' : 'General Student/User')}
+                              </div>
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                 <select 
+                                   className="input input-sm" 
+                                   style={{ width: '120px', fontSize: '0.75rem' }}
+                                   value={u.role}
+                                   onChange={(e) => adminAction('update_user_role', { userId: u.id, newRole: e.target.value })}
+                                   disabled={actionLoading === 'update_user_role' + u.id}
+                                 >
+                                   <option value="customer">Customer</option>
+                                   <option value="vendor">Vendor</option>
+                                   <option value="delivery">Delivery</option>
+                                   <option value="admin">Admin</option>
+                                   <option value="sub_admin">Sub-Admin</option>
+                                 </select>
+                                 
+                                 {u.role === 'sub_admin' && (
+                                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
+                                     {[
+                                       { id: 'payouts', label: '💰', title: 'Payouts' },
+                                       { id: 'customer_service', label: '🎧', title: 'Support' },
+                                       { id: 'delivery', label: '🚚', title: 'Fleet' },
+                                       { id: 'promotions', label: '📢', title: 'Adverts' },
+                                       { id: 'orders', label: '📦', title: 'Orders' },
+                                       { id: 'verification', label: '🛡️', title: 'Verify' },
+                                       { id: 'reviews', label: '⭐', title: 'Reviews' }
+                                     ].map(p => (
+                                       <button 
+                                         key={p.id}
+                                         title={p.title}
+                                         className={`btn btn-sm ${(u.admin_permissions || []).includes(p.id) ? 'btn-primary' : 'btn-ghost'}`}
+                                         style={{ padding: '2px 4px', fontSize: '10px', height: '24px', minWidth: '24px' }}
+                                         onClick={() => {
+                                           const current = u.admin_permissions || [];
+                                           const next = current.includes(p.id) ? current.filter((x: string) => x !== p.id) : [...current, p.id];
+                                           adminAction('update_sub_admin_permissions', { userId: u.id, permissions: next });
+                                         }}
+                                       >
+                                         {p.label}
+                                       </button>
+                                     ))}
+                                   </div>
+                                 )}
+                              </div>
+                            </td>
+                            <td><span className={`badge badge-${u.status || 'active'}`}>{u.status || 'active'}</span></td>
+                            <td>{new Date(u.created_at || '').toLocaleDateString()}</td>
+                            <td>
+                              <div className={styles.actionRow}>
+                                 {u.role !== 'admin' && (
                                    <button 
-                                     key={p.id}
-                                     title={p.title}
-                                     className={`btn btn-sm ${(u.admin_permissions || []).includes(p.id) ? 'btn-primary' : 'btn-ghost'}`}
-                                     style={{ padding: '2px 4px', fontSize: '10px', height: '24px', minWidth: '24px' }}
+                                     className="btn btn-ghost btn-sm" 
+                                     style={{ color: '#ef4444' }} 
                                      onClick={() => {
-                                       const current = u.admin_permissions || [];
-                                       const next = current.includes(p.id) ? current.filter((x: string) => x !== p.id) : [...current, p.id];
-                                       adminAction('update_sub_admin_permissions', { userId: u.id, permissions: next });
+                                       const reason = prompt('Reason for soft-deleting this user:');
+                                       if (reason !== null) {
+                                         adminAction('delete_user', { userId: u.id, reason });
+                                       }
                                      }}
+                                     title="Move to Recycle Bin"
                                    >
-                                     {p.label}
+                                     <Trash2 size={14} />
                                    </button>
-                                 ))}
-                               </div>
-                             )}
-                          </div>
-                        </td>
-                        <td><span className={`badge badge-${u.status || 'active'}`}>{u.status || 'active'}</span></td>
-                        <td>{new Date(u.created_at || '').toLocaleDateString()}</td>
-                        <td>
-                          <div className={styles.actionRow}>
-                             {u.role !== 'admin' && (
-                               <button 
-                                 className="btn btn-ghost btn-sm" 
-                                 style={{ color: '#ef4444' }} 
-                                 onClick={() => { if(confirm('Permanently delete this user? This cannot be undone.')) adminAction('delete_user', { userId: u.id }) }}
-                                 title="Delete User Permanently"
-                               >
-                                 <Trash2 size={14} />
-                               </button>
-                             )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table></div>
+                                 )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 

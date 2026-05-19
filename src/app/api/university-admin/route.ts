@@ -105,12 +105,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ vendors });
   }
 
-  // â”€â”€ Customers (users) in university â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Customers (users) in university ──────────────────────
   if (action === 'customers') {
     const { data, error } = await supabaseAdmin
       .from('users')
       .select('id, name, email, phone, role, status, created_at, university_id')
       .eq('university_id', universityId)
+      .neq('status', 'deleted')
       .not('role', 'in', '("admin","super_admin")') // exclude global admins
       .order('created_at', { ascending: false });
 
@@ -123,7 +124,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ customers });
   }
 
-  // â”€â”€ Orders in university â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Recycle Bin: fetch soft-deleted users ───────────────
+  if (action === 'deleted_users') {
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('id, name, email, phone, role, status, deleted_at, deleted_reason, created_at, university_id')
+      .eq('university_id', universityId)
+      .eq('status', 'deleted')
+      .order('deleted_at', { ascending: false });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ deletedUsers: data || [] });
+  }
+
+  // ── Orders in university ──────────────────────────────────
   if (action === 'orders') {
     const { data, error } = await supabaseAdmin
       .from('orders')
@@ -400,12 +414,30 @@ export async function POST(req: NextRequest) {
     if (!(await ensureScope('brands', brandId))) {
       return NextResponse.json({ error: 'Forbidden: Vendor not in your university.' }, { status: 403 });
     }
+    // 1. Update brand verification status
     const { error } = await supabaseAdmin
       .from('brands')
-      .update({ verification_status: 'verified', verified: true })
+      .update({ verification_status: 'verified', verified: true, fee_paid: true })
       .eq('id', brandId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true });
+    
+    // 2. Promote owner's user role to 'vendor'
+    const { data: brand } = await supabaseAdmin.from('brands').select('owner_id').eq('id', brandId).single();
+    if (brand?.owner_id) {
+      await supabaseAdmin.from('users').update({ role: 'vendor' }).eq('id', brand.owner_id);
+      await supabaseAdmin.auth.admin.updateUserById(brand.owner_id, { user_metadata: { role: 'vendor' } });
+      // 3. Send notification to the vendor
+      await supabaseAdmin.from('notifications').insert({
+        user_id: brand.owner_id,
+        title: '🎉 Your Store Has Been Verified!',
+        content: 'Congratulations! Your vendor application has been approved by the campus admin. Your store is now live. Go to your vendor dashboard to start listing products!',
+        is_read: false,
+        type: 'direct',
+        link: '/dashboard/vendor'
+      });
+    }
+    
+    return NextResponse.json({ success: true, message: 'Vendor verified and role promoted to vendor.' });
   }
 
   // — Reject vendor ——————————————————————————————————————
@@ -485,6 +517,56 @@ export async function POST(req: NextRequest) {
     const { error } = await supabaseAdmin.from('users').update({ status }).eq('id', userId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true, message: `User status updated to ${status}.` });
+  }
+
+  // ─── Soft Delete User (University Admin scoped) ─────────────────────────────────
+  if (action === 'delete_user') {
+    const { userId, reason } = body;
+    if (!(await ensureScope('users', userId))) {
+      return NextResponse.json({ error: 'Forbidden: User not in your university.' }, { status: 403 });
+    }
+    // Soft-delete: set status='deleted', ban from auth
+    const { error } = await supabaseAdmin
+      .from('users')
+      .update({
+        status: 'deleted',
+        deleted_at: new Date().toISOString(),
+        deleted_by_super_admin: false,
+        deleted_reason: reason || null
+      })
+      .eq('id', userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // Ban auth session
+    try {
+      await supabaseAdmin.auth.admin.updateUserById(userId, { ban_duration: '876000h' });
+    } catch (e) {
+      console.warn('[UADMIN API] Auth ban failed for', userId);
+    }
+    return NextResponse.json({ success: true, message: 'User moved to Recycle Bin.' });
+  }
+
+  // ─── Restore User from Recycle Bin (University Admin scoped) ──────────────────
+  if (action === 'restore_user') {
+    const { userId } = body;
+    if (!(await ensureScope('users', userId))) {
+      return NextResponse.json({ error: 'Forbidden: User not in your university.' }, { status: 403 });
+    }
+    // Only university admins can restore unless deleted by super admin
+    const { data: targetUser } = await supabaseAdmin.from('users').select('deleted_by_super_admin').eq('id', userId).single();
+    if (targetUser?.deleted_by_super_admin && !ctx.isFullAdmin) {
+      return NextResponse.json({ error: 'Only the Super Admin can restore this account.' }, { status: 403 });
+    }
+    const { error } = await supabaseAdmin
+      .from('users')
+      .update({ status: 'active', deleted_at: null, deleted_by_super_admin: false, deleted_reason: null })
+      .eq('id', userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    try {
+      await supabaseAdmin.auth.admin.updateUserById(userId, { ban_duration: 'none' });
+    } catch (e) {
+      console.warn('[UADMIN API] Auth unban failed for', userId);
+    }
+    return NextResponse.json({ success: true, message: 'User account restored successfully.' });
   }
 
   // â”€â”€ Send notification to university users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
