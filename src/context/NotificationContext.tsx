@@ -12,10 +12,49 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
+let sharedAudioCtx: any = null;
+
+function unlockAudioContext() {
+  if (typeof window === 'undefined') return;
+  try {
+    if (!sharedAudioCtx) {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        sharedAudioCtx = new AudioCtx();
+      }
+    }
+    if (sharedAudioCtx && sharedAudioCtx.state === 'suspended') {
+      sharedAudioCtx.resume();
+    }
+  } catch (e) {
+    console.warn('AudioContext unlock failed:', e);
+  }
+}
+
+if (typeof window !== 'undefined') {
+  const unlock = () => {
+    unlockAudioContext();
+    window.removeEventListener('click', unlock);
+    window.removeEventListener('touchstart', unlock);
+  };
+  window.addEventListener('click', unlock);
+  window.addEventListener('touchstart', unlock);
+}
+
 function playChime() {
   if (typeof window === 'undefined') return;
   try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    if (!sharedAudioCtx) {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        sharedAudioCtx = new AudioCtx();
+      }
+    }
+    const ctx = sharedAudioCtx;
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
     
     // First tone (ding)
     const osc1 = ctx.createOscillator();
@@ -42,8 +81,8 @@ function playChime() {
     gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.95);
     osc2.start(ctx.currentTime + 0.15);
     osc2.stop(ctx.currentTime + 0.95);
-  } catch {
-    // Audio not available, silently fail
+  } catch (e) {
+    console.warn('Notification audio fail:', e);
   }
 }
 

@@ -34,6 +34,22 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
 
+  const markAsRead = async (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+  };
+
+  const handleMarkAllRead = async () => {
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    if (user) {
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false);
+    }
+  };
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -105,13 +121,6 @@ export default function NotificationsPage() {
           });
         }
         
-        // 4. Mark all as read in DB
-        await supabase
-          .from('notifications')
-          .update({ is_read: true })
-          .eq('user_id', session.user.id)
-          .eq('is_read', false);
-
       } catch (err) {
         console.error('Failed to load notifications:', err);
       } finally {
@@ -166,7 +175,7 @@ export default function NotificationsPage() {
           <section className={styles.feed}>
             <div className={styles.sectionHead}>
               <h3>Latest Activity</h3>
-              <button className={styles.clearBtn}>Mark all as read</button>
+              <button className={styles.clearBtn} onClick={handleMarkAllRead}>Mark all as read</button>
             </div>
 
             {notifications.length === 0 && enquiries.length === 0 ? (
@@ -177,7 +186,7 @@ export default function NotificationsPage() {
             ) : (
               <div className={styles.list}>
                 {notifications.map((n) => (
-                  <Link key={`notif-${n.id}`} href={n.link || '#'} className={`${styles.item} ${!n.is_read ? styles.unread : ''}`}>
+                  <Link key={`notif-${n.id}`} href={n.link || '#'} className={`${styles.item} ${!n.is_read ? styles.unread : ''}`} onClick={() => markAsRead(n.id)}>
                     <div className={styles.iconBox}>
                       {n.type === 'price_drop' && <Tag size={18} />}
                       {n.type === 'vendor_update' && <User size={18} />}

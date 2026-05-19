@@ -358,7 +358,7 @@ export default function CustomerDashboard() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                <div style={{ position: 'relative' }}>
                  {user?.avatar_url ? (
-                   <Image src={user.avatar_url} alt="" width={64} height={64} style={{ borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
+                   <img src={user.avatar_url} alt="" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
                  ) : (
                    <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--bg-300)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                      <User size={32} color="var(--text-400)" />
