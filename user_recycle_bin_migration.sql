@@ -3,7 +3,11 @@
 -- Run this in Supabase SQL Editor
 -- ============================================================
 
--- 1. Add soft-delete columns to users table
+-- 1. Update status check constraint to support 'deleted' status
+ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_status_check;
+ALTER TABLE public.users ADD CONSTRAINT users_status_check CHECK (status IN ('active', 'suspended', 'blocked', 'deleted'));
+
+-- 2. Add soft-delete columns to users table
 ALTER TABLE public.users
   ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ DEFAULT NULL,
   ADD COLUMN IF NOT EXISTS deleted_by_super_admin BOOLEAN DEFAULT FALSE,
