@@ -1,14 +1,18 @@
-import type { Metadata } from 'next';
+import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Campus Brands Directory',
-  description: 'Discover and shop from verified fashion brands and vendors at Master Cart.',
+  title: 'Official Campus Vendors & Brands',
+  description: 'Browse all verified student entrepreneurs, official university brands, and local campus shops.',
+  alternates: {
+    canonical: '/vendors',
+  },
+  openGraph: {
+    title: 'Verified Vendors Directory | MasterCart',
+    description: 'Find trusted sellers on campus. Support student entrepreneurs and shop safely.',
+    url: '/vendors',
+  },
 };
 
-export default function VendorsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function VendorsLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

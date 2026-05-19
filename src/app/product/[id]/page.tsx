@@ -56,11 +56,15 @@ export async function generateMetadata({ params }: Props) {
   return {
     title: `${product.title} | MasterCart`,
     description: metaDescription,
+    alternates: {
+      canonical: `/product/${id}`,
+    },
     openGraph: {
       title: product.title,
       description: metaDescription,
-      type: 'website',
+      url: `/product/${id}`,
       siteName: 'MasterCart',
+      type: 'website',
       images: [
         {
           url: ogImage,

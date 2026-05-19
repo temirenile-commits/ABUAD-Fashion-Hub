@@ -30,9 +30,15 @@ export async function generateMetadata({ params, searchParams }: Props) {
   return { 
     title: `${vendor.name} – Campus Brand`, 
     description: vendor.description,
+    alternates: {
+      canonical: `/vendor/${slug}?id=${id}`,
+    },
     openGraph: {
       title: vendor.name,
       description: vendor.description,
+      url: `/vendor/${slug}?id=${id}`,
+      siteName: 'MasterCart',
+      type: 'profile',
       images: [
         {
           url: ogImage,

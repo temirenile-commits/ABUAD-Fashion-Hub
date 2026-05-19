@@ -9,6 +9,7 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import './globals.css';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://mastercart.vercel.app'),
   title: {
     default: 'Master Cart – Campus Marketplace',
     template: '%s | Master Cart',
@@ -29,6 +30,9 @@ export const metadata: Metadata = {
     description: 'Discover. Connect. Slay. The #1 campus fashion marketplace.',
     type: 'website',
     images: [{ url: '/logo.png' }],
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '',
   },
 };
 
