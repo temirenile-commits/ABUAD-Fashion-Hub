@@ -58,6 +58,15 @@ export default function DeliveryDashboard() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
+    // Fetch the delivery agent user record to get their university_id
+    const { data: agentUser } = await supabase
+      .from('users')
+      .select('university_id')
+      .eq('id', session.user.id)
+      .single();
+
+    const universityId = agentUser?.university_id;
+
     // Fetch Settings
     const { data: settings } = await supabase.from('platform_settings').select('value').eq('key', 'delivery_agent_payout').single();
     if (settings?.value) {
@@ -83,14 +92,15 @@ export default function DeliveryDashboard() {
       .neq('status', 'delivered')
       .order('created_at', { ascending: false });
 
-    // Fetch Available Deliveries (Pending and no agent, and order is accepted/processing/ready/ready_for_pickup)
-    const { data: availData } = await supabase
+    // Fetch Available Deliveries (Pending and no agent, same university, and order is accepted/processing/ready/ready_for_pickup)
+    let availQuery = supabase
       .from('deliveries')
       .select(`
         *,
         orders!inner (
           id,
           status,
+          university_id,
           total_amount,
           shipping_address,
           brands (name, location_name)
@@ -98,8 +108,13 @@ export default function DeliveryDashboard() {
       `)
       .is('agent_id', null)
       .eq('status', 'pending')
-      .in('orders.status', ['accepted', 'processing', 'ready', 'ready_for_pickup'])
-      .order('created_at', { ascending: false });
+      .in('orders.status', ['accepted', 'processing', 'ready', 'ready_for_pickup']);
+
+    if (universityId) {
+      availQuery = availQuery.eq('orders.university_id', universityId);
+    }
+
+    const { data: availData } = await availQuery.order('created_at', { ascending: false });
 
     setDeliveries(myData || []);
     setAvailableDeliveries(availData || []);
