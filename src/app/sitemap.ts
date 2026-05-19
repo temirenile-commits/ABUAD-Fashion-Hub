@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabase';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mastercart.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://master-cart-camp.vercel.app';
 
   // 1. Static Pages
   const staticPages = [
@@ -12,6 +12,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/reels',
     '/services',
     '/rankings',
+    '/delicacies',
+    '/delicacies/rankings',
     '/privacy',
     '/terms',
   ].map((route) => ({

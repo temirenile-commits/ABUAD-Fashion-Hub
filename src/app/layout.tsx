@@ -9,7 +9,7 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import './globals.css';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://mastercart.vercel.app'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://master-cart-camp.vercel.app'),
   title: {
     default: 'Master Cart – Campus Marketplace',
     template: '%s | Master Cart',
