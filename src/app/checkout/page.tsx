@@ -689,11 +689,11 @@ function CheckoutContent() {
                       <h4>{item.title}</h4>
                       <span>{item.brands?.name}</span>
                       <span>Qty: {item.quantity}</span>
-                      {item.variants_selected && Object.keys(item.variants_selected).length > 0 && (
+                      {item.variants_selected && Object.keys(item.variants_selected).length > 0 ? (
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-300)', marginTop: '4px' }}>
                           {Object.entries(item.variants_selected).map(([k, v]) => `${k}: ${v}`).join(' | ')}
                         </div>
-                      )}
+                      ) : null}
                       {item.is_preorder && (
                         <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '2px', fontWeight: 600 }}>
                           [Pre-order] Arrives: {item.preorder_arrival_date ? new Date(item.preorder_arrival_date).toLocaleDateString() : 'TBD'}

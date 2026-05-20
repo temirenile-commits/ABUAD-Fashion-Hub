@@ -335,11 +335,11 @@ export default function TrackingPage() {
               <p className={styles.itemBrand}>{order.brands?.name}</p>
               <h3 className={styles.itemTitle}>{order.products?.title}</h3>
               <p className={styles.itemPrice}>{formatPrice(Number(order.total_amount))}</p>
-              {order.variants_selected && Object.keys(order.variants_selected).length > 0 && (
+              {order.variants_selected && Object.keys(order.variants_selected).length > 0 ? (
                 <p className={styles.itemVariants}>
                   {Object.entries(order.variants_selected).map(([k, v]) => `${k}: ${v}`).join(' · ')}
                 </p>
-              )}
+              ) : null}
             </div>
           </div>
 

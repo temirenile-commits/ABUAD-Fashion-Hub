@@ -21,6 +21,7 @@ export default function DeliveryInvoicePage() {
             id,
             total_amount,
             shipping_address,
+            variants_selected,
             customer:customer_id (name, email, phone),
             product:product_id (title),
             brand:brand_id (name, location_name, phone)
@@ -101,6 +102,11 @@ export default function DeliveryInvoicePage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <p style={{ margin: 0, fontWeight: 600 }}>{order.product?.title}</p>
+                {order.variants_selected && Object.keys(order.variants_selected).length > 0 ? (
+                  <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#555' }}>
+                    {Object.entries(order.variants_selected).map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                  </p>
+                ) : null}
                 <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#777' }}>Order ID: #{order.id.slice(0, 8)}</p>
               </div>
               <p style={{ margin: 0, fontWeight: 700 }}>{formatPrice(order.total_amount)}</p>

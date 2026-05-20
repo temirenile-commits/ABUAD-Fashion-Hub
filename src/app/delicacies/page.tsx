@@ -186,6 +186,19 @@ export default function DelicaciesPage() {
     return list;
   }, [products, selectedCat, search, statusFilter, useLocationFilter, userHostel, sharedProductId]);
 
+  const matchingVendors = useMemo(() => {
+    if (!search.trim()) return [];
+    const s = search.toLowerCase();
+    const uniqueBrands = new Map();
+    products.forEach(p => {
+      const b = Array.isArray(p.brands) ? p.brands[0] : p.brands;
+      if (b && b.name && b.name.toLowerCase().includes(s)) {
+        uniqueBrands.set(b.id, b);
+      }
+    });
+    return Array.from(uniqueBrands.values());
+  }, [products, search]);
+
   return (
     <main style={{ minHeight: '100vh', background: 'var(--bg-300)' }}>
       {/* ── HERO BANNER ── */}
@@ -199,14 +212,27 @@ export default function DelicaciesPage() {
           <p className={styles.heroSubtitle}>
             Snacks, Small Chops, Pastries & Provisions — strictly for campus cravings
           </p>
-          <div className={styles.searchBar}>
+          <div className={styles.searchBar} style={{ position: 'relative' }}>
             <Search size={16} style={{ opacity: 0.5, flexShrink: 0 }} />
             <input
-              placeholder="Search delicacies..."
+              placeholder="Search delicacies or chefs..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className={styles.searchInput}
             />
+            {search.trim() && matchingVendors.length > 0 && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', borderRadius: '8px', marginTop: '4px', padding: '8px', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '4px', padding: '0 8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Chefs matching "{search}"</div>
+                {matchingVendors.map(v => (
+                  <Link key={v.id} href={`/vendor/${v.id}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', textDecoration: 'none', color: '#000', borderRadius: '4px' }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#eee', overflow: 'hidden' }}>
+                      {v.logo_url ? <img src={v.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '10px' }}>{v.name[0]}</span>}
+                    </div>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{v.name}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

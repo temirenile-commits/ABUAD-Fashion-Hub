@@ -169,6 +169,51 @@ export default function CustomerDashboard() {
     }
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    const reason = window.prompt('Why are you cancelling this order? (Optional)');
+    if (reason === null) return; 
+
+    if (!window.confirm('Are you sure you want to cancel this order? This action cannot be undone.')) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch('/api/orders/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, userId: user?.id, reason })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        const { data: updatedOrders } = await supabase
+          .from('orders')
+          .select(`
+            *,
+            products (title, media_urls),
+            brands (owner_id, name, delivery_scope),
+            deliveries (
+              id,
+              status,
+              agent_id,
+              delivery_code,
+              users:agent_id (id, name, phone)
+            )
+          `)
+          .eq('customer_id', user?.id)
+          .order('created_at', { ascending: false });
+        setOrders((updatedOrders as unknown as AppOrder[]) || []);
+        alert('Order cancelled successfully.');
+      } else {
+        alert(data.error || 'Failed to cancel order.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading && orders.length === 0) {
     return (
       <div className={styles.loading}>
@@ -244,6 +289,16 @@ export default function CustomerDashboard() {
                           onClick={() => handleConfirmDelivery(order.id)}
                         >
                           Confirm Receipt
+                        </button>
+                      )}
+                      
+                      {!['ready', 'picked_up', 'in_transit', 'delivered', 'confirmed', 'completed', 'cancelled', 'refunded'].includes(order.status) && (
+                        <button 
+                          className="btn btn-ghost btn-sm"
+                          style={{ color: '#ef4444' }}
+                          onClick={() => handleCancelOrder(order.id)}
+                        >
+                          Cancel Order
                         </button>
                       )}
                     </div>

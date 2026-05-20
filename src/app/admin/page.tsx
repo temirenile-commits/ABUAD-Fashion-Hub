@@ -37,6 +37,7 @@ interface User {
 interface Brand {
   id: string;
   name: string;
+  owner_id?: string;
   logo_url?: string;
   verification_status: string;
   subscription_tier?: string;
@@ -119,6 +120,7 @@ interface Order {
   brands?: { name: string; university_id?: string };
   brand_id?: string;
   university_id?: string;
+  variants_selected?: any;
   payment_system?: string;
   manual_payment_status?: string;
   manual_payment_details?: {
@@ -250,6 +252,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({ userCount: 0, brandCount: 0, productCount: 0, totalRevenue: 0, totalSubsidies: 0, totalProductViews: 0, totalProfileViews: 0 });
   const [error, setError] = useState<string | null>(null);
   const [vendors, setVendors] = useState<Brand[]>([]);
+  const [onlyVendorsWithOrders, setOnlyVendorsWithOrders] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [deletedUsers, setDeletedUsers] = useState<User[]>([]);
@@ -1121,12 +1124,19 @@ export default function AdminDashboard() {
 
             {activeTab === 'vendors' && (
               <div className={styles.sectionCard}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h2 style={{ margin: 0 }}>Vendors Directory</h2>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                    <input type="checkbox" checked={onlyVendorsWithOrders} onChange={e => setOnlyVendorsWithOrders(e.target.checked)} />
+                    Only Vendors with Orders
+                  </label>
+                </div>
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table className={styles.table}>
                   <thead>
                     <tr><th>Brand</th><th>University</th><th>Academic Details</th><th>Tier</th><th>Status</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
-                    {filterBy(vendors, ['name', 'matric_number']).map(v => (
+                    {filterBy(vendors, ['name', 'matric_number']).filter(v => onlyVendorsWithOrders ? orders.some(o => o.brand_id === v.id) : true).map(v => (
                       <tr key={v.id}>
                         <td>
                           <div className={styles.brandCell}>
@@ -3553,6 +3563,48 @@ export default function AdminDashboard() {
                       <option value="platform">Platform Managed</option>
                       <option value="vendor">Vendor Managed</option>
                     </select>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.modalSection}>
+                <h3>Order History</h3>
+                <div style={{ marginTop: '1rem' }}>
+                  <h4>Received Orders (As Vendor)</h4>
+                  <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.5rem', marginBottom: '1rem' }}>
+                    {orders.filter(o => o.brand_id === selectedVendor.id).length > 0 ? (
+                      orders.filter(o => o.brand_id === selectedVendor.id).map(o => (
+                        <div key={o.id} style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)', fontSize: '0.8rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <strong>{o.products?.title}</strong>
+                            <span>{o.status}</span>
+                          </div>
+                          <div style={{ color: 'var(--text-400)' }}>
+                            {o.variants_selected && Object.keys(o.variants_selected).length > 0 && Object.entries(o.variants_selected).map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-400)' }}>No orders received.</p>
+                    )}
+                  </div>
+                  
+                  <h4>Sent Orders (As Customer)</h4>
+                  <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.5rem' }}>
+                    {orders.filter(o => o.customer_id === selectedVendor.owner_id).length > 0 ? (
+                      orders.filter(o => o.customer_id === selectedVendor.owner_id).map(o => (
+                        <div key={o.id} style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)', fontSize: '0.8rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <strong>{o.products?.title}</strong>
+                            <span>{o.status}</span>
+                          </div>
+                          <div style={{ color: 'var(--text-400)' }}>
+                            {o.variants_selected && Object.keys(o.variants_selected).length > 0 && Object.entries(o.variants_selected).map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-400)' }}>No orders sent.</p>
+                    )}
                   </div>
                 </div>
               </div>

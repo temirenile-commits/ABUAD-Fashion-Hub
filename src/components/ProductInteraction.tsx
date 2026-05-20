@@ -39,12 +39,10 @@ export default function ProductInteraction({ product }: Props) {
   }, {});
 
   const handleAddToCart = () => {
-    // Check if all variant types have been selected
     const requiredTypes = Object.keys(variantsByType);
-    const missingTypes = requiredTypes.filter(t => !selectedVariants[t]);
     
-    if (missingTypes.length > 0) {
-      alert(`Please select: ${missingTypes.join(', ')}`);
+    if (requiredTypes.length > 0 && Object.keys(selectedVariants).length === 0) {
+      alert(`Please select at least one variant option (e.g. ${requiredTypes.join(', ')})`);
       return;
     }
     
@@ -55,10 +53,9 @@ export default function ProductInteraction({ product }: Props) {
 
   const handleBuyNow = () => {
     const requiredTypes = Object.keys(variantsByType);
-    const missingTypes = requiredTypes.filter(t => !selectedVariants[t]);
     
-    if (missingTypes.length > 0) {
-      alert(`Please select: ${missingTypes.join(', ')}`);
+    if (requiredTypes.length > 0 && Object.keys(selectedVariants).length === 0) {
+      alert(`Please select at least one variant option (e.g. ${requiredTypes.join(', ')})`);
       return;
     }
 
@@ -78,7 +75,15 @@ export default function ProductInteraction({ product }: Props) {
                 {(values as string[]).map((val) => (
                   <button
                     key={val}
-                    onClick={() => setSelectedVariants(prev => ({ ...prev, [type]: val }))}
+                    onClick={() => setSelectedVariants(prev => {
+                      const newSelections = { ...prev };
+                      if (newSelections[type] === val) {
+                        delete newSelections[type];
+                      } else {
+                        newSelections[type] = val;
+                      }
+                      return newSelections;
+                    })}
                     style={{
                       padding: '8px 16px',
                       borderRadius: '8px',

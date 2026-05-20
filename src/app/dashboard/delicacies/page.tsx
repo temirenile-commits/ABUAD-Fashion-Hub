@@ -1272,10 +1272,18 @@ export default function VendorDashboard() {
             <div><strong>BILL TO:</strong><p>Customer ID: ${order.customer_id}</p><p>${order.shipping_address || 'Campus Hub Pickup'}</p></div>
             <div><strong>ORDER STATUS:</strong><p>${order.status.toUpperCase()}</p></div>
           </div>
-          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}><table>
+          <div style="overflow-x: auto; width: 100%; border: 1px solid #ddd; border-radius: 8px;"><table>
             <thead><tr><th>Product</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr></thead>
             <tbody>
-              <tr><td>${order.products?.title}</td><td>1</td><td>?${Number(order.total_amount).toLocaleString()}</td><td>?${Number(order.total_amount).toLocaleString()}</td></tr>
+              <tr>
+                <td>
+                  ${order.products?.title}
+                  ${order.variants_selected && Object.keys(order.variants_selected).length > 0 ? `<br/><small style="color: #666;">${Object.entries(order.variants_selected).map(([k,v]) => `${k}: ${v}`).join(' | ')}</small>` : ''}
+                </td>
+                <td>1</td>
+                <td>₦${Number(order.total_amount).toLocaleString()}</td>
+                <td>₦${Number(order.total_amount).toLocaleString()}</td>
+              </tr>
             </tbody>
           </table></div>
           <div class="total">Total: ?${Number(order.total_amount).toLocaleString()}</div>
@@ -1644,6 +1652,11 @@ export default function VendorDashboard() {
                       <div className={styles.orderItemIcon}><Package size={16} /></div>
                       <div className={styles.orderItemInfo}>
                         <p>{order.products?.title}</p>
+                        {order.variants_selected && Object.keys(order.variants_selected).length > 0 ? (
+                          <div style={{ fontSize: '0.65rem', color: 'var(--text-400)', marginTop: '2px' }}>
+                            {Object.entries(order.variants_selected).map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                          </div>
+                        ) : null}
                         <span>{new Date(order.created_at).toLocaleDateString()}</span>
                       </div>
                       <div className={`${styles.statusBadgeSmall} ${styles[order.status]}`}>
@@ -2079,6 +2092,11 @@ export default function VendorDashboard() {
                     <div className={styles.orderBody}>
                       <div className={styles.orderInfo}>
                         <h3>{order.products?.title || 'Fashion Item'}</h3>
+                        {order.variants_selected && Object.keys(order.variants_selected).length > 0 ? (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-400)', marginTop: '4px', marginBottom: '4px' }}>
+                            {Object.entries(order.variants_selected).map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                          </div>
+                        ) : null}
                         <span className={styles.orderPrice}>{formatPrice(Number(order.total_amount))}</span>
                       </div>
 
