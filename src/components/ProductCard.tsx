@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import Image from 'next/image';
+import OptimizedImage from '@/components/OptimizedImage';
 import { Heart, Star, MessageCircle, ShoppingBag, ShieldCheck, Download, Play, MoreVertical, Share2, Eye, Trophy } from 'lucide-react';
 import styles from './ProductCard.module.css';
 
@@ -134,12 +134,12 @@ export default function ProductCard({ product }: Props) {
             </div>
           </>
         ) : (
-          <Image
+          <OptimizedImage
             src={displayUrl}
             alt={product.title}
             fill
-            sizes="(max-width: 768px) 50vw, 25vw"
             className={styles.image}
+            useThumbnail={true}
           />
         )}
 
@@ -204,7 +204,7 @@ export default function ProductCard({ product }: Props) {
         <div className={styles.info}>
           <div className={styles.videoAvatar}>
             {product.brands?.logo_url ? (
-              <Image src={product.brands.logo_url} alt="" width={40} height={40} style={{ objectFit: 'cover' }} />
+              <OptimizedImage src={product.brands.logo_url} alt="" width={40} height={40} style={{ objectFit: 'cover' }} useThumbnail={true} />
             ) : (
               <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary)', color: '#000', fontWeight: 800 }}>
                 {brandName.substring(0, 1)}

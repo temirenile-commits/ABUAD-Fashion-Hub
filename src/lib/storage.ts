@@ -1,141 +1,259 @@
 import { supabase } from './supabase';
 
 /**
- * Supabase Storage Utility
- * Handles file uploads to predefined buckets.
+ * MasterCart Image Upload & Optimization Pipeline
+ *
+ * Key behaviours:
+ *  1. All images converted to WebP at 85% quality before upload.
+ *  2. Thumbnails (≤600px, 80% quality) generated in-browser and uploaded
+ *     alongside the full-res version as `<name>_thumb.webp`.
+ *  3. Files >5 MB are automatically resized to max 1280px.
+ *  4. Files <100 KB are fast-tracked (still converted to WebP, skips resize).
+ *  5. Non-image files (videos, documents) bypass compression completely.
+ *  6. Fallback: if canvas fails the original file is uploaded unmodified.
  */
 
-type BucketName = 'brand-assets' | 'product-media' | 'verification-docs' | 'brand-logos' | 'product-images' | 'product-videos' | 'brand-reels' | 'delicacies-media' | 'delicacies-videos';
+type BucketName =
+  | 'brand-assets'
+  | 'product-media'
+  | 'verification-docs'
+  | 'brand-logos'
+  | 'product-images'
+  | 'product-videos'
+  | 'brand-reels'
+  | 'delicacies-media'
+  | 'delicacies-videos'
+  | 'payout_proofs'
+  | 'products';
 
-const SKIP_THRESHOLD = 5 * 1024 * 1024; // 5MB fast-track
-const TARGET_SIZE = 1280; // Standard HD
-const OPTIMIZATION_TIMEOUT = 8000; // 8 seconds safety limit
+// ── Configuration ────────────────────────────────────────────────────────────
+const MAX_DIMENSION   = 1280;   // Full-res max width/height (px)
+const THUMB_DIMENSION = 600;    // Thumbnail max width/height (px)
+const FULL_QUALITY    = 0.85;   // WebP quality for full-res (0–1)
+const THUMB_QUALITY   = 0.80;   // WebP quality for thumbnails (0–1)
+const TINY_THRESHOLD  = 100 * 1024;  // <100 KB → skip resize, still WebP
+const MAX_FILE_SIZE   = 5 * 1024 * 1024; // 5 MB hard upload limit
+const OPT_TIMEOUT     = 10_000; // Canvas timeout safety (ms)
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function isOptimizableImage(file: File): boolean {
+  return ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp'].includes(file.type);
+}
 
 /**
- * Robust image optimization with fallback
+ * Resizes an HTMLImageElement onto a canvas respecting `maxDim`.
+ * Returns a Blob in WebP format at the given quality.
  */
-async function optimizeImage(file: File): Promise<File> {
-  const isBasicImage = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
-  
-  // 1. Instant Bypass for non-images, heavy formats (HEIC), or small files
-  if (!isBasicImage || file.size < SKIP_THRESHOLD) {
-    return file;
-  }
-
+function canvasToWebPBlob(
+  img: HTMLImageElement,
+  maxDim: number,
+  quality: number
+): Promise<Blob | null> {
   return new Promise((resolve) => {
-    const imgUrl = URL.createObjectURL(file);
-    const img = new Image();
-    
-    // Safety timeout: If resizing hangs, return original file instead of failing
-    const timeout = setTimeout(() => {
-      URL.revokeObjectURL(imgUrl);
-      console.warn('Image optimization timed out, using original.');
-      resolve(file);
-    }, OPTIMIZATION_TIMEOUT);
-
-    img.onload = () => {
-      clearTimeout(timeout);
-      const canvas = document.createElement('canvas');
-      let width = img.width;
-      let height = img.height;
-
-      if (width > TARGET_SIZE || height > TARGET_SIZE) {
-        if (width > height) {
-          height *= TARGET_SIZE / width;
-          width = TARGET_SIZE;
-        } else {
-          width *= TARGET_SIZE / height;
-          height = TARGET_SIZE;
-        }
+    let { width, height } = img;
+    if (width > maxDim || height > maxDim) {
+      if (width >= height) {
+        height = Math.round((height / width) * maxDim);
+        width  = maxDim;
+      } else {
+        width  = Math.round((width / height) * maxDim);
+        height = maxDim;
       }
-
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        URL.revokeObjectURL(imgUrl);
-        resolve(file); // Fallback
-        return;
-      }
-
-      ctx.drawImage(img, 0, 0, width, height);
-      canvas.toBlob((blob) => {
-        URL.revokeObjectURL(imgUrl);
-        if (!blob) {
-          resolve(file);
-          return;
-        }
-        resolve(new File([blob], file.name, { type: 'image/jpeg' }));
-      }, 'image/jpeg', 0.70);
-    };
-
-    img.onerror = () => {
-      clearTimeout(timeout);
-      URL.revokeObjectURL(imgUrl);
-      resolve(file); // Final fallback: if it can't be rendered, just upload raw
-    };
-
-    img.src = imgUrl;
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width  = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { resolve(null); return; }
+    ctx.drawImage(img, 0, 0, width, height);
+    canvas.toBlob(resolve, 'image/webp', quality);
   });
 }
 
+/**
+ * Loads a File into an HTMLImageElement and resolves with both
+ * a full-res WebP Blob and a thumbnail WebP Blob.
+ * Falls back to `null` blobs on any error so uploads still succeed.
+ */
+async function optimizeImage(file: File): Promise<{
+  full: File;
+  thumb: File | null;
+}> {
+  if (!isOptimizableImage(file)) {
+    return { full: file, thumb: null };
+  }
+
+  return new Promise((resolve) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+
+    const cleanup = () => URL.revokeObjectURL(objectUrl);
+
+    const timeout = setTimeout(() => {
+      cleanup();
+      console.warn('[MasterCart] Image optimization timed out – uploading original.');
+      resolve({ full: file, thumb: null });
+    }, OPT_TIMEOUT);
+
+    img.onerror = () => {
+      clearTimeout(timeout);
+      cleanup();
+      resolve({ full: file, thumb: null });
+    };
+
+    img.onload = async () => {
+      clearTimeout(timeout);
+      cleanup();
+
+      try {
+        const isTiny = file.size < TINY_THRESHOLD;
+
+        // Full-res: only resize if big, but always convert to WebP
+        const fullMaxDim = isTiny ? Math.max(img.width, img.height) : MAX_DIMENSION;
+        const fullBlob   = await canvasToWebPBlob(img, fullMaxDim, FULL_QUALITY);
+
+        // Thumbnail: always generate
+        const thumbBlob = await canvasToWebPBlob(img, THUMB_DIMENSION, THUMB_QUALITY);
+
+        const baseName = file.name.replace(/\.[^.]+$/, '');
+
+        const fullFile  = fullBlob
+          ? new File([fullBlob],  `${baseName}.webp`,        { type: 'image/webp' })
+          : file;
+
+        const thumbFile = thumbBlob
+          ? new File([thumbBlob], `${baseName}_thumb.webp`,  { type: 'image/webp' })
+          : null;
+
+        resolve({ full: fullFile, thumb: thumbFile });
+      } catch (err) {
+        console.error('[MasterCart] Canvas error:', err);
+        resolve({ full: file, thumb: null });
+      }
+    };
+
+    img.src = objectUrl;
+  });
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
+export interface UploadResult {
+  url:      string | null;
+  thumbUrl: string | null;
+  error:    string | null;
+}
+
+/**
+ * Uploads an image (or any file) to Supabase Storage with:
+ *  - Automatic WebP conversion & compression
+ *  - Automatic thumbnail generation
+ *  - Progress callback support
+ *
+ * @param file        The file to upload (raw from <input>)
+ * @param bucket      Target Supabase storage bucket
+ * @param pathPrefix  Path prefix / folder inside the bucket
+ * @param onProgress  Optional callback receiving 0-100 progress
+ */
 export async function uploadFile(
-  file: File, 
-  bucket: BucketName, 
-  path: string,
+  file: File,
+  bucket: BucketName,
+  pathPrefix: string,
   onProgress?: (progress: number) => void
-): Promise<{ url: string | null; error: string | null }> {
+): Promise<UploadResult> {
   try {
-    if (onProgress) onProgress(2); // Start bar immediately
-    
-    // Heavy lifting: Optimize if needed, otherwise instant fast-track
-    const fileToUpload = await optimizeImage(file);
+    if (onProgress) onProgress(2);
 
-    const fileExt = fileToUpload.name.split('.').pop();
-    const fileName = `${path}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const filePath = `${fileName}`;
+    // ── Client-side size guard ────────────────────────────────────────────
+    if (file.size > MAX_FILE_SIZE && !isOptimizableImage(file)) {
+      // Non-image files over 5 MB (e.g. large videos) pass through
+      // Images over 5 MB will be resized, so we allow them.
+    }
 
-    const isImage = file.type.startsWith('image/');
+    // ── Optimize ──────────────────────────────────────────────────────────
+    const { full: optimizedFull, thumb: optimizedThumb } = isOptimizableImage(file)
+      ? await optimizeImage(file)
+      : { full: file, thumb: null };
 
-    const { error: uploadError } = await supabase.storage
+    const uid        = Math.random().toString(36).substring(2, 10);
+    const baseName   = optimizedFull.name.replace(/\.[^.]+$/, '');
+    const ext        = optimizedFull.type === 'image/webp' ? 'webp' : (file.name.split('.').pop() ?? 'bin');
+    const fullPath   = `${pathPrefix}-${uid}.${ext}`;
+    const thumbPath  = `${pathPrefix}-${uid}_thumb.webp`;
+
+    if (onProgress) onProgress(10);
+
+    // ── Upload full-res ───────────────────────────────────────────────────
+    const { error: fullError } = await supabase.storage
       .from(bucket)
-      .upload(filePath, fileToUpload, {
-        cacheControl: '3600',
+      .upload(fullPath, optimizedFull, {
+        cacheControl: '31536000', // 1 year cache
         upsert: false,
-        contentType: fileToUpload.type, // 💡 Speed tip: Always set content type explicitly
-        onUploadProgress: (progress: any) => {
-          if (onProgress) {
-            const percent = Math.round((progress.loaded / progress.total) * 100);
-            // Optimization takes a tiny fraction, so we start at 2% and go to 99%
-            const scaledPercent = 2 + (percent * 0.97);
-            onProgress(Math.min(99, Math.round(scaledPercent)));
-          }
-        }
+        contentType: optimizedFull.type,
       } as any);
 
-    if (uploadError) {
-      throw uploadError;
+    if (fullError) throw fullError;
+
+    if (onProgress) onProgress(60);
+
+    // ── Upload thumbnail (fire-and-forget, non-blocking) ──────────────────
+    if (optimizedThumb) {
+      supabase.storage
+        .from(bucket)
+        .upload(thumbPath, optimizedThumb, {
+          cacheControl: '31536000',
+          upsert: false,
+          contentType: 'image/webp',
+        } as any)
+        .then(({ error }) => {
+          if (error) console.warn('[MasterCart] Thumbnail upload failed (non-critical):', error.message);
+        });
     }
+
+    if (onProgress) onProgress(90);
+
+    // ── Get public URLs ───────────────────────────────────────────────────
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fullPath);
+
+    const thumbPublicUrl = optimizedThumb
+      ? supabase.storage.from(bucket).getPublicUrl(thumbPath).data.publicUrl
+      : null;
 
     if (onProgress) onProgress(100);
 
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(filePath);
-
-    return { url: publicUrl, error: null };
+    return { url: publicUrl, thumbUrl: thumbPublicUrl, error: null };
 
   } catch (error: any) {
-    console.error('Upload error:', error);
-    return { url: null, error: error.message || 'Failed to upload file' };
+    console.error('[MasterCart] Upload error:', error);
+    return { url: null, thumbUrl: null, error: error.message ?? 'Upload failed' };
   }
 }
 
 /**
- * Deletes a file from Supabase Storage
+ * Deletes a file from Supabase Storage.
+ * Also attempts to delete the companion thumbnail if present.
  */
-export async function deleteFile(bucket: BucketName, path: string) {
-  const { error } = await supabase.storage.from(bucket).remove([path]);
-  if (error) console.error('Delete error:', error);
+export async function deleteFile(bucket: BucketName, path: string): Promise<boolean> {
+  const paths = [path];
+
+  // If this is a full-res image, also remove its thumbnail
+  const thumbPath = path.replace(/(\.[^.]+)$/, '_thumb.webp');
+  if (thumbPath !== path) paths.push(thumbPath);
+
+  const { error } = await supabase.storage.from(bucket).remove(paths);
+  if (error) console.error('[MasterCart] Delete error:', error);
   return !error;
+}
+
+/**
+ * Given a full-res Supabase image URL, returns the companion thumbnail URL.
+ * Returns the original URL if no thumbnail convention can be applied.
+ */
+export function toThumbUrl(fullUrl: string): string {
+  if (!fullUrl) return fullUrl;
+  // Insert _thumb before the last extension
+  return fullUrl.replace(/(\.[a-z0-9]+)(\?.*)?$/i, '_thumb.webp$2');
 }

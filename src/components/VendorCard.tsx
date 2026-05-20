@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Image from 'next/image';
+import OptimizedImage from '@/components/OptimizedImage';
 import { CheckCircle, Star, Package, Users, Eye } from 'lucide-react';
 import styles from './VendorCard.module.css';
 
@@ -43,12 +43,12 @@ export default function VendorCard({ vendor, layout = 'grid' }: Props) {
     <Link href={`/vendor/${slug}?id=${vendor.id}`} className={`${styles.card} ${layout === 'list' ? styles.list : ''}`}>
       {/* Cover */}
       <div className={styles.coverWrap}>
-        <Image
+        <OptimizedImage
           src={vendor.cover_url || fallbackCover}
           alt={vendorName}
           fill
-          sizes="(max-width: 768px) 100vw, 400px"
           className={styles.cover}
+          useThumbnail={true}
         />
         <div className={styles.coverGradient} />
 
@@ -56,7 +56,7 @@ export default function VendorCard({ vendor, layout = 'grid' }: Props) {
         <div className={styles.logoWrap}>
           <span className={styles.logoText}>
             {vendor.logo_url && vendor.logo_url.startsWith('http') ? (
-              <Image src={vendor.logo_url} alt={vendorName} fill style={{objectFit: 'cover', borderRadius: '8px'}} />
+              <OptimizedImage src={vendor.logo_url} alt={vendorName} fill style={{objectFit: 'cover', borderRadius: '8px'}} useThumbnail={true} />
             ) : (
               vendorName.substring(0, 2).toUpperCase()
             )}

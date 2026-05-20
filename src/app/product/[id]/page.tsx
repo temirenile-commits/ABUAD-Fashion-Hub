@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
+import OptimizedImage from '@/components/OptimizedImage';
 import Link from 'next/link';
 import {
   MessageCircle,
@@ -181,13 +181,13 @@ export default async function ProductPage({ params }: Props) {
                   </video>
                 ) : (
                   <div className={styles.imageWrapper}>
-                    <Image
+                    <OptimizedImage
                       src={mainImage}
                       alt={product.title}
                       fill
-                      sizes="(max-width: 768px) 100vw, 50vw"
                       priority
                       className={styles.mainImgEl}
+                      useThumbnail={false}
                     />
                   </div>
                 )}
@@ -211,7 +211,7 @@ export default async function ProductPage({ params }: Props) {
               <div className={styles.thumbs}>
                 {allImages.map((img, i) => (
                   <div key={i} className={`${styles.thumb} ${img === mainImage ? styles.thumbActive : ''}`}>
-                    <Image src={img} alt={`${product.title} ${i + 1}`} fill sizes="80px" className={styles.thumbImg} />
+                    <OptimizedImage src={img} alt={`${product.title} ${i + 1}`} fill className={styles.thumbImg} useThumbnail={true} />
                   </div>
                 ))}
               </div>
@@ -363,7 +363,7 @@ export default async function ProductPage({ params }: Props) {
               <Link href={`/vendor/${vendor.name.toLowerCase().replace(/\s+/g, '-')}?id=${vendor.id}`} className={styles.vendorMini}>
                 <div className={styles.vendorMiniLogo}>
                   {vendor.logo_url ? (
-                    <Image src={vendor.logo_url} alt={vendor.name} fill style={{objectFit: 'cover'}} />
+                    <OptimizedImage src={vendor.logo_url} alt={vendor.name} fill style={{objectFit: 'cover'}} useThumbnail={true} />
                   ) : (
                     vendor.name.substring(0, 2).toUpperCase()
                   )}

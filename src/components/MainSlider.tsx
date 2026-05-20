@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import OptimizedImage from '@/components/OptimizedImage';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import styles from './MainSlider.module.css';
@@ -105,12 +105,13 @@ export default function MainSlider() {
             onClick={() => { if(slide.link) window.location.href = slide.link; }}
             style={{ cursor: slide.link ? 'pointer' : 'default' }}
           >
-            <Image 
+            <OptimizedImage 
               src={slide.image} 
               alt={slide.title} 
               fill 
               priority 
               className={styles.img} 
+              useThumbnail={false}
             />
             <div className={styles.overlay}>
               <h2 className={styles.title}>{slide.title}</h2>

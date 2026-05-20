@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import OptimizedImage from '@/components/OptimizedImage';
 import { Zap, ChevronRight } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import styles from './FlashSales.module.css';
@@ -61,7 +61,7 @@ export default function FlashSales({ items }: { items: FlashSaleItem[] }) {
           {items.map((item) => (
             <Link key={item.id} href={`/product/${item.id}`} className={styles.card}>
               <div className={styles.imgWrap}>
-                <Image src={item.image} alt={item.title} fill className={styles.img} />
+                <OptimizedImage src={item.image} alt={item.title} fill className={styles.img} useThumbnail={true} />
                 <span className={styles.discountBadge}>-{item.discount}%</span>
               </div>
               <div className={styles.body}>
