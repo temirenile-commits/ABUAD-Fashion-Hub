@@ -7,7 +7,7 @@ import { CreditCard, ShoppingBag, Truck, Lock, Loader2, MapPin, Phone, ArrowRigh
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/context/CartContext';
 import { LiveProduct } from '@/components/ProductCard';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, calculateActivePrice } from '@/lib/utils';
 import styles from './checkout.module.css';
 
 function CheckoutContent() {
@@ -89,23 +89,9 @@ function CheckoutContent() {
   const calculateLiveCartTotal = () => {
     return cart.reduce((total, item) => {
       const live = liveProductsMap[item.id];
-      let basePrice = live ? Number(live.price) : Number(item.price);
-      
-      if (item.variants_selected && live?.variants) {
-        Object.entries(item.variants_selected).forEach(([type, val]) => {
-          const match = (live.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
-          if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
-            basePrice = Number(match.price);
-          }
-        });
-      } else if (item.variants_selected && item.variants) {
-        Object.entries(item.variants_selected).forEach(([type, val]) => {
-          const match = (item.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
-          if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
-            basePrice = Number(match.price);
-          }
-        });
-      }
+      const basePrice = live
+        ? calculateActivePrice(live.price, live.variants, item.variants_selected)
+        : calculateActivePrice(item.price, item.variants, item.variants_selected);
 
       const commission = live ? Number(live.commission_price || 0) : Number(item.commission_price || 0);
       const delivery = live ? Number(live.delivery_rate || 0) : Number(item.delivery_rate || 0);
@@ -123,23 +109,9 @@ function CheckoutContent() {
       // If general promo OR specific to this product
       if (!promoAppliedData.product_id || promoAppliedData.product_id === item.id) {
         const live = liveProductsMap[item.id];
-        let basePrice = live ? Number(live.price) : Number(item.price);
-        
-        if (item.variants_selected && live?.variants) {
-          Object.entries(item.variants_selected).forEach(([type, val]) => {
-            const match = (live.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
-            if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
-              basePrice = Number(match.price);
-            }
-          });
-        } else if (item.variants_selected && item.variants) {
-          Object.entries(item.variants_selected).forEach(([type, val]) => {
-            const match = (item.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
-            if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
-              basePrice = Number(match.price);
-            }
-          });
-        }
+        const basePrice = live
+          ? calculateActivePrice(live.price, live.variants, item.variants_selected)
+          : calculateActivePrice(item.price, item.variants, item.variants_selected);
 
         const commission = live ? Number(live.commission_price || 0) : Number(item.commission_price || 0);
         const delivery = live ? Number(live.delivery_rate || 0) : Number(item.delivery_rate || 0);
@@ -656,27 +628,12 @@ function CheckoutContent() {
               
               {cart.map((item: any) => {
                 const live = liveProductsMap[item.id];
-                const basePrice = live ? Number(live.price) : Number(item.price);
+                const activePrice = live
+                  ? calculateActivePrice(live.price, live.variants, item.variants_selected)
+                  : calculateActivePrice(item.price, item.variants, item.variants_selected);
                 const commission = live ? Number(live.commission_price || 0) : Number(item.commission_price || 0);
                 const deliveryRate = live ? Number(live.delivery_rate || 0) : Number(item.delivery_rate || 0);
                 const isDelicacy = item.product_section === 'delicacies';
-                
-                let activePrice = basePrice;
-                if (item.variants_selected && live?.variants) {
-                  Object.entries(item.variants_selected).forEach(([type, val]) => {
-                    const match = (live.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
-                    if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
-                      activePrice = Number(match.price);
-                    }
-                  });
-                } else if (item.variants_selected && item.variants) {
-                  Object.entries(item.variants_selected).forEach(([type, val]) => {
-                    const match = (item.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
-                    if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
-                      activePrice = Number(match.price);
-                    }
-                  });
-                }
 
                 const totalItemPrice = (activePrice + commission + deliveryRate) * item.quantity;
                 return (

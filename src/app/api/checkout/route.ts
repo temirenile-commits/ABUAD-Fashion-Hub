@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { initializeTransaction } from '@/lib/paystack';
+import { calculateActivePrice } from '@/lib/utils';
 
 export async function POST(req: Request) {
   // Default fallbacks
@@ -158,15 +159,7 @@ export async function POST(req: Request) {
       const liveProduct = liveProducts.find(p => p.id === item.productId);
       
       // Calculate active base price from selected variants if applicable
-      let originalPrice = liveProduct?.price || item.price;
-      if (item.variants_selected && liveProduct?.variants) {
-        Object.entries(item.variants_selected).forEach(([type, val]) => {
-          const match = (liveProduct.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
-          if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
-            originalPrice = Number(match.price);
-          }
-        });
-      }
+      const originalPrice = calculateActivePrice(liveProduct?.price || item.price, liveProduct?.variants, item.variants_selected);
       
       const isFirst = index === 0;
       

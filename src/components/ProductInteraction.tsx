@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { ShoppingBag, CreditCard, Plus, Minus, Check } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { LiveProduct } from '@/components/ProductCard';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, calculateActivePrice } from '@/lib/utils';
 import styles from './ProductInteraction.module.css';
 
 interface Props {
@@ -20,16 +20,8 @@ export default function ProductInteraction({ product }: Props) {
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
 
   // Get active price based on selected variants
-  let activePrice = Number(product.price);
-  let hasCustomVariantPrice = false;
-  
-  Object.entries(selectedVariants).forEach(([type, val]) => {
-    const match = (product.variants || []).find((v: any) => v.type === type && v.value === val);
-    if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
-      activePrice = Number(match.price);
-      hasCustomVariantPrice = true;
-    }
-  });
+  const activePrice = calculateActivePrice(product.price, product.variants, selectedVariants);
+  const hasCustomVariantPrice = activePrice !== Number(product.price);
 
   // Group variants by type (e.g. Size: ["S", "M", "L"], Color: ["Red", "Blue"])
   const variantsByType = (product.variants || []).reduce((acc: Record<string, string[]>, v: any) => {

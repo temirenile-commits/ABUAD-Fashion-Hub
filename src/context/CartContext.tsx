@@ -1,6 +1,7 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { LiveProduct } from '@/components/ProductCard';
+import { calculateActivePrice } from '@/lib/utils';
 
 export interface CartItem extends LiveProduct {
   quantity: number;
@@ -80,17 +81,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const getCartTotal = () => {
     return cart.reduce((total, item) => {
-      let activePrice = Number(item.price);
-      
-      if (item.variants_selected && item.variants) {
-        Object.entries(item.variants_selected).forEach(([type, val]) => {
-          const match = (item.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
-          if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
-            activePrice = Number(match.price);
-          }
-        });
-      }
-
+      const activePrice = calculateActivePrice(item.price, item.variants, item.variants_selected);
       const commission = Number(item.commission_price || 0);
       const delivery = Number(item.delivery_rate || 0);
       const effectivePrice = activePrice + commission + delivery;

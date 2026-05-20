@@ -13,7 +13,7 @@ import styles from './admin.module.css';
 import PremiumChart from '@/components/PremiumChart'; 
 import { useToast } from '@/context/ToastContext';
 
-type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds' | 'preorders' | 'delicacies' | 'manual_payments';
+type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds' | 'preorders' | 'delicacies' | 'manual_payments' | 'vendor_orders';
 
 interface University {
   id: string;
@@ -129,6 +129,7 @@ interface Order {
     receipt_code?: string;
     rejection_reason?: string;
   };
+  expires_at?: string;
 }
 
 interface Review {
@@ -240,6 +241,7 @@ export default function AdminDashboard() {
   const [actionLoading, setActionLoading] = useState('');
   const [search, setSearch] = useState('');
   const [selectedVendor, setSelectedVendor] = useState<Brand | null>(null);
+  const [activeVendorId, setActiveVendorId] = useState<string | null>(null);
   const [enlargedImg, setEnlargedImg] = useState<string | null>(null);
   const [notifForm, setNotifForm] = useState({ title: '', content: '', target: 'all', userId: '', universityId: '' });
   const [notifSending, setNotifSending] = useState(false);
@@ -607,6 +609,7 @@ export default function AdminDashboard() {
           {([
             ['overview', 'Overview', TrendingUp],
             ['vendors', 'Vendors', Store],
+            ['vendor_orders', 'Vendor Orders', ShoppingCart],
             ['products', 'Catalog', ShoppingBag],
             ['users', 'Users', Users],
             ['orders', 'Orders', ShoppingCart],
@@ -627,7 +630,7 @@ export default function AdminDashboard() {
             <button
               key={id}
               className={`${styles.navItem} ${activeTab === id ? styles.navActive : ''}`}
-              onClick={() => { setActiveTab(id); setSearch(''); }}
+              onClick={() => { setActiveTab(id); setSearch(''); setActiveVendorId(null); }}
             >
               <Icon size={18} /> {label}
               {id === 'vendors' && pendingVendors.length > 0 && <span className={styles.badgeCount}>{pendingVendors.length}</span>}
@@ -1196,6 +1199,208 @@ export default function AdminDashboard() {
                     ))}
                   </tbody>
                 </table></div>
+              </div>
+            )}
+
+            {activeTab === 'vendor_orders' && (
+              <div className={styles.sectionCard}>
+                {!activeVendorId ? (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                      <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>Vendors Order History</h2>
+                      <div className={styles.subText}>{vendors.filter(v => orders.some(o => o.brand_id === v.id)).length} vendors with orders</div>
+                    </div>
+                    <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                      <table className={styles.table}>
+                        <thead>
+                          <tr>
+                            <th>Brand / Vendor</th>
+                            <th>University</th>
+                            <th>Total Orders</th>
+                            <th>Revenue (Completed)</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filterBy(vendors.filter(v => orders.some(o => o.brand_id === v.id)), ['name']).map(v => {
+                            const vendorOrders = orders.filter(o => o.brand_id === v.id);
+                            const totalRevenue = vendorOrders.reduce((sum, o) => sum + (o.status === 'cancelled' ? 0 : Number(o.total_amount || 0)), 0);
+                            return (
+                              <tr key={v.id}>
+                                <td>
+                                  <div className={styles.brandCell}>
+                                    {v.logo_url ? (
+                                      <Image src={v.logo_url} alt={v.name} width={32} height={32} className={styles.tableLogo} />
+                                    ) : (
+                                      <div className={styles.logoPlaceholder}>{v.name?.substring(0, 2).toUpperCase()}</div>
+                                    )}
+                                    <div>
+                                      <div style={{ fontWeight: 600 }}>{v.name}</div>
+                                      <div className={styles.subText}>{v.users?.email || 'No email'}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td>
+                                  {v.universities ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                      <span className="badge badge-primary" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', width: 'fit-content' }}>🎓 {v.universities.abbreviation}</span>
+                                    </div>
+                                  ) : (
+                                    <span className={styles.subText}>General Marketplace</span>
+                                  )}
+                                </td>
+                                <td>
+                                  <span className="badge badge-verified" style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6', fontWeight: 600 }}>
+                                    {vendorOrders.length} {vendorOrders.length === 1 ? 'Order' : 'Orders'}
+                                  </span>
+                                </td>
+                                <td>
+                                  <div style={{ fontWeight: 700, color: '#10b981' }}>
+                                    ₦{totalRevenue.toLocaleString()}
+                                  </div>
+                                </td>
+                                <td>
+                                  <button
+                                    className="btn btn-ghost btn-sm"
+                                    style={{ color: 'var(--primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                                    onClick={() => setActiveVendorId(v.id)}
+                                  >
+                                    <Eye size={14} /> View History
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          {filterBy(vendors.filter(v => orders.some(o => o.brand_id === v.id)), ['name']).length === 0 && (
+                            <tr>
+                              <td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }} className={styles.subText}>
+                                No vendors with orders found matching your search.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : (() => {
+                  const currentVendor = vendors.find(v => v.id === activeVendorId);
+                  const vendorOrders = orders.filter(o => o.brand_id === activeVendorId);
+                  const totalRevenue = vendorOrders.reduce((sum, o) => sum + (o.status === 'cancelled' ? 0 : Number(o.total_amount || 0)), 0);
+                  const paidCount = vendorOrders.filter(o => o.status === 'paid').length;
+                  const pendingCount = vendorOrders.filter(o => o.status === 'pending').length;
+                  
+                  return (
+                    <div>
+                      {/* Back button and Vendor Details Header */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1.5rem' }}>
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => setActiveVendorId(null)}
+                          style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-300)', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid var(--border)' }}
+                        >
+                          <ArrowLeft size={16} /> Back to Vendor List
+                        </button>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                          {currentVendor?.logo_url ? (
+                            <Image src={currentVendor.logo_url} alt={currentVendor.name} width={48} height={48} className={styles.tableLogo} style={{ width: '48px', height: '48px', borderRadius: '8px' }} />
+                          ) : (
+                            <div className={styles.logoPlaceholder} style={{ width: '48px', height: '48px', borderRadius: '8px', fontSize: '1.2rem' }}>
+                              {currentVendor?.name?.substring(0, 2).toUpperCase()}
+                            </div>
+                          )}
+                          <div>
+                            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>{currentVendor?.name}</h2>
+                            <p style={{ margin: '2px 0 0', fontSize: '0.85rem' }} className={styles.subText}>
+                              Store Owner: {currentVendor?.users?.name || 'Unknown'} ({currentVendor?.users?.email || 'No Email'})
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Micro-insights stats row */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+                        <div style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem' }}>
+                          <div style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase', fontWeight: 700 }} className={styles.subText}>Total Orders</div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)', marginTop: '0.25rem' }}>{vendorOrders.length}</div>
+                        </div>
+                        <div style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem' }}>
+                          <div style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase', fontWeight: 700 }} className={styles.subText}>Completed Revenue</div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#10b981', marginTop: '0.25rem' }}>₦{totalRevenue.toLocaleString()}</div>
+                        </div>
+                        <div style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem' }}>
+                          <div style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase', fontWeight: 700 }} className={styles.subText}>Paid Orders</div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#3b82f6', marginTop: '0.25rem' }}>{paidCount}</div>
+                        </div>
+                        <div style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem' }}>
+                          <div style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase', fontWeight: 700 }} className={styles.subText}>Pending Orders</div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b', marginTop: '0.25rem' }}>{pendingCount}</div>
+                        </div>
+                      </div>
+
+                      {/* Orders Filter Bar */}
+                      <div className={styles.filterBar}>
+                        {(['all', 'paid', 'pending', 'cancelled'] as const).map(f => (
+                          <button
+                            key={f}
+                            className={`${styles.filterBtn} ${orderStatusFilter === f ? styles.filterActive : ''}`}
+                            onClick={() => setOrderStatusFilter(f)}
+                          >
+                            {f.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Detail orders table */}
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                        <table className={styles.table}>
+                          <thead>
+                            <tr>
+                              <th>Order ID</th>
+                              <th>Customer</th>
+                              <th>Amount</th>
+                              <th>Status</th>
+                              <th>Date</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filterBy(
+                              vendorOrders.filter(o => orderStatusFilter === 'all' || o.status === orderStatusFilter),
+                              ['id', 'status']
+                            ).map(o => (
+                              <tr key={o.id}>
+                                <td className={styles.subText}>#{o.id.slice(0, 8)}</td>
+                                <td>
+                                  <div>{o.users?.name || 'Customer'}</div>
+                                  <div className={styles.subText}>{o.users?.email}</div>
+                                </td>
+                                <td>₦{Number(o.total_amount).toLocaleString()}</td>
+                                <td>
+                                  {o.status === 'pending' && o.expires_at && new Date(o.expires_at) < new Date() ? (
+                                    <span className="badge badge-cancelled" style={{ background: '#ef4444' }}>EXPIRED</span>
+                                  ) : (
+                                    <span className={`badge badge-${o.status}`}>{o.status}</span>
+                                  )}
+                                </td>
+                                <td className={styles.subText}>{new Date(o.created_at || '').toLocaleDateString()}</td>
+                              </tr>
+                            ))}
+                            {filterBy(
+                              vendorOrders.filter(o => orderStatusFilter === 'all' || o.status === orderStatusFilter),
+                              ['id', 'status']
+                            ).length === 0 && (
+                              <tr>
+                                <td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }} className={styles.subText}>
+                                  No orders found matching this filter.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 

@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import { ShoppingBag, Trash2, Plus, Minus, CreditCard } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, calculateActivePrice } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -45,14 +45,21 @@ export default function CartPage() {
                       <Trash2 size={16} />
                     </button>
                   </div>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-400)', textTransform: 'uppercase', marginBottom: 'auto' }}>{item.brands?.name}</p>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-400)', textTransform: 'uppercase' }}>{item.brands?.name}</p>
+                  {item.variants_selected && Object.keys(item.variants_selected).length > 0 && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-300)', marginTop: '2px', marginBottom: 'auto' }}>
+                      {Object.entries(item.variants_selected).map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                    </div>
+                  )}
                   
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '1rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)' }}>{formatPrice(Number(item.price) + Number(item.commission_price || 0) + Number(item.delivery_rate || 0))}</span>
+                      <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)' }}>
+                        {formatPrice(calculateActivePrice(item.price, item.variants, item.variants_selected) + Number(item.commission_price || 0) + Number(item.delivery_rate || 0))}
+                      </span>
                       {item.product_section === 'delicacies' && (
                         <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', color: 'var(--text-300)', marginTop: '2px' }}>
-                          <span>Item: {formatPrice(Number(item.price))}</span>
+                          <span>Item: {formatPrice(calculateActivePrice(item.price, item.variants, item.variants_selected))}</span>
                           {Number(item.commission_price) > 0 && <span>Platform Fee: {formatPrice(Number(item.commission_price))}</span>}
                           {Number(item.delivery_rate) > 0 && <span>Delivery: {formatPrice(Number(item.delivery_rate))}</span>}
                         </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { calculateActivePrice } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -124,17 +125,9 @@ export async function POST(req: NextRequest) {
 
     const ordersToInsert = items.map((item: any, index: number) => {
       const liveProduct = liveProducts.find(p => p.id === item.productId);
-      let originalPrice = liveProduct?.price || item.price;
       
       // Calculate active base price from selected variants if applicable
-      if (item.variants_selected && liveProduct?.variants) {
-        Object.entries(item.variants_selected).forEach(([type, val]) => {
-          const match = (liveProduct.variants as any[] || []).find((v: any) => v.type === type && v.value === val);
-          if (match && match.price !== undefined && match.price !== null && Number(match.price) > 0) {
-            originalPrice = Number(match.price);
-          }
-        });
-      }
+      const originalPrice = calculateActivePrice(liveProduct?.price || item.price, liveProduct?.variants, item.variants_selected);
 
       const isFirst = index === 0;
       const brandData = liveProduct?.brands as any;
