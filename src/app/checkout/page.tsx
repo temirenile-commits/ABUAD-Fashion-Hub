@@ -499,7 +499,7 @@ function CheckoutContent() {
                 </div>
                 <p className={styles.deliveryNote}>
                   {deliveryFee > 0 
-                    ? "Logistics are managed by Master Cart for safety and speed."
+                    ? "Logistics are managed by MasterCart for safety and speed."
                     : "The vendor will contact you directly to arrange delivery."
                   }
                 </p>
@@ -579,7 +579,7 @@ function CheckoutContent() {
                 <div className={styles.escrowNotice}>
                   <Lock size={16} />
                   <p>
-                    <strong>Escrow Protection:</strong> Your payment is held securely by Master Cart. 
+                    <strong>Escrow Protection:</strong> Your payment is held securely by MasterCart. 
                     Vendors do not receive funds until you confirm delivery.
                   </p>
                 </div>
@@ -644,7 +644,7 @@ function CheckoutContent() {
               )}
               
               <p className={styles.termsNote}>
-                By clicking &quot;Pay&quot; or &quot;Submit&quot;, you agree to the Master Cart <Link href="/terms">Terms of Service</Link> and recognize that funds will be held in escrow until delivery is confirmed.
+                By clicking &quot;Pay&quot; or &quot;Submit&quot;, you agree to the MasterCart <Link href="/terms">Terms of Service</Link> and recognize that funds will be held in escrow until delivery is confirmed.
               </p>
             </section>
           </div>

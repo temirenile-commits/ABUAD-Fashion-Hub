@@ -168,7 +168,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           filter: `user_id=eq.${userId}`,
         }, (payload) => {
           handleIncoming(
-            payload.new.title || 'Master Cart',
+            payload.new.title || 'MasterCart',
             payload.new.content || payload.new.body || '',
             payload.new.link
           );

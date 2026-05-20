@@ -225,7 +225,7 @@ export default function UniversityAdminPage() {
         <div className={styles.sidebarHeader}>
           <div className={styles.logoMark}>
             <div className={styles.logoIcon}>📦</div>
-            <span className={styles.logoText}>MASTER CART</span>
+            <span className={styles.logoText}>MASTERCART</span>
           </div>
           {myUniversity && <div className={styles.universityBadge}>🏛 {myUniversity.abbreviation||myUniversity.name} ADMIN</div>}
         </div>

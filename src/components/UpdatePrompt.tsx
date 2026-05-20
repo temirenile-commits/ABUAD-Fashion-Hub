@@ -43,13 +43,13 @@ export default function UpdatePrompt() {
         </div>
 
         <div className={styles.content}>
-          <h2>Upgrade to Master Cart</h2>
+          <h2>Upgrade to MasterCart</h2>
           <p className={styles.badge}>Official Platform Transition</p>
           
           <div className={styles.infoBox}>
             <AlertTriangle size={18} className={styles.warnIcon} />
             <p>
-              The ABUAD Fashion Hub app is now <strong>Master Cart</strong>. 
+              The ABUAD Fashion Hub app is now <strong>MasterCart</strong>. 
               To continue enjoying seamless shopping, live tracking, and secure payouts, 
               please update your application.
             </p>

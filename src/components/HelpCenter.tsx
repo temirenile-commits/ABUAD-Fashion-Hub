@@ -11,7 +11,7 @@ const FAQ_DATA = [
   {
     category: 'Customers',
     q: 'How does Escrow protection work?',
-    a: 'When you pay for an order, the money goes into a secure Master Cart Escrow account. The vendor only receives the funds AFTER you confirm delivery of your order. If there is an issue, you can dispute it and get a refund.',
+    a: 'When you pay for an order, the money goes into a secure MasterCart Escrow account. The vendor only receives the funds AFTER you confirm delivery of your order. If there is an issue, you can dispute it and get a refund.',
     tourId: 'feature_escrow'
   },
   {
@@ -28,7 +28,7 @@ const FAQ_DATA = [
   {
     category: 'Vendors',
     q: 'How do I get paid?',
-    a: 'After a customer confirms delivery, the funds (minus commission) are instantly credited to your Master Cart wallet. You can request a payout from your Dashboard -> Wallet, and it will be sent to your bank account within 24 hours.',
+    a: 'After a customer confirms delivery, the funds (minus commission) are instantly credited to your MasterCart wallet. You can request a payout from your Dashboard -> Wallet, and it will be sent to your bank account within 24 hours.',
   },
   {
     category: 'Vendors',

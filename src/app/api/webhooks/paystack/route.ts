@@ -236,7 +236,7 @@ export async function POST(req: Request) {
       if (customer?.email) {
         sendEmail({
           to: customer.email,
-          subject: 'Payment Secured! 🎊 Master Cart',
+          subject: 'Payment Secured! 🎊 MasterCart',
           html: emailTemplates.paymentSuccess(
             customer.name || '', 
             reference.slice(-8), 

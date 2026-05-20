@@ -600,7 +600,7 @@ export default function AdminDashboard() {
     <div className={styles.container}>
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
-          <div className={styles.logo}>MASTER CART ADMIN</div>
+          <div className={styles.logo}>MASTERCART ADMIN</div>
           <p>Campus Marketplace Admin</p>
         </div>
         <nav className={styles.nav}>

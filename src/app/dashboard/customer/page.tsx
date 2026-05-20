@@ -157,7 +157,7 @@ export default function CustomerDashboard() {
           .eq('customer_id', user?.id)
           .order('created_at', { ascending: false });
         setOrders((updatedOrders as unknown as AppOrder[]) || []);
-        alert('Payment released! Thank you for shopping with Master Cart.');
+        alert('Payment released! Thank you for shopping with MasterCart.');
       } else {
         alert(data.error || 'Failed to confirm delivery.');
       }
@@ -551,7 +551,7 @@ export default function CustomerDashboard() {
 
           <Link href="/onboarding" className={`card ${styles.vendorCard}`} style={{ background: 'linear-gradient(135deg, var(--bg-200), var(--bg-300))', border: '1px solid var(--border)', marginTop: '1.5rem' }}>
             <div className={styles.vendorInfo}>
-              <h3 style={{ color: 'var(--primary)', marginBottom: '0.25rem' }}>Sell on Master Cart</h3>
+              <h3 style={{ color: 'var(--primary)', marginBottom: '0.25rem' }}>Sell on MasterCart</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-400)' }}>Open your campus boutique and grow your brand vividly.</p>
             </div>
             <ArrowRight size={20} color="var(--primary)" />

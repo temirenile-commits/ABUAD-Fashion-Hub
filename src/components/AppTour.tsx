@@ -8,7 +8,7 @@ import styles from './AppTour.module.css';
 const CUSTOMER_STEPS = [
   {
     id: 'welcome',
-    title: '👋 Welcome to Master Cart!',
+    title: '👋 Welcome to MasterCart!',
     description: 'You\'re on the #1 campus marketplace. Let\'s take a quick 60-second tour so you know how to get the most out of it.',
     position: 'center',
     target: null,

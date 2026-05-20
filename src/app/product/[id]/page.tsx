@@ -134,7 +134,7 @@ export default async function ProductPage({ params }: Props) {
 
   const relatedProducts = (relatedData || []) as unknown as LiveProduct[];
 
-  const waMessage = `Hi! I'm interested in: *${product.title}* priced at *${formatPrice(product.price)}* from Master Cart. Is it available?`;
+  const waMessage = `Hi! I'm interested in: *${product.title}* priced at *${formatPrice(product.price)}* from MasterCart. Is it available?`;
   const normalizeNgPhone = (num: string) => {
     const digits = (num || '').replace(/\D/g, '');
     if (digits.startsWith('234')) return digits;

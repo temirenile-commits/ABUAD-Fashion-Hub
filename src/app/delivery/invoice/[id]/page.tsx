@@ -69,7 +69,7 @@ export default function DeliveryInvoicePage() {
               <p style={{ margin: '5px 0', fontSize: '0.9rem', color: '#666' }}>Ref: #{delivery.id.slice(0, 8).toUpperCase()}</p>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Master Cart</h2>
+              <h2 style={{ margin: 0, fontSize: '1.2rem' }}>MasterCart</h2>
               <p style={{ margin: '5px 0', fontSize: '0.8rem', color: '#666' }}>{new Date(delivery.assigned_at).toLocaleDateString()}</p>
             </div>
           </div>
@@ -139,7 +139,7 @@ export default function DeliveryInvoicePage() {
 
         <div style={{ padding: '20px', background: '#f8f9fa', textAlign: 'center', fontSize: '0.7rem', color: '#999' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginBottom: '5px', color: '#555' }}>
-            <ShieldCheck size={14} color="var(--success)" /> Verified by Master Cart Logistics
+            <ShieldCheck size={14} color="var(--success)" /> Verified by MasterCart Logistics
           </div>
           <p>This is a digitally generated invoice for internal campus logistics purposes.</p>
         </div>

@@ -1,4 +1,4 @@
-// Shared utility functions for Master Cart
+// Shared utility functions for MasterCart
 // These are server-compatible (no 'use client' directive)
 
 /**

@@ -1,5 +1,5 @@
 /**
- * Master Cart Email Utility
+ * MasterCart Email Utility
  * Powered by Resend (https://resend.com)
  */
 
@@ -22,7 +22,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Master Cart <onboarding@resend.dev>',
+        from: 'MasterCart <onboarding@resend.dev>',
         to: [to],
         subject,
         html,
@@ -65,7 +65,7 @@ export const emailTemplates = {
         <a href="https://abuadfashionista.com/dashboard/customer" style="display: inline-block; background: #eb0c7a; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">View Order Status</a>
       </div>
       <div style="background: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
-        &copy; 2026 Master Cart. All rights reserved.
+        &copy; 2026 MasterCart. All rights reserved.
       </div>
     </div>
   `,
@@ -76,7 +76,7 @@ export const emailTemplates = {
       </div>
       <div style="padding: 30px;">
         <p>Hi ${name || 'Customer'},</p>
-        <p>There was an issue with your recent transaction on Master Cart.</p>
+        <p>There was an issue with your recent transaction on MasterCart.</p>
         <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0;">
           <p style="margin: 0; color: #b91c1c;"><strong>Reason:</strong> ${reason || 'Transaction could not be completed.'}</p>
         </div>

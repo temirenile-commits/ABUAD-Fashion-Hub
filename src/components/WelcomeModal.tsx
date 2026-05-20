@@ -38,7 +38,7 @@ export default function WelcomeModal() {
             <Sparkles size={28} color="var(--primary)" />
           </div>
           
-          <h2 className={styles.title}>Welcome to Master Cart</h2>
+          <h2 className={styles.title}>Welcome to MasterCart</h2>
           <p className={styles.subtitle}>The #1 Digital Marketplace for Students & Entrepreneurs.</p>
 
           <div className={styles.featureList}>

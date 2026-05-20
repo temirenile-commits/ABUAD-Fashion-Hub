@@ -37,11 +37,11 @@ export default function TermsPage() {
     sections: [
       {
         title: '1. Platform Identity & Mission',
-        content: 'Master Cart is a digital marketplace designed exclusively for university student entrepreneurs. Our mission is to provide a "Vivid" commercial experience that empowers students to build brands while maintaining academic integrity. All operations are sponsored and governed by MIGHTY SEEDS EXCEL INVESTMENT LTD.'
+        content: 'MasterCart is a digital marketplace designed exclusively for university student entrepreneurs. Our mission is to provide a "Vivid" commercial experience that empowers students to build brands while maintaining academic integrity. All operations are sponsored and governed by MIGHTY SEEDS EXCEL INVESTMENT LTD.'
       },
       {
         title: '2. User Eligibility & Verification',
-        content: 'Access to Master Cart is restricted to verified students, alumni, and staff of the University. Registration requires a valid university email or matriculation details. We reserve the right to suspend any account that cannot provide proof of campus affiliation upon request.'
+        content: 'Access to MasterCart is restricted to verified students, alumni, and staff of the University. Registration requires a valid university email or matriculation details. We reserve the right to suspend any account that cannot provide proof of campus affiliation upon request.'
       },
       {
         title: '3. The Escrow Payment System',
@@ -69,11 +69,11 @@ export default function TermsPage() {
       },
       {
         title: '9. Data Privacy & Account Security',
-        content: 'We take data security seriously. Your login credentials, phone numbers, and location data are stored securely and never sold to third parties. Users are responsible for maintaining the confidentiality of their passwords. Any suspected breach should be reported to Master Cart Support immediately.'
+        content: 'We take data security seriously. Your login credentials, phone numbers, and location data are stored securely and never sold to third parties. Users are responsible for maintaining the confidentiality of their passwords. Any suspected breach should be reported to MasterCart Support immediately.'
       },
       {
         title: '10. Cookie & Tracking Policy',
-        content: 'Master Cart uses local storage and cookies to maintain your login session and store your marketplace preferences (such as your wishlist). By using the platform, you consent to this essential tracking required for system functionality.'
+        content: 'MasterCart uses local storage and cookies to maintain your login session and store your marketplace preferences (such as your wishlist). By using the platform, you consent to this essential tracking required for system functionality.'
       },
       {
         title: '11. Marketing & Billboard Boosts',
@@ -81,7 +81,7 @@ export default function TermsPage() {
       },
       {
         title: '12. Disputes & Final Arbitration',
-        content: 'In the event of a dispute, the Master Cart Admin team acts as the final arbitrator. We will review chat logs, order history, and delivery timestamps. Decisions made by the Admin team regarding refunds or fund releases are final.'
+        content: 'In the event of a dispute, the MasterCart Admin team acts as the final arbitrator. We will review chat logs, order history, and delivery timestamps. Decisions made by the Admin team regarding refunds or fund releases are final.'
       }
     ]
   };
@@ -104,14 +104,14 @@ export default function TermsPage() {
           </h1>
         </div>
         <p style={{ color: 'var(--text-300)', maxWidth: '600px', margin: '0 auto 1.5rem', lineHeight: 1.7 }}>
-          Welcome to Master Cart. By accessing or using this platform, you agree to these terms. These policies are updated in real-time to reflect platform operations.
+          Welcome to MasterCart. By accessing or using this platform, you agree to these terms. These policies are updated in real-time to reflect platform operations.
         </p>
         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <span style={{ background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '999px', padding: '0.3rem 1rem', fontSize: '0.8rem', color: 'var(--text-400)' }}>
             Last Updated: {activePolicy.last_updated}
           </span>
           <span style={{ background: 'var(--bg-300)', border: '1px solid var(--accent-gold)', borderRadius: '999px', padding: '0.3rem 1rem', fontSize: '0.8rem', color: 'var(--accent-gold)' }}>
-            Official Master Cart Policy
+            Official MasterCart Policy
           </span>
         </div>
       </div>

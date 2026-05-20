@@ -11,8 +11,8 @@ export const TOURS: Record<string, TourStep[]> = {
   customer_onboarding: [
     { 
       element: '#tour-navbar-logo', 
-      title: '👋 Welcome to Master Cart', 
-      description: 'We are thrilled to have you! Master Cart is the premier digital marketplace designed exclusively for university students and campus entrepreneurs.', 
+      title: '👋 Welcome to MasterCart', 
+      description: 'We are thrilled to have you! MasterCart is the premier digital marketplace designed exclusively for university students and campus entrepreneurs.', 
       route: '/' 
     },
     { 
@@ -81,7 +81,7 @@ export const TOURS: Record<string, TourStep[]> = {
     {
       element: '#tour-vendor-overview',
       title: '⚖️ Terms & Conditions: Vendor Policy',
-      description: 'By selling on Master Cart, you agree to fulfill orders promptly and authentically. Platform commissions are automatically deducted at checkout. Fraudulent activity or failure to deliver will result in Escrow refunds to the customer and potential store suspension.',
+      description: 'By selling on MasterCart, you agree to fulfill orders promptly and authentically. Platform commissions are automatically deducted at checkout. Fraudulent activity or failure to deliver will result in Escrow refunds to the customer and potential store suspension.',
       route: '/dashboard/vendor'
     }
   ],
@@ -108,7 +108,7 @@ export const TOURS: Record<string, TourStep[]> = {
     {
       element: '#tour-admin-settings',
       title: '👉 Campus Customization',
-      description: 'Configure subscription tiers, credit limits, and features independently for every single university campus registered on Master Cart.',
+      description: 'Configure subscription tiers, credit limits, and features independently for every single university campus registered on MasterCart.',
       route: '/admin'
     }
   ],
@@ -144,7 +144,7 @@ export const TOURS: Record<string, TourStep[]> = {
     { 
       element: '#tour-customer-orders', 
       title: '👇 Protected Orders', 
-      description: 'Your payment is held safely by Master Cart. The vendor only gets paid AFTER you click "Confirm Delivery" here.', 
+      description: 'Your payment is held safely by MasterCart. The vendor only gets paid AFTER you click "Confirm Delivery" here.', 
       route: '/dashboard/customer' 
     }
   ],

@@ -40,7 +40,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         <div className="container">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem', textAlign: 'left', marginBottom: '2rem' }}>
             <div>
-              <h3 style={{ color: 'var(--primary)', marginBottom: '1rem', fontSize: '1rem' }}>Master Cart</h3>
+              <h3 style={{ color: 'var(--primary)', marginBottom: '1rem', fontSize: '1rem' }}>MasterCart</h3>
               <p style={{ lineHeight: '1.6', opacity: 0.8 }}>The premier digital fashion marketplace for students and entrepreneurs at your University.</p>
               {/* Sponsor Badge */}
               <div style={{ marginTop: '1rem', padding: '0.6rem 0.9rem', background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.25)', borderRadius: '8px', display: 'inline-block' }}>
@@ -70,7 +70,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
           {/* Bottom bar */}
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem', paddingBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', opacity: 0.7, fontSize: '0.78rem' }}>
-            <span>© 2026 Master Cart. All rights reserved. Empowering Campus Entrepreneurs.</span>
+            <span>© 2026 MasterCart. All rights reserved. Empowering Campus Entrepreneurs.</span>
             <div style={{ display: 'flex', gap: '1.25rem' }}>
               <Link href="/terms" style={{ color: 'var(--text-400)' }}>Terms &amp; Conditions</Link>
               <Link href="/terms#vendor-terms" style={{ color: 'var(--text-400)' }}>Vendor Agreement</Link>

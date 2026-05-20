@@ -1,8 +1,8 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Privacy Policy | Master Cart',
-  description: 'Privacy Policy and Data Handling for Master Cart.',
+  title: 'Privacy Policy | MasterCart',
+  description: 'Privacy Policy and Data Handling for MasterCart.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -14,7 +14,7 @@ export default function PrivacyPolicyPage() {
       <section style={{ marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>1. Information We Collect</h2>
         <p>
-          Master Cart collects information to provide better services to all our users. We collect information in the following ways:
+          MasterCart collects information to provide better services to all our users. We collect information in the following ways:
         </p>
         <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem', listStyleType: 'disc' }}>
           <li><strong>Information you give us:</strong> This includes your email address, name, phone number, and campus delivery address provided during registration or checkout.</li>
@@ -25,7 +25,7 @@ export default function PrivacyPolicyPage() {
 
       <section style={{ marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>2. How We Use Information</h2>
-        <p>We use the information we collect from all of our services to provide, maintain, protect and improve them, to develop new ones, and to protect Master Cart and our users.</p>
+        <p>We use the information we collect from all of our services to provide, maintain, protect and improve them, to develop new ones, and to protect MasterCart and our users.</p>
         <p style={{ marginTop: '0.5rem' }}>Specifically, we use your information to:</p>
         <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem', listStyleType: 'disc' }}>
           <li>Process transactions and deliver your orders via our campus agents.</li>
@@ -36,7 +36,7 @@ export default function PrivacyPolicyPage() {
 
       <section style={{ marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>3. Information Sharing</h2>
-        <p>We do not share personal information with companies, organizations and individuals outside of Master Cart unless one of the following circumstances applies:</p>
+        <p>We do not share personal information with companies, organizations and individuals outside of MasterCart unless one of the following circumstances applies:</p>
         <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem', listStyleType: 'disc' }}>
           <li><strong>With Vendors and Delivery Agents:</strong> We share your name, phone number, and delivery address with the specific vendor you purchase from and the assigned delivery agent solely for the purpose of fulfilling your order.</li>
           <li><strong>For legal reasons:</strong> We will share personal information if we have a good-faith belief that access, use, preservation or disclosure of the information is reasonably necessary to meet any applicable law, regulation, legal process or enforceable governmental request.</li>
@@ -45,7 +45,7 @@ export default function PrivacyPolicyPage() {
 
       <section style={{ marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>4. Security</h2>
-        <p>We work hard to protect Master Cart and our users from unauthorized access to or unauthorized alteration, disclosure or destruction of information we hold. In particular:</p>
+        <p>We work hard to protect MasterCart and our users from unauthorized access to or unauthorized alteration, disclosure or destruction of information we hold. In particular:</p>
         <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem', listStyleType: 'disc' }}>
           <li>We encrypt our services using HTTPS.</li>
           <li>We use secure, enterprise-grade payment gateways (Paystack) to process transactions. We do not store your credit card details.</li>

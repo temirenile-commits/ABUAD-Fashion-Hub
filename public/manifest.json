@@ -1,6 +1,6 @@
 {
-  "name": "Master Cart",
-  "short_name": "Master Cart",
+  "name": "MasterCart",
+  "short_name": "MasterCart",
   "description": "The premier campus fashion marketplace at ABUAD",
   "start_url": "/",
   "display": "standalone",
