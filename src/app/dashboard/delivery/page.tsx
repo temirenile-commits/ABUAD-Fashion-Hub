@@ -165,7 +165,7 @@ export default function DeliveryDashboard() {
   const [deliveries, setDeliveries] = useState<DeliveryRecord[]>([]);
   const [availableDeliveries, setAvailableDeliveries] = useState<DeliveryRecord[]>([]);
   const [knownLocations, setKnownLocations] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'available' | 'queue' | 'history' | 'locations'>('available');
+  const [activeTab, setActiveTab] = useState<'available' | 'queue' | 'history' | 'locations' | 'private'>('available');
   const [verificationCode, setVerificationCode] = useState('');
   const [verifyTarget, setVerifyTarget] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -178,6 +178,8 @@ export default function DeliveryDashboard() {
   const [isSettingUpBank, setIsSettingUpBank] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [newOrderAlert, setNewOrderAlert] = useState(false);
+  const [userBrands, setUserBrands] = useState<any[]>([]);
+  const [privateOrders, setPrivateOrders] = useState<any[]>([]);
 
   // Keep a ref to the latest agent so the realtime callback sees fresh data
   const agentRef = useRef<any>(null);
@@ -337,12 +339,37 @@ export default function DeliveryDashboard() {
       .eq('user_id', agentUserId)
       .order('created_at', { ascending: false });
 
+    // ── 7. Brand ownership & private orders ──────────────────────────────
+    const { data: brandsOwned } = await supabase
+      .from('brands')
+      .select('id, name')
+      .eq('owner_id', agentUserId);
+
+    let pOrders: any[] = [];
+    if (brandsOwned && brandsOwned.length > 0) {
+      const brandIds = brandsOwned.map((b) => b.id);
+      const { data } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          brands (name, location_name),
+          products:product_id (title),
+          users:customer_id (name, phone)
+        `)
+        .in('brand_id', brandIds)
+        .in('status', ['paid', 'accepted', 'processing', 'ready', 'ready_for_pickup'])
+        .order('created_at', { ascending: false });
+      pOrders = data ?? [];
+    }
+
     setDeliveries(myData ?? []);
     setAvailableDeliveries(availData ?? []);
     setKnownLocations(uniqueLocs);
     setWallet(walletData);
     setHistory(histData ?? []);
     setPayoutRequests(payoutData ?? []);
+    setUserBrands(brandsOwned ?? []);
+    setPrivateOrders(pOrders);
 
     if (!silent) setLoading(false);
     setRefreshing(false);
@@ -601,6 +628,94 @@ export default function DeliveryDashboard() {
       setProcessingId(null);
     }
   };
+
+  const handleLocationTap = (loc: string) => {
+    const normalizedKey = normaliseLocation(loc);
+    const matchingGroup = locationGroups.find((g) => g.key === normalizedKey);
+    if (matchingGroup) {
+      setExpandedGroups((prev) => {
+        const next = new Set(prev);
+        next.add(matchingGroup.key);
+        return next;
+      });
+      setActiveTab('available');
+    }
+  };
+
+  const forwardOrderToPublic = async (order: any) => {
+    const confirmForward = window.confirm(
+      "Are you sure you want to forward this order to the public delivery console? Any available delivery agent in your university will be notified and can accept it."
+    );
+    if (!confirmForward) return;
+
+    setProcessingId(order.id);
+    try {
+      let currentStatus = order.status;
+
+      // Automatically transition order through accepted and processing stages if needed
+      if (currentStatus === 'paid') {
+        const resAccept = await fetch('/api/orders/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: order.id,
+            status: 'accepted',
+            vendorId: agent.id,
+          }),
+        });
+        if (!resAccept.ok) {
+          const data = await resAccept.json();
+          alert(data.error || 'Failed to accept order first');
+          setProcessingId(null);
+          return;
+        }
+        currentStatus = 'accepted';
+      }
+
+      if (currentStatus === 'accepted') {
+        const resProc = await fetch('/api/orders/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: order.id,
+            status: 'processing',
+            vendorId: agent.id,
+          }),
+        });
+        if (!resProc.ok) {
+          const data = await resProc.json();
+          alert(data.error || 'Failed to start processing order');
+          setProcessingId(null);
+          return;
+        }
+        currentStatus = 'processing';
+      }
+
+      // Final status change to ready_for_pickup + force public logistics routing bypass
+      const res = await fetch('/api/orders/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: order.id,
+          status: 'ready_for_pickup',
+          vendorId: agent.id,
+          forwardToPublic: true,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('Order successfully forwarded to the public console!');
+        await fetchData(true);
+      } else {
+        alert(data.error || 'Failed to forward order');
+      }
+    } catch {
+      alert('Network error forwarding order');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
 
 
   const verifyDelivery = async (deliveryId: string) => {
@@ -875,6 +990,15 @@ export default function DeliveryDashboard() {
             <Star size={14} style={{ marginRight: 4 }} />
             History
           </button>
+          {userBrands.length > 0 && (
+            <button
+              className={`${styles.tab} ${activeTab === 'private' ? styles.tabActive : ''}`}
+              onClick={() => setActiveTab('private')}
+            >
+              <Package size={14} style={{ marginRight: 4 }} />
+              Private Store Orders ({privateOrders.length})
+            </button>
+          )}
         </div>
 
         {/* ── AVAILABLE TAB ── */}
@@ -1244,7 +1368,9 @@ export default function DeliveryDashboard() {
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '0.5rem',
+                        cursor: hasLiveOrders ? 'pointer' : 'default',
                       }}
+                      onClick={() => hasLiveOrders && handleLocationTap(loc)}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <MapPin size={14} color={hasLiveOrders ? 'var(--success)' : 'var(--text-400)'} />
@@ -1339,6 +1465,109 @@ export default function DeliveryDashboard() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── PRIVATE STORE ORDERS TAB ── */}
+        {activeTab === 'private' && (
+          <div className={styles.deliveryList}>
+            <p style={{ color: 'var(--text-400)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+              These are orders from your store. You can self-deliver them, or click &quot;Forward to Public Console&quot; to make them available for other couriers.
+            </p>
+            {privateOrders.length === 0 ? (
+              <div className={styles.emptyState}>
+                <Package size={48} />
+                <h3>No Active Store Orders</h3>
+                <p>New customer orders from your brands will appear here.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {privateOrders.map((order) => {
+                  const statusColors: Record<string, string> = {
+                    paid: '#6366f1',
+                    accepted: '#3b82f6',
+                    processing: '#f59e0b',
+                    ready: '#10b981',
+                    ready_for_pickup: '#10b981',
+                  };
+                  return (
+                    <div
+                      key={order.id}
+                      style={{
+                        background: 'var(--bg-200)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius-md)',
+                        padding: '1.25rem',
+                      }}
+                    >
+                      <div className={styles.deliveryHeader}>
+                        <div>
+                          <span className={styles.orderId}>
+                            #{order.id.slice(0, 8).toUpperCase()}
+                          </span>
+                          <span
+                            className={styles.badge}
+                            style={{
+                              marginLeft: '0.5rem',
+                              background: `${statusColors[order.status] || '#6b7280'}20`,
+                              color: statusColors[order.status] || '#6b7280',
+                            }}
+                          >
+                            {order.status.replace('_', ' ').toUpperCase()}
+                          </span>
+                        </div>
+                        <div className={styles.fee}>
+                          {order.brands?.name}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                        <div className={styles.infoBlock}>
+                          <h5><MapPin size={14} /> Shop Location</h5>
+                          <p style={{ fontSize: '0.85rem' }}>{order.brands?.location_name || 'Not Specified'}</p>
+                        </div>
+                        <div className={styles.infoBlock}>
+                          <h5><Navigation size={14} /> Customer</h5>
+                          <p><strong>{order.users?.name || 'Customer'}</strong></p>
+                          <p style={{ fontSize: '0.85rem' }}>{order.shipping_address}</p>
+                          {order.users?.phone && (
+                            <Link href={`tel:${order.users.phone}`} className={styles.contactLink}>
+                              <Phone size={12} /> Call Customer
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+
+                      {order.products?.title && (
+                        <div
+                          style={{
+                            marginTop: '0.75rem',
+                            padding: '0.5rem 0.75rem',
+                            background: 'rgba(99,102,241,0.07)',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: '0.85rem',
+                          }}
+                        >
+                          <Package size={12} style={{ marginRight: 6, verticalAlign: 'middle', color: '#818cf8' }} />
+                          <strong>Item:</strong> {order.products.title}
+                        </div>
+                      )}
+
+                      <div className={styles.actionArea} style={{ marginTop: '1rem' }}>
+                        <button
+                          className="btn btn-outline w-full"
+                          style={{ borderColor: 'var(--primary)', color: 'var(--primary)', background: 'transparent' }}
+                          onClick={() => forwardOrderToPublic(order)}
+                          disabled={processingId === order.id}
+                        >
+                          <Share2 size={16} style={{ marginRight: 6 }} /> Forward to Public Console
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

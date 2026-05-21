@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { orderId, status, vendorId, trackingNumber, rejectionReason } = body;
+    const { orderId, status, vendorId, trackingNumber, rejectionReason, forwardToPublic } = body;
 
     if (!orderId || !status || !vendorId) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
@@ -113,6 +113,8 @@ export async function POST(req: Request) {
         .eq('is_active', true)
         .maybeSingle();
 
+      const shouldAutoAssign = vendorAsAgent && !forwardToPublic;
+
       // Check if a delivery record already exists for this order
       const { data: existingDelivery } = await supabaseAdmin
         .from('deliveries')
@@ -123,10 +125,14 @@ export async function POST(req: Request) {
       if (existingDelivery) {
         // UPDATE: promote to pending or assign to vendor-agent
         const deliveryUpdate: any = { status: 'pending' };
-        if (vendorAsAgent) {
+        if (shouldAutoAssign) {
           deliveryUpdate.agent_id = vendorOwnerId;
           deliveryUpdate.status = 'assigned';
           console.log(`[LOGISTICS] Auto-assigning order ${orderId} to vendor-agent ${vendorOwnerId}`);
+        } else {
+          deliveryUpdate.agent_id = null;
+          deliveryUpdate.agent_name = null;
+          deliveryUpdate.agent_phone = null;
         }
         await supabaseAdmin
           .from('deliveries')
@@ -136,10 +142,10 @@ export async function POST(req: Request) {
         // INSERT: create the delivery record that was never created at checkout
         const deliveryInsert: any = {
           order_id: orderId,
-          status: vendorAsAgent ? 'assigned' : 'pending',
+          status: shouldAutoAssign ? 'assigned' : 'pending',
           delivery_fee: riderPayout,
         };
-        if (vendorAsAgent) {
+        if (shouldAutoAssign) {
           deliveryInsert.agent_id = vendorOwnerId;
           console.log(`[LOGISTICS] Creating + auto-assigning delivery for order ${orderId} to vendor-agent ${vendorOwnerId}`);
         }
@@ -154,7 +160,7 @@ export async function POST(req: Request) {
       }
 
       // Notify delivery agents in this university (skip if auto-assigned to vendor)
-      if (!vendorAsAgent && uniId) {
+      if (!shouldAutoAssign && uniId) {
         try {
           const { data: agents } = await supabaseAdmin
             .from('delivery_agents')
