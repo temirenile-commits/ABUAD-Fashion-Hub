@@ -36,9 +36,9 @@ export async function POST(req: Request) {
     const validTransitions: Record<string, string[]> = {
       paid:             ['accepted', 'cancelled'],
       preorder_paid:    ['ready_for_pickup', 'cancelled'],
-      accepted:         ['processing', 'cancelled'],
-      processing:       ['ready', 'cancelled'],
-      ready:            ['in_transit', 'cancelled'],
+      accepted:         ['processing', 'ready_for_pickup', 'cancelled'],
+      processing:       ['ready', 'ready_for_pickup', 'cancelled'],
+      ready:            ['ready_for_pickup', 'in_transit', 'cancelled'],
       ready_for_pickup: ['in_transit', 'cancelled'],
       in_transit:       ['delivered', 'cancelled'],
       picked_up:        ['in_transit', 'delivered'],
@@ -81,11 +81,40 @@ export async function POST(req: Request) {
     if (updateError) throw updateError;
 
     // 3. Sync Delivery Visibility
-    if (['accepted', 'processing', 'ready', 'ready_for_pickup'].includes(status) && order.delivery_method === 'platform') {
-      await supabaseAdmin.from('deliveries')
+    // Only expose to delivery agents queue when vendor explicitly marks ready_for_pickup
+    if (status === 'ready_for_pickup' && order.delivery_method === 'platform') {
+      await supabaseAdmin
+        .from('deliveries')
         .update({ status: 'pending' })
         .eq('order_id', orderId)
-        .eq('status', 'waiting_for_vendor');
+        .in('status', ['waiting_for_vendor', 'pending']); // idempotent
+
+      // Notify all active delivery agents in the same university
+      try {
+        const uniId = order.university_id ?? order.brands?.university_id;
+        if (uniId) {
+          const { data: agents } = await supabaseAdmin
+            .from('delivery_agents')
+            .select('id')
+            .eq('university_id', uniId)
+            .eq('is_active', true);
+
+          if (agents && agents.length > 0) {
+            await supabaseAdmin.from('notifications').insert(
+              agents.map((a: { id: string }) => ({
+                user_id: a.id,
+                title: '📦 New Pickup Ready!',
+                content: `An order is ready for pickup. Open your Dispatch Console to claim it.`,
+                link: '/dashboard/delivery',
+                type: 'direct',
+                is_read: false,
+              }))
+            );
+          }
+        }
+      } catch (notifErr) {
+        console.error('[NOTIFY-AGENTS] Failed to notify delivery agents:', notifErr);
+      }
     }
 
     // 4. AUTO PAYOUT RECORD: Create financial record when order is delivered
