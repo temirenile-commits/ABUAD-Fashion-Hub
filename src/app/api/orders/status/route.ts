@@ -80,19 +80,82 @@ export async function POST(req: Request) {
 
     if (updateError) throw updateError;
 
-    // 3. Sync Delivery Visibility
-    // Only expose to delivery agents queue when vendor explicitly marks ready or ready_for_pickup
-    if (['ready', 'ready_for_pickup'].includes(status) && order.delivery_method === 'platform') {
+    // 3. Sync Delivery Visibility — UPSERT delivery record when vendor marks ready
+    // This fires for BOTH 'ready' and 'ready_for_pickup', regardless of original delivery_method,
+    // because the vendor explicitly requested platform logistics.
+    if (['ready', 'ready_for_pickup'].includes(status)) {
+      // Force delivery_method to 'platform' so the entire pipeline aligns correctly
       await supabaseAdmin
-        .from('deliveries')
-        .update({ status: 'pending' })
-        .eq('order_id', orderId)
-        .in('status', ['waiting_for_vendor', 'pending']); // idempotent
+        .from('orders')
+        .update({ delivery_method: 'platform' })
+        .eq('id', orderId);
 
-      // Notify all active delivery agents in the same university
-      try {
-        const uniId = order.university_id ?? order.brands?.university_id;
-        if (uniId) {
+      // Fetch university config for rider payout
+      let riderPayout = 500;
+      const uniId = order.university_id ?? order.brands?.university_id;
+      if (uniId) {
+        const { data: uniConfigData } = await supabaseAdmin
+          .from('platform_settings')
+          .select('value')
+          .eq('key', `uni_config_${uniId}`)
+          .single();
+        if (uniConfigData && (uniConfigData.value as any)?.delivery_rider_pay) {
+          riderPayout = Number((uniConfigData.value as any).delivery_rider_pay);
+        }
+      }
+
+      // Check if the vendor (brand owner) is ALSO a delivery agent — auto-assign if so
+      const vendorOwnerId = order.brands?.owner_id ?? vendorId;
+      const { data: vendorAsAgent } = await supabaseAdmin
+        .from('delivery_agents')
+        .select('id')
+        .eq('id', vendorOwnerId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      // Check if a delivery record already exists for this order
+      const { data: existingDelivery } = await supabaseAdmin
+        .from('deliveries')
+        .select('id, status')
+        .eq('order_id', orderId)
+        .maybeSingle();
+
+      if (existingDelivery) {
+        // UPDATE: promote to pending or assign to vendor-agent
+        const deliveryUpdate: any = { status: 'pending' };
+        if (vendorAsAgent) {
+          deliveryUpdate.agent_id = vendorOwnerId;
+          deliveryUpdate.status = 'assigned';
+          console.log(`[LOGISTICS] Auto-assigning order ${orderId} to vendor-agent ${vendorOwnerId}`);
+        }
+        await supabaseAdmin
+          .from('deliveries')
+          .update(deliveryUpdate)
+          .eq('id', existingDelivery.id);
+      } else {
+        // INSERT: create the delivery record that was never created at checkout
+        const deliveryInsert: any = {
+          order_id: orderId,
+          status: vendorAsAgent ? 'assigned' : 'pending',
+          delivery_fee: riderPayout,
+        };
+        if (vendorAsAgent) {
+          deliveryInsert.agent_id = vendorOwnerId;
+          console.log(`[LOGISTICS] Creating + auto-assigning delivery for order ${orderId} to vendor-agent ${vendorOwnerId}`);
+        }
+        const { error: insertErr } = await supabaseAdmin
+          .from('deliveries')
+          .insert(deliveryInsert);
+        if (insertErr) {
+          console.error('[LOGISTICS] Failed to insert delivery record:', insertErr);
+        } else {
+          console.log(`[LOGISTICS] Created delivery record for order ${orderId} (status: ${deliveryInsert.status})`);
+        }
+      }
+
+      // Notify delivery agents in this university (skip if auto-assigned to vendor)
+      if (!vendorAsAgent && uniId) {
+        try {
           const { data: agents } = await supabaseAdmin
             .from('delivery_agents')
             .select('id')
@@ -111,9 +174,9 @@ export async function POST(req: Request) {
               }))
             );
           }
+        } catch (notifErr) {
+          console.error('[NOTIFY-AGENTS] Failed to notify delivery agents:', notifErr);
         }
-      } catch (notifErr) {
-        console.error('[NOTIFY-AGENTS] Failed to notify delivery agents:', notifErr);
       }
     }
 

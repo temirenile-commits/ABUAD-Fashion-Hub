@@ -245,14 +245,18 @@ export default function DeliveryDashboard() {
           products:product_id (title, product_section, location_availability)
         )
       `)
-      .is('agent_id', null)
       .in('orders.status', ['ready', 'ready_for_pickup']); // Either button marks it ready!
+
+    // Show unassigned orders OR orders already pre-assigned to this agent (for vendor-delivery agents)
+    availQuery = availQuery.or(`agent_id.is.null,agent_id.eq.${agentUserId}`);
 
     if (universityId) {
       availQuery = availQuery.eq('orders.university_id', universityId);
     }
 
-    const { data: availData } = await availQuery.order('created_at', { ascending: false });
+    const { data: availData, error: availError } = await availQuery.order('created_at', { ascending: false });
+    if (availError) console.error('[DELIVERY DASH] Available queue error:', availError);
+    console.log(`[DELIVERY DASH] Available orders returned: ${availData?.length ?? 0}`);
 
     // ── 3. All known pickup locations for this university ────────────────
     let brandLocQuery = supabase
