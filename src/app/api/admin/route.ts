@@ -1476,6 +1476,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  if (action === 'remove_manual_billboard') {
+    const { billboardId } = body;
+    const { data: exist } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'manual_billboards').single();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const list = ((exist?.value as any[]) || []).filter((b: any) => b.id !== billboardId);
+    const { error } = await supabaseAdmin.from('platform_settings').upsert({ key: 'manual_billboards', value: list, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+
   if (action === 'update_uni_config') {
     const { universityId, key, value } = body;
     

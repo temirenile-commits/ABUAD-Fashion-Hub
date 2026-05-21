@@ -1903,11 +1903,15 @@ export default function AdminDashboard() {
                               <button 
                                 className="btn btn-ghost btn-sm" 
                                 style={{ color: '#ef4444' }}
-                                onClick={() => {
-                                  if (!confirm('Remove this billboard?')) return;
-                                  // Logic to remove billboard could be added to API too
-                                  addToast('Delete logic not yet in API, but will be removed from state', 'info');
-                                  setManualBillboards(manualBillboards.filter(b => b.id !== mb.id));
+                                onClick={async () => {
+                                  if (!confirm('Remove this billboard from the homepage?')) return;
+                                  try {
+                                    await adminAction('remove_manual_billboard', { billboardId: mb.id });
+                                    setManualBillboards(manualBillboards.filter(b => b.id !== mb.id));
+                                    addToast('Billboard removed successfully.', 'success');
+                                  } catch {
+                                    addToast('Failed to remove billboard. Please try again.', 'error');
+                                  }
                                 }}
                               >
                                 <Trash2 size={16} />

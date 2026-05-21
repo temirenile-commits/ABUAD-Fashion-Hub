@@ -508,6 +508,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  // ─── Remove Manual Billboard (University-scoped) ────────────────────────────
+  if (action === 'remove_manual_billboard') {
+    const { billboardId } = body;
+    const { data: exist } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'manual_billboards').single();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const all = (exist?.value as any[]) || [];
+    // Security: only remove billboards that belong to this university
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const filtered = all.filter((b: any) => {
+      if (b.id !== billboardId) return true; // keep
+      // allow removal only if it belongs to this university (or super admin)
+      if (ctx.isFullAdmin) return false;
+      return b.university_id !== ctx.universityId; // only remove own university's billboards
+    });
+    const { error } = await supabaseAdmin.from('platform_settings').upsert({ key: 'manual_billboards', value: filtered, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+
   // ─── Toggle User Status (Suspend/Activate Delivery, Customer) ───────────────
   if (action === 'toggle_user_status') {
     const { userId, status } = body;

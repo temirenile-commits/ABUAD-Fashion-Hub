@@ -69,10 +69,10 @@ export default function UniversityAdminPage() {
     try {
       const ext = billboardUpload.file.name.split('.').pop();
       const path = `manual_billboards/${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('products').upload(path, billboardUpload.file);
+      const { error: uploadError } = await supabase.storage.from('brand-assets').upload(path, billboardUpload.file);
       if (uploadError) throw uploadError;
       
-      const { data } = supabase.storage.from('products').getPublicUrl(path);
+      const { data } = supabase.storage.from('brand-assets').getPublicUrl(path);
       
       const res = await uaFetch("/api/university-admin", { 
         method: "POST", 
