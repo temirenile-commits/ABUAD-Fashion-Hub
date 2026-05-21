@@ -25,6 +25,7 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  Share2,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
@@ -573,6 +574,35 @@ export default function DeliveryDashboard() {
     }
   };
 
+  const transferToPublic = async (deliveryId: string) => {
+    const confirmTransfer = window.confirm(
+      "Are you sure you want to transfer this order back to the public console? Other agents will be notified and can accept it."
+    );
+    if (!confirmTransfer) return;
+
+    setProcessingId(deliveryId);
+    try {
+      const res = await fetch('/api/delivery/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deliveryId, status: 'transfer', agentId: agent.id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDeliveries((prev) => prev.filter((d) => d.id !== deliveryId));
+        alert('Order successfully transferred to the public console!');
+        await fetchData(true);
+      } else {
+        alert(data.error || 'Failed to transfer order');
+      }
+    } catch {
+      alert('Network error transferring order');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+
   const verifyDelivery = async (deliveryId: string) => {
     if (!verificationCode) return;
     setProcessingId(deliveryId);
@@ -1118,12 +1148,22 @@ export default function DeliveryDashboard() {
 
                   <div className={styles.actionArea}>
                     {delivery.status === 'assigned' && (
-                      <button
-                        className="btn btn-primary w-full"
-                        onClick={() => updateStatus(delivery.id, 'picked_up')}
-                      >
-                        <Package size={18} /> Confirm Pickup from Vendor
-                      </button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
+                        <button
+                          className="btn btn-primary w-full"
+                          onClick={() => updateStatus(delivery.id, 'picked_up')}
+                        >
+                          <Package size={18} /> Confirm Pickup from Vendor
+                        </button>
+                        <button
+                          className="btn btn-outline w-full"
+                          style={{ borderColor: '#ef4444', color: '#ef4444', background: 'transparent' }}
+                          onClick={() => transferToPublic(delivery.id)}
+                          disabled={processingId === delivery.id}
+                        >
+                          <Share2 size={16} style={{ marginRight: 6 }} /> Transfer to Public Console
+                        </button>
+                      </div>
                     )}
 
                     {delivery.status === 'picked_up' && (

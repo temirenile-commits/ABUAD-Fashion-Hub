@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     // 1. Verify Agent Ownership
     const { data: delivery, error: fetchError } = await supabaseAdmin
       .from('deliveries')
-      .select('*, orders(*)')
+      .select('*, orders(*, brands(*))')
       .eq('id', deliveryId)
       .eq('agent_id', agentId)
       .single();
@@ -22,9 +22,17 @@ export async function POST(req: Request) {
     }
 
     // 2. Update Delivery Table
-    const updateData: { status: string; picked_up_at?: string } = { status };
+    let updateData: any = { status };
     if (status === 'picked_up') {
       updateData.picked_up_at = new Date().toISOString();
+    } else if (status === 'transfer') {
+      // Release agent lock and push back to public available pool
+      updateData = {
+        status: 'pending',
+        agent_id: null,
+        agent_name: null,
+        agent_phone: null,
+      };
     }
 
     const { error: deliveryError } = await supabaseAdmin
@@ -34,8 +42,8 @@ export async function POST(req: Request) {
 
     if (deliveryError) throw deliveryError;
 
-    // 3. Sync with Orders Table
-    if (delivery.order_id) {
+    // 3. Sync with Orders Table (only if not a transfer back to pool)
+    if (delivery.order_id && status !== 'transfer') {
        const orderStatus = status === 'picked_up' ? 'in_transit' : status;
        const orderUpdateData: { status: string; picked_up_at?: string; in_transit_at?: string } = { status: orderStatus };
        if (status === 'picked_up') {
@@ -46,7 +54,7 @@ export async function POST(req: Request) {
        await supabaseAdmin.from('orders').update(orderUpdateData).eq('id', delivery.order_id);
     }
 
-    // 4. Notify Customer & Vendor (if picked up)
+    // 4. Notify Customer & Vendor (if picked up) OR notify other agents (if transferred)
     if (status === 'picked_up' && delivery.orders) {
        const notifs = [
           {
@@ -63,6 +71,30 @@ export async function POST(req: Request) {
           }
        ];
        await supabaseAdmin.from('notifications').insert(notifs);
+    } else if (status === 'transfer' && delivery.orders) {
+       // Notify active agents in the university about the transferred order
+       const uniId = delivery.orders.university_id ?? delivery.orders.brands?.university_id;
+       if (uniId) {
+          const { data: agents } = await supabaseAdmin
+            .from('delivery_agents')
+            .select('id')
+            .eq('university_id', uniId)
+            .eq('is_active', true)
+            .neq('id', agentId);
+
+          if (agents && agents.length > 0) {
+             await supabaseAdmin.from('notifications').insert(
+                agents.map((a: { id: string }) => ({
+                   user_id: a.id,
+                   title: '📦 Order Transferred to Public Console',
+                   content: `An order at ${(delivery.orders as any).brands?.name || 'vendor'} has been transferred to public logistics and is ready to claim.`,
+                   link: '/dashboard/delivery',
+                   type: 'direct',
+                   is_read: false,
+                }))
+             );
+          }
+       }
     }
 
     return NextResponse.json({ success: true });
