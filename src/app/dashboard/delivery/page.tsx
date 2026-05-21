@@ -61,6 +61,7 @@ interface DeliveryRecord {
     university_id?: string;
     is_preorder?: boolean;
     product_id?: string;
+    variants_selected?: any;
     users?: { name: string; phone: string };
     brands?: {
       name: string;
@@ -69,7 +70,7 @@ interface DeliveryRecord {
       location_name?: string;
       whatsapp_number?: string;
     };
-    products?: { title: string; product_section?: string };
+    products?: { title: string; product_section?: string; location_availability?: string };
   };
 }
 
@@ -81,6 +82,37 @@ interface LocationGroup {
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+/**
+ * Extracts the most specific pickup location from variants selection, product setup,
+ * or vendor configuration.
+ */
+function getPickupLocation(delivery: DeliveryRecord): string {
+  // 1. Check variants_selected for a location-like key (e.g. "Location", "Pickup Point")
+  const variants = delivery.orders?.variants_selected;
+  if (variants && typeof variants === 'object') {
+    for (const [key, value] of Object.entries(variants)) {
+      const k = key.toLowerCase();
+      if (k.includes('location') || k.includes('pickup') || k.includes('point') || k.includes('place') || k.includes('where') || k.includes('station') || k.includes('spot')) {
+        if (value && typeof value === 'string' && value.trim()) {
+          return value.trim();
+        }
+      }
+    }
+  }
+
+  // 2. Check product availability location
+  if (delivery.orders?.products?.location_availability && delivery.orders.products.location_availability.trim()) {
+    return delivery.orders.products.location_availability.trim();
+  }
+
+  // 3. Fallback to brand's base location
+  if (delivery.orders?.brands?.location_name && delivery.orders.brands.location_name.trim()) {
+    return delivery.orders.brands.location_name.trim();
+  }
+
+  return 'General Campus';
+}
 
 /**
  * Normalises a location string down to a short fingerprint so that
@@ -106,9 +138,9 @@ function groupByLocation(deliveries: DeliveryRecord[]): LocationGroup[] {
   const map = new Map<string, LocationGroup>();
 
   for (const d of deliveries) {
-    const rawLoc = d.orders?.brands?.location_name ?? d.orders?.shipping_address;
+    const rawLoc = getPickupLocation(d);
     const key = normaliseLocation(rawLoc);
-    const label = d.orders?.brands?.location_name ?? 'Unknown Location';
+    const label = rawLoc;
     const vendorName = d.orders?.brands?.name ?? 'Vendor';
 
     if (!map.has(key)) {
@@ -120,6 +152,7 @@ function groupByLocation(deliveries: DeliveryRecord[]): LocationGroup[] {
   // Sort: most deliveries first (best batch opportunity)
   return Array.from(map.values()).sort((a, b) => b.deliveries.length - a.deliveries.length);
 }
+
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -184,16 +217,17 @@ export default function DeliveryDashboard() {
           university_id,
           is_preorder,
           product_id,
+          variants_selected,
           users:customer_id (name, phone),
           brands (name, latitude, longitude, location_name, whatsapp_number),
-          products:product_id (title, product_section)
+          products:product_id (title, product_section, location_availability)
         )
       `)
       .eq('agent_id', agentUserId)
       .neq('status', 'delivered')
       .order('created_at', { ascending: false });
 
-    // ── 2. Available queue — STRICTLY ready_for_pickup ───────────────────
+    // ── 2. Available queue — orders ready or ready_for_pickup ─────────────
     let availQuery = supabase
       .from('deliveries')
       .select(`
@@ -206,13 +240,13 @@ export default function DeliveryDashboard() {
           shipping_address,
           is_preorder,
           product_id,
+          variants_selected,
           brands (name, latitude, longitude, location_name, whatsapp_number),
-          products:product_id (title, product_section)
+          products:product_id (title, product_section, location_availability)
         )
       `)
       .is('agent_id', null)
-      .eq('status', 'pending')
-      .eq('orders.status', 'ready_for_pickup');
+      .in('orders.status', ['ready', 'ready_for_pickup']); // Either button marks it ready!
 
     if (universityId) {
       availQuery = availQuery.eq('orders.university_id', universityId);
@@ -221,20 +255,59 @@ export default function DeliveryDashboard() {
     const { data: availData } = await availQuery.order('created_at', { ascending: false });
 
     // ── 3. All known pickup locations for this university ────────────────
-    //    Pull from brands table — the canonical source of vendor locations.
-    const { data: locData } = await supabase
+    let brandLocQuery = supabase
       .from('brands')
-      .select('location_name, name')
-      .eq('university_id', universityId ?? '')
+      .select('location_name')
       .not('location_name', 'is', null);
 
-    const uniqueLocs: string[] = Array.from(
-      new Set(
-        (locData ?? [])
-          .map((b: any) => b.location_name as string)
-          .filter(Boolean)
-      )
-    ).sort();
+    let prodLocQuery = supabase
+      .from('products')
+      .select('location_availability')
+      .not('location_availability', 'is', null);
+
+    let orderVarQuery = supabase
+      .from('orders')
+      .select('variants_selected')
+      .not('variants_selected', 'is', null);
+
+    if (universityId) {
+      brandLocQuery = brandLocQuery.eq('university_id', universityId);
+      prodLocQuery = prodLocQuery.eq('university_id', universityId);
+      orderVarQuery = orderVarQuery.eq('university_id', universityId);
+    }
+
+    const [brandLocRes, prodLocRes, orderVarRes] = await Promise.all([
+      brandLocQuery,
+      prodLocQuery,
+      orderVarQuery,
+    ]);
+
+    const uniqueLocsSet = new Set<string>();
+
+    brandLocRes.data?.forEach((b: any) => {
+      if (b.location_name?.trim()) uniqueLocsSet.add(b.location_name.trim());
+    });
+
+    prodLocRes.data?.forEach((p: any) => {
+      if (p.location_availability?.trim()) uniqueLocsSet.add(p.location_availability.trim());
+    });
+
+    orderVarRes.data?.forEach((o: any) => {
+      const vars = o.variants_selected;
+      if (vars && typeof vars === 'object') {
+        for (const [key, value] of Object.entries(vars)) {
+          const k = key.toLowerCase();
+          if (k.includes('location') || k.includes('pickup') || k.includes('point') || k.includes('place') || k.includes('where')) {
+            if (value && typeof value === 'string' && value.trim()) {
+              uniqueLocsSet.add(value.trim());
+            }
+          }
+        }
+      }
+    });
+
+    const uniqueLocs = Array.from(uniqueLocsSet).sort();
+
 
     // ── 4. Wallet ────────────────────────────────────────────────────────
     const { data: walletData } = await supabase

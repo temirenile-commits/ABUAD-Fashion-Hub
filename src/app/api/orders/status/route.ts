@@ -81,8 +81,8 @@ export async function POST(req: Request) {
     if (updateError) throw updateError;
 
     // 3. Sync Delivery Visibility
-    // Only expose to delivery agents queue when vendor explicitly marks ready_for_pickup
-    if (status === 'ready_for_pickup' && order.delivery_method === 'platform') {
+    // Only expose to delivery agents queue when vendor explicitly marks ready or ready_for_pickup
+    if (['ready', 'ready_for_pickup'].includes(status) && order.delivery_method === 'platform') {
       await supabaseAdmin
         .from('deliveries')
         .update({ status: 'pending' })
@@ -116,6 +116,7 @@ export async function POST(req: Request) {
         console.error('[NOTIFY-AGENTS] Failed to notify delivery agents:', notifErr);
       }
     }
+
 
     // 4. AUTO PAYOUT RECORD: Create financial record when order is delivered
     if (status === 'delivered') {
