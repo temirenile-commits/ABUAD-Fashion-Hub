@@ -168,9 +168,16 @@ export async function POST(req: Request) {
       const vendorScope = brandData?.delivery_scope || 'in-school';
       const vendorSystem = brandData?.assigned_delivery_system || 'platform';
       
-      const liveCommission = Number(liveProduct?.commission_price || 0);
+      let activeLiveCommission = Number(liveProduct?.commission_price || 0);
+      let activeStandardCommissionRate = dynamicCommissionRate;
+
+      if (liveProduct?.product_section === 'delicacies' && (item.quantity || 1) > 4) {
+        activeLiveCommission = activeLiveCommission / 2;
+        activeStandardCommissionRate = activeStandardCommissionRate / 2;
+      }
+
       const liveDeliveryRate = Number(liveProduct?.delivery_rate || 0);
-      const effectiveItemPrice = originalPrice + liveCommission + liveDeliveryRate;
+      const effectiveItemPrice = originalPrice + activeLiveCommission + liveDeliveryRate;
 
       const baseItemSubtotal = effectiveItemPrice * (item.quantity || 1);
       
@@ -202,13 +209,13 @@ export async function POST(req: Request) {
       
       // Platform commission logic
       // Vendor Earning = (Original Price * quantity) - (Standard Commission on Original Price)
-      const standardCommission = (originalPrice * (item.quantity || 1)) * dynamicCommissionRate;
+      const standardCommission = (originalPrice * (item.quantity || 1)) * activeStandardCommissionRate;
       
       // SUBSIDY FUNDING LOGIC
       // If the vendor created the promo code, they fund it (reduced earning)
       // If admin created it, admin funds it (reduced commission)
       let vendorEarning = (originalPrice * (item.quantity || 1)) - standardCommission;
-      let adminCommission = standardCommission + (liveCommission + liveDeliveryRate) * (item.quantity || 1);
+      let adminCommission = standardCommission + (activeLiveCommission + liveDeliveryRate) * (item.quantity || 1);
 
       if (promoData?.creator_type === 'vendor') {
           // Vendor funds the discount
