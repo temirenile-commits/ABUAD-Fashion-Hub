@@ -805,6 +805,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, message: 'Financial settings updated for this product.' });
   }
 
+  if (action === 'bulk_update_products_finances') {
+    const { updates } = body;
+    if (!Array.isArray(updates)) {
+      return NextResponse.json({ error: 'Updates must be an array' }, { status: 400 });
+    }
+
+    for (const update of updates) {
+      const { productId, commission_price, delivery_rate, payment_system } = update;
+      const updatePayload: Record<string, any> = {};
+      if (commission_price !== undefined) updatePayload.commission_price = Number(commission_price);
+      if (delivery_rate !== undefined) updatePayload.delivery_rate = Number(delivery_rate);
+      if (payment_system !== undefined) updatePayload.payment_system = payment_system;
+
+      if (Object.keys(updatePayload).length > 0) {
+        const { error } = await supabaseAdmin
+          .from('products')
+          .update(updatePayload)
+          .eq('id', productId);
+        if (error) {
+          console.error('[BulkUpdateFinances]', error.message);
+          return NextResponse.json({ error: `Failed to update product ${productId}: ${error.message}` }, { status: 500 });
+        }
+      }
+    }
+    return NextResponse.json({ success: true, message: 'Bulk financial updates saved successfully.' });
+  }
+
   if (action === 'delete_user') {
     // ─── SOFT DELETE: Move user to Recycle Bin ────────────────────────────────
     const { userId, reason } = body;

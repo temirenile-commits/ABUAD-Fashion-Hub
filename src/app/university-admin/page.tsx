@@ -8,11 +8,11 @@ import styles from "./university-admin.module.css";
 import {
   LayoutDashboard, Store, Users, ShoppingCart, Star, Bell,
   BarChart3, Globe, Truck, Shield, LogOut, RefreshCw, Search,
-  CheckCircle, XCircle, Loader2, AlertTriangle, Plus, UserPlus, Trash2, Tag, Settings, ShoppingBag
+  CheckCircle, XCircle, Loader2, AlertTriangle, Plus, UserPlus, Trash2, Tag, Settings, ShoppingBag, Coffee
 } from "lucide-react";
 import PremiumChart from "@/components/PremiumChart"; 
 
-type Tab = "overview" | "vendors" | "customers" | "orders" | "reviews" | "notices" | "analytics" | "insights" | "fleet" | "team" | "catalog" | "merchandising" | "settings" | "promos";
+type Tab = "overview" | "vendors" | "customers" | "orders" | "reviews" | "notices" | "analytics" | "insights" | "fleet" | "team" | "catalog" | "merchandising" | "settings" | "promos" | "cafeterias";
 
 async function uaFetch(path: string, opts: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -45,6 +45,9 @@ export default function UniversityAdminPage() {
   const [insights, setInsights] = useState<any[]>([]);
   const [team, setTeam] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [cafeterias, setCafeterias] = useState<any[]>([]);
+  const [showCafeteriaModal, setShowCafeteriaModal] = useState(false);
+  const [cafeteriaForm, setCafeteriaForm] = useState({ id: "", name: "", description: "", is_active: true });
   const [staffSearch, setStaffSearch] = useState("");
   const [platformSettings, setPlatformSettings] = useState<any>({});
 
@@ -127,7 +130,7 @@ export default function UniversityAdminPage() {
   const fetchAll = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const actions = ["stats","vendors","customers","orders","reviews","riders","analytics","cross_university_insights","team","products", "merchandising", "promo_codes", "deleted_users"];
+      const actions = ["stats","vendors","customers","orders","reviews","riders","analytics","cross_university_insights","team","products", "merchandising", "promo_codes", "deleted_users", "cafeterias"];
       const results = await Promise.allSettled(actions.map(async a => {
         const r = await uaFetch(`/api/university-admin?action=${a}`);
         if (!r.ok) {
@@ -153,6 +156,7 @@ export default function UniversityAdminPage() {
       setHomepageSections(g(10).sections||[]);
       setPromoCodes(g(11).promoCodes||[]);
       setDeletedUsers(g(12).deletedUsers||[]);
+      setCafeterias(g(13).cafeterias||[]);
 
       // Identify most volatile university (example logic: highest growth or activity)
       const insightsData = g(7).insights || [];
@@ -203,7 +207,7 @@ export default function UniversityAdminPage() {
   const pendingVendors = vendors.filter(v => v.verification_status==="pending");
 
   const TABS: [Tab, string, any][] = [
-    ["overview","Overview",LayoutDashboard],["vendors","Vendors",Store],["catalog","Catalog",ShoppingCart],["customers","Customers",Users],
+    ["overview","Overview",LayoutDashboard],["vendors","Vendors",Store],["cafeterias","Cafeterias",Coffee],["catalog","Catalog",ShoppingCart],["customers","Customers",Users],
     ["orders","Orders",ShoppingCart],["reviews","Reviews",Star],["notices","Notices",Bell],["merchandising", "Merchandising", Tag],
     ["promos", "Promo Codes", Tag],
     ["analytics","Analytics",BarChart3],["insights","Insights",Globe],["fleet","Fleet",Truck],["team","My Team",Shield], ["settings", "Settings", Settings],
@@ -215,9 +219,9 @@ export default function UniversityAdminPage() {
     return userCtx?.admin_permissions?.includes(tabId);
   };
 
-  const visibleManagement = TABS.slice(0,5).filter(t => hasAccess(t[0]));
-  const visibleCommunication = TABS.slice(5,6).filter(t => hasAccess(t[0]));
-  const visibleOps = TABS.slice(6).filter(t => hasAccess(t[0]));
+  const visibleManagement = TABS.slice(0,6).filter(t => hasAccess(t[0]));
+  const visibleCommunication = TABS.slice(6,7).filter(t => hasAccess(t[0]));
+  const visibleOps = TABS.slice(7).filter(t => hasAccess(t[0]));
 
   return (
     <div className={styles.container}>
@@ -1175,7 +1179,7 @@ export default function UniversityAdminPage() {
                     <div style={{ padding: '1.5rem' }}>
                       <Link 
                         href="/rankings" 
-                               className={styles.btnPrimary} 
+                        className={styles.btnPrimary} 
                         style={{ background: 'linear-gradient(135deg, #eb0c7a 0%, #7c3aed 100%)', width: 'fit-content' }}
                       >
                         🏆 Open University Leaderboard
@@ -1184,10 +1188,136 @@ export default function UniversityAdminPage() {
                   </div>
                 </div>
               )}
+
+              {tab === "cafeterias" && (
+                <div className={styles.sectionCard}>
+                  <div className={styles.sectionHeader}>
+                    <div>
+                      <h2>Cafeterias & Food Courts</h2>
+                      <p>Add and manage active dining areas for delicacies vendors on your campus.</p>
+                    </div>
+                    <button className={styles.btnPrimary} onClick={() => {
+                      setCafeteriaForm({ id: "", name: "", description: "", is_active: true });
+                      setShowCafeteriaModal(true);
+                    }}>
+                      <Plus size={15} /> New Cafeteria
+                    </button>
+                  </div>
+
+                  <div className={styles.tableWrap}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>Cafeteria Name</th>
+                          <th>Description</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filter(cafeterias, ["name", "description"]).map(c => (
+                          <tr key={c.id}>
+                            <td>
+                              <div style={{ fontWeight: 700 }}>{c.name}</div>
+                            </td>
+                            <td>
+                              <div className={styles.subText}>{c.description || "No description"}</div>
+                            </td>
+                            <td>
+                              <span className={`${styles.badge} ${c.is_active ? styles.badgeActive : styles.badgeOffline}`}>
+                                {c.is_active ? "Active" : "Inactive"}
+                              </span>
+                            </td>
+                            <td>
+                              <div className={styles.actionRow}>
+                                <button className={styles.btnSm} title="Toggle Status" onClick={() => action("toggle_cafeteria", { id: c.id, is_active: !c.is_active })}>
+                                  {c.is_active ? <XCircle size={13}/> : <CheckCircle size={13}/>}
+                                </button>
+                                <button className={styles.btnSm} title="Edit" onClick={() => {
+                                  setCafeteriaForm({ id: c.id, name: c.name, description: c.description || "", is_active: c.is_active });
+                                  setShowCafeteriaModal(true);
+                                }}>
+                                  <Settings size={13} />
+                                </button>
+                                <button className={`${styles.btnSm} ${styles.btnDelete}`} title="Delete" onClick={() => {
+                                  if (confirm("Delete this cafeteria? Edible vendors will no longer be able to select it.")) {
+                                    action("delete_cafeteria", { id: c.id });
+                                  }
+                                }}>
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {cafeterias.length === 0 && (
+                          <tr>
+                            <td colSpan={4} style={{ textAlign: "center", color: "#4a5568", padding: "2rem" }}>
+                              No cafeterias configured for this campus yet. Click &quot;New Cafeteria&quot; to add one.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
       </main>
+      {showCafeteriaModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowCafeteriaModal(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3>{cafeteriaForm.id ? 'Edit Cafeteria' : 'Add Cafeteria'}</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div>
+                <label className={styles.formLabel}>Cafeteria Name</label>
+                <input
+                  type="text"
+                  className={styles.formInput}
+                  placeholder="e.g. Sub Dome / Abiola Food Court"
+                  value={cafeteriaForm.name}
+                  onChange={e => setCafeteriaForm({ ...cafeteriaForm, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className={styles.formLabel}>Description</label>
+                <textarea
+                  className={styles.formInput}
+                  style={{ height: '80px', resize: 'none', padding: '0.5rem' }}
+                  placeholder="e.g. Near the main lecture theater, serving hot meals."
+                  value={cafeteriaForm.description}
+                  onChange={e => setCafeteriaForm({ ...cafeteriaForm, description: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className={styles.formLabel} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={cafeteriaForm.is_active}
+                    onChange={e => setCafeteriaForm({ ...cafeteriaForm, is_active: e.target.checked })}
+                  />
+                  Active & Available for Vendors
+                </label>
+              </div>
+              <div style={{ display: "flex", gap: "0.75rem" }}>
+                <button
+                  className={styles.btnPrimary}
+                  disabled={!cafeteriaForm.name}
+                  onClick={async () => {
+                    await action("upsert_cafeteria", cafeteriaForm);
+                    setShowCafeteriaModal(false);
+                  }}
+                >
+                  {cafeteriaForm.id ? 'Save Changes' : 'Create Cafeteria'}
+                </button>
+                <button className={styles.btnSm} onClick={() => setShowCafeteriaModal(false)}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {showAddStaff&&(
         <div className={styles.modalOverlay} onClick={()=>setShowAddStaff(false)}>
           <div className={styles.modal} onClick={e=>e.stopPropagation()}>

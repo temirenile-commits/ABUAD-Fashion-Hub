@@ -33,6 +33,7 @@ export default function VendorDashboard() {
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [subscriptionRates, setSubscriptionRates] = useState<any[]>([]);
+  const [cafeterias, setCafeterias] = useState<any[]>([]);
   const [boostRates, setBoostRates] = useState<any[]>([]);
   const [activationFee, setActivationFee] = useState(2000);
   const [loading, setLoading] = useState(true);
@@ -141,7 +142,8 @@ export default function VendorDashboard() {
     isPreorder: false,
     preorderArrivalDate: '',
     location_availability: '',
-    delicacy_category: 'snacks'
+    delicacy_category: 'snacks',
+    cafeteria_ids: [] as string[]
   });
 
   const [isEditingName, setIsEditingName] = useState(false);
@@ -343,6 +345,14 @@ export default function VendorDashboard() {
         setDelicaciesCreditPrice(delicaciesCreditPriceVal);
 
         if (brandData.university_id) {
+            const { data: cafData } = await supabase
+              .from('cafeterias')
+              .select('*')
+              .eq('university_id', brandData.university_id)
+              .eq('is_active', true)
+              .order('name', { ascending: true });
+            setCafeterias(cafData || []);
+
             // University Vendor Settings Overlay
             const uniConfig = settingsData.find(s => s.key === `uni_config_${brandData.university_id}`)?.value || {};
             
@@ -677,7 +687,8 @@ export default function VendorDashboard() {
             is_draft: newProduct.isDraft,
             is_preorder: newProduct.isPreorder,
             preorder_arrival_date: newProduct.isPreorder && newProduct.preorderArrivalDate ? new Date(newProduct.preorderArrivalDate).toISOString() : null,
-            location_availability: newProduct.location_availability
+            location_availability: newProduct.location_availability,
+            cafeteria_ids: newProduct.cafeteria_ids || []
         };
         let { error } = await supabase
           .from('products')
@@ -715,7 +726,7 @@ export default function VendorDashboard() {
           setEditingProduct(null);
           setNewProduct({
             title: '', description: '', price: '', originalPrice: '', category: 'snacks',
-            stockCount: '10', mediaUrls: [], imageUrl: '', videoUrl: '', variants: [], isDraft: false, visibility_type: 'university', isPreorder: false, preorderArrivalDate: '', location_availability: '', delicacy_category: 'snacks'
+            stockCount: '10', mediaUrls: [], imageUrl: '', videoUrl: '', variants: [], isDraft: false, visibility_type: 'university', isPreorder: false, preorderArrivalDate: '', location_availability: '', delicacy_category: 'snacks', cafeteria_ids: []
           });
           alert('Product updated successfully!');
         } else {
@@ -758,7 +769,8 @@ export default function VendorDashboard() {
             isPreorder: false,
             preorderArrivalDate: '',
             location_availability: '',
-            delicacy_category: 'snacks'
+            delicacy_category: 'snacks',
+            cafeteria_ids: []
           });
           alert('Product listed successfully!');
         } else {
@@ -2524,6 +2536,43 @@ export default function VendorDashboard() {
                     <p className={styles.formHint}>Let customers know where they can get this or where you deliver to.</p>
                   </div>
 
+                  {cafeterias.length > 0 && (
+                    <div className={styles.inputGroup}>
+                      <label>🏪 Available at Cafeterias</label>
+                      <p className={styles.formHint} style={{ marginBottom: '0.5rem' }}>Select which campus cafeterias serve this dish. Customers can browse food by cafeteria.</p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {cafeterias.map(c => {
+                          const isSelected = newProduct.cafeteria_ids.includes(c.id);
+                          return (
+                            <label
+                              key={c.id}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: '6px',
+                                padding: '8px 14px', borderRadius: '10px', cursor: 'pointer',
+                                background: isSelected ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-200)',
+                                border: `1.5px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
+                                fontSize: '0.82rem', fontWeight: 500, transition: 'all 0.2s',
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {
+                                  const next = isSelected
+                                    ? newProduct.cafeteria_ids.filter((id: string) => id !== c.id)
+                                    : [...newProduct.cafeteria_ids, c.id];
+                                  setNewProduct({ ...newProduct, cafeteria_ids: next });
+                                }}
+                                style={{ accentColor: 'var(--accent)' }}
+                              />
+                              {c.name}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   <div className={styles.inputGroup}>
                     <label>Product Gallery (Vivid Photos)</label>
                     <div className={styles.vividMediaGrid}>
@@ -2610,7 +2659,8 @@ export default function VendorDashboard() {
                           category: p.category, stockCount: p.stock_count.toString(), mediaUrls: p.media_urls || [],
                           imageUrl: '', videoUrl: '', visibility_type: (p.visibility_type as string) || 'university',
                           variants: (Array.isArray(p.variants) ? p.variants : []) as any[], isDraft: !!p.is_draft, isPreorder: !!p.is_preorder, preorderArrivalDate: (p.preorder_arrival_date as string)?.slice(0, 16) || '',
-                          delicacy_category: ['snacks', 'small_chops', 'pastries_baked', 'drinks_beverages', 'provisions', 'combo_packages', 'frozen_chilled', 'seasonal_trending', 'other'].includes(p.delicacy_category as string) ? (p.delicacy_category as string) : 'other', location_availability: (p.location_availability as string) || 'Whole University'
+                          delicacy_category: ['snacks', 'small_chops', 'pastries_baked', 'drinks_beverages', 'provisions', 'combo_packages', 'frozen_chilled', 'seasonal_trending', 'other'].includes(p.delicacy_category as string) ? (p.delicacy_category as string) : 'other', location_availability: (p.location_availability as string) || 'Whole University',
+                          cafeteria_ids: (p.cafeteria_ids as any) || []
                         });
                         setIsAddingProduct(true);
                         window.scrollTo({ top: 0, behavior: 'smooth' });

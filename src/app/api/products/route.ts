@@ -35,6 +35,7 @@ export async function POST(req: Request) {
       location_availability,
       commission_rate,
       delivery_rate,
+      cafeteria_ids,
     } = await req.json();
 
     if (!title || !price || !brandId) {
@@ -109,6 +110,7 @@ export async function POST(req: Request) {
       location_availability: location_availability || null,
       commission_rate: commission_rate != null ? Number(commission_rate) : null,
       delivery_rate: delivery_rate != null ? Number(delivery_rate) : null,
+      cafeteria_ids: cafeteria_ids || [],
     };
 
     // 1. Create the Product record
@@ -177,6 +179,7 @@ export async function PATCH(req: Request) {
       location_availability,
       commission_rate,
       delivery_rate,
+      cafeteria_ids,
     } = await req.json();
 
     if (!productId) {
@@ -217,6 +220,7 @@ export async function PATCH(req: Request) {
     if (location_availability !== undefined) updatePayload.location_availability = location_availability;
     if (commission_rate !== undefined) updatePayload.commission_rate = commission_rate != null ? Number(commission_rate) : null;
     if (delivery_rate !== undefined) updatePayload.delivery_rate = delivery_rate != null ? Number(delivery_rate) : null;
+    if (cafeteria_ids !== undefined) updatePayload.cafeteria_ids = cafeteria_ids || [];
 
     let { error: updateError } = await supabaseAdmin.from('products').update(updatePayload).eq('id', productId);
 

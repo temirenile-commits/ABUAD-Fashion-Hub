@@ -374,8 +374,18 @@ export async function GET(req: NextRequest) {
       .select('value')
       .eq('key', `uni_config_${universityId}`)
       .single();
-    
     return NextResponse.json({ config: config?.value || {} });
+  }
+  
+  if (action === 'cafeterias') {
+    const { data, error } = await supabaseAdmin
+      .from('cafeterias')
+      .select('*')
+      .eq('university_id', universityId)
+      .order('name', { ascending: true });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ cafeterias: data || [] });
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
@@ -963,6 +973,46 @@ export async function POST(req: NextRequest) {
     }
 
     const { error } = await supabaseAdmin.from('promo_codes').delete().eq('id', codeId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'upsert_cafeteria') {
+    const { id, name, description, is_active } = body;
+    if (!name) return NextResponse.json({ error: 'Cafeteria name is required' }, { status: 400 });
+
+    const record = {
+      name,
+      description: description || null,
+      is_active: is_active ?? true,
+      university_id: universityId
+    };
+
+    if (id) {
+      // Ensure scope
+      const { data: exist } = await supabaseAdmin.from('cafeterias').select('university_id').eq('id', id).single();
+      if (!exist || exist.university_id !== universityId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const { error } = await supabaseAdmin.from('cafeterias').update(record).eq('id', id);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    } else {
+      const { error } = await supabaseAdmin.from('cafeterias').insert(record);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'delete_cafeteria') {
+    const { id } = body;
+    const { error } = await supabaseAdmin.from('cafeterias').delete().eq('id', id).eq('university_id', universityId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'toggle_cafeteria') {
+    const { id, is_active } = body;
+    const { error } = await supabaseAdmin.from('cafeterias').update({ is_active }).eq('id', id).eq('university_id', universityId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }

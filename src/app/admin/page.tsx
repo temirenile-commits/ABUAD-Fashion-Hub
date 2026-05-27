@@ -13,7 +13,7 @@ import styles from './admin.module.css';
 import PremiumChart from '@/components/PremiumChart'; 
 import { useToast } from '@/context/ToastContext';
 
-type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds' | 'preorders' | 'delicacies' | 'manual_payments' | 'vendor_orders';
+type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds' | 'preorders' | 'delicacies' | 'normal_products' | 'manual_payments' | 'vendor_orders';
 
 interface University {
   id: string;
@@ -268,6 +268,13 @@ export default function AdminDashboard() {
   const [payoutRecordModal, setPayoutRecordModal] = useState<any | null>(null);
   const [payoutTransferRef, setPayoutTransferRef] = useState('');
   const [payoutStatusFilter, setPayoutStatusFilter] = useState<'all' | 'pending' | 'transferred' | 'confirmed'>('all');
+  
+  // Financial drafts states for bulk saving
+  const [delicacyDrafts, setDelicacyDrafts] = useState<Record<string, { commission_price?: number; delivery_rate?: number; payment_system?: string }>>({});
+  const [savingDelicacies, setSavingDelicacies] = useState(false);
+  const [normalProductDrafts, setNormalProductDrafts] = useState<Record<string, { commission_price?: number; delivery_rate?: number; payment_system?: string }>>({});
+  const [savingNormal, setSavingNormal] = useState(false);
+
   const [confirmingRecord, setConfirmingRecord] = useState('');
   const [marketData, setMarketData] = useState<MarketData[]>([]);
   const [deliveryAgents, setDeliveryAgents] = useState<DeliveryAgent[]>([]);
@@ -525,6 +532,50 @@ export default function AdminDashboard() {
     return null;
   };
 
+  const submitDelicacyFinancials = async () => {
+    const updates = Object.entries(delicacyDrafts).map(([productId, vals]) => ({
+      productId,
+      commission_price: vals.commission_price,
+      delivery_rate: vals.delivery_rate,
+      payment_system: vals.payment_system
+    }));
+
+    if (updates.length === 0) {
+      addToast('No changes to save.', 'info');
+      return;
+    }
+
+    setSavingDelicacies(true);
+    const res = await adminAction('bulk_update_products_finances', { updates });
+    setSavingDelicacies(false);
+    if (res && res.success) {
+      setDelicacyDrafts({});
+      addToast('All delicacy changes saved successfully!', 'success');
+    }
+  };
+
+  const submitNormalFinancials = async () => {
+    const updates = Object.entries(normalProductDrafts).map(([productId, vals]) => ({
+      productId,
+      commission_price: vals.commission_price,
+      delivery_rate: vals.delivery_rate,
+      payment_system: vals.payment_system
+    }));
+
+    if (updates.length === 0) {
+      addToast('No changes to save.', 'info');
+      return;
+    }
+
+    setSavingNormal(true);
+    const res = await adminAction('bulk_update_products_finances', { updates });
+    setSavingNormal(false);
+    if (res && res.success) {
+      setNormalProductDrafts({});
+      addToast('All normal product changes saved successfully!', 'success');
+    }
+  };
+
   const handleConfirmPayout = async () => {
     if (!confirmPayoutModal) return;
     if (!proofFile || !transferRef) return addToast('Please attach proof and enter reference', 'error');
@@ -625,6 +676,7 @@ export default function AdminDashboard() {
             ['delivery_agents', 'Fleet ', Activity],
             ['universities', 'Universities', MapPin],
             ['delicacies', 'Delicacies', UtensilsCrossed],
+            ['normal_products', 'Normal Products', TrendingUp],
             ['manual_payments', 'Manual Transfers', ShieldCheck],
           ] as [Tab, string, React.ElementType][]).map(([id, label, Icon]) => (
             <button
@@ -2379,7 +2431,7 @@ export default function AdminDashboard() {
                     </button>
                   </div>
                 </div>
-                <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '8px', marginBottom: '1.5rem' }}>
                   <table className={styles.table}>
                     <thead>
                       <tr>
@@ -2389,12 +2441,16 @@ export default function AdminDashboard() {
                         <th>Delivery Rate</th>
                         <th>Customer Pays</th>
                         <th>Checkout System</th>
-                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {products.filter(p => p.product_section === 'delicacies').map(p => {
-                         const customerPrice = Number(p.price) + Number(p.commission_price || 0) + Number(p.delivery_rate || 0);
+                         const draft = delicacyDrafts[p.id] || {};
+                         const commVal = draft.commission_price !== undefined ? draft.commission_price : (p.commission_price || 0);
+                         const delivVal = draft.delivery_rate !== undefined ? draft.delivery_rate : (p.delivery_rate || 0);
+                         const paySystem = draft.payment_system !== undefined ? draft.payment_system : (p.payment_system || 'paystack');
+                         const customerPrice = Number(p.price) + commVal + delivVal;
+
                          return (
                            <tr key={p.id}>
                              <td>
@@ -2414,12 +2470,14 @@ export default function AdminDashboard() {
                                    type="number" 
                                    className={styles.input} 
                                    style={{ width: '100px', padding: '4px 8px', height: '32px' }}
-                                   defaultValue={p.commission_price || 0}
-                                   onBlur={(e) => {
-                                     const val = Number(e.target.value);
-                                     if (val !== p.commission_price) {
-                                       adminAction('update_product_finances', { productId: p.id, commission_price: val, delivery_rate: p.delivery_rate || 0 });
-                                     }
+                                   value={commVal === 0 ? '' : commVal}
+                                   placeholder="0"
+                                   onChange={(e) => {
+                                     const val = e.target.value === '' ? 0 : Number(e.target.value);
+                                     setDelicacyDrafts({
+                                       ...delicacyDrafts,
+                                       [p.id]: { ...(delicacyDrafts[p.id] || {}), commission_price: val }
+                                     });
                                    }}
                                  />
                                </div>
@@ -2431,12 +2489,14 @@ export default function AdminDashboard() {
                                    type="number" 
                                    className={styles.input} 
                                    style={{ width: '100px', padding: '4px 8px', height: '32px' }}
-                                   defaultValue={p.delivery_rate || 0}
-                                   onBlur={(e) => {
-                                     const val = Number(e.target.value);
-                                     if (val !== p.delivery_rate) {
-                                       adminAction('update_product_finances', { productId: p.id, commission_price: p.commission_price || 0, delivery_rate: val });
-                                     }
+                                   value={delivVal === 0 ? '' : delivVal}
+                                   placeholder="0"
+                                   onChange={(e) => {
+                                     const val = e.target.value === '' ? 0 : Number(e.target.value);
+                                     setDelicacyDrafts({
+                                       ...delicacyDrafts,
+                                       [p.id]: { ...(delicacyDrafts[p.id] || {}), delivery_rate: val }
+                                     });
                                    }}
                                  />
                                </div>
@@ -2448,17 +2508,17 @@ export default function AdminDashboard() {
                                <select
                                  className="form-input"
                                  style={{ fontSize: '0.75rem', padding: '0.2rem', height: 'auto', width: '130px', background: 'var(--bg-300)', color: 'var(--text-100)', border: '1px solid var(--border)' }}
-                                 value={p.payment_system || 'paystack'}
-                                 onChange={(e) => adminAction('update_product_payment_system', { productId: p.id, paymentSystem: e.target.value })}
+                                 value={paySystem}
+                                 onChange={(e) => {
+                                   setDelicacyDrafts({
+                                     ...delicacyDrafts,
+                                     [p.id]: { ...(delicacyDrafts[p.id] || {}), payment_system: e.target.value }
+                                   });
+                                 }}
                                >
                                  <option value="paystack">💳 Paystack</option>
                                  <option value="manual">🏦 Manual GTB/Acc</option>
                                </select>
-                             </td>
-                             <td>
-                               <button className="btn btn-ghost btn-sm" onClick={() => addToast('Auto-saves on change', 'info')}>
-                                 <RefreshCw size={14} />
-                               </button>
                              </td>
                            </tr>
                          );
@@ -2469,6 +2529,153 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 </div>
+
+                {Object.keys(delicacyDrafts).length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+                    <button 
+                      className="btn btn-ghost" 
+                      onClick={() => setDelicacyDrafts({})}
+                      disabled={savingDelicacies}
+                    >
+                      Discard
+                    </button>
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={submitDelicacyFinancials}
+                      disabled={savingDelicacies}
+                    >
+                      {savingDelicacies ? 'Saving Changes...' : '💾 Save All Changes'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'normal_products' && (
+              <div className={styles.sectionCard}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                  <div>
+                    <h2>Normal Products Financials Management</h2>
+                    <p className={styles.subText}>Configure commission and delivery rates for general marketplace products (Fashion, Accessories, Provisions, etc.).</p>
+                  </div>
+                </div>
+                <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '8px', marginBottom: '1.5rem' }}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>Base Price (Vendor)</th>
+                        <th>Commission (Admin)</th>
+                        <th>Delivery Rate</th>
+                        <th>Customer Pays</th>
+                        <th>Checkout System</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.filter(p => p.product_section !== 'delicacies').map(p => {
+                         const draft = normalProductDrafts[p.id] || {};
+                         const commVal = draft.commission_price !== undefined ? draft.commission_price : (p.commission_price || 0);
+                         const delivVal = draft.delivery_rate !== undefined ? draft.delivery_rate : (p.delivery_rate || 0);
+                         const paySystem = draft.payment_system !== undefined ? draft.payment_system : (p.payment_system || 'paystack');
+                         const customerPrice = Number(p.price) + commVal + delivVal;
+
+                         return (
+                           <tr key={p.id}>
+                             <td>
+                               <div className={styles.brandCell}>
+                                 <Image src={p.image_url || p.media_urls?.[0] || '/logo.png'} alt="" width={32} height={32} className={styles.tableLogo} />
+                                 <div>
+                                   <div style={{ fontWeight: 600 }}>{p.title}</div>
+                                   <div className={styles.subText} style={{ fontSize: '0.7rem' }}>By {p.brands?.name}</div>
+                                 </div>
+                               </div>
+                             </td>
+                             <td>₦{Number(p.price).toLocaleString()}</td>
+                             <td>
+                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-400)' }}>₦</span>
+                                 <input 
+                                   type="number" 
+                                   className={styles.input} 
+                                   style={{ width: '100px', padding: '4px 8px', height: '32px' }}
+                                   value={commVal === 0 ? '' : commVal}
+                                   placeholder="0"
+                                   onChange={(e) => {
+                                     const val = e.target.value === '' ? 0 : Number(e.target.value);
+                                     setNormalProductDrafts({
+                                       ...normalProductDrafts,
+                                       [p.id]: { ...(normalProductDrafts[p.id] || {}), commission_price: val }
+                                     });
+                                   }}
+                                 />
+                               </div>
+                             </td>
+                             <td>
+                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-400)' }}>₦</span>
+                                 <input 
+                                   type="number" 
+                                   className={styles.input} 
+                                   style={{ width: '100px', padding: '4px 8px', height: '32px' }}
+                                   value={delivVal === 0 ? '' : delivVal}
+                                   placeholder="0"
+                                   onChange={(e) => {
+                                     const val = e.target.value === '' ? 0 : Number(e.target.value);
+                                     setNormalProductDrafts({
+                                       ...normalProductDrafts,
+                                       [p.id]: { ...(normalProductDrafts[p.id] || {}), delivery_rate: val }
+                                     });
+                                   }}
+                                 />
+                               </div>
+                             </td>
+                             <td style={{ fontWeight: 800, color: 'var(--primary)' }}>
+                               ₦{customerPrice.toLocaleString()}
+                             </td>
+                             <td>
+                               <select
+                                 className="form-input"
+                                 style={{ fontSize: '0.75rem', padding: '0.2rem', height: 'auto', width: '130px', background: 'var(--bg-300)', color: 'var(--text-100)', border: '1px solid var(--border)' }}
+                                 value={paySystem}
+                                 onChange={(e) => {
+                                   setNormalProductDrafts({
+                                     ...normalProductDrafts,
+                                     [p.id]: { ...(normalProductDrafts[p.id] || {}), payment_system: e.target.value }
+                                   });
+                                 }}
+                               >
+                                 <option value="paystack">💳 Paystack</option>
+                                 <option value="manual">🏦 Manual GTB/Acc</option>
+                               </select>
+                             </td>
+                           </tr>
+                         );
+                      })}
+                      {products.filter(p => p.product_section !== 'delicacies').length === 0 && (
+                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>No general marketplace products found in the catalog.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {Object.keys(normalProductDrafts).length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+                    <button 
+                      className="btn btn-ghost" 
+                      onClick={() => setNormalProductDrafts({})}
+                      disabled={savingNormal}
+                    >
+                      Discard
+                    </button>
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={submitNormalFinancials}
+                      disabled={savingNormal}
+                    >
+                      {savingNormal ? 'Saving Changes...' : '💾 Save All Changes'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

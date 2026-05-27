@@ -26,6 +26,7 @@ interface DelicacyProduct {
   delicacy_category: string;
   available_from?: string;
   location_availability?: string;
+  cafeteria_ids?: string[];
   brands: any; // Can be object or array depending on join
 }
 
@@ -57,10 +58,17 @@ export default function DelicaciesPage() {
   const [billboardIdx, setBillboardIdx] = useState(0);
   void billboardIdx; void setBillboardIdx; // Used by billboard auto-rotation below
 
+  // Cafeteria filter state
+  const [cafeterias, setCafeterias] = useState<any[]>([]);
+  const [selectedCafeteria, setSelectedCafeteria] = useState<string | null>(null);
+
   // Advanced Filters
   const [statusFilter, setStatusFilter] = useState<string>('all'); // all, available, preorder, top_rated
   const [useLocationFilter, setUseLocationFilter] = useState(false);
-  const priceRange: [number, number] = [0, 10000]; // Static range (no UI slider currently)
+
+  // Price range filter
+  const [priceMin, setPriceMin] = useState<string>('');
+  const [priceMax, setPriceMax] = useState<string>('');
 
   // Fetch user university
   useEffect(() => {
@@ -102,6 +110,13 @@ export default function DelicaciesPage() {
         setTopDishes(dishesData.rankings || []);
         setCategories(catData.categories || []);
         setBillboards(billData.billboards || []);
+
+        // Fetch cafeterias for this university
+        try {
+          const cafRes = await fetch(`/api/university-admin?action=cafeterias&university_id=${universityId}`);
+          const cafData = await cafRes.json();
+          setCafeterias((cafData.cafeterias || []).filter((c: any) => c.is_active));
+        } catch { /* cafeterias optional */ }
       } catch (err) { console.error('Fetch error:', err); }
       finally { setLoading(false); }
     };
@@ -178,13 +193,20 @@ export default function DelicaciesPage() {
        });
     }
 
+    // Cafeteria Filter
+    if (selectedCafeteria && !sharedProductId) {
+      list = list.filter(p => (p.cafeteria_ids || []).includes(selectedCafeteria));
+    }
+
     // Price Filter
     if (!sharedProductId) {
-      list = list.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
+      const min = priceMin ? Number(priceMin) : 0;
+      const max = priceMax ? Number(priceMax) : Infinity;
+      list = list.filter(p => p.price >= min && p.price <= max);
     }
 
     return list;
-  }, [products, selectedCat, search, statusFilter, useLocationFilter, userHostel, sharedProductId]);
+  }, [products, selectedCat, search, statusFilter, useLocationFilter, userHostel, sharedProductId, selectedCafeteria, priceMin, priceMax]);
 
   const matchingVendors = useMemo(() => {
     if (!search.trim()) return [];
@@ -278,6 +300,82 @@ export default function DelicaciesPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* ── BROWSE BY CAFETERIA ── */}
+        {cafeterias.length > 0 && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--text-100)' }}>🏪 Browse by Cafeteria</h3>
+            <div style={{ display: 'flex', gap: '0.6rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+              <button
+                onClick={() => setSelectedCafeteria(null)}
+                style={{
+                  flex: '0 0 auto', padding: '10px 18px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                  fontWeight: 600, fontSize: '0.82rem', transition: 'all 0.2s',
+                  background: !selectedCafeteria ? 'var(--primary)' : 'var(--bg-100)',
+                  color: !selectedCafeteria ? '#fff' : 'var(--text-200)',
+                  boxShadow: !selectedCafeteria ? '0 2px 8px rgba(79,70,229,0.3)' : 'none',
+                }}
+              >
+                All Cafeterias
+              </button>
+              {cafeterias.map(c => {
+                const count = products.filter(p => (p.cafeteria_ids || []).includes(c.id)).length;
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => setSelectedCafeteria(selectedCafeteria === c.id ? null : c.id)}
+                    style={{
+                      flex: '0 0 auto', padding: '10px 18px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                      fontWeight: 600, fontSize: '0.82rem', transition: 'all 0.2s',
+                      background: selectedCafeteria === c.id ? 'var(--primary)' : 'var(--bg-100)',
+                      color: selectedCafeteria === c.id ? '#fff' : 'var(--text-200)',
+                      boxShadow: selectedCafeteria === c.id ? '0 2px 8px rgba(79,70,229,0.3)' : 'none',
+                    }}
+                  >
+                    {c.name} <span style={{ opacity: 0.7, marginLeft: '4px' }}>({count})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── PRICE RANGE FILTER ── */}
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-200)' }}>💰 Price Range:</span>
+          <input
+            type="number"
+            placeholder="Min ₦"
+            value={priceMin}
+            onChange={e => setPriceMin(e.target.value)}
+            style={{
+              width: '100px', padding: '8px 12px', borderRadius: '10px', border: '1.5px solid var(--border)',
+              background: 'var(--bg-100)', fontSize: '0.82rem', color: 'var(--text-100)', outline: 'none',
+            }}
+          />
+          <span style={{ fontSize: '0.82rem', color: 'var(--text-400)' }}>—</span>
+          <input
+            type="number"
+            placeholder="Max ₦"
+            value={priceMax}
+            onChange={e => setPriceMax(e.target.value)}
+            style={{
+              width: '100px', padding: '8px 12px', borderRadius: '10px', border: '1.5px solid var(--border)',
+              background: 'var(--bg-100)', fontSize: '0.82rem', color: 'var(--text-100)', outline: 'none',
+            }}
+          />
+          {(priceMin || priceMax) && (
+            <button
+              onClick={() => { setPriceMin(''); setPriceMax(''); }}
+              style={{
+                padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border)',
+                background: 'transparent', fontSize: '0.75rem', cursor: 'pointer', color: 'var(--text-300)',
+              }}
+            >
+              Clear
+            </button>
+          )}
         </div>
 
         {/* ── BILLBOARD SLIDER ── */}
