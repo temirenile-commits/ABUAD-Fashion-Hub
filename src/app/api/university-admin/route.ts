@@ -416,14 +416,26 @@ export async function GET(req: NextRequest) {
 
   // ── Product Categories ─────────────────────────────────────────────────────
   if (action === 'categories') {
-    // Return global categories + university-specific ones
-    const { data, error } = await supabaseAdmin
+    // Try to return global categories + university-specific ones ordered by sort_order
+    let query = supabaseAdmin
       .from('product_categories')
       .select('*')
-      .or(`university_id.is.null,university_id.eq.${universityId}`)
-      .order('sort_order', { ascending: true });
+      .or(`university_id.is.null,university_id.eq.${universityId}`);
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const { data, error } = await query.order('sort_order', { ascending: true });
+
+    if (error) {
+      if (error.message.includes('sort_order')) {
+        // Fallback for older schemas missing sort_order
+        const { data: fallbackData, error: fallbackError } = await supabaseAdmin
+          .from('product_categories')
+          .select('*')
+          .or(`university_id.is.null,university_id.eq.${universityId}`);
+        if (fallbackError) return NextResponse.json({ error: fallbackError.message }, { status: 500 });
+        return NextResponse.json({ categories: fallbackData || [] });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ categories: data || [] });
   }
 

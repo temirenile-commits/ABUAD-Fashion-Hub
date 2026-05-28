@@ -505,15 +505,30 @@ export async function GET(req: NextRequest) {
   if (action === 'categories') {
     let query = supabaseAdmin
       .from('product_categories')
-      .select('*, universities(name, abbreviation)')
-      .order('sort_order', { ascending: true });
+      .select('*, universities(name, abbreviation)');
 
     if (admin && !admin.isFullAdmin && admin.university_id) {
       query = query.or(`university_id.is.null,university_id.eq.${admin.university_id}`);
     }
 
-    const { data, error } = await query;
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const { data, error } = await query.order('sort_order', { ascending: true });
+    
+    if (error) {
+      if (error.message.includes('sort_order')) {
+        let fallbackQuery = supabaseAdmin
+          .from('product_categories')
+          .select('*, universities(name, abbreviation)');
+          
+        if (admin && !admin.isFullAdmin && admin.university_id) {
+          fallbackQuery = fallbackQuery.or(`university_id.is.null,university_id.eq.${admin.university_id}`);
+        }
+        
+        const { data: fallbackData, error: fallbackError } = await fallbackQuery;
+        if (fallbackError) return NextResponse.json({ error: fallbackError.message }, { status: 500 });
+        return NextResponse.json({ categories: fallbackData || [] });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ categories: data || [] });
   }
 
