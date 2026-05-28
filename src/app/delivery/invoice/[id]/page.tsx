@@ -22,6 +22,9 @@ export default function DeliveryInvoicePage() {
             total_amount,
             shipping_address,
             variants_selected,
+            quantity,
+            delivery_fee_charged,
+            commission_amount,
             customer:customer_id (name, email, phone),
             product:product_id (title),
             brand:brand_id (name, location_name, phone)
@@ -101,7 +104,7 @@ export default function DeliveryInvoicePage() {
             <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#999', textTransform: 'uppercase', marginBottom: '12px' }}>Item Details</p>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <p style={{ margin: 0, fontWeight: 600 }}>{order.product?.title}</p>
+                <p style={{ margin: 0, fontWeight: 600 }}>{order.product?.title} (x{order.quantity || 1})</p>
                 {order.variants_selected && Object.keys(order.variants_selected).length > 0 ? (
                   <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#555' }}>
                     {Object.entries(order.variants_selected).map(([k, v]) => `${k}: ${v}`).join(' | ')}
@@ -109,7 +112,12 @@ export default function DeliveryInvoicePage() {
                 ) : null}
                 <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#777' }}>Order ID: #{order.id.slice(0, 8)}</p>
               </div>
-              <p style={{ margin: 0, fontWeight: 700 }}>{formatPrice(order.total_amount)}</p>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>Product Total: {formatPrice(Number(order.total_amount) - Number(order.delivery_fee_charged || 0) - Number(order.commission_amount || 0))}</p>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>Delivery Fee: {formatPrice(Number(order.delivery_fee_charged || 0))}</p>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>Platform Fee: {formatPrice(Number(order.commission_amount || 0))}</p>
+                <p style={{ margin: '4px 0 0', fontWeight: 700 }}>Total: {formatPrice(order.total_amount)}</p>
+              </div>
             </div>
           </div>
 

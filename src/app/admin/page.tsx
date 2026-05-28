@@ -237,6 +237,8 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [refundOrders, setRefundOrders] = useState<Order[]>([]);
   const [manualQueueSubTab, setManualQueueSubTab] = useState<'pending' | 'history'>('pending');
+
+  const [financialEngineConfigJson, setFinancialEngineConfigJson] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState('');
   const [search, setSearch] = useState('');
@@ -251,7 +253,7 @@ export default function AdminDashboard() {
   const [transferRef, setTransferRef] = useState('');
   const [uploadingProof, setUploadingProof] = useState(false);
 
-  const [stats, setStats] = useState({ userCount: 0, brandCount: 0, productCount: 0, totalRevenue: 0, totalSubsidies: 0, totalProductViews: 0, totalProfileViews: 0 });
+  const [stats, setStats] = useState({ userCount: 0, brandCount: 0, productCount: 0, totalRevenue: 0, totalSubsidies: 0, totalCommission: 0, totalDelivery: 0, totalProductViews: 0, totalProfileViews: 0 });
   const [error, setError] = useState<string | null>(null);
   const [vendors, setVendors] = useState<Brand[]>([]);
   const [onlyVendorsWithOrders, setOnlyVendorsWithOrders] = useState(false);
@@ -322,6 +324,8 @@ export default function AdminDashboard() {
   const [showAddAgentModal, setShowAddAgentModal] = useState(false);
   const [newAgentData, setNewAgentData] = useState({ email: '', university_id: '', agent_type: 'in-campus' });
   const [addingAgent, setAddingAgent] = useState(false);
+  const [manualPaymentUniFilter, setManualPaymentUniFilter] = useState<string>('all');
+  const [categoryUniFilter, setCategoryUniFilter] = useState<string>('all');
   const { addToast } = useToast();
   const fetchedRef = useRef(false);
 
@@ -444,6 +448,27 @@ export default function AdminDashboard() {
       setUniversities(unisD.universities || []);
       setHomepageSections(statsD.sections || []);
       setPlatformSettings(settingsD.settings || {});
+      if (settingsD.settings?.financial_engine_config) {
+        setFinancialEngineConfigJson(JSON.stringify(settingsD.settings.financial_engine_config, null, 2));
+      } else {
+        // Fallback to default
+        setFinancialEngineConfigJson(JSON.stringify({
+          deliveryTiers: [
+            { min: 0, max: 1500, fee: 200 },
+            { min: 1501, max: 3000, fee: 300 },
+            { min: 3001, max: 6000, fee: 400 },
+            { min: 6001, max: null, fee: 600 }
+          ],
+          commissionTiers: [
+            { min: 0, max: 1500, fee: 100 },
+            { min: 1501, max: 3000, fee: 200 },
+            { min: 3001, max: 6000, fee: 350 },
+            { min: 6001, max: 15000, fee: 600 },
+            { min: 15001, max: 40000, fee: 1000 },
+            { min: 40001, max: null, percentage: 2, cap: 5000 }
+          ]
+        }, null, 2));
+      }
       setCategories(categoriesD.categories || []);
       
       // Filter orders that are stuck (Paid but not delivered for > 24h)
@@ -787,6 +812,8 @@ export default function AdminDashboard() {
                   { label: 'Brands', val: stats.brandCount, color: '#10b981', Icon: Store },
                   { label: 'Products', val: stats.productCount, color: '#c9a14a', Icon: ShoppingBag },
                   { label: 'Revenue', val: `₦${stats.totalRevenue.toLocaleString()}`, color: '#eb0c7a', Icon: TrendingUp },
+                  { label: 'Commission', val: `₦${(stats.totalCommission || 0).toLocaleString()}`, color: '#10b981', Icon: Activity },
+                  { label: 'Delivery', val: `₦${(stats.totalDelivery || 0).toLocaleString()}`, color: '#f59e0b', Icon: Tag },
                   { label: 'Subsidies', val: `₦${(stats.totalSubsidies || 0).toLocaleString()}`, color: '#f59e0b', Icon: Tag },
                   { label: 'Product Views', val: (stats.totalProductViews || 0).toLocaleString(), color: '#8b5cf6', Icon: Eye },
                   { label: 'Profile Visits', val: (stats.totalProfileViews || 0).toLocaleString(), color: '#ec4899', Icon: Users },
@@ -803,6 +830,25 @@ export default function AdminDashboard() {
             {activeTab === 'manual_payments' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
                 
+                {/* 0. UNIVERSITY FILTER DROPDOWN */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem' }}>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>🔍 Filter by University</h3>
+                    <p style={{ margin: '0.1rem 0 0', fontSize: '0.8rem', opacity: 0.7 }}>Scopes manual transfers and bank configuration by campus.</p>
+                  </div>
+                  <select 
+                    className="form-input" 
+                    style={{ maxWidth: '280px', background: 'var(--bg-300)', border: '1px solid var(--border)', color: '#fff', padding: '0.5rem 1rem', borderRadius: '8px' }}
+                    value={manualPaymentUniFilter}
+                    onChange={(e) => setManualPaymentUniFilter(e.target.value)}
+                  >
+                    <option value="all">🌍 All Universities</option>
+                    {universities.map(u => (
+                      <option key={u.id} value={u.id}>🎓 {u.name} ({u.abbreviation})</option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* 1. TOP METRICS HEADER */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
                   
@@ -811,11 +857,11 @@ export default function AdminDashboard() {
                     <div>
                       <span style={{ fontSize: '0.75rem', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.5px' }}>📅 Daily Manual Sales (Today)</span>
                       <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#10b981', margin: '0.5rem 0 0.25rem' }}>
-                        ₦{orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status === 'approved' && new Date(o.created_at).toDateString() === new Date().toDateString()).reduce((sum, o) => sum + Number(o.total_amount), 0).toLocaleString()}
+                        ₦{orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status === 'approved' && new Date(o.created_at).toDateString() === new Date().toDateString() && (manualPaymentUniFilter === 'all' || o.university_id === manualPaymentUniFilter)).reduce((sum, o) => sum + Number(o.total_amount), 0).toLocaleString()}
                       </h2>
                     </div>
                     <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>
-                      {orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status === 'approved' && new Date(o.created_at).toDateString() === new Date().toDateString()).length} verified orders today
+                      {orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status === 'approved' && new Date(o.created_at).toDateString() === new Date().toDateString() && (manualPaymentUniFilter === 'all' || o.university_id === manualPaymentUniFilter)).length} verified orders today
                     </span>
                   </div>
 
@@ -824,7 +870,7 @@ export default function AdminDashboard() {
                     <div>
                       <span style={{ fontSize: '0.75rem', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.5px' }}>⏳ Pending Verification Queue</span>
                       <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#f59e0b', margin: '0.5rem 0 0.25rem' }}>
-                        {orders.filter(o => o.payment_system === 'manual' && o.status === 'pending' && o.manual_payment_status === 'pending').length}
+                        {orders.filter(o => o.payment_system === 'manual' && o.status === 'pending' && o.manual_payment_status === 'pending' && (manualPaymentUniFilter === 'all' || o.university_id === manualPaymentUniFilter)).length}
                       </h2>
                     </div>
                     <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>Needs manual approval</span>
@@ -835,11 +881,11 @@ export default function AdminDashboard() {
                     <div>
                       <span style={{ fontSize: '0.75rem', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.5px' }}>🏛️ Total Manual Sales (All-time)</span>
                       <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)', margin: '0.5rem 0 0.25rem' }}>
-                        ₦{orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status === 'approved').reduce((sum, o) => sum + Number(o.total_amount), 0).toLocaleString()}
+                        ₦{orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status === 'approved' && (manualPaymentUniFilter === 'all' || o.university_id === manualPaymentUniFilter)).reduce((sum, o) => sum + Number(o.total_amount), 0).toLocaleString()}
                       </h2>
                     </div>
                     <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>
-                      {orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status === 'approved').length} total orders verified
+                      {orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status === 'approved' && (manualPaymentUniFilter === 'all' || o.university_id === manualPaymentUniFilter)).length} total orders verified
                     </span>
                   </div>
                 </div>
@@ -3185,6 +3231,33 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     )}
+
+                  {selectedUniId === 'global' && (
+                    <div style={{ marginTop: '3rem', borderTop: '1px solid var(--border)', paddingTop: '2rem' }}>
+                      <h3>Centralized Financial Engine (Delicacies)</h3>
+                      <p className={styles.subText}>Configure dynamic delivery and platform commission tiers. Use JSON format. Setting <code>max</code> to <code>null</code> means infinity.</p>
+                      <div style={{ marginTop: '1rem', background: 'var(--bg-200)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                        <textarea
+                          style={{ width: '100%', height: '300px', fontFamily: 'monospace', fontSize: '0.85rem', padding: '1rem', background: 'var(--bg-300)', color: 'var(--text-100)', border: '1px solid var(--border)', borderRadius: '8px' }}
+                          value={financialEngineConfigJson}
+                          onChange={e => setFinancialEngineConfigJson(e.target.value)}
+                        />
+                        <button 
+                          className="btn btn-primary mt-4" 
+                          onClick={() => {
+                            try {
+                              const parsed = JSON.parse(financialEngineConfigJson);
+                              adminAction('update_settings', { key: 'financial_engine_config', value: parsed });
+                            } catch (err) {
+                              alert("Invalid JSON format. Please check for syntax errors.");
+                            }
+                          }}
+                        >
+                          Save Financial Engine Config
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   
                   {!selectedUniId && (

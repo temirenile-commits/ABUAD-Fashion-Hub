@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { initializeTransaction } from '@/lib/paystack';
 import { calculateActivePrice } from '@/lib/utils';
+import { calculateItemFinances, defaultFinancialEngineConfig } from '@/lib/financialEngine';
 
 export async function POST(req: Request) {
   // Default fallbacks
@@ -146,7 +147,11 @@ export async function POST(req: Request) {
       }
     }
 
-    // NEW: If we have per-product delivery rates (Delicacies), suppress the general platform delivery fee
+    // Financial Engine Config Extraction
+    const financialEngineConfig = uniConfig.financial_engine_config || defaultFinancialEngineConfig;
+
+    // NEW: Suppress the general platform delivery fee if cart contains any delicacies, 
+    // because delicacies use the per-product dynamic financial engine.
     const hasPerProductDelivery = (liveProducts as any[]).some(p => Number(p.delivery_rate) > 0 || p.product_section === 'delicacies');
     if (hasPerProductDelivery) {
       totalDeliveryFee = 0;
@@ -160,26 +165,46 @@ export async function POST(req: Request) {
       
       // Calculate active base price from selected variants if applicable
       const originalPrice = calculateActivePrice(liveProduct?.price || item.price, liveProduct?.variants, item.variants_selected);
-      
       const isFirst = index === 0;
-      
       const brandData = (Array.isArray(liveProduct?.brands) ? liveProduct.brands[0] : liveProduct?.brands) as any;
-      
       const vendorScope = brandData?.delivery_scope || 'in-school';
       const vendorSystem = brandData?.assigned_delivery_system || 'platform';
-      
-      let activeLiveCommission = Number(liveProduct?.commission_price || 0);
-      let activeStandardCommissionRate = dynamicCommissionRate;
+      const quantity = item.quantity || 1;
 
-      if (liveProduct?.product_section === 'delicacies' && (item.quantity || 1) > 4) {
-        activeLiveCommission = activeLiveCommission / 2;
-        activeStandardCommissionRate = activeStandardCommissionRate / 2;
+      let baseItemSubtotal = 0;
+      let itemDeliveryFee = 0;
+      let adminCommission = 0;
+      let vendorEarning = 0;
+
+      if (liveProduct?.product_section === 'delicacies') {
+        // --- NEW CENTRALIZED FINANCIAL ENGINE FOR DELICACIES ---
+        const finances = calculateItemFinances(originalPrice, quantity, financialEngineConfig);
+        baseItemSubtotal = finances.totalSubtotal; 
+        itemDeliveryFee = finances.totalDeliveryFee;
+        adminCommission = finances.totalCommission;
+        vendorEarning = finances.totalVendorEarning;
+        
+        // Ensure manual overrides from product are respected if needed (legacy fallback)
+        if (Number(liveProduct?.delivery_rate) > 0) {
+           itemDeliveryFee = Number(liveProduct?.delivery_rate) * quantity;
+        }
+        if (Number(liveProduct?.commission_price) > 0) {
+           adminCommission = Number(liveProduct?.commission_price) * quantity;
+        }
+      } else {
+        // --- LEGACY LOGIC FOR NON-DELICACIES ---
+        let activeLiveCommission = Number(liveProduct?.commission_price || 0);
+        let activeStandardCommissionRate = dynamicCommissionRate;
+        const liveDeliveryRate = Number(liveProduct?.delivery_rate || 0);
+        const effectiveItemPrice = originalPrice + activeLiveCommission + liveDeliveryRate;
+        
+        baseItemSubtotal = effectiveItemPrice * quantity;
+        itemDeliveryFee = isFirst ? totalDeliveryFee : 0;
+        
+        const standardCommission = (originalPrice * quantity) * activeStandardCommissionRate;
+        vendorEarning = (originalPrice * quantity) - standardCommission;
+        adminCommission = standardCommission + (activeLiveCommission + liveDeliveryRate) * quantity;
       }
-
-      const liveDeliveryRate = Number(liveProduct?.delivery_rate || 0);
-      const effectiveItemPrice = originalPrice + activeLiveCommission + liveDeliveryRate;
-
-      const baseItemSubtotal = effectiveItemPrice * (item.quantity || 1);
       
       // Calculate Discount (Paid by Admin or Vendor)
       let itemDiscount = 0;
@@ -203,29 +228,20 @@ export async function POST(req: Request) {
       }
 
       const discountedItemSubtotal = Math.max(0, baseItemSubtotal - itemDiscount);
-      // Only charge delivery fee on the FIRST item of the order batch
-      const itemDeliveryFee = isFirst ? totalDeliveryFee : 0;
-      const finalItemTotal = discountedItemSubtotal + itemDeliveryFee;
       
-      // Platform commission logic
-      // Vendor Earning = (Original Price * quantity) - (Standard Commission on Original Price)
-      const standardCommission = (originalPrice * (item.quantity || 1)) * activeStandardCommissionRate;
+      // Final total the customer pays for this item row
+      const finalItemTotal = discountedItemSubtotal + itemDeliveryFee + adminCommission;
       
       // SUBSIDY FUNDING LOGIC
-      // If the vendor created the promo code, they fund it (reduced earning)
-      // If admin created it, admin funds it (reduced commission)
-      let vendorEarning = (originalPrice * (item.quantity || 1)) - standardCommission;
-      let adminCommission = standardCommission + (activeLiveCommission + liveDeliveryRate) * (item.quantity || 1);
-
       if (promoData?.creator_type === 'vendor') {
           // Vendor funds the discount
           vendorEarning -= itemDiscount;
-      } else {
+      } else if (promoData?.creator_type === 'admin') {
           // Admin or University Admin funds the discount
           adminCommission -= itemDiscount;
       }
 
-      const totalCommissionForRecord = adminCommission + itemDeliveryFee;
+      const totalCommissionForRecord = adminCommission;
 
       const deliveryCode = Math.floor(100000 + Math.random() * 900000).toString();
 

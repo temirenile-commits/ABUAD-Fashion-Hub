@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { useCart } from '@/context/CartContext';
 import { LiveProduct } from '@/components/ProductCard';
 import { formatPrice, calculateActivePrice } from '@/lib/utils';
+import { calculateItemFinances, defaultFinancialEngineConfig } from '@/lib/financialEngine';
 import styles from './checkout.module.css';
 
 function CheckoutContent() {
@@ -82,6 +83,7 @@ function CheckoutContent() {
   const [calculatedDeliveryFee, setCalculatedDeliveryFee] = useState(1500);
   const [, setDeliveryConfigs] = useState<{ id: string; delivery_scope: string; assigned_delivery_system: string }[]>([]);
   const [liveProductsMap, setLiveProductsMap] = useState<Record<string, any>>({});
+  const [financialEngineConfig, setFinancialEngineConfig] = useState<any>(defaultFinancialEngineConfig);
 
 
   const deliveryFee = calculatedDeliveryFee;
@@ -93,10 +95,29 @@ function CheckoutContent() {
         ? calculateActivePrice(live.price, live.variants, item.variants_selected)
         : calculateActivePrice(item.price, item.variants, item.variants_selected);
 
-      const commission = live ? Number(live.commission_price || 0) : Number(item.commission_price || 0);
-      const delivery = live ? Number(live.delivery_rate || 0) : Number(item.delivery_rate || 0);
-      const effectivePrice = basePrice + commission + delivery;
-      return total + effectivePrice * item.quantity;
+      if (item.product_section === 'delicacies') {
+        const finances = calculateItemFinances(basePrice, item.quantity, financialEngineConfig);
+        let overrideDel = 0;
+        let overrideCom = 0;
+        if (live) {
+          if (Number(live.delivery_rate) > 0) overrideDel = Number(live.delivery_rate) * item.quantity;
+          if (Number(live.commission_price) > 0) overrideCom = Number(live.commission_price) * item.quantity;
+        } else {
+          if (Number(item.delivery_rate) > 0) overrideDel = Number(item.delivery_rate) * item.quantity;
+          if (Number(item.commission_price) > 0) overrideCom = Number(item.commission_price) * item.quantity;
+        }
+        
+        const effectivePrice = finances.totalSubtotal + 
+          (overrideDel > 0 ? overrideDel : finances.totalDeliveryFee) + 
+          (overrideCom > 0 ? overrideCom : finances.totalCommission);
+          
+        return total + effectivePrice;
+      } else {
+        const commission = live ? Number(live.commission_price || 0) : Number(item.commission_price || 0);
+        const delivery = live ? Number(live.delivery_rate || 0) : Number(item.delivery_rate || 0);
+        const effectivePrice = basePrice + commission + delivery;
+        return total + effectivePrice * item.quantity;
+      }
     }, 0);
   };
 
@@ -113,10 +134,28 @@ function CheckoutContent() {
           ? calculateActivePrice(live.price, live.variants, item.variants_selected)
           : calculateActivePrice(item.price, item.variants, item.variants_selected);
 
-        const commission = live ? Number(live.commission_price || 0) : Number(item.commission_price || 0);
-        const delivery = live ? Number(live.delivery_rate || 0) : Number(item.delivery_rate || 0);
-        const effectivePrice = basePrice + commission + delivery;
-        const itemSubtotal = effectivePrice * (item.quantity || 1);
+        let itemSubtotal = 0;
+        if (item.product_section === 'delicacies') {
+          const finances = calculateItemFinances(basePrice, item.quantity, financialEngineConfig);
+          
+          let overrideDel = 0;
+          let overrideCom = 0;
+          if (live) {
+            if (Number(live.delivery_rate) > 0) overrideDel = Number(live.delivery_rate) * item.quantity;
+            if (Number(live.commission_price) > 0) overrideCom = Number(live.commission_price) * item.quantity;
+          } else {
+            if (Number(item.delivery_rate) > 0) overrideDel = Number(item.delivery_rate) * item.quantity;
+            if (Number(item.commission_price) > 0) overrideCom = Number(item.commission_price) * item.quantity;
+          }
+          itemSubtotal = finances.totalSubtotal + 
+            (overrideDel > 0 ? overrideDel : finances.totalDeliveryFee) + 
+            (overrideCom > 0 ? overrideCom : finances.totalCommission);
+        } else {
+          const commission = live ? Number(live.commission_price || 0) : Number(item.commission_price || 0);
+          const delivery = live ? Number(live.delivery_rate || 0) : Number(item.delivery_rate || 0);
+          const effectivePrice = basePrice + commission + delivery;
+          itemSubtotal = effectivePrice * (item.quantity || 1);
+        }
 
         if (promoAppliedData.type === 'percentage') {
           savings += itemSubtotal * (Number(promoAppliedData.value) / 100);
@@ -238,6 +277,15 @@ function CheckoutContent() {
 
       if (bankInfo) {
         setManualBankSettings(bankInfo);
+      }
+      
+      const { data: engineSettingsData } = await supabase
+        .from('platform_settings')
+        .select('value')
+        .eq('key', 'financial_engine_config')
+        .maybeSingle();
+      if (engineSettingsData?.value) {
+        setFinancialEngineConfig(engineSettingsData.value);
       }
 
       // 2. Check Cart

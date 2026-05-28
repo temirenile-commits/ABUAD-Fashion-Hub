@@ -1171,45 +1171,59 @@ export default function VendorDashboard() {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const html = `
-      <html>
-        <head>
-          <title>Invoice - ${order.id.slice(0, 8)}</title>
-          <style>
-            body { font-family: sans-serif; padding: 40px; color: #333; }
-            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 20px; }
-            .details { margin: 30px 0; display: flex; justify-content: space-between; }
-            table { width: 100%; border-collapse: collapse; margin-top: 30px; }
-            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-            th { background: #f5f5f5; }
-            .total { text-align: right; margin-top: 30px; font-size: 1.2rem; font-weight: bold; }
-            .footer { margin-top: 50px; font-size: 0.8rem; color: #777; text-align: center; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div><h1>INVOICE</h1><p>#${order.id.toUpperCase()}</p></div>
-            <div style="text-align:right"><h2>${brand?.name}</h2><p>${new Date().toLocaleDateString()}</p></div>
-          </div>
-          <div class="details">
-            <div><strong>BILL TO:</strong><p>Customer ID: ${order.customer_id}</p><p>${order.shipping_address || 'Campus Hub Pickup'}</p></div>
-            <div><strong>ORDER STATUS:</strong><p>${order.status.toUpperCase()}</p></div>
-          </div>
-          <div style="overflow-x: auto; width: 100%; border: 1px solid #ddd; border-radius: 8px;"><table>
-            <thead><tr><th>Product</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr></thead>
-            <tbody>
-              <tr>
-                <td>
-                  ${order.products?.title}
-                  ${order.variants_selected && Object.keys(order.variants_selected).length > 0 ? `<br/><small style="color: #666;">${Object.entries(order.variants_selected).map(([k,v]) => `${k}: ${v}`).join(' | ')}</small>` : ''}
-                </td>
-                <td>1</td>
-                <td>₦${Number(order.total_amount).toLocaleString()}</td>
-                <td>₦${Number(order.total_amount).toLocaleString()}</td>
-              </tr>
-            </tbody>
-          </table></div>
-          <div class="total">Total: ?${Number(order.total_amount).toLocaleString()}</div>
+      const qty = order.quantity || 1;
+      const deliveryFee = Number(order.delivery_fee_charged || 0);
+      const commission = Number(order.commission_amount || 0);
+      const productTotal = Number(order.total_amount) - deliveryFee - commission;
+      const unitPrice = productTotal / qty;
+
+      const html = `
+        <html>
+          <head>
+            <title>Invoice - ${order.id.slice(0, 8)}</title>
+            <style>
+              body { font-family: sans-serif; padding: 40px; color: #333; }
+              .header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 20px; }
+              .details { margin: 30px 0; display: flex; justify-content: space-between; }
+              table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+              th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+              th { background: #f5f5f5; }
+              .total { text-align: right; margin-top: 30px; font-size: 1.2rem; font-weight: bold; }
+              .footer { margin-top: 50px; font-size: 0.8rem; color: #777; text-align: center; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div><h1>INVOICE</h1><p>#${order.id.toUpperCase()}</p></div>
+              <div style="text-align:right"><h2>${brand?.name}</h2><p>${new Date().toLocaleDateString()}</p></div>
+            </div>
+            <div class="details">
+              <div><strong>BILL TO:</strong><p>Customer ID: ${order.customer_id}</p><p>${order.shipping_address || 'Campus Hub Pickup'}</p></div>
+              <div><strong>ORDER STATUS:</strong><p>${order.status.toUpperCase()}</p></div>
+            </div>
+            <div style="overflow-x: auto; width: 100%; border: 1px solid #ddd; border-radius: 8px;"><table>
+              <thead><tr><th>Item</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>
+                    ${order.products?.title}
+                    ${order.variants_selected && Object.keys(order.variants_selected).length > 0 ? `<br/><small style="color: #666;">${Object.entries(order.variants_selected).map(([k,v]) => `${k}: ${v}`).join(' | ')}</small>` : ''}
+                  </td>
+                  <td>${qty}</td>
+                  <td>₦${unitPrice.toLocaleString()}</td>
+                  <td>₦${productTotal.toLocaleString()}</td>
+                </tr>
+                <tr>
+                  <td colspan="3" style="text-align: right; color: #666;">Delivery Fee</td>
+                  <td>₦${deliveryFee.toLocaleString()}</td>
+                </tr>
+                <tr>
+                  <td colspan="3" style="text-align: right; color: #666;">Platform Commission</td>
+                  <td>₦${commission.toLocaleString()}</td>
+                </tr>
+              </tbody>
+            </table></div>
+            <div class="total">Grand Total: ₦${Number(order.total_amount).toLocaleString()}</div>
           <div class="footer">Thank you for your business! Generated by MasterCart.</div>
           <script>window.print();</script>
         </body>

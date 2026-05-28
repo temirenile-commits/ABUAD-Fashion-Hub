@@ -198,7 +198,7 @@ export async function GET(req: NextRequest) {
     let userQuery = supabaseAdmin.from('users').select('*', { count: 'exact', head: true });
     let brandQuery = supabaseAdmin.from('brands').select('id', { count: 'exact', head: true });
     let productQuery = supabaseAdmin.from('products').select('id', { count: 'exact', head: true });
-    let orderQuery = supabaseAdmin.from('orders').select('total_amount, admin_discount').in('status', ['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered', 'received']);
+    let orderQuery = supabaseAdmin.from('orders').select('total_amount, admin_discount, commission_amount, delivery_fee_charged').in('status', ['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered', 'received']);
 
     if (uniId) {
       userQuery = userQuery.eq('university_id', uniId);
@@ -250,6 +250,10 @@ export async function GET(req: NextRequest) {
     const totalRevenue = revenueData.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const totalSubsidies = revenueData.reduce((sum: number, o: any) => sum + Number(o.admin_discount || 0), 0);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const totalCommission = revenueData.reduce((sum: number, o: any) => sum + Number(o.commission_amount || 0), 0);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const totalDelivery = revenueData.reduce((sum: number, o: any) => sum + Number(o.delivery_fee_charged || 0), 0);
 
     return NextResponse.json({
       stats: { 
@@ -258,6 +262,8 @@ export async function GET(req: NextRequest) {
         productCount, 
         totalRevenue, 
         totalSubsidies,
+        totalCommission,
+        totalDelivery,
         totalProductViews,
         totalProfileViews
       },
@@ -1565,6 +1571,8 @@ export async function POST(req: NextRequest) {
           const boosts = (existBoosts?.value as any[]) || [];
           const newBoosts = boosts.map(b => b.id === 'billboard_boost' ? { ...b, price: Number(value) } : b);
           await supabaseAdmin.from('platform_settings').upsert({ key: 'boost_rates', value: newBoosts, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+       } else if (key === 'financial_engine_config') {
+          await supabaseAdmin.from('platform_settings').upsert({ key: 'financial_engine_config', value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
        }
        return NextResponse.json({ success: true });
     }
