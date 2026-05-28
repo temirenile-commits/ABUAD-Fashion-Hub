@@ -502,6 +502,21 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ teams: data });
   }
 
+  if (action === 'categories') {
+    let query = supabaseAdmin
+      .from('product_categories')
+      .select('*, universities(name, abbreviation)')
+      .order('sort_order', { ascending: true });
+
+    if (admin && !admin.isFullAdmin && admin.university_id) {
+      query = query.or(`university_id.is.null,university_id.eq.${admin.university_id}`);
+    }
+
+    const { data, error } = await query;
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ categories: data || [] });
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }
 
@@ -1758,6 +1773,43 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, message: 'Manual payment rejected.' });
+  }
+
+  if (action === 'upsert_category') {
+    const { id, name, type, icon, is_active, sort_order, university_id } = body;
+    if (!name || !type) return NextResponse.json({ error: 'Name and type are required.' }, { status: 400 });
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const record: any = {
+      name,
+      slug,
+      type,
+      icon: icon || '📦',
+      is_active: is_active !== undefined ? is_active : true,
+      sort_order: sort_order || 0,
+      university_id: university_id || null
+    };
+    if (id) {
+      const { error } = await supabaseAdmin.from('product_categories').update(record).eq('id', id);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    } else {
+      const { error } = await supabaseAdmin.from('product_categories').insert(record);
+      if (error) {
+        if (error.message.includes('unique')) {
+          const { error: retryErr } = await supabaseAdmin.from('product_categories').insert({ ...record, slug: `${slug}-${Date.now()}` });
+          if (retryErr) return NextResponse.json({ error: retryErr.message }, { status: 500 });
+        } else {
+          return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+      }
+    }
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'delete_category') {
+    const { id } = body;
+    const { error } = await supabaseAdmin.from('product_categories').delete().eq('id', id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

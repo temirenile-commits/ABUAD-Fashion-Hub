@@ -8,11 +8,12 @@ import styles from "./university-admin.module.css";
 import {
   LayoutDashboard, Store, Users, ShoppingCart, Star, Bell,
   BarChart3, Globe, Truck, Shield, LogOut, RefreshCw, Search,
-  CheckCircle, XCircle, Loader2, AlertTriangle, Plus, UserPlus, Trash2, Tag, Settings, ShoppingBag, Coffee
+  CheckCircle, XCircle, Loader2, AlertTriangle, Plus, UserPlus, Trash2, Tag, Settings, ShoppingBag, Coffee,
+  ShieldCheck, CreditCard, FolderOpen, Clock, Edit2
 } from "lucide-react";
 import PremiumChart from "@/components/PremiumChart"; 
 
-type Tab = "overview" | "vendors" | "customers" | "orders" | "reviews" | "notices" | "analytics" | "insights" | "fleet" | "team" | "catalog" | "merchandising" | "settings" | "promos" | "cafeterias";
+type Tab = "overview" | "vendors" | "customers" | "orders" | "reviews" | "notices" | "analytics" | "insights" | "fleet" | "team" | "catalog" | "merchandising" | "settings" | "promos" | "cafeterias" | "manual_transfers" | "categories";
 
 async function uaFetch(path: string, opts: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -48,6 +49,21 @@ export default function UniversityAdminPage() {
   const [cafeterias, setCafeterias] = useState<any[]>([]);
   const [showCafeteriaModal, setShowCafeteriaModal] = useState(false);
   const [cafeteriaForm, setCafeteriaForm] = useState({ id: "", name: "", description: "", is_active: true });
+
+  // Manual Transfers state
+  const [manualOrders, setManualOrders] = useState<any[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+  const [manualQueueSubTab, setManualQueueSubTab] = useState<'pending' | 'history'>('pending');
+  const [showBankModal, setShowBankModal] = useState(false);
+  const [bankForm, setBankForm] = useState({ id: '', bank_name: '', bank_code: '', account_number: '', account_name: '', label: 'Main Account', is_primary: false });
+  const [availableBanks, setAvailableBanks] = useState<any[]>([]);
+  const [resolvingBank, setResolvingBank] = useState(false);
+
+  // Categories state
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categorySubTab, setCategorySubTab] = useState<'edible' | 'non_edible'>('edible');
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [categoryForm, setCategoryForm] = useState({ id: '', name: '', type: 'edible', icon: '📦', is_active: true, sort_order: 0 });
   const [staffSearch, setStaffSearch] = useState("");
   const [platformSettings, setPlatformSettings] = useState<any>({});
 
@@ -130,7 +146,7 @@ export default function UniversityAdminPage() {
   const fetchAll = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const actions = ["stats","vendors","customers","orders","reviews","riders","analytics","cross_university_insights","team","products", "merchandising", "promo_codes", "deleted_users", "cafeterias"];
+      const actions = ["stats","vendors","customers","orders","reviews","riders","analytics","cross_university_insights","team","products", "merchandising", "promo_codes", "deleted_users", "cafeterias", "manual_payments", "bank_accounts", "categories"];
       const results = await Promise.allSettled(actions.map(async a => {
         const r = await uaFetch(`/api/university-admin?action=${a}`);
         if (!r.ok) {
@@ -157,6 +173,9 @@ export default function UniversityAdminPage() {
       setPromoCodes(g(11).promoCodes||[]);
       setDeletedUsers(g(12).deletedUsers||[]);
       setCafeterias(g(13).cafeterias||[]);
+      setManualOrders(g(14).orders||[]);
+      setBankAccounts(g(15).bankAccounts||[]);
+      setCategories(g(16).categories||[]);
 
       // Identify most volatile university (example logic: highest growth or activity)
       const insightsData = g(7).insights || [];
@@ -176,6 +195,41 @@ export default function UniversityAdminPage() {
     fetchedRef.current = true;
     fetchAll(); 
   }, [fetchAll]);
+
+  // Load available banks for bank account configuration
+  useEffect(() => {
+    const loadBanks = async () => {
+      try {
+        const res = await fetch('/api/paystack/banks');
+        const d = await res.json();
+        if (d.data) setAvailableBanks(d.data || []);
+      } catch { /* silent */ }
+    };
+    loadBanks();
+  }, []);
+
+  // Auto-resolve bank account details for university bank account modal
+  useEffect(() => {
+    const resolveAccount = async () => {
+      if (bankForm.account_number.length === 10 && bankForm.bank_code) {
+        setResolvingBank(true);
+        setBankForm(prev => ({ ...prev, account_name: '' }));
+        try {
+          const res = await fetch(`/api/paystack/resolve?accountNumber=${bankForm.account_number}&bankCode=${bankForm.bank_code}`);
+          const d = await res.json();
+          if (d.success && d.data?.account_name) {
+            setBankForm(prev => ({ ...prev, account_name: d.data.account_name }));
+          } else {
+            alert('Could not resolve bank account details.');
+          }
+        } catch (err) {
+          alert('Error resolving bank account details.');
+        }
+        setResolvingBank(false);
+      }
+    };
+    resolveAccount();
+  }, [bankForm.account_number, bankForm.bank_code]);
 
   const action = async (act: string, payload: any) => {
     setActionLoading(act+(payload.brandId||payload.userId||""));
@@ -208,20 +262,23 @@ export default function UniversityAdminPage() {
 
   const TABS: [Tab, string, any][] = [
     ["overview","Overview",LayoutDashboard],["vendors","Vendors",Store],["cafeterias","Cafeterias",Coffee],["catalog","Catalog",ShoppingCart],["customers","Customers",Users],
-    ["orders","Orders",ShoppingCart],["reviews","Reviews",Star],["notices","Notices",Bell],["merchandising", "Merchandising", Tag],
-    ["promos", "Promo Codes", Tag],
-    ["analytics","Analytics",BarChart3],["insights","Insights",Globe],["fleet","Fleet",Truck],["team","My Team",Shield], ["settings", "Settings", Settings],
+    ["orders","Orders",ShoppingCart],["manual_transfers","Manual Transfers",CreditCard],
+    ["reviews","Reviews",Star],["notices","Notices",Bell],["merchandising","Merchandising",Tag],
+    ["promos","Promo Codes",Tag],["categories","Categories",FolderOpen],
+    ["analytics","Analytics",BarChart3],["insights","Insights",Globe],["fleet","Fleet",Truck],["team","My Team",Shield],["settings","Settings",Settings],
   ];
 
   const hasAccess = (tabId: string) => {
     if (userCtx?.role === "admin" || userCtx?.role === "university_admin") return true;
     if (["overview", "analytics", "insights"].includes(tabId)) return true;
+    // Verifying admins can only access the manual transfers tab
+    if (tabId === "manual_transfers" && userCtx?.admin_permissions?.includes("verify_payments")) return true;
     return userCtx?.admin_permissions?.includes(tabId);
   };
 
-  const visibleManagement = TABS.slice(0,6).filter(t => hasAccess(t[0]));
-  const visibleCommunication = TABS.slice(6,7).filter(t => hasAccess(t[0]));
-  const visibleOps = TABS.slice(7).filter(t => hasAccess(t[0]));
+  const visibleManagement = TABS.slice(0,7).filter(t => hasAccess(t[0]));
+  const visibleCommunication = TABS.slice(7,8).filter(t => hasAccess(t[0]));
+  const visibleOps = TABS.slice(8).filter(t => hasAccess(t[0]));
 
   return (
     <div className={styles.container}>
@@ -1262,6 +1319,460 @@ export default function UniversityAdminPage() {
                   </div>
                 </div>
               )}
+
+              {tab === "manual_transfers" && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+                  
+                  {/* 1. TOP METRICS HEADER */}
+                  <div className={styles.statsGrid}>
+                    {/* Daily Manual Transactions Sum */}
+                    <div className={styles.statCard}>
+                      <div>
+                        <div className={styles.statLabel}>📅 Daily Manual Sales (Today)</div>
+                        <div className={styles.statValue} style={{ color: '#10b981' }}>
+                          ₦{manualOrders.filter(o => o.manual_payment_status === 'approved' && new Date(o.created_at).toDateString() === new Date().toDateString()).reduce((sum, o) => sum + Number(o.total_amount), 0).toLocaleString()}
+                        </div>
+                        <div className={styles.subText}>
+                          {manualOrders.filter(o => o.manual_payment_status === 'approved' && new Date(o.created_at).toDateString() === new Date().toDateString()).length} verified orders today
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pending Manual Queue Count */}
+                    <div className={styles.statCard}>
+                      <div>
+                        <div className={styles.statLabel}>⏳ Pending Verification Queue</div>
+                        <div className={styles.statValue} style={{ color: '#f59e0b' }}>
+                          {manualOrders.filter(o => o.status === 'pending' && o.manual_payment_status === 'pending').length}
+                        </div>
+                        <div className={styles.subText}>Needs manual approval</div>
+                      </div>
+                    </div>
+
+                    {/* All-time Manual Sales */}
+                    <div className={styles.statCard}>
+                      <div>
+                        <div className={styles.statLabel}>🏛️ Total Manual Sales (All-time)</div>
+                        <div className={styles.statValue} style={{ color: 'var(--primary)' }}>
+                          ₦{manualOrders.filter(o => o.manual_payment_status === 'approved').reduce((sum, o) => sum + Number(o.total_amount), 0).toLocaleString()}
+                        </div>
+                        <div className={styles.subText}>
+                          {manualOrders.filter(o => o.manual_payment_status === 'approved').length} total orders verified
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. CAMPUS BANK ACCOUNTS CONFIGURATION CARD */}
+                  <div className={styles.sectionCard} style={{ background: 'linear-gradient(135deg, var(--bg-200), rgba(99,102,241,0.03))' }}>
+                    <div className={styles.sectionHeader}>
+                      <div>
+                        <h2>🏦 Campus Bank Accounts</h2>
+                        <p>Configure multiple bank accounts for student manual checkouts. The primary account will be shown first.</p>
+                      </div>
+                      <button 
+                        className={styles.btnPrimary}
+                        onClick={() => {
+                          setBankForm({ id: '', bank_name: '', bank_code: '', account_number: '', account_name: '', label: 'Main Account', is_primary: bankAccounts.length === 0 });
+                          setShowBankModal(true);
+                        }}
+                      >
+                        <Plus size={15} /> Add Bank Account
+                      </button>
+                    </div>
+
+                    <div className={styles.tableWrap}>
+                      <table className={styles.table}>
+                        <thead>
+                          <tr>
+                            <th>Label / Account Name</th>
+                            <th>Bank Info</th>
+                            <th>Account Number</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {bankAccounts.map((account: any) => (
+                            <tr key={account.id}>
+                              <td>
+                                <div style={{ fontWeight: 700 }}>{account.label || 'Main Account'}</div>
+                                <div className={styles.subText}>{account.account_name}</div>
+                              </td>
+                              <td>{account.bank_name}</td>
+                              <td style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--primary)', letterSpacing: '0.05em' }}>{account.account_number}</td>
+                              <td>
+                                {account.is_primary ? (
+                                  <span className={styles.badgeActive}>★ Primary</span>
+                                ) : (
+                                  <button 
+                                    className={styles.btnSm} 
+                                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}
+                                    onClick={() => action('set_primary_bank', { id: account.id })}
+                                  >
+                                    Set Primary
+                                  </button>
+                                )}
+                              </td>
+                              <td>
+                                <div className={styles.actionRow}>
+                                  <button 
+                                    className={styles.btnSm}
+                                    onClick={() => {
+                                      setBankForm({
+                                        id: account.id,
+                                        bank_name: account.bank_name,
+                                        bank_code: account.bank_code || '',
+                                        account_number: account.account_number,
+                                        account_name: account.account_name,
+                                        label: account.label || 'Main Account',
+                                        is_primary: account.is_primary
+                                      });
+                                      setShowBankModal(true);
+                                    }}
+                                  >
+                                    <Edit2 size={13} />
+                                  </button>
+                                  <button 
+                                    className={`${styles.btnSm} ${styles.btnReject}`}
+                                    onClick={() => {
+                                      if (confirm('Are you sure you want to delete this bank account?')) {
+                                        action('delete_bank_account', { id: account.id });
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {bankAccounts.length === 0 && (
+                            <tr>
+                              <td colSpan={5} style={{ textAlign: 'center', color: '#4a5568', padding: '2rem' }}>
+                                No bank accounts configured yet. Checkout will fallback to the platform default manual payment settings.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* 3. SEGMENTED CONTROLS FOR QUEUE */}
+                  <div style={{ display: 'flex', gap: '0.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+                    <button 
+                      onClick={() => setManualQueueSubTab('pending')}
+                      className={`${styles.btnSm} ${manualQueueSubTab === 'pending' ? styles.btnApprove : styles.btnReject}`}
+                      style={{ background: manualQueueSubTab === 'pending' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--border)' }}
+                    >
+                      Pending Queue ({manualOrders.filter(o => o.status === 'pending' && o.manual_payment_status === 'pending').length})
+                    </button>
+                    <button 
+                      onClick={() => setManualQueueSubTab('history')}
+                      className={`${styles.btnSm} ${manualQueueSubTab === 'history' ? styles.btnApprove : styles.btnReject}`}
+                      style={{ background: manualQueueSubTab === 'history' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--border)' }}
+                    >
+                      Verification History
+                    </button>
+                  </div>
+
+                  {/* Sub Tab: Pending Queue */}
+                  {manualQueueSubTab === 'pending' && (
+                    <div className={styles.sectionCard}>
+                      <div className={styles.sectionHeader}>
+                        <h2>Pending Manual Bank Transfers</h2>
+                        <p>Review and verify transfer receipts to authorize student orders.</p>
+                      </div>
+
+                      {manualOrders.filter(o => o.status === 'pending' && o.manual_payment_status === 'pending').length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-400)' }}>
+                          <ShieldCheck size={48} style={{ color: '#10b981', marginBottom: '1rem', opacity: 0.6 }} />
+                          <h4 style={{ margin: 0, color: '#fff', fontWeight: 600 }}>All Clear!</h4>
+                          <p className={styles.subText} style={{ marginTop: '0.25rem' }}>No pending manual transfers waiting to be verified.</p>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                          {manualOrders.filter(o => o.status === 'pending' && o.manual_payment_status === 'pending').map((o) => (
+                            <div 
+                              key={o.id} 
+                              style={{ 
+                                background: 'var(--bg-200)', 
+                                border: '1px solid var(--border)', 
+                                borderRadius: '12px', 
+                                padding: '1.5rem', 
+                                display: 'grid', 
+                                gridTemplateColumns: '1fr auto',
+                                gap: '1.5rem',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                  <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--primary)', background: 'rgba(99,102,241,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem' }}>
+                                    ORDER #{o.id.slice(0, 8).toUpperCase()}
+                                  </span>
+                                  <span className={styles.subText} style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <Clock size={12} /> {new Date(o.created_at).toLocaleString()}
+                                  </span>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '0.25rem' }}>
+                                  <div>
+                                    <span className={styles.subText} style={{ fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Customer</span>
+                                    <strong style={{ fontSize: '0.9rem', color: '#fff' }}>{o.users?.name || 'Customer'}</strong>
+                                    <span className={styles.subText} style={{ display: 'block', fontSize: '0.8rem' }}>{o.users?.email}</span>
+                                  </div>
+                                  <div>
+                                    <span className={styles.subText} style={{ fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Vendor / Store</span>
+                                    <strong style={{ fontSize: '0.9rem', color: '#fff' }}>{o.brands?.name || 'Vendor'}</strong>
+                                  </div>
+                                  <div>
+                                    <span className={styles.subText} style={{ fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Submitted Bank Details</span>
+                                    <div style={{ background: 'var(--bg-300)', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                                      <div>🏛️ <strong style={{ color: '#fff' }}>{o.manual_payment_details?.sender_bank || '—'}</strong></div>
+                                      <div style={{ margin: '2px 0' }}>👤 {o.manual_payment_details?.account_name || '—'}</div>
+                                      <div style={{ fontFamily: 'monospace', color: 'var(--primary)', fontWeight: 600 }}>🔑 Ref: {o.manual_payment_details?.receipt_code || '—'}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1rem' }}>
+                                <div style={{ textAlign: 'right' }}>
+                                  <span className={styles.subText} style={{ fontSize: '0.75rem' }}>Total Amount</span>
+                                  <h3 style={{ color: '#10b981', margin: 0, fontWeight: 800, fontSize: '1.5rem' }}>₦{Number(o.total_amount || 0).toLocaleString()}</h3>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                  <button 
+                                    className={styles.btnSm} 
+                                    style={{ background: 'none', color: '#ef4444', border: '1px solid #ef4444', height: '38px', padding: '0 1rem', borderRadius: '6px' }}
+                                    disabled={!!actionLoading}
+                                    onClick={async () => {
+                                      const reason = prompt('Please enter the reason for rejecting this manual payment receipt:');
+                                      if (reason === null) return;
+                                      await action('reject_manual_payment', { orderId: o.id, reason });
+                                    }}
+                                  >
+                                    Reject Receipt
+                                  </button>
+                                  <button 
+                                    className={styles.btnPrimary} 
+                                    style={{ background: '#10b981', borderColor: '#10b981', height: '38px', color: '#fff', fontWeight: 700 }}
+                                    disabled={!!actionLoading}
+                                    onClick={async () => {
+                                      if (confirm(`Verify GTB transfer of ₦${Number(o.total_amount || 0).toLocaleString()}? This authorizes the vendor store to fulfill the order.`)) {
+                                        await action('verify_manual_payment', { orderId: o.id });
+                                      }
+                                    }}
+                                  >
+                                    Approve Payment
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Sub Tab: History Log */}
+                  {manualQueueSubTab === 'history' && (
+                    <div className={styles.sectionCard}>
+                      <div className={styles.sectionHeader}>
+                        <h2>Verification History Log</h2>
+                        <p>Historical archive of approved or rejected manual transfer checkouts.</p>
+                      </div>
+
+                      {manualOrders.filter(o => o.manual_payment_status !== 'pending').length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-400)' }}>
+                          <Clock size={48} style={{ color: 'var(--primary)', marginBottom: '1rem', opacity: 0.6 }} />
+                          <h4 style={{ margin: 0, color: '#fff', fontWeight: 600 }}>Log is Empty</h4>
+                          <p className={styles.subText} style={{ marginTop: '0.25rem' }}>No historical manual verifications recorded yet.</p>
+                        </div>
+                      ) : (
+                        <div className={styles.tableWrap}>
+                          <table className={styles.table}>
+                            <thead>
+                              <tr>
+                                <th>Order Info</th>
+                                <th>Customer</th>
+                                <th>Submitted Bank Details</th>
+                                <th>Amount</th>
+                                <th>Verification Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {manualOrders.filter(o => o.manual_payment_status !== 'pending').map((o) => (
+                                <tr key={o.id}>
+                                  <td>
+                                    <div style={{ fontWeight: 700, color: 'var(--primary)', fontFamily: 'monospace' }}>
+                                      #{o.id.slice(0, 8).toUpperCase()}
+                                    </div>
+                                    <div className={styles.subText} style={{ fontSize: '0.7rem' }}>
+                                      {new Date(o.created_at).toLocaleString()}
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <div style={{ fontWeight: 600 }}>{o.users?.name || 'Customer'}</div>
+                                    <div className={styles.subText}>{o.users?.email}</div>
+                                  </td>
+                                  <td>
+                                    <div style={{ fontSize: '0.8rem' }}>
+                                      <strong>{o.manual_payment_details?.sender_bank || '—'}</strong> ({o.manual_payment_details?.account_name || '—'})
+                                    </div>
+                                    <div className={styles.subText} style={{ fontFamily: 'monospace' }}>Ref: {o.manual_payment_details?.receipt_code || '—'}</div>
+                                  </td>
+                                  <td>
+                                    <strong style={{ color: '#fff' }}>₦{Number(o.total_amount || 0).toLocaleString()}</strong>
+                                  </td>
+                                  <td>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                      <span className={styles.badge} style={{ width: 'fit-content', background: o.manual_payment_status === 'approved' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: o.manual_payment_status === 'approved' ? '#10b981' : '#ef4444' }}>
+                                        {o.manual_payment_status === 'approved' ? '✓ Verified' : '✗ Rejected'}
+                                      </span>
+                                      {o.manual_payment_status === 'rejected' && o.manual_payment_details?.rejection_reason && (
+                                        <span className={styles.subText} style={{ color: '#ef4444', fontSize: '0.75rem', maxWidth: '200px' }}>
+                                          Reason: {o.manual_payment_details.rejection_reason}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {tab === "categories" && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+                  
+                  {/* Segmented Controls for Edible / Non-Edible */}
+                  <div style={{ display: 'flex', gap: '0.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+                    <button 
+                      onClick={() => setCategorySubTab('edible')}
+                      className={`${styles.btnSm} ${categorySubTab === 'edible' ? styles.btnApprove : styles.btnReject}`}
+                      style={{ background: categorySubTab === 'edible' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--border)' }}
+                    >
+                      🍱 Edible Categories
+                    </button>
+                    <button 
+                      onClick={() => setCategorySubTab('non_edible')}
+                      className={`${styles.btnSm} ${categorySubTab === 'non_edible' ? styles.btnApprove : styles.btnReject}`}
+                      style={{ background: categorySubTab === 'non_edible' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--border)' }}
+                    >
+                      👕 Non-Edible Categories
+                    </button>
+                  </div>
+
+                  <div className={styles.sectionCard}>
+                    <div className={styles.sectionHeader}>
+                      <div>
+                        <h2>🎒 Category Catalog ({categorySubTab === 'edible' ? 'Edible' : 'Non-Edible'})</h2>
+                        <p>Manage product categorization tags available for campus vendors.</p>
+                      </div>
+                      <button 
+                        className={styles.btnPrimary}
+                        onClick={() => {
+                          setCategoryForm({ id: '', name: '', type: categorySubTab, icon: '📦', is_active: true, sort_order: categories.length + 1 });
+                          setShowCategoryModal(true);
+                        }}
+                      >
+                        <Plus size={15} /> Add Category
+                      </button>
+                    </div>
+
+                    <div className={styles.tableWrap}>
+                      <table className={styles.table}>
+                        <thead>
+                          <tr>
+                            <th>Icon</th>
+                            <th>Category Name</th>
+                            <th>Slug</th>
+                            <th>Type Scope</th>
+                            <th>Sort Order</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {categories.filter(c => c.type === categorySubTab).map((cat: any) => (
+                            <tr key={cat.id}>
+                              <td style={{ fontSize: '1.5rem', width: '60px', textAlign: 'center' }}>{cat.icon || '📦'}</td>
+                              <td><strong style={{ color: '#fff' }}>{cat.name}</strong></td>
+                              <td style={{ fontFamily: 'monospace', color: 'var(--primary)' }}>{cat.slug}</td>
+                              <td>
+                                {cat.university_id ? (
+                                  <span className={styles.badgeActive} style={{ fontSize: '0.65rem' }}>🎓 Campus Specific</span>
+                                ) : (
+                                  <span className={styles.badge} style={{ fontSize: '0.65rem', background: 'rgba(99,102,241,0.15)', color: '#818cf8' }}>🌍 Global Standings</span>
+                                )}
+                              </td>
+                              <td>{cat.sort_order || 0}</td>
+                              <td>
+                                <span className={cat.is_active ? styles.badgeActive : styles.badgeOffline}>
+                                  {cat.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                              </td>
+                              <td>
+                                <div className={styles.actionRow}>
+                                  {/* Only campus-specific categories can be deleted or updated by campus admin */}
+                                  {cat.university_id ? (
+                                    <>
+                                      <button 
+                                        className={styles.btnSm}
+                                        onClick={() => {
+                                          setCategoryForm({
+                                            id: cat.id,
+                                            name: cat.name,
+                                            type: cat.type,
+                                            icon: cat.icon || '📦',
+                                            is_active: cat.is_active,
+                                            sort_order: cat.sort_order || 0
+                                          });
+                                          setShowCategoryModal(true);
+                                        }}
+                                      >
+                                        <Edit2 size={13} />
+                                      </button>
+                                      <button 
+                                        className={`${styles.btnSm} ${styles.btnReject}`}
+                                        onClick={() => {
+                                          if (confirm('Delete this custom category? Products under this category will need updating.')) {
+                                            action('delete_category', { id: cat.id });
+                                          }
+                                        }}
+                                      >
+                                        <Trash2 size={13} />
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <span className={styles.subText} style={{ fontSize: '0.7rem' }}>Global (Read-Only)</span>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {categories.filter(c => c.type === categorySubTab).length === 0 && (
+                            <tr>
+                              <td colSpan={7} style={{ textAlign: 'center', color: '#4a5568', padding: '2rem' }}>
+                                No categories listed in this section yet.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -1363,13 +1874,13 @@ export default function UniversityAdminPage() {
               <div>
                 <label className={styles.formLabel}>Permissions</label>
                 <div className={styles.permCheckGrid}>
-                  {["vendors","customers","orders","reviews","fleet","notices"].map(p=>(
+                  {["vendors","customers","orders","reviews","fleet","notices","verify_payments"].map(p=>(
                     <label key={p} className={styles.permCheck}>
                       <input type="checkbox" checked={staffForm.permissions.includes(p)} onChange={e=>{
                         const next = e.target.checked ? [...staffForm.permissions,p] : staffForm.permissions.filter(x=>x!==p);
                         setStaffForm({...staffForm,permissions:next});
                       }}/>
-                      {p.charAt(0).toUpperCase()+p.slice(1)}
+                      {p === "verify_payments" ? "Payment Verifier" : p.charAt(0).toUpperCase()+p.slice(1)}
                     </label>
                   ))}
                 </div>
@@ -1382,6 +1893,159 @@ export default function UniversityAdminPage() {
                   setAddStaffLoading(false);
                 }}>{addStaffLoading?"Adding...":"Add Staff"}</button>
                 <button className={styles.btnSm} onClick={()=>setShowAddStaff(false)}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBankModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowBankModal(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3>{bankForm.id ? '🔧 Edit Bank Account' : '🏦 Add Bank Account'}</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label className={styles.formLabel}>Select Bank</label>
+                <select 
+                  className={styles.formSelect} 
+                  value={bankForm.bank_code} 
+                  onChange={e => setBankForm({ ...bankForm, bank_code: e.target.value, bank_name: availableBanks.find(b => b.code === e.target.value)?.name || '' })}
+                >
+                  <option value="">-- Choose Bank --</option>
+                  {availableBanks.map(b => (
+                    <option key={b.code} value={b.code}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={styles.formLabel}>Account Number (10 digits)</label>
+                <input 
+                  type="text" 
+                  className={styles.formInput} 
+                  maxLength={10}
+                  placeholder="e.g. 0123456789"
+                  value={bankForm.account_number}
+                  onChange={e => setBankForm({ ...bankForm, account_number: e.target.value.replace(/\D/g, '') })}
+                />
+              </div>
+              <div>
+                <label className={styles.formLabel}>
+                  Account Name {resolvingBank && <span className={styles.subText} style={{ color: 'var(--primary)' }}>(resolving...)</span>}
+                </label>
+                <input 
+                  type="text" 
+                  className={styles.formInput} 
+                  placeholder="Resolved account name..."
+                  value={bankForm.account_name}
+                  onChange={e => setBankForm({ ...bankForm, account_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className={styles.formLabel}>Label / Purpose</label>
+                <input 
+                  type="text" 
+                  className={styles.formInput} 
+                  placeholder="e.g. Main Account, Secondary Account"
+                  value={bankForm.label}
+                  onChange={e => setBankForm({ ...bankForm, label: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className={styles.formLabel} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={bankForm.is_primary}
+                    onChange={e => setBankForm({ ...bankForm, is_primary: e.target.checked })}
+                  />
+                  Mark as Primary Bank Account
+                </label>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button 
+                  className={styles.btnPrimary} 
+                  disabled={!bankForm.bank_code || bankForm.account_number.length !== 10 || !bankForm.account_name || resolvingBank}
+                  onClick={async () => {
+                    await action('upsert_bank_account', bankForm);
+                    setShowBankModal(false);
+                  }}
+                >
+                  {bankForm.id ? 'Save Changes' : 'Add Bank Account'}
+                </button>
+                <button className={styles.btnSm} onClick={() => setShowBankModal(false)}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCategoryModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowCategoryModal(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3>{categoryForm.id ? '🔧 Edit Custom Category' : '🎒 Add Custom Category'}</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label className={styles.formLabel}>Category Name</label>
+                <input 
+                  type="text" 
+                  className={styles.formInput} 
+                  placeholder="e.g. Traditional Wears / Native Delicacies"
+                  value={categoryForm.name}
+                  onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className={styles.formLabel}>Type</label>
+                <select 
+                  className={styles.formSelect} 
+                  value={categoryForm.type}
+                  onChange={e => setCategoryForm({ ...categoryForm, type: e.target.value })}
+                >
+                  <option value="edible">🍱 Edible (Delicacies)</option>
+                  <option value="non_edible">👕 Non-Edible (Fashion/Others)</option>
+                </select>
+              </div>
+              <div>
+                <label className={styles.formLabel}>Emoji Icon</label>
+                <input 
+                  type="text" 
+                  className={styles.formInput} 
+                  placeholder="e.g. 🍔 / 👕 / 📦"
+                  maxLength={4}
+                  value={categoryForm.icon}
+                  onChange={e => setCategoryForm({ ...categoryForm, icon: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className={styles.formLabel}>Sort Order</label>
+                <input 
+                  type="number" 
+                  className={styles.formInput} 
+                  value={categoryForm.sort_order}
+                  onChange={e => setCategoryForm({ ...categoryForm, sort_order: Number(e.target.value) })}
+                />
+              </div>
+              <div>
+                <label className={styles.formLabel} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={categoryForm.is_active}
+                    onChange={e => setCategoryForm({ ...categoryForm, is_active: e.target.checked })}
+                  />
+                  Active & Available for Vendors
+                </label>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button 
+                  className={styles.btnPrimary} 
+                  disabled={!categoryForm.name}
+                  onClick={async () => {
+                    await action('upsert_category', categoryForm);
+                    setShowCategoryModal(false);
+                  }}
+                >
+                  {categoryForm.id ? 'Save Changes' : 'Create Category'}
+                </button>
+                <button className={styles.btnSm} onClick={() => setShowCategoryModal(false)}>Cancel</button>
               </div>
             </div>
           </div>

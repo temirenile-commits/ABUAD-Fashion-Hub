@@ -388,6 +388,44 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ cafeterias: data || [] });
   }
 
+  // ── Manual Payments (scoped to this university) ────────────────────────────
+  if (action === 'manual_payments') {
+    const { data, error } = await supabaseAdmin
+      .from('orders')
+      .select('*, products(title), brands(name), users:customer_id(name, email)')
+      .eq('university_id', universityId)
+      .eq('payment_system', 'manual')
+      .order('created_at', { ascending: false });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ orders: data || [] });
+  }
+
+  // ── University Bank Accounts ───────────────────────────────────────────────
+  if (action === 'bank_accounts') {
+    const { data, error } = await supabaseAdmin
+      .from('university_bank_accounts')
+      .select('*')
+      .eq('university_id', universityId)
+      .order('is_primary', { ascending: false });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ bankAccounts: data || [] });
+  }
+
+  // ── Product Categories ─────────────────────────────────────────────────────
+  if (action === 'categories') {
+    // Return global categories + university-specific ones
+    const { data, error } = await supabaseAdmin
+      .from('product_categories')
+      .select('*')
+      .or(`university_id.is.null,university_id.eq.${universityId}`)
+      .order('sort_order', { ascending: true });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ categories: data || [] });
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }
 
@@ -1013,6 +1051,171 @@ export async function POST(req: NextRequest) {
   if (action === 'toggle_cafeteria') {
     const { id, is_active } = body;
     const { error } = await supabaseAdmin.from('cafeterias').update({ is_active }).eq('id', id).eq('university_id', universityId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // ── Verify Manual Payment (University-scoped) ──────────────────────────────
+  if (action === 'verify_manual_payment') {
+    const { orderId } = body;
+    // Ensure order belongs to this university
+    const { data: order, error: orderErr } = await supabaseAdmin
+      .from('orders').select('*').eq('id', orderId).single();
+    if (orderErr || !order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    if (!ctx.isFullAdmin && order.university_id !== universityId) {
+      return NextResponse.json({ error: 'Forbidden: Order not in your university.' }, { status: 403 });
+    }
+    const { error } = await supabaseAdmin.from('orders').update({
+      manual_payment_status: 'approved', status: 'paid'
+    }).eq('id', orderId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Create delivery record if platform delivery
+    if (order.delivery_method === 'platform') {
+      const { data: existingDelivery } = await supabaseAdmin.from('deliveries').select('id').eq('order_id', orderId).single();
+      if (!existingDelivery) {
+        let riderPayout = 500;
+        if (order.university_id) {
+          const { data: uniConfigData } = await supabaseAdmin.from('platform_settings').select('value').eq('key', `uni_config_${order.university_id}`).single();
+          if (uniConfigData && (uniConfigData.value as any)?.delivery_rider_pay) {
+            riderPayout = Number((uniConfigData.value as any).delivery_rider_pay);
+          }
+        }
+        await supabaseAdmin.from('deliveries').insert({ order_id: orderId, status: 'waiting_for_vendor', delivery_fee: riderPayout });
+      }
+    }
+    return NextResponse.json({ success: true, message: 'Manual payment verified.' });
+  }
+
+  // ── Reject Manual Payment (University-scoped) ──────────────────────────────
+  if (action === 'reject_manual_payment') {
+    const { orderId, reason } = body;
+    const { data: order } = await supabaseAdmin.from('orders').select('university_id, manual_payment_details').eq('id', orderId).single();
+    if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    if (!ctx.isFullAdmin && order.university_id !== universityId) {
+      return NextResponse.json({ error: 'Forbidden: Order not in your university.' }, { status: 403 });
+    }
+    const updatedDetails = { ...(order.manual_payment_details || {}), rejection_reason: reason };
+    const { error } = await supabaseAdmin.from('orders').update({
+      manual_payment_status: 'rejected',
+      status: 'cancelled',
+      manual_payment_details: updatedDetails
+    }).eq('id', orderId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Manual payment rejected.' });
+  }
+
+  // ── University Bank Accounts ───────────────────────────────────────────────
+  if (action === 'upsert_bank_account') {
+    const { id, bank_name, bank_code, account_number, account_name, label, is_primary } = body;
+    if (!bank_name || !account_number || !account_name) {
+      return NextResponse.json({ error: 'Bank name, account number and account name are required.' }, { status: 400 });
+    }
+    const record: any = { bank_name, bank_code: bank_code || null, account_number, account_name, label: label || 'Main Account', university_id: universityId };
+
+    if (id) {
+      const { data: exist } = await supabaseAdmin.from('university_bank_accounts').select('university_id').eq('id', id).single();
+      if (!exist || (!ctx.isFullAdmin && exist.university_id !== universityId)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      }
+      const { error } = await supabaseAdmin.from('university_bank_accounts').update(record).eq('id', id);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    } else {
+      const { error } = await supabaseAdmin.from('university_bank_accounts').insert(record);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    // If is_primary set, clear other primaries for this university
+    if (is_primary) {
+      await supabaseAdmin.from('university_bank_accounts').update({ is_primary: false }).eq('university_id', universityId);
+      const selector = id ? supabaseAdmin.from('university_bank_accounts').update({ is_primary: true }).eq('id', id) :
+        supabaseAdmin.from('university_bank_accounts').update({ is_primary: true }).eq('university_id', universityId).eq('account_number', account_number);
+      await selector;
+    }
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'delete_bank_account') {
+    const { id } = body;
+    const { data: exist } = await supabaseAdmin.from('university_bank_accounts').select('university_id').eq('id', id).single();
+    if (!exist || (!ctx.isFullAdmin && exist.university_id !== universityId)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+    const { error } = await supabaseAdmin.from('university_bank_accounts').delete().eq('id', id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'set_primary_bank') {
+    const { id } = body;
+    // Verify ownership
+    const { data: exist } = await supabaseAdmin.from('university_bank_accounts').select('university_id').eq('id', id).single();
+    if (!exist || (!ctx.isFullAdmin && exist.university_id !== universityId)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+    // Clear all primaries for this university, then set the chosen one
+    await supabaseAdmin.from('university_bank_accounts').update({ is_primary: false }).eq('university_id', universityId);
+    const { error } = await supabaseAdmin.from('university_bank_accounts').update({ is_primary: true }).eq('id', id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // ── Product Categories ─────────────────────────────────────────────────────
+  if (action === 'upsert_category') {
+    const { id, name, type, icon, is_active, sort_order } = body;
+    if (!name || !type) return NextResponse.json({ error: 'Name and type are required.' }, { status: 400 });
+    // Generate slug from name
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const record: any = {
+      name, slug, type, icon: icon || '📦',
+      is_active: is_active !== undefined ? is_active : true,
+      sort_order: sort_order || 0,
+      university_id: ctx.isFullAdmin ? (body.university_id || null) : universityId
+    };
+    if (id) {
+      const { error } = await supabaseAdmin.from('product_categories').update(record).eq('id', id);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    } else {
+      const { error } = await supabaseAdmin.from('product_categories').insert(record);
+      if (error) {
+        // Handle duplicate slug — append suffix
+        if (error.message.includes('unique')) {
+          const { error: retryErr } = await supabaseAdmin.from('product_categories').insert({ ...record, slug: `${slug}-${Date.now()}` });
+          if (retryErr) return NextResponse.json({ error: retryErr.message }, { status: 500 });
+        } else {
+          return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+      }
+    }
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'delete_category') {
+    const { id } = body;
+    // Allow superadmin to delete any; university admin can only delete their own
+    const query = ctx.isFullAdmin
+      ? supabaseAdmin.from('product_categories').delete().eq('id', id)
+      : supabaseAdmin.from('product_categories').delete().eq('id', id).eq('university_id', universityId);
+    const { error } = await query;
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // ── Assign Verifying Admin Permission ─────────────────────────────────────
+  if (action === 'assign_verifying_admin') {
+    // Only head university_admin or super admin
+    if (ctx.role !== 'university_admin' && !ctx.isFullAdmin) {
+      return NextResponse.json({ error: 'Only the head university admin can assign verifying admin roles.' }, { status: 403 });
+    }
+    const { userId, grant } = body; // grant=true to assign, false to revoke
+    const { data: targetUser } = await supabaseAdmin.from('users').select('university_id, admin_permissions').eq('id', userId).single();
+    if (!targetUser || (!ctx.isFullAdmin && targetUser.university_id !== universityId)) {
+      return NextResponse.json({ error: 'User not in your university.' }, { status: 403 });
+    }
+    const currentPerms: string[] = targetUser.admin_permissions || [];
+    const newPerms = grant
+      ? [...new Set([...currentPerms, 'verify_payments'])]
+      : currentPerms.filter((p: string) => p !== 'verify_payments');
+    const { error } = await supabaseAdmin.from('users').update({ admin_permissions: newPerms }).eq('id', userId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }

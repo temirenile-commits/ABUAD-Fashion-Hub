@@ -13,7 +13,7 @@ import styles from './admin.module.css';
 import PremiumChart from '@/components/PremiumChart'; 
 import { useToast } from '@/context/ToastContext';
 
-type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds' | 'preorders' | 'delicacies' | 'normal_products' | 'manual_payments' | 'vendor_orders';
+type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds' | 'preorders' | 'delicacies' | 'normal_products' | 'manual_payments' | 'vendor_orders' | 'categories';
 
 interface University {
   id: string;
@@ -313,6 +313,12 @@ export default function AdminDashboard() {
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [platformSettings, setPlatformSettings] = useState<Record<string, any>>({});
+
+  // Categories states for superadmin
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categorySubTab, setCategorySubTab] = useState<'edible' | 'non_edible'>('edible');
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [categoryForm, setCategoryForm] = useState({ id: '', name: '', type: 'edible', icon: '📦', is_active: true, sort_order: 0, university_id: '' });
   const [showAddAgentModal, setShowAddAgentModal] = useState(false);
   const [newAgentData, setNewAgentData] = useState({ email: '', university_id: '', agent_type: 'in-campus' });
   const [addingAgent, setAddingAgent] = useState(false);
@@ -373,7 +379,7 @@ export default function AdminDashboard() {
     setError(null);
     try {
       // Step 1: Fire all requests simultaneously
-      const keys = ['stats','vendors','products','users','transactions','orders','reviews','payouts','settings','market_analytics','delivery_agents','promo_codes', 'universities_list', 'deleted_users'] as const;
+      const keys = ['stats','vendors','products','users','transactions','orders','reviews','payouts','settings','market_analytics','delivery_agents','promo_codes', 'universities_list', 'deleted_users', 'categories'] as const;
       const fetchResults = await Promise.allSettled(
         keys.map(k => adminFetch(`/api/admin?action=${k}`))
       );
@@ -420,6 +426,7 @@ export default function AdminDashboard() {
       const promosD = getData(11);
       const unisD = getData(12);
       const deletedUsersD = getData(13);
+      const categoriesD = getData(14);
 
       setStats(prev => statsD.stats || prev);
       setVendors(vendorsD.vendors || []);
@@ -437,6 +444,7 @@ export default function AdminDashboard() {
       setUniversities(unisD.universities || []);
       setHomepageSections(statsD.sections || []);
       setPlatformSettings(settingsD.settings || {});
+      setCategories(categoriesD.categories || []);
       
       // Filter orders that are stuck (Paid but not delivered for > 24h)
       const now = new Date();
@@ -678,6 +686,7 @@ export default function AdminDashboard() {
             ['delicacies', 'Delicacies', UtensilsCrossed],
             ['normal_products', 'Normal Products', TrendingUp],
             ['manual_payments', 'Manual Transfers', ShieldCheck],
+            ['categories', 'Categories', Tag],
           ] as [Tab, string, React.ElementType][]).map(([id, label, Icon]) => (
             <button
               key={id}
@@ -3878,6 +3887,130 @@ export default function AdminDashboard() {
                 )}
               </div>
             )}
+
+            {activeTab === 'categories' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+                
+                {/* Segmented Controls for Edible / Non-Edible */}
+                <div style={{ display: 'flex', gap: '0.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+                  <button 
+                    onClick={() => setCategorySubTab('edible')}
+                    className={`btn btn-sm ${categorySubTab === 'edible' ? 'btn-primary' : 'btn-ghost'}`}
+                    style={{ border: '1px solid var(--border)' }}
+                  >
+                    🍱 Edible Categories
+                  </button>
+                  <button 
+                    onClick={() => setCategorySubTab('non_edible')}
+                    className={`btn btn-sm ${categorySubTab === 'non_edible' ? 'btn-primary' : 'btn-ghost'}`}
+                    style={{ border: '1px solid var(--border)' }}
+                  >
+                    👕 Non-Edible Categories
+                  </button>
+                </div>
+
+                <div style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>🎒 Global & Custom Categories ({categorySubTab === 'edible' ? 'Edible' : 'Non-Edible'})</h2>
+                      <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', opacity: 0.7 }}>
+                        Manage product categorization tags available across all campuses or specific universities.
+                      </p>
+                    </div>
+                    <button 
+                      className="btn btn-primary"
+                      onClick={() => {
+                        setCategoryForm({ id: '', name: '', type: categorySubTab, icon: '📦', is_active: true, sort_order: categories.length + 1, university_id: '' });
+                        setShowCategoryModal(true);
+                      }}
+                    >
+                      + Add Category
+                    </button>
+                  </div>
+
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
+                          <th style={{ padding: '0.75rem' }}>Icon</th>
+                          <th style={{ padding: '0.75rem' }}>Category Name</th>
+                          <th style={{ padding: '0.75rem' }}>Slug</th>
+                          <th style={{ padding: '0.75rem' }}>Scope / University</th>
+                          <th style={{ padding: '0.75rem' }}>Sort Order</th>
+                          <th style={{ padding: '0.75rem' }}>Status</th>
+                          <th style={{ padding: '0.75rem' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {categories.filter(c => c.type === categorySubTab).map((cat: any) => (
+                          <tr key={cat.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                            <td style={{ fontSize: '1.5rem', width: '60px', textAlign: 'center', padding: '0.75rem' }}>{cat.icon || '📦'}</td>
+                            <td style={{ padding: '0.75rem' }}><strong style={{ color: '#fff' }}>{cat.name}</strong></td>
+                            <td style={{ fontFamily: 'monospace', color: 'var(--primary)', padding: '0.75rem' }}>{cat.slug}</td>
+                            <td style={{ padding: '0.75rem' }}>
+                              {cat.university_id ? (
+                                <span className="badge badge-verified" style={{ fontSize: '0.65rem' }}>
+                                  🎓 {cat.universities?.abbreviation || cat.universities?.name || 'Campus Custom'}
+                                </span>
+                              ) : (
+                                <span className="badge" style={{ fontSize: '0.65rem', background: 'rgba(99,102,241,0.15)', color: '#818cf8' }}>
+                                  🌍 Global
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ padding: '0.75rem' }}>{cat.sort_order || 0}</td>
+                            <td style={{ padding: '0.75rem' }}>
+                              <span className={`badge ${cat.is_active ? 'badge-verified' : 'badge-offline'}`} style={{ background: cat.is_active ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)', color: cat.is_active ? '#10b981' : '#888' }}>
+                                {cat.is_active ? 'Active' : 'Inactive'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '0.75rem' }}>
+                              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button 
+                                  className="btn btn-sm btn-ghost"
+                                  onClick={() => {
+                                    setCategoryForm({
+                                      id: cat.id,
+                                      name: cat.name,
+                                      type: cat.type,
+                                      icon: cat.icon || '📦',
+                                      is_active: cat.is_active,
+                                      sort_order: cat.sort_order || 0,
+                                      university_id: cat.university_id || ''
+                                    });
+                                    setShowCategoryModal(true);
+                                  }}
+                                >
+                                  ✏️ Edit
+                                </button>
+                                <button 
+                                  className="btn btn-sm btn-ghost"
+                                  style={{ color: '#ef4444' }}
+                                  onClick={async () => {
+                                    if (confirm('Delete this category? Products under this category will lose their linkage.')) {
+                                      await adminAction('delete_category', { id: cat.id });
+                                    }
+                                  }}
+                                >
+                                  🗑️ Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {categories.filter(c => c.type === categorySubTab).length === 0 && (
+                          <tr>
+                            <td colSpan={7} style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>
+                              No categories listed in this section yet.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -4197,6 +4330,102 @@ export default function AdminDashboard() {
               >
                 {addingAgent ? 'Adding Rider...' : 'Add & Verify Rider'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCategoryModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowCategoryModal(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-100)', color: '#fff', borderRadius: '12px', border: '1px solid var(--border)', maxWidth: '450px', width: '100%' }}>
+            <div className={styles.modalHeader} style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: '1.2rem', margin: 0 }}>{categoryForm.id ? '🔧 Edit Category' : '🎒 Add Category'}</h2>
+              <button onClick={() => setShowCategoryModal(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}><XCircle size={24} /></button>
+            </div>
+            <div className={styles.modalBody} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="form-group">
+                <label className="form-label" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.35rem' }}>Category Name</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#fff' }}
+                  placeholder="e.g. Traditional Wears / Native Delicacies"
+                  value={categoryForm.name}
+                  onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.35rem' }}>Type</label>
+                <select 
+                  className="form-input" 
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#fff' }}
+                  value={categoryForm.type}
+                  onChange={e => setCategoryForm({ ...categoryForm, type: e.target.value })}
+                >
+                  <option value="edible">🍱 Edible (Delicacies)</option>
+                  <option value="non_edible">👕 Non-Edible (Fashion/Others)</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.35rem' }}>Scope / Assignment</label>
+                <select 
+                  className="form-input" 
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#fff' }}
+                  value={categoryForm.university_id || ''}
+                  onChange={e => setCategoryForm({ ...categoryForm, university_id: e.target.value })}
+                >
+                  <option value="">🌍 Global Scope (All Campuses)</option>
+                  {universities.map(u => (
+                    <option key={u.id} value={u.id}>🎓 {u.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.35rem' }}>Emoji Icon</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#fff' }}
+                  placeholder="e.g. 🍔 / 👕 / 📦"
+                  maxLength={4}
+                  value={categoryForm.icon}
+                  onChange={e => setCategoryForm({ ...categoryForm, icon: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.35rem' }}>Sort Order</label>
+                <input 
+                  type="number" 
+                  className="form-input" 
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#fff' }}
+                  value={categoryForm.sort_order}
+                  onChange={e => setCategoryForm({ ...categoryForm, sort_order: Number(e.target.value) })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={categoryForm.is_active}
+                    onChange={e => setCategoryForm({ ...categoryForm, is_active: e.target.checked })}
+                  />
+                  Active & Available for Vendors
+                </label>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                <button 
+                  className="btn btn-primary" 
+                  style={{ flex: 1 }}
+                  disabled={!categoryForm.name}
+                  onClick={async () => {
+                    await adminAction('upsert_category', categoryForm);
+                    setShowCategoryModal(false);
+                  }}
+                >
+                  {categoryForm.id ? 'Save Changes' : 'Create Category'}
+                </button>
+                <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowCategoryModal(false)}>Cancel</button>
+              </div>
             </div>
           </div>
         </div>
