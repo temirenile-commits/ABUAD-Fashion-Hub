@@ -407,7 +407,8 @@ export async function GET(req: NextRequest) {
       .from('university_bank_accounts')
       .select('*')
       .eq('university_id', universityId)
-      .order('is_primary', { ascending: false });
+      .order('is_active', { ascending: false })
+      .order('created_at', { ascending: true });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ bankAccounts: data || [] });
@@ -1107,11 +1108,18 @@ export async function POST(req: NextRequest) {
 
   // ── University Bank Accounts ───────────────────────────────────────────────
   if (action === 'upsert_bank_account') {
-    const { id, bank_name, bank_code, account_number, account_name, label, is_primary } = body;
+    const { id, bank_name, bank_code, account_number, account_name, label } = body;
     if (!bank_name || !account_number || !account_name) {
       return NextResponse.json({ error: 'Bank name, account number and account name are required.' }, { status: 400 });
     }
-    const record: any = { bank_name, bank_code: bank_code || null, account_number, account_name, label: label || 'Main Account', university_id: universityId };
+    const record: any = {
+      bank_name,
+      bank_code: bank_code || null,
+      account_number,
+      account_name,
+      label: label || 'Main Account',
+      university_id: universityId,
+    };
 
     if (id) {
       const { data: exist } = await supabaseAdmin.from('university_bank_accounts').select('university_id').eq('id', id).single();
@@ -1121,15 +1129,16 @@ export async function POST(req: NextRequest) {
       const { error } = await supabaseAdmin.from('university_bank_accounts').update(record).eq('id', id);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     } else {
+      // New account: if it's the first one for this university, auto-activate it
+      const { count: existingCount } = await supabaseAdmin
+        .from('university_bank_accounts')
+        .select('id', { count: 'exact', head: true })
+        .eq('university_id', universityId);
+      if ((existingCount || 0) === 0) {
+        record.is_active = true; // First account is auto-activated
+      }
       const { error } = await supabaseAdmin.from('university_bank_accounts').insert(record);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-    // If is_primary set, clear other primaries for this university
-    if (is_primary) {
-      await supabaseAdmin.from('university_bank_accounts').update({ is_primary: false }).eq('university_id', universityId);
-      const selector = id ? supabaseAdmin.from('university_bank_accounts').update({ is_primary: true }).eq('id', id) :
-        supabaseAdmin.from('university_bank_accounts').update({ is_primary: true }).eq('university_id', universityId).eq('account_number', account_number);
-      await selector;
     }
     return NextResponse.json({ success: true });
   }
@@ -1145,16 +1154,47 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  // ── Toggle Bank Account Active State (exclusive: only one active at a time) ──
+  if (action === 'toggle_bank_active') {
+    const { id, is_active } = body;
+    // Verify ownership
+    const { data: exist } = await supabaseAdmin
+      .from('university_bank_accounts')
+      .select('university_id')
+      .eq('id', id)
+      .single();
+    if (!exist || (!ctx.isFullAdmin && exist.university_id !== universityId)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+    // Activating: deactivate ALL other accounts for this university first (exclusive)
+    if (is_active) {
+      await supabaseAdmin
+        .from('university_bank_accounts')
+        .update({ is_active: false })
+        .eq('university_id', universityId);
+    }
+    const { error } = await supabaseAdmin
+      .from('university_bank_accounts')
+      .update({ is_active: !!is_active })
+      .eq('id', id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // ── Set Primary Bank (legacy — now also sets is_active) ──────────────────────
   if (action === 'set_primary_bank') {
     const { id } = body;
-    // Verify ownership
     const { data: exist } = await supabaseAdmin.from('university_bank_accounts').select('university_id').eq('id', id).single();
     if (!exist || (!ctx.isFullAdmin && exist.university_id !== universityId)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
-    // Clear all primaries for this university, then set the chosen one
-    await supabaseAdmin.from('university_bank_accounts').update({ is_primary: false }).eq('university_id', universityId);
-    const { error } = await supabaseAdmin.from('university_bank_accounts').update({ is_primary: true }).eq('id', id);
+    // Deactivate all for this university, then activate the chosen one
+    await supabaseAdmin.from('university_bank_accounts')
+      .update({ is_primary: false, is_active: false })
+      .eq('university_id', universityId);
+    const { error } = await supabaseAdmin.from('university_bank_accounts')
+      .update({ is_primary: true, is_active: true })
+      .eq('id', id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }

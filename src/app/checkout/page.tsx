@@ -191,14 +191,53 @@ function CheckoutContent() {
         }
       }
 
-      // Fetch platform settings to get bank transfer details if configured
-      const { data: settingsData } = await supabase
-        .from('platform_settings')
-        .select('value')
-        .eq('key', 'manual_payment_settings')
-        .maybeSingle();
-      if (settingsData?.value) {
-        setManualBankSettings(settingsData.value);
+      // ── Bank account resolution (3-tier fallback) ─────────────────────────────
+      // 1. Active university bank account (toggled ON by university admin)
+      // 2. Per-university superadmin default (stored in platform_settings)
+      // 3. Global platform manual payment default
+      const firstCartUniId = cart[0]?.university_id;
+      let bankInfo = null;
+
+      if (firstCartUniId) {
+        // Tier 1: Check for an actively-toggled university bank account
+        const { data: activeUniBank } = await supabase
+          .from('university_bank_accounts')
+          .select('*')
+          .eq('university_id', firstCartUniId)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (activeUniBank) {
+          bankInfo = activeUniBank;
+        }
+
+        // Tier 2: Superadmin-set per-university default fallback
+        if (!bankInfo) {
+          const { data: uniDefaultBank } = await supabase
+            .from('platform_settings')
+            .select('value')
+            .eq('key', `uni_default_bank_${firstCartUniId}`)
+            .maybeSingle();
+          if (uniDefaultBank?.value) {
+            bankInfo = uniDefaultBank.value;
+          }
+        }
+      }
+
+      // Tier 3: Global platform default
+      if (!bankInfo) {
+        const { data: settingsData } = await supabase
+          .from('platform_settings')
+          .select('value')
+          .eq('key', 'manual_payment_settings')
+          .maybeSingle();
+        if (settingsData?.value) {
+          bankInfo = settingsData.value;
+        }
+      }
+
+      if (bankInfo) {
+        setManualBankSettings(bankInfo);
       }
 
       // 2. Check Cart

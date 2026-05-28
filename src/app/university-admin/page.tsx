@@ -55,7 +55,7 @@ export default function UniversityAdminPage() {
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [manualQueueSubTab, setManualQueueSubTab] = useState<'pending' | 'history'>('pending');
   const [showBankModal, setShowBankModal] = useState(false);
-  const [bankForm, setBankForm] = useState({ id: '', bank_name: '', bank_code: '', account_number: '', account_name: '', label: 'Main Account', is_primary: false });
+  const [bankForm, setBankForm] = useState({ id: '', bank_name: '', bank_code: '', account_number: '', account_name: '', label: 'Main Account' });
   const [availableBanks, setAvailableBanks] = useState<any[]>([]);
   const [resolvingBank, setResolvingBank] = useState(false);
 
@@ -1368,12 +1368,12 @@ export default function UniversityAdminPage() {
                     <div className={styles.sectionHeader}>
                       <div>
                         <h2>🏦 Campus Bank Accounts</h2>
-                        <p>Configure multiple bank accounts for student manual checkouts. The primary account will be shown first.</p>
+                        <p>Configure bank accounts for manual checkout. Only the <strong style={{ color: 'var(--primary)' }}>Active</strong> account will be shown to students at checkout.</p>
                       </div>
                       <button 
                         className={styles.btnPrimary}
                         onClick={() => {
-                          setBankForm({ id: '', bank_name: '', bank_code: '', account_number: '', account_name: '', label: 'Main Account', is_primary: bankAccounts.length === 0 });
+                          setBankForm({ id: '', bank_name: '', bank_code: '', account_number: '', account_name: '', label: 'Main Account' });
                           setShowBankModal(true);
                         }}
                       >
@@ -1402,18 +1402,33 @@ export default function UniversityAdminPage() {
                               <td>{account.bank_name}</td>
                               <td style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--primary)', letterSpacing: '0.05em' }}>{account.account_number}</td>
                               <td>
-                                {account.is_primary ? (
-                                  <span className={styles.badgeActive}>★ Primary</span>
-                                ) : (
-                                  <button 
-                                    className={styles.btnSm} 
-                                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}
-                                    onClick={() => action('set_primary_bank', { id: account.id })}
-                                  >
-                                    Set Primary
-                                  </button>
-                                )}
-                              </td>
+                                 {account.is_active ? (
+                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'flex-start' }}>
+                                     <span style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '6px', padding: '2px 8px', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                       <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }}></span>
+                                       Active at Checkout
+                                     </span>
+                                     <button
+                                       className={styles.btnSm}
+                                       style={{ fontSize: '0.7rem', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }}
+                                       onClick={() => action('toggle_bank_active', { id: account.id, is_active: false })}
+                                       disabled={!!actionLoading}
+                                     >
+                                       Deactivate
+                                     </button>
+                                   </div>
+                                 ) : (
+                                   <button
+                                     className={styles.btnSm}
+                                     style={{ background: 'rgba(99,102,241,0.1)', color: 'var(--primary)', border: '1px solid rgba(99,102,241,0.3)', fontWeight: 600 }}
+                                     onClick={() => action('toggle_bank_active', { id: account.id, is_active: true })}
+                                     disabled={!!actionLoading}
+                                     title="Set this as the active checkout account (deactivates others)"
+                                   >
+                                     Set Active
+                                   </button>
+                                 )}
+                               </td>
                               <td>
                                 <div className={styles.actionRow}>
                                   <button 
@@ -1426,7 +1441,6 @@ export default function UniversityAdminPage() {
                                         account_number: account.account_number,
                                         account_name: account.account_name,
                                         label: account.label || 'Main Account',
-                                        is_primary: account.is_primary
                                       });
                                       setShowBankModal(true);
                                     }}
@@ -1450,7 +1464,7 @@ export default function UniversityAdminPage() {
                           {bankAccounts.length === 0 && (
                             <tr>
                               <td colSpan={5} style={{ textAlign: 'center', color: '#4a5568', padding: '2rem' }}>
-                                No bank accounts configured yet. Checkout will fallback to the platform default manual payment settings.
+                                No bank accounts configured yet. Students at checkout will see the platform default manual payment account.
                               </td>
                             </tr>
                           )}
@@ -1950,15 +1964,9 @@ export default function UniversityAdminPage() {
                   onChange={e => setBankForm({ ...bankForm, label: e.target.value })}
                 />
               </div>
-              <div>
-                <label className={styles.formLabel} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={bankForm.is_primary}
-                    onChange={e => setBankForm({ ...bankForm, is_primary: e.target.checked })}
-                  />
-                  Mark as Primary Bank Account
-                </label>
+              <div style={{ background: 'rgba(99,102,241,0.07)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '8px', padding: '0.75rem 1rem', fontSize: '0.8rem', color: 'var(--text-300)', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                <span style={{ fontSize: '1rem', flexShrink: 0 }}>💡</span>
+                <span>After saving, use the <strong style={{ color: 'var(--primary)' }}>Set Active</strong> button in the table to make this account visible to students at checkout. Only one account can be active at a time.</span>
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button 
