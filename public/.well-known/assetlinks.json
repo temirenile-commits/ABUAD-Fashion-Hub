@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.mastercart.campus",
+    "sha256_cert_fingerprints": [
+      "64:EE:7A:C7:B7:AD:D1:A2:9C:10:67:DC:F1:2D:EB:E2:19:DC:DB:6C:28:BA:AC:10:77:D0:04:78:71:39:B4:2B"
+    ]
+  }
+}]
