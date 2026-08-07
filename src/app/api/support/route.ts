@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
     const { data: userProfile } = await supabaseAdmin.from('users').select('role').eq('id', user.id).single();
 
-    const isSuperAdmin = userProfile?.role === 'admin';
+    const isSuperAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
     const isSupportHead = teamCheck?.role === 'User Support' || teamCheck?.role === 'Campus Admin' || isSuperAdmin;
     const isSupportAgent = isSupportHead || teamCheck?.role === 'customer_support_agent';
 

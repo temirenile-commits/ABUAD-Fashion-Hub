@@ -46,9 +46,13 @@ async function verifyAdmin(req: NextRequest) {
     return null;
   }
 
-  if (profile.role === 'admin') return { id: userId, email: payload.email, isFullAdmin: true, permissions: ['all'] };
+  const isSuperAdmin = profile.role === 'super_admin' || profile.role === 'admin';
+
+  // Super admin (super_admin / admin) is ALWAYS granted full access — bypasses ALL
+  // subscription checks, time-limit calculations, paywalls, and university scoping.
+  if (isSuperAdmin) return { id: userId, email: payload.email, isFullAdmin: true, permissions: profile.admin_permissions || ['all'] };
   if (profile.role === 'sub_admin') return { id: userId, email: payload.email, isFullAdmin: false, permissions: profile.admin_permissions || [], university_id: profile.university_id };
-  
+
   console.warn(`[ADMIN API] User ${payload.email} attempted admin action but has role: ${profile.role}`);
   return null;
 }
@@ -489,7 +493,7 @@ export async function GET(req: NextRequest) {
       .from('users')
       .select('id, name, email, role, created_at, status')
       .eq('university_id', uniId)
-      .neq('role', 'admin') // Exclude Universal Super Admins
+      .not('role', 'in', '(admin,super_admin)') // Exclude Universal Super Admins
       .order('created_at', { ascending: false });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ users: data });
