@@ -201,3 +201,10 @@
   font-weight: 700;
   text-align: center;
 }
+
+/* ===== Very small phones: shrink the vendor scroller cards ===== */
+@media (max-width: 380px) {
+  .miniVendorCard { min-width: 105px; }
+  .miniVendorCard img { width: 85px; height: 85px; }
+  .scroller { gap: 1rem; }
+}

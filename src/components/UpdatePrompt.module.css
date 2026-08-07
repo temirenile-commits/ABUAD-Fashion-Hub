@@ -209,3 +209,12 @@
   50% { transform: scale(1.1); filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.4)); }
   100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(212, 175, 55, 0)); }
 }
+
+/* ===== Small phones: allow modal to fill width, allow scrolling in short viewports ===== */
+@media (max-width: 420px) {
+  .overlay { padding: 0.75rem; align-items: flex-start; padding-top: 2rem; overflow-y: auto; }
+  .modal { max-width: 100%; border-radius: 16px; }
+  .content { padding: 1.25rem; }
+  .content h2 { font-size: 1.35rem; }
+  .iconCircle { height: 90px; }
+}

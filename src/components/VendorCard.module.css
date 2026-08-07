@@ -136,3 +136,18 @@
   font-size: 0.75rem !important;
   font-weight: 700;
 }
+
+/* ===== Phones ===== */
+@media (max-width: 640px) {
+  .coverWrap { height: 110px; }
+  .logoWrap { width: 46px; height: 46px; bottom: -20px; left: 1rem; }
+  .body { padding: 1.75rem 1rem 1rem; gap: 0.4rem; }
+  .name { font-size: 1rem; }
+  .description { font-size: 0.8rem; }
+  .stats { gap: 0.8rem; font-size: 0.72rem; }
+}
+
+/* ===== Large screens ===== */
+@media (min-width: 1280px) {
+  .coverWrap { height: 160px; }
+}

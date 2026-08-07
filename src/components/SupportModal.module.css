@@ -82,3 +82,10 @@
     transform: translateY(0) scale(1);
   }
 }
+
+/* ===== Tiny phones: let the modal fill the screen width ===== */
+@media (max-width: 420px) {
+  .modal { max-width: 100%; border-radius: 12px; }
+  .header { padding: 1rem; }
+  .body { padding: 1rem; }
+}

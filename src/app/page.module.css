@@ -38,6 +38,15 @@
   }
 }
 
+/* Ensure the category sidebar never forces the grid wider than the viewport */
+.heroCategoryCol, .heroExtraCol {
+  min-width: 0;
+}
+.heroMainCol {
+  min-width: 0;
+  max-width: 100%;
+}
+
 @media (max-width: 900px) {
   .heroGrid {
     grid-template-columns: 1fr;
@@ -46,6 +55,13 @@
   .heroCategoryCol {
     display: none;
   }
+  .heroSection { padding: 0.5rem 0; }
+}
+
+/* Very small phones: shorter hero so above-the-fold content is not dominated by the banner */
+@media (max-width: 480px) {
+  .heroGrid { height: 240px; }
+  .heroMainCol { height: 100%; }
 }
 
 /* ── SERVICE BAR ── */

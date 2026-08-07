@@ -135,3 +135,22 @@
   font-weight: 600;
 }
 .link:hover { text-decoration: underline; }
+
+/* ===== Tablet and up ===== */
+@media (min-width: 768px) {
+  .page { padding: 3rem; }
+  .card { padding: 3rem; }
+}
+
+/* ===== Phones ===== */
+@media (max-width: 640px) {
+  .page {
+    padding: 1rem;
+    justify-content: flex-start;
+    padding-top: 4rem;
+  }
+  .back { top: 1rem; left: 1rem; }
+  .card { max-width: 100%; padding: 1.5rem; }
+  .cardHeader { margin-bottom: 1.25rem; }
+  .cardHeader h2 { font-size: 1.35rem; }
+}

@@ -308,3 +308,27 @@
   color: #fff;
   transform: scale(1.1);
 }
+
+/* ===== Phones: keep cards compact, avoid overflow ===== */
+@media (max-width: 640px) {
+  .card { border-radius: var(--radius-md); }
+  .imageWrap {
+    aspect-ratio: 4 / 5;
+    margin: 0.25rem;
+    width: calc(100% - 0.5rem);
+  }
+  .info { padding: 0.6rem 0.4rem; }
+  .title { font-size: 0.88rem; }
+  .price { font-size: 1.05rem; }
+  .oldPrice { font-size: 0.72rem; }
+  .rating { font-size: 0.7rem; }
+  .discountBadge, .verifiedBadge, .campusBadge, .globalBadge { font-size: 0.6rem; }
+  .videoTitle { font-size: 0.95rem; }
+  .videoStats { font-size: 0.78rem; }
+}
+
+/* ===== Large desktops: slightly larger cards ===== */
+@media (min-width: 1280px) {
+  .title { font-size: 1.05rem; }
+  .price { font-size: 1.3rem; }
+}

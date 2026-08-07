@@ -126,9 +126,12 @@
 }
 
 html {
-  font-size: 16px;
+  font-size: clamp(14px, 0.95vw, 16px);
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
+  /* Prevent iOS text size adjust and overscroll bounce */
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -159,14 +162,14 @@ input, textarea, select, button { font-family: inherit; }
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 1.25rem;
+  padding: 0 clamp(0.75rem, 3vw, 1.25rem);
 }
 
 .container-wide {
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0 1.25rem;
+  padding: 0 clamp(0.75rem, 3vw, 1.25rem);
 }
 
 /* ============================================
@@ -393,6 +396,70 @@ input, textarea, select, button { font-family: inherit; }
    DIVIDER
    ============================================ */
 .divider { height: 1px; background: var(--border); width: 100%; }
+
+/* ============================================
+   RESPONSIVE BASE — ALL DEVICES
+   ============================================ */
+
+/* Fluid display typography so headlines scale with the viewport */
+html h1 { font-size: clamp(1.6rem, 4vw, 3rem); }
+html h2 { font-size: clamp(1.35rem, 3vw, 2.25rem); }
+html h3 { font-size: clamp(1.15rem, 2.2vw, 1.6rem); }
+
+/* Ensure tables and pre blocks never force horizontal scroll */
+table { max-width: 100%; display: block; overflow-x: auto; }
+pre { max-width: 100%; overflow-x: auto; }
+
+/* Touch-friendly minimum tap target */
+@media (pointer: coarse) {
+  button, a, input[type='checkbox'], input[type='radio'], select {
+    min-height: 40px;
+  }
+}
+
+/* ===== Tablets and small desktops (768px+) ===== */
+@media (min-width: 768px) {
+  html { font-size: 16px; }
+}
+
+/* ===== Large desktops (1440px+) ===== */
+@media (min-width: 1440px) {
+  html { font-size: 17px; }
+}
+
+/* ===== Small phones (≤ 480px) ===== */
+@media (max-width: 480px) {
+  html { font-size: 14.5px; }
+  body { overflow-x: hidden; }
+  /* Prevent sticky footers / fixed elements from overlapping content */
+  .btn { white-space: normal; }
+}
+
+/* ===== Very small phones (≤ 360px) ===== */
+@media (max-width: 360px) {
+  html { font-size: 13.5px; }
+}
+
+/* ===== Foldable / landscape phones ===== */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* Give modals and sheets room in short viewports */
+  body { overflow-y: auto; }
+}
+
+/* ============================================
+   RESPONSIVE GRID UTILITIES
+   ============================================ */
+.grid-responsive {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+  gap: 0.75rem;
+}
+@media (min-width: 640px) {
+  .grid-responsive { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+}
+@media (min-width: 1024px) {
+  .grid-responsive { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+}
 
 /* ============================================
    STAR RATING

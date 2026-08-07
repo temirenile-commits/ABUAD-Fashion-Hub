@@ -129,3 +129,12 @@
   color: var(--text-400);
   text-decoration: line-through;
 }
+
+/* ===== Very small phones: shrink the horizontal scroll cards ===== */
+@media (max-width: 380px) {
+  .card { width: 140px; }
+  .itemTitle { font-size: 0.72rem; }
+  .price { font-size: 0.88rem; }
+  .oldPrice { font-size: 0.7rem; }
+  .itemsInner { gap: 0.75rem; }
+}
