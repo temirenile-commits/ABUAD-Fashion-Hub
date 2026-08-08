@@ -312,3 +312,38 @@
   50% { transform: translateX(50%); width: 70%; }
   100% { transform: translateX(400%); width: 20%; }
 }
+
+.autoFillRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+  padding: 0.4rem 0.5rem;
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.autoFillLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-200);
+  cursor: pointer;
+  margin: 0;
+}
+.autoFillCheck {
+  accent-color: var(--primary);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+.autoFillHint {
+  font-size: 0.72rem;
+  color: var(--text-400);
+}
+@media (max-width: 640px) {
+  .autoFillRow { flex-direction: column; align-items: flex-start; }
+}

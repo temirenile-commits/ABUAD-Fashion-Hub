@@ -75,6 +75,10 @@ function CheckoutContent() {
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
+  const [autoFill, setAutoFill] = useState(true);
+  const [savedAutoFill, setSavedAutoFill] = useState({ address: '', phone: '' });
+  const [saveAsDefault, setSaveAsDefault] = useState(false);
+  const [savingDefault, setSavingDefault] = useState(false);
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState<string | null>(null);
@@ -221,12 +225,21 @@ function CheckoutContent() {
       if (profile) {
         setName(profile.name || '');
         setPhone(profile.phone || '');
-        // Auto-fill address from hostel and room number
-        if (profile.hostel) {
-          const fullAddress = profile.room_number 
-            ? `${profile.hostel}, ${profile.room_number}`
-            : profile.hostel;
-          setAddress(fullAddress);
+        // Auto-fill address: prefer the saved default address, fall back to hostel + room
+        const savedAddress = profile.default_address || '';
+        const hostelAddress = profile.hostel
+          ? (profile.room_number ? `${profile.hostel}, ${profile.room_number}` : profile.hostel)
+          : '';
+        const filledAddress = savedAddress || hostelAddress;
+        setSavedAutoFill({ address: filledAddress, phone: profile.phone || '' });
+        // Honor the user's stored auto-fill preference (default ON)
+        const preferAutoFill = profile.auto_fill_checkout !== false;
+        setAutoFill(preferAutoFill);
+        if (!preferAutoFill) {
+          setAddress('');
+          setPhone('');
+        } else {
+          setAddress(filledAddress);
         }
       }
 
@@ -542,6 +555,74 @@ function CheckoutContent() {
                     <Phone size={16} className={styles.inputIcon} />
                     <input className="form-input" placeholder="e.g. 08123456789" value={phone} onChange={e => setPhone(e.target.value)} required />
                   </div>
+                </div>
+
+                {/* Auto-fill toggle: restore or clear saved phone & address */}
+                <div className={styles.autoFillRow}>
+                  <label className={styles.autoFillLabel}>
+                    <input
+                      type="checkbox"
+                      className={styles.autoFillCheck}
+                      checked={autoFill}
+                      onChange={async (e) => {
+                        const next = e.target.checked;
+                        setAutoFill(next);
+                        if (next) {
+                          setAddress(savedAutoFill.address);
+                          setPhone(savedAutoFill.phone);
+                        }
+                        // Save the user's toggle preference on the profile
+                        if (user) {
+                          await supabase.from('users').update({ auto_fill_checkout: next }).eq('id', user.id);
+                        }
+                      }}
+                    />
+                    <span>Auto-fill saved phone &amp; address</span>
+                  </label>
+                  <span className={styles.autoFillHint}>
+                    {autoFill ? 'Edit freely below — your edits apply to this order only' : 'Fields cleared — type your details manually'}
+                  </span>
+                </div>
+
+                {/* Optional: persist edited fields as the new checkout defaults */}
+                <div className={styles.autoFillRow}>
+                  <label className={styles.autoFillLabel}>
+                    <input
+                      type="checkbox"
+                      className={styles.autoFillCheck}
+                      checked={saveAsDefault}
+                      onChange={(e) => setSaveAsDefault(e.target.checked)}
+                      disabled={savingDefault}
+                    />
+                    <span>Save these as my default checkout details</span>
+                  </label>
+                  {saveAsDefault && (
+                    <button
+                      className="btn btn-sm"
+                      style={{ fontSize: '0.7rem', padding: '5px 10px' }}
+                      disabled={savingDefault}
+                      onClick={async () => {
+                        if (!user) return;
+                        setSavingDefault(true);
+                        try {
+                          const { error } = await supabase
+                            .from('users')
+                            .update({ phone: phone.trim(), default_address: address.trim() })
+                            .eq('id', user.id);
+                          if (error) throw error;
+                          setSavedAutoFill({ address: address.trim(), phone: phone.trim() });
+                          setSaveAsDefault(false);
+                          alert('Default checkout details saved!');
+                        } catch (err: any) {
+                          alert(err.message || 'Failed to save defaults.');
+                        } finally {
+                          setSavingDefault(false);
+                        }
+                      }}
+                    >
+                      {savingDefault ? 'Saving...' : 'Apply & Save'}
+                    </button>
+                  )}
                 </div>
               </div>
 

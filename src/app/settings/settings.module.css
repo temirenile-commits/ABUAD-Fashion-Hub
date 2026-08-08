@@ -1,0 +1,132 @@
+.page {
+  min-height: 100vh;
+  background: var(--grad-dark);
+  color: var(--text-100);
+  padding: 1.5rem 1rem 4rem;
+}
+.wrap {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.backLink {
+  color: var(--text-300);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.backLink:hover { color: var(--primary); }
+.title { font-size: 1.35rem; font-weight: 800; margin: 0; }
+.sub { color: var(--text-400); font-size: 0.85rem; margin: 0.25rem 0 0; }
+
+.section {
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+}
+.sectionDesc { color: var(--text-400); font-size: 0.8rem; margin: 0 0 1rem; }
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+.formRow label { font-size: 0.75rem; color: var(--text-300); font-weight: 600; }
+.input {
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  background: var(--bg-300);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-100);
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+}
+.input:focus { outline: none; border-color: var(--primary); }
+.input::placeholder { color: var(--text-500); }
+
+.saveRow { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.5rem; }
+
+.danger {
+  border-color: rgba(255, 80, 80, 0.35);
+  background: linear-gradient(180deg, var(--bg-200), rgba(255, 60, 60, 0.06));
+}
+.dangerTitle { color: #ff6b6b; }
+.dangerText { color: var(--text-400); font-size: 0.8rem; margin: 0 0 1rem; }
+
+/* Password strength meter */
+.strength { display: flex; gap: 0.35rem; margin-top: 0.4rem; }
+.strengthBar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg-400);
+}
+
+/* Modal */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+  padding: 1rem;
+}
+.modal {
+  background: var(--bg-200);
+  border: 1px solid rgba(255, 80, 80, 0.4);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 420px;
+}
+.modal h3 { margin: 0 0 0.5rem; color: #ff6b6b; font-size: 1.1rem; }
+.modal p { color: var(--text-300); font-size: 0.85rem; margin: 0 0 1rem; line-height: 1.5; }
+.modalActions { display: flex; gap: 0.75rem; margin-top: 1rem; }
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-100);
+  color: var(--text-100);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1.25rem;
+  font-size: 0.85rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  animation: toastIn 0.25s ease;
+}
+.toast.success { border-color: #25d366; }
+.toast.error { border-color: #ff5050; }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+@media (max-width: 600px) {
+  .page { padding: 1.25rem 0.75rem 4rem; }
+  .section { padding: 1rem; }
+  .modalActions { flex-direction: column; }
+  .modalActions button { width: 100%; }
+}

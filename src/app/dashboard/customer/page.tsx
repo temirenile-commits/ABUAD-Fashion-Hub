@@ -513,6 +513,13 @@ export default function CustomerDashboard() {
             <ArrowRight size={20} />
           </Link>
 
+          <Link href="/settings" className={`card ${styles.wishlistCard}`} style={{ textDecoration: 'none' }}>
+            <div className={styles.wishlistInfo}>
+              <h3>Account Settings</h3>
+              <p>Checkout info, password, delete account</p>
+            </div>
+            <ArrowRight size={20} />
+          </Link>
           <button 
             className={`card ${styles.logoutCard}`}
             onClick={async () => {
