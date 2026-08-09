@@ -344,8 +344,8 @@ export default function UniversityAdminPage() {
                 <>
                   {vendors.filter((v: any) => v.verification_status === "pending").length > 0 && (
                     <div style={{
-                      background: 'rgba(245, 158, 11, 0.1)',
-                      border: '1px solid rgba(245, 158, 11, 0.3)',
+                      background: 'rgba(255,255,255,0.1)',
+                      border: '1px solid rgba(255,255,255,0.3)',
                       borderRadius: '12px',
                       padding: '1.25rem',
                       marginBottom: '1.5rem',
@@ -356,8 +356,8 @@ export default function UniversityAdminPage() {
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{
-                          background: '#f59e0b',
-                          color: '#fff',
+                          background: '#FFFFFF',
+                          color: '#000000',
                           borderRadius: '50%',
                           width: '40px',
                           height: '40px',
@@ -370,17 +370,17 @@ export default function UniversityAdminPage() {
                           ⚠️
                         </div>
                         <div>
-                          <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: '#f59e0b' }}>
+                          <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: '#FFFFFF' }}>
                             Pending Vendor Verifications ({vendors.filter((v: any) => v.verification_status === "pending").length})
                           </h4>
-                          <p style={{ margin: '4px 0 0', fontSize: '0.85rem', opacity: 0.8, color: '#fff' }}>
+                          <p style={{ margin: '4px 0 0', fontSize: '0.85rem', opacity: 0.8, color: '#FFFFFF' }}>
                             There are currently {vendors.filter((v: any) => v.verification_status === "pending").length} brand applications waiting for university verification. Review and approve them.
                           </p>
                         </div>
                       </div>
                       <button 
                         className={styles.btnSm}
-                        style={{ background: '#f59e0b', color: '#fff', border: 'none', fontWeight: 600, padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
+                        style={{ background: '#FFFFFF', color: '#000000', border: 'none', fontWeight: 600, padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
                         onClick={() => setTab('vendors')}
                       >
                         Review Now
@@ -389,12 +389,12 @@ export default function UniversityAdminPage() {
                   )}
                   <div className={styles.statsGrid} id="tour-uni-admin-overview">
                     {[
-                      {label:"Vendors",val:stats.totalVendors||0,color:"#7c3aed",bg:"rgba(124,58,237,0.1)"},
-                      {label:"Customers",val:stats.totalUsers||0,color:"#3b82f6",bg:"rgba(59,130,246,0.1)"},
-                      {label:"Total Orders",val:stats.totalOrders||0,color:"#f59e0b",bg:"rgba(245,158,11,0.1)"},
-                      {label:"Total Revenue (Paid)",val:`₦${(stats.totalRevenue||0).toLocaleString()}`,color:"#ec4899",bg:"rgba(236,72,153,0.1)"},
-                      {label:"Acquired Revenue (Completed)",val:`₦${(stats.acquiredRevenue||0).toLocaleString()}`,color:"#10b981",bg:"rgba(16,185,129,0.1)"},
-                      {label:"Projected Revenue (Stock Value)",val:`₦${(stats.projectedRevenue||0).toLocaleString()}`,color:"#f59e0b",bg:"rgba(245,158,11,0.1)"},
+                      {label:"Vendors",val:stats.totalVendors||0,color:"#000000",bg:"rgba(0,0,0,0.1)"},
+                      {label:"Customers",val:stats.totalUsers||0,color:"#000000",bg:"rgba(0,0,0,0.1)"},
+                      {label:"Total Orders",val:stats.totalOrders||0,color:"#FFFFFF",bg:"rgba(255,255,255,0.1)"},
+                      {label:"Total Revenue (Paid)",val:`₦${(stats.totalRevenue||0).toLocaleString()}`,color:"#FFFFFF",bg:"rgba(255,255,255,0.1)"},
+                      {label:"Acquired Revenue (Completed)",val:`₦${(stats.acquiredRevenue||0).toLocaleString()}`,color:"#FFFFFF",bg:"rgba(255,255,255,0.1)"},
+                      {label:"Projected Revenue (Stock Value)",val:`₦${(stats.projectedRevenue||0).toLocaleString()}`,color:"#FFFFFF",bg:"rgba(255,255,255,0.1)"},
                     ].map(({label,val,color,bg})=>(
                       <div key={label} className={styles.statCard}>
                         <div><div className={styles.statLabel}>{label}</div><div className={styles.statValue}>{val}</div></div>
@@ -409,7 +409,7 @@ export default function UniversityAdminPage() {
                         <table className={styles.table}>
                           <thead><tr><th>#</th><th>Product</th><th>Sales</th><th>Views</th></tr></thead>
                           <tbody>{(stats.popularProducts as any[]).map((p:any,i:number)=>(
-                            <tr key={p.id}><td className={styles.subText}>{i+1}</td><td>{p.title}</td><td style={{color:"#10b981",fontWeight:700}}>{p.sales_count||0}</td><td className={styles.subText}>{p.views_count||0}</td></tr>
+                            <tr key={p.id}><td className={styles.subText}>{i+1}</td><td>{p.title}</td><td style={{color:"#FFFFFF",fontWeight:700}}>{p.sales_count||0}</td><td className={styles.subText}>{p.views_count||0}</td></tr>
                           ))}</tbody>
                         </table>
                       </div>
@@ -430,7 +430,7 @@ export default function UniversityAdminPage() {
                             <td><div className={styles.avatarCell}><div className={styles.avatar}>{v.name?.substring(0,2).toUpperCase()}</div><div><div style={{fontWeight:600}}>{v.name}</div></div></div></td>
                              <td><div>{v.users?.name || 'N/A'}</div><div className={styles.subText}>{v.users?.email}</div></td>
                             <td><span className={`${styles.badge} ${styles["badge"+v.verification_status?.charAt(0).toUpperCase()+v.verification_status?.slice(1)]||styles.badgePending}`}>{v.verification_status}</span></td>
-                            <td><span style={{fontSize:"0.75rem",color:"#a78bfa"}}>{v.subscription_tier||"free"}</span></td>
+                            <td><span style={{fontSize:"0.75rem",color:"#FFFFFF"}}>{v.subscription_tier||"free"}</span></td>
                             <td>
                               <div className={styles.actionRow}>
                                 {v.verification_status!=="verified"&&<button className={`${styles.btnSm} ${styles.btnApprove}`} onClick={()=>action("verify_vendor",{brandId:v.id})} disabled={!!actionLoading} title="Verify Vendor"><CheckCircle size={13}/></button>}
@@ -458,21 +458,21 @@ export default function UniversityAdminPage() {
                   <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                     <button 
                       className={`${styles.btnSm} ${customersSubTab === 'all' ? styles.btnApprove : styles.btnReject}`}
-                      style={{ background: customersSubTab === 'all' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--border)' }}
+                      style={{ background: customersSubTab === 'all' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#FFFFFF', border: '1px solid var(--border)' }}
                       onClick={() => setCustomersSubTab('all')}
                     >
                       Active Users ({filter(customers, ["name", "email", "display_name"]).length})
                     </button>
                     <button 
                       className={`${styles.btnSm} ${customersSubTab === 'deleted' ? styles.btnApprove : styles.btnReject}`}
-                      style={{ background: customersSubTab === 'deleted' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--border)', position: 'relative' }}
+                      style={{ background: customersSubTab === 'deleted' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#FFFFFF', border: '1px solid var(--border)', position: 'relative' }}
                       onClick={() => setCustomersSubTab('deleted')}
                     >
                       Recycle Bin ({filter(deletedUsers, ["name", "email"]).length})
                       {deletedUsers.length > 0 && (
                         <span style={{
-                          background: '#ef4444',
-                          color: '#fff',
+                          background: '#000000',
+                          color: '#FFFFFF',
                           borderRadius: '10px',
                           padding: '2px 6px',
                           fontSize: '10px',
@@ -504,7 +504,7 @@ export default function UniversityAdminPage() {
                               </td>
                               <td><span className={styles.badge}>{c.role}</span></td>
                               <td>
-                                <div style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 600 }}>
+                                <div style={{ fontSize: '0.75rem', color: '#000000', fontWeight: 600 }}>
                                   🗓️ {c.deleted_at ? new Date(c.deleted_at).toLocaleString() : 'N/A'}
                                 </div>
                                 {c.deleted_reason && (
@@ -517,7 +517,7 @@ export default function UniversityAdminPage() {
                                 <div className={styles.actionRow} style={{ gap: '0.5rem' }}>
                                   <button 
                                     className={styles.btnSm} 
-                                    style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 10px' }}
+                                    style={{ background: '#FFFFFF', color: '#000000', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 10px' }}
                                     onClick={() => { if (confirm('Restore this user account?')) action('restore_user', { userId: c.id }) }}
                                   >
                                     Restore
@@ -547,7 +547,7 @@ export default function UniversityAdminPage() {
                                   </button>
                                   <button 
                                     className={styles.btnSm} 
-                                    style={{ background: '#ef4444', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    style={{ background: '#000000', color: '#FFFFFF', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                     onClick={() => {
                                       const reason = prompt('Reason for soft-deleting this user:');
                                       if (reason !== null) {
@@ -586,7 +586,7 @@ export default function UniversityAdminPage() {
                             <td className={styles.subText}>#{o.id.slice(0,8)}</td>
                             <td>{o.users?.name || o.users?.email?.split('@')[0] || "—"}</td>
                             <td>{o.brands?.name||"—"}</td>
-                            <td style={{fontWeight:700,color:"#10b981"}}>₦{Number(o.total_amount).toLocaleString()}</td>
+                            <td style={{fontWeight:700,color:"#FFFFFF"}}>₦{Number(o.total_amount).toLocaleString()}</td>
                             <td><span className={`${styles.badge} ${o.status==="paid"?styles.badgePaid:o.status==="cancelled"?styles.badgeCancelled:styles.badgePending}`}>{o.status}</span></td>
                             <td className={styles.subText}>{new Date(o.created_at).toLocaleDateString()}</td>
                           </tr>
@@ -611,7 +611,7 @@ export default function UniversityAdminPage() {
                                <div style={{fontWeight:600}}>{r.products?.title || r.brands?.name || "—"}</div>
                                {r.products?.description && <div className={styles.subText} style={{fontSize:'0.7rem', maxWidth:'200px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{r.products.description}</div>}
                              </td>
-                            <td style={{color:"#f59e0b",fontWeight:700}}>{"★".repeat(r.rating)}</td>
+                            <td style={{color:"#FFFFFF",fontWeight:700}}>{"★".repeat(r.rating)}</td>
                             <td>{r.comment||"—"}</td>
                             <td className={styles.subText}>{new Date(r.created_at).toLocaleDateString()}</td>
                           </tr>
@@ -723,10 +723,10 @@ export default function UniversityAdminPage() {
                       }}
                       multiLineConfig={{
                         keys: [
-                          { dataKey: 'projected', color: '#10b981', label: 'Campus Projected', isProjected: true },
-                          { dataKey: 'realized', color: '#3b82f6', label: 'Campus Realized' },
-                          { dataKey: 'unrealized', color: '#f59e0b', label: 'Campus Unrealized' },
-                          { dataKey: 'failed', color: '#ef4444', label: 'Campus Failed' }
+                          { dataKey: 'projected', color: '#FFFFFF', label: 'Campus Projected', isProjected: true },
+                          { dataKey: 'realized', color: '#000000', label: 'Campus Realized' },
+                          { dataKey: 'unrealized', color: '#FFFFFF', label: 'Campus Unrealized' },
+                          { dataKey: 'failed', color: '#000000', label: 'Campus Failed' }
                         ],
                         categorize: (row: Record<string, any>) => {
                           const val = Number(row.total_amount || 0);
@@ -777,7 +777,7 @@ export default function UniversityAdminPage() {
                             <td>
                               <span className={p.is_active ? styles.textGreen : styles.textRed}>{p.is_active ? 'Active' : 'Inactive'}</span>
                               {p.subsidiary_capital > 0 && (
-                                <div style={{ fontSize: '0.65rem', color: '#f59e0b', marginTop: '2px' }}>
+                                <div style={{ fontSize: '0.65rem', color: '#FFFFFF', marginTop: '2px' }}>
                                   Budget: ₦{Number(p.capital_used || 0).toLocaleString()} / ₦{Number(p.subsidiary_capital).toLocaleString()}
                                 </div>
                               )}
@@ -798,7 +798,7 @@ export default function UniversityAdminPage() {
 
                   {/* Promo Code Modal */}
                   <dialog id="promo-modal" className={styles.modalDialog} style={{ padding: 0 }}>
-                    <div className={styles.modalContent} style={{ maxWidth: '400px', background: 'var(--bg-100)', color: '#fff', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                    <div className={styles.modalContent} style={{ maxWidth: '400px', background: 'var(--bg-100)', color: '#FFFFFF', borderRadius: '12px', border: '1px solid var(--border)' }}>
                       <div className={styles.modalHeader} style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 style={{ margin: 0 }}>New Promo Code</h3>
                         <button className={styles.btnIcon} onClick={() => (document.getElementById('promo-modal') as any)?.close()}><XCircle size={20} /></button>
@@ -826,7 +826,7 @@ export default function UniversityAdminPage() {
                           <input type="number" className={styles.formInput} value={promoForm.max_uses} onChange={e => setPromoForm({...promoForm, max_uses: e.target.value})} />
                         </div>
                         <div className="form-group mb-4">
-                          <label className={styles.formLabel} style={{ color: '#f59e0b' }}>Subsidiary Capital / Budget (₦)</label>
+                          <label className={styles.formLabel} style={{ color: '#FFFFFF' }}>Subsidiary Capital / Budget (₦)</label>
                           <input 
                              type="number" 
                              className={styles.formInput} 
@@ -861,7 +861,7 @@ export default function UniversityAdminPage() {
                             <div className={styles.insightAbbr}>{u.abbreviation}</div>
                           </div>
                           {i === 0 && (
-                            <span className={styles.badge} style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', fontSize: '0.65rem', fontWeight: 800 }}>
+                            <span className={styles.badge} style={{ background: 'rgba(0,0,0,0.15)', color: '#000000', fontSize: '0.65rem', fontWeight: 800 }}>
                               🔥 MOST VOLATILE
                             </span>
                           )}
@@ -893,7 +893,7 @@ export default function UniversityAdminPage() {
                                <span className={`${styles.badge} ${r.is_active?styles.badgeActive:styles.badgeOffline}`}>{r.is_active?"Active":"Inactive"}</span>
                              </td>
                              <td>{r.completed_orders_count||0} Deliveries</td>
-                             <td style={{color:"#f59e0b",fontWeight:700}}>₦{Number(r.wallet_balance||0).toLocaleString()}</td>
+                             <td style={{color:"#FFFFFF",fontWeight:700}}>₦{Number(r.wallet_balance||0).toLocaleString()}</td>
                              <td>
                                <div className={styles.actionRow}>
                                  {!r.is_active && <button className={`${styles.btnSm} ${styles.btnApprove}`} onClick={()=>action("verify_rider",{userId:r.id})}><CheckCircle size={12}/> Verify</button>}
@@ -902,7 +902,7 @@ export default function UniversityAdminPage() {
                              </td>
                            </tr>
                          ))}
-                        {riders.length===0&&<tr><td colSpan={6} style={{textAlign:"center",color:"#4a5568",padding:"2rem"}}>No riders assigned yet.</td></tr>}
+                        {riders.length===0&&<tr><td colSpan={6} style={{textAlign:"center",color:"#000000",padding:"2rem"}}>No riders assigned yet.</td></tr>}
                       </tbody>
                     </table>
                   </div>
@@ -914,13 +914,13 @@ export default function UniversityAdminPage() {
                   <div className={styles.sectionHeader}>
                     <div>
                       <h2>My Team</h2>
-                      <p>University administrative team &nbsp;<span style={{background:'rgba(99,102,241,0.15)',color:'#818cf8',padding:'2px 8px',borderRadius:'12px',fontSize:'0.7rem',fontWeight:700}}>{team.length}/10 Members</span></p>
+                      <p>University administrative team &nbsp;<span style={{background:'rgba(0,0,0,0.15)',color:'#FFFFFF',padding:'2px 8px',borderRadius:'12px',fontSize:'0.7rem',fontWeight:700}}>{team.length}/10 Members</span></p>
                     </div>
                     {/* Only HEAD university_admin or super admin can add staff */}
                     {(userCtx?.role === "university_admin" || userCtx?.role === "admin") && team.length < 10 && (
                       <button className={styles.btnPrimary} onClick={()=>setShowAddStaff(true)}><UserPlus size={15}/>Add Staff</button>
                     )}
-                    {team.length >= 10 && <span style={{color:'#ef4444',fontSize:'0.75rem',fontWeight:600}}>Team Full (10/10)</span>}
+                    {team.length >= 10 && <span style={{color:'#000000',fontSize:'0.75rem',fontWeight:600}}>Team Full (10/10)</span>}
                   </div>
                   <div className={styles.teamGrid}>
                     {team.map((m:any)=>(
@@ -956,7 +956,7 @@ export default function UniversityAdminPage() {
                         )}
                       </div>
                     ))}
-                    {team.length===0&&<div style={{padding:"2rem",color:"#4a5568"}}>No staff added yet. Use Add Staff to build your team (max 10).</div>}
+                    {team.length===0&&<div style={{padding:"2rem",color:"#000000"}}>No staff added yet. Use Add Staff to build your team (max 10).</div>}
                   </div>
                 </div>
               )}
@@ -984,8 +984,8 @@ export default function UniversityAdminPage() {
                             <td>{p.brands?.name}</td>
                             <td>
                                <span className={styles.badge} style={{ 
-                                  background: p.visibility_type === 'global' ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.05)', 
-                                  color: p.visibility_type === 'global' ? '#818cf8' : 'var(--text-200)',
+                                  background: p.visibility_type === 'global' ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.05)', 
+                                  color: p.visibility_type === 'global' ? '#FFFFFF' : 'var(--text-200)',
                                   fontSize: '0.65rem'
                                }}>
                                  {p.visibility_type === 'global' ? '🌍 Global' : '🎓 Campus'}
@@ -1075,7 +1075,7 @@ export default function UniversityAdminPage() {
 
                   {/* Section Form Modal */}
                   <dialog id="section-modal" className={styles.modalDialog} style={{ padding: 0 }}>
-                    <div className={styles.modalContent} style={{ maxWidth: '500px', background: 'var(--bg-100)', color: '#fff', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                    <div className={styles.modalContent} style={{ maxWidth: '500px', background: 'var(--bg-100)', color: '#FFFFFF', borderRadius: '12px', border: '1px solid var(--border)' }}>
                       <div className={styles.modalHeader} style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 style={{ margin: 0 }}>{editingSection ? 'Edit Section' : 'Create New Section'}</h3>
                         <button className={styles.btnIcon} onClick={() => (document.getElementById('section-modal') as any)?.close()}><XCircle size={20} /></button>
@@ -1151,7 +1151,7 @@ export default function UniversityAdminPage() {
 
                   {/* Product Picker Modal */}
                   <dialog id="product-picker-modal" className={styles.modalDialog} style={{ padding: 0 }}>
-                     <div className={styles.modalContent} style={{ maxWidth: '800px', height: '80vh', background: 'var(--bg-100)', color: '#fff', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                     <div className={styles.modalContent} style={{ maxWidth: '800px', height: '80vh', background: 'var(--bg-100)', color: '#FFFFFF', borderRadius: '12px', border: '1px solid var(--border)' }}>
                         <div className={styles.modalHeader} style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <h3 style={{ margin: 0 }}>Manage Products: {editingSection?.title}</h3>
                           <button className={styles.btnIcon} onClick={() => (document.getElementById('product-picker-modal') as any)?.close()}><XCircle size={20} /></button>
@@ -1161,7 +1161,7 @@ export default function UniversityAdminPage() {
                               <h4>University Catalog</h4>
                               <div className={styles.searchBar} style={{ width: '100%', background: 'var(--bg-200)' }}>
                                 <Search size={14} />
-                                <input placeholder="Filter products..." value={search} onChange={e => setSearch(e.target.value)} style={{ background: 'none', border: 'none', color: '#fff' }} />
+                                <input placeholder="Filter products..." value={search} onChange={e => setSearch(e.target.value)} style={{ background: 'none', border: 'none', color: '#FFFFFF' }} />
                               </div>
                               <div style={{ overflowY: 'auto', flex: 1 }}>
                                  {filter(products, ['title']).slice(0, 50).map(p => (
@@ -1237,7 +1237,7 @@ export default function UniversityAdminPage() {
                       <Link 
                         href="/rankings" 
                         className={styles.btnPrimary} 
-                        style={{ background: 'linear-gradient(135deg, #eb0c7a 0%, #7c3aed 100%)', width: 'fit-content' }}
+                        style={{ background: 'linear-gradient(135deg, #000000 0%, #000000 100%)', width: 'fit-content' }}
                       >
                         🏆 Open University Leaderboard
                       </Link>
@@ -1309,7 +1309,7 @@ export default function UniversityAdminPage() {
                         ))}
                         {cafeterias.length === 0 && (
                           <tr>
-                            <td colSpan={4} style={{ textAlign: "center", color: "#4a5568", padding: "2rem" }}>
+                            <td colSpan={4} style={{ textAlign: "center", color: "#000000", padding: "2rem" }}>
                               No cafeterias configured for this campus yet. Click &quot;New Cafeteria&quot; to add one.
                             </td>
                           </tr>
@@ -1329,7 +1329,7 @@ export default function UniversityAdminPage() {
                     <div className={styles.statCard}>
                       <div>
                         <div className={styles.statLabel}>📅 Daily Manual Sales (Today)</div>
-                        <div className={styles.statValue} style={{ color: '#10b981' }}>
+                        <div className={styles.statValue} style={{ color: '#FFFFFF' }}>
                           ₦{manualOrders.filter(o => o.manual_payment_status === 'approved' && new Date(o.created_at).toDateString() === new Date().toDateString()).reduce((sum, o) => sum + Number(o.total_amount), 0).toLocaleString()}
                         </div>
                         <div className={styles.subText}>
@@ -1342,7 +1342,7 @@ export default function UniversityAdminPage() {
                     <div className={styles.statCard}>
                       <div>
                         <div className={styles.statLabel}>⏳ Pending Verification Queue</div>
-                        <div className={styles.statValue} style={{ color: '#f59e0b' }}>
+                        <div className={styles.statValue} style={{ color: '#FFFFFF' }}>
                           {manualOrders.filter(o => o.status === 'pending' && o.manual_payment_status === 'pending').length}
                         </div>
                         <div className={styles.subText}>Needs manual approval</div>
@@ -1364,7 +1364,7 @@ export default function UniversityAdminPage() {
                   </div>
 
                   {/* 2. CAMPUS BANK ACCOUNTS CONFIGURATION CARD */}
-                  <div className={styles.sectionCard} style={{ background: 'linear-gradient(135deg, var(--bg-200), rgba(99,102,241,0.03))' }}>
+                  <div className={styles.sectionCard} style={{ background: 'linear-gradient(135deg, var(--bg-200), rgba(0,0,0,0.03))' }}>
                     <div className={styles.sectionHeader}>
                       <div>
                         <h2>🏦 Campus Bank Accounts</h2>
@@ -1404,13 +1404,13 @@ export default function UniversityAdminPage() {
                               <td>
                                  {account.is_active ? (
                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'flex-start' }}>
-                                     <span style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '6px', padding: '2px 8px', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                       <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }}></span>
+                                     <span style={{ background: 'rgba(255,255,255,0.15)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '6px', padding: '2px 8px', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                       <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#FFFFFF', display: 'inline-block' }}></span>
                                        Active at Checkout
                                      </span>
                                      <button
                                        className={styles.btnSm}
-                                       style={{ fontSize: '0.7rem', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }}
+                                       style={{ fontSize: '0.7rem', background: 'rgba(0,0,0,0.1)', color: '#000000', border: '1px solid rgba(0,0,0,0.2)' }}
                                        onClick={() => action('toggle_bank_active', { id: account.id, is_active: false })}
                                        disabled={!!actionLoading}
                                      >
@@ -1420,7 +1420,7 @@ export default function UniversityAdminPage() {
                                  ) : (
                                    <button
                                      className={styles.btnSm}
-                                     style={{ background: 'rgba(99,102,241,0.1)', color: 'var(--primary)', border: '1px solid rgba(99,102,241,0.3)', fontWeight: 600 }}
+                                     style={{ background: 'rgba(0,0,0,0.1)', color: 'var(--primary)', border: '1px solid rgba(0,0,0,0.3)', fontWeight: 600 }}
                                      onClick={() => action('toggle_bank_active', { id: account.id, is_active: true })}
                                      disabled={!!actionLoading}
                                      title="Set this as the active checkout account (deactivates others)"
@@ -1463,7 +1463,7 @@ export default function UniversityAdminPage() {
                           ))}
                           {bankAccounts.length === 0 && (
                             <tr>
-                              <td colSpan={5} style={{ textAlign: 'center', color: '#4a5568', padding: '2rem' }}>
+                              <td colSpan={5} style={{ textAlign: 'center', color: '#000000', padding: '2rem' }}>
                                 No bank accounts configured yet. Students at checkout will see the platform default manual payment account.
                               </td>
                             </tr>
@@ -1478,14 +1478,14 @@ export default function UniversityAdminPage() {
                     <button 
                       onClick={() => setManualQueueSubTab('pending')}
                       className={`${styles.btnSm} ${manualQueueSubTab === 'pending' ? styles.btnApprove : styles.btnReject}`}
-                      style={{ background: manualQueueSubTab === 'pending' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--border)' }}
+                      style={{ background: manualQueueSubTab === 'pending' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#FFFFFF', border: '1px solid var(--border)' }}
                     >
                       Pending Queue ({manualOrders.filter(o => o.status === 'pending' && o.manual_payment_status === 'pending').length})
                     </button>
                     <button 
                       onClick={() => setManualQueueSubTab('history')}
                       className={`${styles.btnSm} ${manualQueueSubTab === 'history' ? styles.btnApprove : styles.btnReject}`}
-                      style={{ background: manualQueueSubTab === 'history' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--border)' }}
+                      style={{ background: manualQueueSubTab === 'history' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#FFFFFF', border: '1px solid var(--border)' }}
                     >
                       Verification History
                     </button>
@@ -1501,8 +1501,8 @@ export default function UniversityAdminPage() {
 
                       {manualOrders.filter(o => o.status === 'pending' && o.manual_payment_status === 'pending').length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-400)' }}>
-                          <ShieldCheck size={48} style={{ color: '#10b981', marginBottom: '1rem', opacity: 0.6 }} />
-                          <h4 style={{ margin: 0, color: '#fff', fontWeight: 600 }}>All Clear!</h4>
+                          <ShieldCheck size={48} style={{ color: '#FFFFFF', marginBottom: '1rem', opacity: 0.6 }} />
+                          <h4 style={{ margin: 0, color: '#FFFFFF', fontWeight: 600 }}>All Clear!</h4>
                           <p className={styles.subText} style={{ marginTop: '0.25rem' }}>No pending manual transfers waiting to be verified.</p>
                         </div>
                       ) : (
@@ -1523,7 +1523,7 @@ export default function UniversityAdminPage() {
                             >
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                                  <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--primary)', background: 'rgba(99,102,241,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem' }}>
+                                  <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--primary)', background: 'rgba(0,0,0,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem' }}>
                                     ORDER #{o.id.slice(0, 8).toUpperCase()}
                                   </span>
                                   <span className={styles.subText} style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -1534,17 +1534,17 @@ export default function UniversityAdminPage() {
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '0.25rem' }}>
                                   <div>
                                     <span className={styles.subText} style={{ fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Customer</span>
-                                    <strong style={{ fontSize: '0.9rem', color: '#fff' }}>{o.users?.name || 'Customer'}</strong>
+                                    <strong style={{ fontSize: '0.9rem', color: '#FFFFFF' }}>{o.users?.name || 'Customer'}</strong>
                                     <span className={styles.subText} style={{ display: 'block', fontSize: '0.8rem' }}>{o.users?.email}</span>
                                   </div>
                                   <div>
                                     <span className={styles.subText} style={{ fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Vendor / Store</span>
-                                    <strong style={{ fontSize: '0.9rem', color: '#fff' }}>{o.brands?.name || 'Vendor'}</strong>
+                                    <strong style={{ fontSize: '0.9rem', color: '#FFFFFF' }}>{o.brands?.name || 'Vendor'}</strong>
                                   </div>
                                   <div>
                                     <span className={styles.subText} style={{ fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Submitted Bank Details</span>
                                     <div style={{ background: 'var(--bg-300)', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-                                      <div>🏛️ <strong style={{ color: '#fff' }}>{o.manual_payment_details?.sender_bank || '—'}</strong></div>
+                                      <div>🏛️ <strong style={{ color: '#FFFFFF' }}>{o.manual_payment_details?.sender_bank || '—'}</strong></div>
                                       <div style={{ margin: '2px 0' }}>👤 {o.manual_payment_details?.account_name || '—'}</div>
                                       <div style={{ fontFamily: 'monospace', color: 'var(--primary)', fontWeight: 600 }}>🔑 Ref: {o.manual_payment_details?.receipt_code || '—'}</div>
                                     </div>
@@ -1555,13 +1555,13 @@ export default function UniversityAdminPage() {
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1rem' }}>
                                 <div style={{ textAlign: 'right' }}>
                                   <span className={styles.subText} style={{ fontSize: '0.75rem' }}>Total Amount</span>
-                                  <h3 style={{ color: '#10b981', margin: 0, fontWeight: 800, fontSize: '1.5rem' }}>₦{Number(o.total_amount || 0).toLocaleString()}</h3>
+                                  <h3 style={{ color: '#FFFFFF', margin: 0, fontWeight: 800, fontSize: '1.5rem' }}>₦{Number(o.total_amount || 0).toLocaleString()}</h3>
                                 </div>
 
                                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                                   <button 
                                     className={styles.btnSm} 
-                                    style={{ background: 'none', color: '#ef4444', border: '1px solid #ef4444', height: '38px', padding: '0 1rem', borderRadius: '6px' }}
+                                    style={{ background: 'none', color: '#000000', border: '1px solid #000000', height: '38px', padding: '0 1rem', borderRadius: '6px' }}
                                     disabled={!!actionLoading}
                                     onClick={async () => {
                                       const reason = prompt('Please enter the reason for rejecting this manual payment receipt:');
@@ -1573,7 +1573,7 @@ export default function UniversityAdminPage() {
                                   </button>
                                   <button 
                                     className={styles.btnPrimary} 
-                                    style={{ background: '#10b981', borderColor: '#10b981', height: '38px', color: '#fff', fontWeight: 700 }}
+                                    style={{ background: '#FFFFFF', borderColor: '#FFFFFF', height: '38px', color: '#000000', fontWeight: 700 }}
                                     disabled={!!actionLoading}
                                     onClick={async () => {
                                       if (confirm(`Verify GTB transfer of ₦${Number(o.total_amount || 0).toLocaleString()}? This authorizes the vendor store to fulfill the order.`)) {
@@ -1603,7 +1603,7 @@ export default function UniversityAdminPage() {
                       {manualOrders.filter(o => o.manual_payment_status !== 'pending').length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-400)' }}>
                           <Clock size={48} style={{ color: 'var(--primary)', marginBottom: '1rem', opacity: 0.6 }} />
-                          <h4 style={{ margin: 0, color: '#fff', fontWeight: 600 }}>Log is Empty</h4>
+                          <h4 style={{ margin: 0, color: '#FFFFFF', fontWeight: 600 }}>Log is Empty</h4>
                           <p className={styles.subText} style={{ marginTop: '0.25rem' }}>No historical manual verifications recorded yet.</p>
                         </div>
                       ) : (
@@ -1640,15 +1640,15 @@ export default function UniversityAdminPage() {
                                     <div className={styles.subText} style={{ fontFamily: 'monospace' }}>Ref: {o.manual_payment_details?.receipt_code || '—'}</div>
                                   </td>
                                   <td>
-                                    <strong style={{ color: '#fff' }}>₦{Number(o.total_amount || 0).toLocaleString()}</strong>
+                                    <strong style={{ color: '#FFFFFF' }}>₦{Number(o.total_amount || 0).toLocaleString()}</strong>
                                   </td>
                                   <td>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                      <span className={styles.badge} style={{ width: 'fit-content', background: o.manual_payment_status === 'approved' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: o.manual_payment_status === 'approved' ? '#10b981' : '#ef4444' }}>
+                                      <span className={styles.badge} style={{ width: 'fit-content', background: o.manual_payment_status === 'approved' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', color: o.manual_payment_status === 'approved' ? '#FFFFFF' : '#000000' }}>
                                         {o.manual_payment_status === 'approved' ? '✓ Verified' : '✗ Rejected'}
                                       </span>
                                       {o.manual_payment_status === 'rejected' && o.manual_payment_details?.rejection_reason && (
-                                        <span className={styles.subText} style={{ color: '#ef4444', fontSize: '0.75rem', maxWidth: '200px' }}>
+                                        <span className={styles.subText} style={{ color: '#000000', fontSize: '0.75rem', maxWidth: '200px' }}>
                                           Reason: {o.manual_payment_details.rejection_reason}
                                         </span>
                                       )}
@@ -1673,14 +1673,14 @@ export default function UniversityAdminPage() {
                     <button 
                       onClick={() => setCategorySubTab('edible')}
                       className={`${styles.btnSm} ${categorySubTab === 'edible' ? styles.btnApprove : styles.btnReject}`}
-                      style={{ background: categorySubTab === 'edible' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--border)' }}
+                      style={{ background: categorySubTab === 'edible' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#FFFFFF', border: '1px solid var(--border)' }}
                     >
                       🍱 Edible Categories
                     </button>
                     <button 
                       onClick={() => setCategorySubTab('non_edible')}
                       className={`${styles.btnSm} ${categorySubTab === 'non_edible' ? styles.btnApprove : styles.btnReject}`}
-                      style={{ background: categorySubTab === 'non_edible' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--border)' }}
+                      style={{ background: categorySubTab === 'non_edible' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: '#FFFFFF', border: '1px solid var(--border)' }}
                     >
                       👕 Non-Edible Categories
                     </button>
@@ -1720,13 +1720,13 @@ export default function UniversityAdminPage() {
                           {categories.filter(c => c.type === categorySubTab).map((cat: any) => (
                             <tr key={cat.id}>
                               <td style={{ fontSize: '1.5rem', width: '60px', textAlign: 'center' }}>{cat.icon || '📦'}</td>
-                              <td><strong style={{ color: '#fff' }}>{cat.name}</strong></td>
+                              <td><strong style={{ color: '#FFFFFF' }}>{cat.name}</strong></td>
                               <td style={{ fontFamily: 'monospace', color: 'var(--primary)' }}>{cat.slug}</td>
                               <td>
                                 {cat.university_id ? (
                                   <span className={styles.badgeActive} style={{ fontSize: '0.65rem' }}>🎓 Campus Specific</span>
                                 ) : (
-                                  <span className={styles.badge} style={{ fontSize: '0.65rem', background: 'rgba(99,102,241,0.15)', color: '#818cf8' }}>🌍 Global Standings</span>
+                                  <span className={styles.badge} style={{ fontSize: '0.65rem', background: 'rgba(0,0,0,0.15)', color: '#FFFFFF' }}>🌍 Global Standings</span>
                                 )}
                               </td>
                               <td>{cat.sort_order || 0}</td>
@@ -1776,7 +1776,7 @@ export default function UniversityAdminPage() {
                           ))}
                           {categories.filter(c => c.type === categorySubTab).length === 0 && (
                             <tr>
-                              <td colSpan={7} style={{ textAlign: 'center', color: '#4a5568', padding: '2rem' }}>
+                              <td colSpan={7} style={{ textAlign: 'center', color: '#000000', padding: '2rem' }}>
                                 No categories listed in this section yet.
                               </td>
                             </tr>
@@ -1861,7 +1861,7 @@ export default function UniversityAdminPage() {
                   />
                 </div>
                 {staffSearch.length > 1 && (
-                  <div style={{position:"absolute", top:"100%", left:0, right:0, background:"#1a1a2e", border:"1px solid var(--primary)", borderRadius:"8px", marginTop:"4px", zIndex:200, maxHeight:"200px", overflowY:"auto"}}>
+                  <div style={{position:"absolute", top:"100%", left:0, right:0, background:"#000000", border:"1px solid var(--primary)", borderRadius:"8px", marginTop:"4px", zIndex:200, maxHeight:"200px", overflowY:"auto"}}>
                     {customers.filter(u => u.name?.toLowerCase().includes(staffSearch.toLowerCase()) || u.email.toLowerCase().includes(staffSearch.toLowerCase())).map(u => (
                       <div 
                         key={u.id} 
@@ -1964,7 +1964,7 @@ export default function UniversityAdminPage() {
                   onChange={e => setBankForm({ ...bankForm, label: e.target.value })}
                 />
               </div>
-              <div style={{ background: 'rgba(99,102,241,0.07)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '8px', padding: '0.75rem 1rem', fontSize: '0.8rem', color: 'var(--text-300)', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+              <div style={{ background: 'rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.2)', borderRadius: '8px', padding: '0.75rem 1rem', fontSize: '0.8rem', color: 'var(--text-300)', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
                 <span style={{ fontSize: '1rem', flexShrink: 0 }}>💡</span>
                 <span>After saving, use the <strong style={{ color: 'var(--primary)' }}>Set Active</strong> button in the table to make this account visible to students at checkout. Only one account can be active at a time.</span>
               </div>

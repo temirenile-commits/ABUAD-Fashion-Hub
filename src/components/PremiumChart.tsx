@@ -413,8 +413,8 @@ export default function PremiumChart({
 
                   <XAxis
                     dataKey="time"
-                    stroke="#475569"
-                    tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'monospace' }}
+                    stroke="#000000"
+                    tick={{ fill: '#000000', fontSize: 10, fontFamily: 'monospace' }}
                     tickLine={{ stroke: 'rgba(255,255,255,0.1)' }}
                     axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
                     minTickGap={50}
@@ -423,8 +423,8 @@ export default function PremiumChart({
                   <YAxis
                     domain={[minVal, maxVal]}
                     tickCount={6}
-                    stroke="#475569"
-                    tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'monospace' }}
+                    stroke="#000000"
+                    tick={{ fill: '#000000', fontSize: 10, fontFamily: 'monospace' }}
                     tickLine={{ stroke: 'rgba(255,255,255,0.1)' }}
                     axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
                     tickFormatter={(v: number) => yFmt(v, valuePrefix)}

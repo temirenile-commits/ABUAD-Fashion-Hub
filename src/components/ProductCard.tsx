@@ -206,7 +206,7 @@ export default function ProductCard({ product }: Props) {
             {product.brands?.logo_url ? (
               <OptimizedImage src={product.brands.logo_url} alt="" width={40} height={40} style={{ objectFit: 'cover' }} useThumbnail={true} />
             ) : (
-              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary)', color: '#000', fontWeight: 800 }}>
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary)', color: '#000000', fontWeight: 800 }}>
                 {brandName.substring(0, 1)}
               </div>
             )}
@@ -237,7 +237,7 @@ export default function ProductCard({ product }: Props) {
               <span>•</span>
               <div className={styles.rating} style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                  <Star size={10} fill="currentColor" color="#EAB308" />
+                  <Star size={10} fill="currentColor" color="#FFFFFF" />
                   <span>{product.rating ? Number(product.rating).toFixed(1) : '5.0'}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '2px', opacity: 0.7 }}>
@@ -279,7 +279,7 @@ export default function ProductCard({ product }: Props) {
 
           <div className={styles.footer}>
             <div className={styles.rating}>
-              <Star size={12} fill="currentColor" color="#EAB308" />
+              <Star size={12} fill="currentColor" color="#FFFFFF" />
               <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{product.rating ? Number(product.rating).toFixed(1) : '5.0'}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '8px', opacity: 0.6 }}>
                 <Eye size={12} />
@@ -289,7 +289,7 @@ export default function ProductCard({ product }: Props) {
                 marginLeft: 'auto', 
                 fontSize: '0.75rem', 
                 fontWeight: 700, 
-                color: (product.stock_count || 0) > 0 ? '#10b981' : '#ef4444' 
+                color: (product.stock_count || 0) > 0 ? '#FFFFFF' : '#000000' 
               }}>
                 {(product.stock_count || 0) > 0 ? `${product.stock_count} In Stock` : 'Out of Stock'}
               </div>

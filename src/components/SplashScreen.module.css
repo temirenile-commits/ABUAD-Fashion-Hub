@@ -13,7 +13,7 @@
   /* Subtle radial glow from centre — like a spotlight on a display cabinet */
   background-image: radial-gradient(
     ellipse 70% 60% at 50% 50%,
-    rgba(201, 161, 74, 0.08) 0%,
+    rgba(255,255,255,0.08) 0%,
     transparent 70%
   );
 
@@ -45,7 +45,7 @@
   display: block;
 
   /* Gentle enhancement — keeps logo feeling rich on any display */
-  filter: brightness(1.05) contrast(1.05) drop-shadow(0 0 40px rgba(201, 161, 74, 0.25));
+  filter: brightness(1.05) contrast(1.05) drop-shadow(0 0 40px rgba(255,255,255,0.25));
 }
 
 /* ── Animations ── */

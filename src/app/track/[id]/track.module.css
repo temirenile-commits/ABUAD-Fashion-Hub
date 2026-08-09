@@ -126,13 +126,13 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.3rem 0.75rem;
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.3);
   border-radius: 999px;
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: #22c55e;
+  color: #FFFFFF;
   flex-shrink: 0;
 }
 
@@ -141,8 +141,8 @@
 }
 
 @keyframes pillFlash {
-  0%, 100% { background: rgba(34, 197, 94, 0.1); }
-  50%       { background: rgba(34, 197, 94, 0.3); }
+  0%, 100% { background: rgba(255,255,255,0.1); }
+  50%       { background: rgba(255,255,255,0.3); }
 }
 
 .liveDot {
@@ -178,7 +178,7 @@
 
 @keyframes glowPulse {
   0%   { box-shadow: 0 0 0 3px var(--primary), 0 8px 32px rgba(0,0,0,0.2); }
-  50%  { box-shadow: 0 0 0 6px rgba(212,175,55,0.3), 0 8px 32px rgba(0,0,0,0.2); }
+  50%  { box-shadow: 0 0 0 6px rgba(255,255,255,0.3), 0 8px 32px rgba(0,0,0,0.2); }
   100% { box-shadow: 0 0 0 2px var(--primary), 0 8px 32px rgba(0,0,0,0.2); }
 }
 
@@ -278,7 +278,7 @@
   font-weight: 900;
   padding: 2px 6px;
   background: var(--primary);
-  color: #000;
+  color: #000000;
   border-radius: 4px;
   letter-spacing: 0.06em;
   animation: badgePop 0.4s ease;
@@ -305,10 +305,10 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.8rem;
-  color: #ef4444;
+  color: #000000;
   padding: 0.75rem 1rem;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.2);
   border-radius: 8px;
   margin-top: 1rem;
 }
@@ -420,8 +420,8 @@
   gap: 0.75rem;
   align-items: flex-start;
   padding: 1rem;
-  background: rgba(212, 175, 55, 0.05);
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 12px;
   font-size: 0.8rem;
   color: var(--text-300);

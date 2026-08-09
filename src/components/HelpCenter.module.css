@@ -2,7 +2,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0,0,0,0.7);
   backdrop-filter: blur(8px);
   z-index: 100000;
   display: flex;
@@ -24,7 +24,7 @@
   max-height: 85dvh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   animation: slideUp 0.3s ease;
   overflow: hidden;
 }
@@ -61,7 +61,7 @@
 
 .closeBtn:hover {
   background: var(--primary);
-  color: #fff;
+  color: #FFFFFF;
 }
 
 .searchBar {
@@ -118,7 +118,7 @@
 
 .tabActive {
   background: var(--primary);
-  color: #000;
+  color: #000000;
   border-color: var(--primary);
 }
 
@@ -151,12 +151,12 @@
   border: none;
   width: 100%;
   text-align: left;
-  color: #ffffff;
+  color: #FFFFFF;
   transition: all 0.2s;
 }
 
 .faqQuestion:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255,255,255,0.05);
 }
 
 .faqAnswer {

@@ -13,13 +13,13 @@
   align-items: center;
   gap: 0.6rem;
   font-size: 0.9rem;
-  color: #f59e0b; /* Amber/Warning color */
-  background: rgba(245, 158, 11, 0.1);
+  color: #FFFFFF; /* Amber/Warning color */
+  background: rgba(255,255,255,0.1);
   padding: 0.5rem 1rem;
   border-radius: 20px;
   width: fit-content;
   margin-bottom: 2rem;
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(255,255,255,0.2);
   animation: pulse 2s infinite ease-in-out;
 }
 
@@ -95,8 +95,8 @@
   align-items: flex-start;
   gap: 1rem;
   padding: 1.25rem;
-  background: rgba(34, 197, 94, 0.08); /* Success tint */
-  border: 1px solid rgba(34, 197, 94, 0.2);
+  background: rgba(255,255,255,0.08); /* Success tint */
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: var(--radius-md);
   margin-bottom: 1.5rem;
 }
@@ -229,13 +229,13 @@
 .secureOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.95);
+  background: rgba(0,0,0,0.95);
   backdrop-filter: blur(10px);
   z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: #FFFFFF;
   text-align: center;
 }
 
@@ -256,7 +256,7 @@
 .lockPulse {
   width: 100px;
   height: 100px;
-  background: rgba(245, 158, 11, 0.1);
+  background: rgba(255,255,255,0.1);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -268,14 +268,14 @@
   content: '';
   position: absolute;
   inset: 0;
-  border: 2px solid #f59e0b;
+  border: 2px solid #FFFFFF;
   border-radius: 50%;
   animation: ripple 2s infinite ease-out;
 }
 
 .goldLock {
-  color: #f59e0b;
-  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.4));
+  color: #FFFFFF;
+  filter: drop-shadow(0 0 10px rgba(255,255,255,0.4));
 }
 
 .progressBar {

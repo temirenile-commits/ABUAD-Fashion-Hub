@@ -200,7 +200,7 @@ export default function OnboardingPage() {
               href={`https://wa.me/${ADMIN_WHATSAPP}?text=Hi Admin, I just submitted my vendor application for "${form.brandName}". My Matric No is ${form.matricNo}. I'm ready to finalize my registration.`} 
               target="_blank" 
               className="btn btn-primary"
-              style={{ width: '100%', justifyContent: 'center', background: '#25D366', borderColor: '#25D366' }}
+              style={{ width: '100%', justifyContent: 'center', background: '#FFFFFF', borderColor: '#FFFFFF' }}
             >
               <MessageCircle size={20} /> MESSAGE ADMIN TO FINALIZE
             </a>
@@ -220,7 +220,7 @@ export default function OnboardingPage() {
         </div>
 
         {errorMsg && (
-          <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center' }}>
+          <div style={{ padding: '1rem', background: 'rgba(0,0,0,0.1)', color: '#000000', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center' }}>
             {errorMsg}
           </div>
         )}
@@ -421,7 +421,7 @@ export default function OnboardingPage() {
                 <p style={{ marginBottom: '1rem', color: 'var(--text-300)' }}>You agree to fulfill orders promptly, communicate respectfully with customers, and only list authentic items. The admin reserves the right to suspend or terminate any store violating platform integrity, selling prohibited items, or engaging in fraudulent behavior.</p>
               </div>
 
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', marginBottom: '1.5rem', fontSize: '0.9rem', padding: '1rem', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', marginBottom: '1.5rem', fontSize: '0.9rem', padding: '1rem', background: 'rgba(0,0,0,0.05)', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.2)' }}>
                 <input 
                   type="checkbox" 
                   checked={acceptedTerms} 

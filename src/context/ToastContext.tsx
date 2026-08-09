@@ -67,11 +67,11 @@ function ToastItem({ toast, onRemove }: { toast: Toast, onRemove: (id: string) =
     <div
       style={{
         pointerEvents: 'auto',
-        background: isError ? '#ef4444' : isSuccess ? '#10b981' : '#3b82f6',
-        color: 'white',
+        background: isError ? '#000000' : isSuccess ? '#FFFFFF' : '#000000',
+        color: isError ? 'white' : 'black',
         padding: '12px 20px',
         borderRadius: '8px',
-        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)',
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
@@ -95,7 +95,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast, onRemove: (id: string) =
       
       <button 
         onClick={() => onRemove(toast.id)} 
-        style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}
+        style={{ background: 'transparent', border: 'none', color: isError ? 'white' : 'black', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}
       >
         <X size={16} />
       </button>

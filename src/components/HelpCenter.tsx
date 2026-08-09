@@ -160,7 +160,7 @@ export default function HelpCenter({ isOpen, onClose }: { isOpen: boolean, onClo
               <button 
                 onClick={() => setShowSupport(true)}
                 className="btn" 
-                style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', background: 'var(--primary)', color: '#000' }}
+                style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', background: 'var(--primary)', color: '#000000' }}
               >
                 <MessageCircle size={18} />
                 Still need help? Contact Support

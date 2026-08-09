@@ -17,9 +17,9 @@ import styles from './dashboard.module.css';
 // Icons mapper for dynamic rates
 const getIcon = (id: string) => {
   switch (id) {
-    case 'quarter': return <Target size={24} color="#3b82f6" />;
+    case 'quarter': return <Target size={24} color="#000000" />;
     case 'half': return <Rocket size={24} color="var(--primary)" />;
-    case 'full': return <Crown size={24} color="#f59e0b" />;
+    case 'full': return <Crown size={24} color="#FFFFFF" />;
     case 'boost_week': return '??';
     case 'boost_month': return '??';
     case 'boost_top': return '??';
@@ -1182,14 +1182,14 @@ export default function VendorDashboard() {
           <head>
             <title>Invoice - ${order.id.slice(0, 8)}</title>
             <style>
-              body { font-family: sans-serif; padding: 40px; color: #333; }
-              .header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 20px; }
+              body { font-family: sans-serif; padding: 40px; color: #000000; }
+              .header { display: flex; justify-content: space-between; border-bottom: 2px solid #000000; padding-bottom: 20px; }
               .details { margin: 30px 0; display: flex; justify-content: space-between; }
               table { width: 100%; border-collapse: collapse; margin-top: 30px; }
-              th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-              th { background: #f5f5f5; }
+              th, td { border: 1px solid #FFFFFF; padding: 12px; text-align: left; }
+              th { background: #FFFFFF; }
               .total { text-align: right; margin-top: 30px; font-size: 1.2rem; font-weight: bold; }
-              .footer { margin-top: 50px; font-size: 0.8rem; color: #777; text-align: center; }
+              .footer { margin-top: 50px; font-size: 0.8rem; color: #000000; text-align: center; }
             </style>
           </head>
           <body>
@@ -1201,24 +1201,24 @@ export default function VendorDashboard() {
               <div><strong>BILL TO:</strong><p>Customer ID: ${order.customer_id}</p><p>${order.shipping_address || 'Campus Hub Pickup'}</p></div>
               <div><strong>ORDER STATUS:</strong><p>${order.status.toUpperCase()}</p></div>
             </div>
-            <div style="overflow-x: auto; width: 100%; border: 1px solid #ddd; border-radius: 8px;"><table>
+            <div style="overflow-x: auto; width: 100%; border: 1px solid #FFFFFF; border-radius: 8px;"><table>
               <thead><tr><th>Item</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr></thead>
               <tbody>
                 <tr>
                   <td>
                     ${order.products?.title}
-                    ${order.variants_selected && Object.keys(order.variants_selected).length > 0 ? `<br/><small style="color: #666;">${Object.entries(order.variants_selected).map(([k,v]) => `${k}: ${v}`).join(' | ')}</small>` : ''}
+                    ${order.variants_selected && Object.keys(order.variants_selected).length > 0 ? `<br/><small style="color: #000000;">${Object.entries(order.variants_selected).map(([k,v]) => `${k}: ${v}`).join(' | ')}</small>` : ''}
                   </td>
                   <td>${qty}</td>
                   <td>₦${unitPrice.toLocaleString()}</td>
                   <td>₦${productTotal.toLocaleString()}</td>
                 </tr>
                 <tr>
-                  <td colspan="3" style="text-align: right; color: #666;">Delivery Fee</td>
+                  <td colspan="3" style="text-align: right; color: #000000;">Delivery Fee</td>
                   <td>₦${deliveryFee.toLocaleString()}</td>
                 </tr>
                 <tr>
-                  <td colspan="3" style="text-align: right; color: #666;">Platform Commission</td>
+                  <td colspan="3" style="text-align: right; color: #000000;">Platform Commission</td>
                   <td>₦${commission.toLocaleString()}</td>
                 </tr>
               </tbody>
@@ -1261,9 +1261,9 @@ export default function VendorDashboard() {
           <div className={styles.restrictedView}>
             <div className={styles.restrictedIcon}>
               {brand?.verification_status === 'pending' ? (
-                <ShieldAlert size={48} style={{ color: '#f59e0b' }} />
+                <ShieldAlert size={48} style={{ color: '#FFFFFF' }} />
               ) : (
-                <ShieldAlert size={48} style={{ color: '#ef4444' }} />
+                <ShieldAlert size={48} style={{ color: '#000000' }} />
               )}
             </div>
             <h2 style={{ marginTop: '1rem' }}>
@@ -1384,12 +1384,12 @@ export default function VendorDashboard() {
               <button className={`${styles.navItem} ${activeTab === 'plans' ? styles.navActive : ''}`} onClick={() => setActiveTab('plans')} style={{ color: 'var(--primary)', background: activeTab === 'plans' ? 'var(--primary-soft)' : 'transparent' }}>
                 <Crown size={18} /> Plans & Upgrade
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'ai' ? styles.navActive : ''}`} onClick={() => setActiveTab('ai')} style={{ color: '#a78bfa', background: activeTab === 'ai' ? 'rgba(167,139,250,0.1)' : 'transparent' }}>
+              <button className={`${styles.navItem} ${activeTab === 'ai' ? styles.navActive : ''}`} onClick={() => setActiveTab('ai')} style={{ color: '#FFFFFF', background: activeTab === 'ai' ? 'rgba(255,255,255,0.1)' : 'transparent' }}>
                 <Zap size={18} /> AI Assistant
               </button>
 
               {userRole === 'admin' && (
-                <Link href="/admin" className={styles.navItem} style={{ color: 'var(--accent-gold)', marginTop: '0.5rem', background: 'rgba(212, 175, 55, 0.05)' }}>
+                <Link href="/admin" className={styles.navItem} style={{ color: 'var(--accent-gold)', marginTop: '0.5rem', background: 'rgba(255,255,255,0.05)' }}>
                   <ShieldCheck size={18} /> Admin Control Panel
                 </Link>
               )}
@@ -1400,7 +1400,7 @@ export default function VendorDashboard() {
 
               <button
                 className={styles.navItem}
-                style={{ color: '#ef4444' }}
+                style={{ color: '#000000' }}
                 onClick={async () => {
                   await supabase.auth.signOut();
                   router.push('/');
@@ -1420,7 +1420,7 @@ export default function VendorDashboard() {
           
           <div className={styles.headerActions}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: 'var(--bg-200)', borderRadius: '20px', border: '1px solid var(--border)' }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }} />
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FFFFFF' }} />
               <span style={{ fontSize: '0.7rem', fontWeight: 800 }}>MARKETPLACE MODE</span>
             </div>
             <button className={styles.notifBtn} onClick={() => setActiveTab('enquiries')}>
@@ -1451,7 +1451,7 @@ export default function VendorDashboard() {
 
         {activeTab === 'activation_rejected' && (
           <div className={styles.activationNotice}>
-            <AlertTriangle size={48} color="#ef4444" />
+            <AlertTriangle size={48} color="#000000" />
             <h2>Application Declined</h2>
             <p>Unfortunately, your brand application has been rejected at this time. Please contact support via WhatsApp if you believe this is a mistake.</p>
             <Link href="/" className="btn btn-ghost">Contact Support</Link>
@@ -1502,11 +1502,11 @@ export default function VendorDashboard() {
             )}
 
             {!isTrialActive && !isSubActive && (
-              <div className={`${styles.escrowBanner} mb-4`} style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: '#ef4444', marginBottom: '1.5rem' }}>
-                <AlertTriangle className={styles.escrowIcon} style={{ color: '#ef4444' }} />
+              <div className={`${styles.escrowBanner} mb-4`} style={{ background: 'rgba(0,0,0,0.1)', borderColor: '#000000', marginBottom: '1.5rem' }}>
+                <AlertTriangle className={styles.escrowIcon} style={{ color: '#000000' }} />
                 <div className={styles.escrowText}>
-                  <h4 style={{ color: '#ef4444' }}>Low Brand Power</h4>
-                  <p>Your trial/subscription has expired. <button onClick={() => setActiveTab('plans')} style={{ color: '#ef4444', fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 'inherit' }}>Activate your powers now</button> to continue selling.</p>
+                  <h4 style={{ color: '#000000' }}>Low Brand Power</h4>
+                  <p>Your trial/subscription has expired. <button onClick={() => setActiveTab('plans')} style={{ color: '#000000', fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 'inherit' }}>Activate your powers now</button> to continue selling.</p>
                 </div>
               </div>
             )}
@@ -1540,13 +1540,13 @@ export default function VendorDashboard() {
                 </div>
                 <div className={styles.statValue}>{formatPrice(wallet?.available_balance || 0)}</div>
                 <div className={styles.statTrend}>
-                  {wallet?.pending_balance > 0 && <span style={{ color: '#f59e0b' }}>{formatPrice(wallet.pending_balance)} pending</span>}
+                  {wallet?.pending_balance > 0 && <span style={{ color: '#FFFFFF' }}>{formatPrice(wallet.pending_balance)} pending</span>}
                 </div>
                 <div className={styles.growthBadge}><ArrowUpRight size={12} /> Live</div>
               </div>
               <div className={styles.statCard}>
                 <div className={styles.statHead}>
-                  <TrendingUp size={20} color="#10b981" />
+                  <TrendingUp size={20} color="#FFFFFF" />
                   <span>Est. Revenue (30d)</span>
                 </div>
                 <div className={styles.statValue}>
@@ -1564,7 +1564,7 @@ export default function VendorDashboard() {
               </div>
               <div className={styles.statCard}>
                 <div className={styles.statHead}>
-                  <ShoppingCart size={20} color="#3b82f6" />
+                  <ShoppingCart size={20} color="#000000" />
                   <span>Success Rate</span>
                 </div>
                 <div className={styles.statValue}>
@@ -1593,16 +1593,16 @@ export default function VendorDashboard() {
               </div>
               <div className={`${styles.statCard} ${brand?.free_listings_count <= 2 ? styles.statCardWarning : ''}`}>
                 <div className={styles.statHead}>
-                  <ShoppingBag size={20} color="#f59e0b" />
+                  <ShoppingBag size={20} color="#FFFFFF" />
                   <span>Upload Credits</span>
                 </div>
                 <div className={styles.statValue}>{brand?.free_listings_count || 0}</div>
                 <div className={styles.statTrend}>
                   {brand?.free_listings_count <= 2 ? (
-                    <button onClick={() => setActiveTab('plans')} style={{ color: '#ef4444', fontWeight: 600, background: 'none', border: 'none', padding: 0, textDecoration: 'underline', cursor: 'pointer' }}>Running Low! Top Up</button>
+                    <button onClick={() => setActiveTab('plans')} style={{ color: '#000000', fontWeight: 600, background: 'none', border: 'none', padding: 0, textDecoration: 'underline', cursor: 'pointer' }}>Running Low! Top Up</button>
                   ) : 'Ready for new listings'}
                 </div>
-                <div className={styles.growthBadge} style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>Real-time</div>
+                <div className={styles.growthBadge} style={{ background: 'rgba(255,255,255,0.1)', color: '#FFFFFF' }}>Real-time</div>
               </div>
             </div>
 
@@ -1653,13 +1653,13 @@ export default function VendorDashboard() {
 
 
             {userRole === 'admin' && (
-              <div className={styles.adminQuickLink} style={{ marginTop: '2rem', padding: '2rem', borderRadius: '16px', background: 'var(--bg-300)', border: '2px solid var(--accent-gold)', boxShadow: '0 0 30px rgba(212, 175, 55, 0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1rem' }}>
+              <div className={styles.adminQuickLink} style={{ marginTop: '2rem', padding: '2rem', borderRadius: '16px', background: 'var(--bg-300)', border: '2px solid var(--accent-gold)', boxShadow: '0 0 30px rgba(255,255,255,0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1rem' }}>
                 <ShieldCheck size={48} color="var(--accent-gold)" />
                 <div>
                   <h2 style={{ color: 'var(--accent-gold)', marginBottom: '0.5rem' }}>Global Admin Console</h2>
                   <p style={{ color: 'var(--text-300)', maxWidth: '400px' }}>You have root access to manage all vendors, products, and financial transactions on the platform.</p>
                 </div>
-                <Link href="/admin" className="btn btn-primary" style={{ background: 'var(--accent-gold)', borderColor: 'var(--accent-gold)', color: '#000', fontWeight: 'bold', padding: '1rem 3rem' }}>ENTER ADMIN DASHBOARD</Link>
+                <Link href="/admin" className="btn btn-primary" style={{ background: 'var(--accent-gold)', borderColor: 'var(--accent-gold)', color: '#000000', fontWeight: 'bold', padding: '1rem 3rem' }}>ENTER ADMIN DASHBOARD</Link>
               </div>
             )}
           </div>
@@ -1672,7 +1672,7 @@ export default function VendorDashboard() {
             <p className={styles.subtitle}>Manage your brand identity, contact details, and store policies.</p>
 
             {/* ── Dashboard Operations Section (General Dedicated) ────────────────────────────────── */}
-            <div className={styles.settingsSection} style={{ border: '1px solid var(--primary-soft)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', background: 'rgba(124,58,237,0.03)' }}>
+            <div className={styles.settingsSection} style={{ border: '1px solid var(--primary-soft)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', background: 'rgba(0,0,0,0.03)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                 <Store size={20} color="var(--primary)" />
                 <h3 style={{ margin: 0 }}>Store Operations</h3>
@@ -1680,7 +1680,7 @@ export default function VendorDashboard() {
               
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
                 <div>
-                  <p style={{ margin: 0, fontWeight: 600, color: '#fff' }}>
+                  <p style={{ margin: 0, fontWeight: 600, color: '#FFFFFF' }}>
                     Workspace: <span style={{ color: 'var(--primary)', textTransform: 'uppercase' }}>General Marketplace Dashboard</span>
                   </p>
                   <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text-400)' }}>
@@ -1747,7 +1747,7 @@ export default function VendorDashboard() {
                     )}
                     {brand.cover_url && (
                       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }} className={styles.coverHover}>
-                        {uploadingMedia ? <Loader2 size={24} className="anim-spin" color="#fff" /> : <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600, display: 'flex', gap: '0.5rem', alignItems: 'center' }}><Camera size={16} /> Change Background</span>}
+                        {uploadingMedia ? <Loader2 size={24} className="anim-spin" color="#FFFFFF" /> : <span style={{ color: '#FFFFFF', fontSize: '0.85rem', fontWeight: 600, display: 'flex', gap: '0.5rem', alignItems: 'center' }}><Camera size={16} /> Change Background</span>}
                       </div>
                     )}
                     <input
@@ -1795,11 +1795,11 @@ export default function VendorDashboard() {
                     <div style={{ background: 'var(--bg-200)', padding: '1.25rem', borderRadius: '12px', border: '1px dashed var(--border)' }}>
                       <div className={styles.inputGroup}>
                         <label>Proposed Category Name</label>
-                        <input type="text" placeholder="e.g. Local Soups, Fruit Platters..." id="suggested_cat_name" style={{ width: '100%', background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem', color: '#fff' }} />
+                        <input type="text" placeholder="e.g. Local Soups, Fruit Platters..." id="suggested_cat_name" style={{ width: '100%', background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem', color: '#FFFFFF' }} />
                       </div>
                       <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
                         <label>Why should we add this?</label>
-                        <textarea placeholder="Explain why this category would benefit the marketplace..." id="suggested_cat_desc" style={{ height: '80px', width: '100%', background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem', color: '#fff' }}></textarea>
+                        <textarea placeholder="Explain why this category would benefit the marketplace..." id="suggested_cat_desc" style={{ height: '80px', width: '100%', background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem', color: '#FFFFFF' }}></textarea>
                       </div>
                       <button 
                         className="btn btn-secondary" 
@@ -1968,16 +1968,16 @@ export default function VendorDashboard() {
 
                 <div style={{ marginTop: '2.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                    <Zap size={24} color="#f59e0b" />
+                    <Zap size={24} color="#FFFFFF" />
                     <h3>Product Boosters & Trendy Board</h3>
                   </div>
                   <div className={styles.compactPricingGrid}>
                     {boostRates.map((boost) => (
-                      <div key={boost.id} className={styles.compactPricingCard} style={boost.id === 'billboard' ? { border: '2px solid #f59e0b', background: 'rgba(245, 158, 11, 0.05)' } : {}}>
+                      <div key={boost.id} className={styles.compactPricingCard} style={boost.id === 'billboard' ? { border: '2px solid #FFFFFF', background: 'rgba(255,255,255,0.05)' } : {}}>
                         <div className={styles.tierHeader}>
-                          {boost.id === 'billboard' ? <Star size={24} color="#f59e0b" /> : <Zap size={24} color="var(--primary)" />}
+                          {boost.id === 'billboard' ? <Star size={24} color="#FFFFFF" /> : <Zap size={24} color="var(--primary)" />}
                           <div>
-                            <h4 style={boost.id === 'billboard' ? { color: '#f59e0b' } : {}}>{boost.name}</h4>
+                            <h4 style={boost.id === 'billboard' ? { color: '#FFFFFF' } : {}}>{boost.name}</h4>
                             <span className={styles.tierPrice}>₦{boost.price.toLocaleString()}</span>
                           </div>
                         </div>
@@ -2001,14 +2001,14 @@ export default function VendorDashboard() {
                 {/* Security Section */}
                 <div className={styles.settingsSection}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                    <ShieldAlert size={24} color="#ef4444" />
+                    <ShieldAlert size={24} color="#000000" />
                     <h3>Account Security</h3>
                   </div>
                   <p className={styles.formHint}>Protect your store by keeping your password updated.</p>
 
                   <form onSubmit={handlePasswordChange} style={{ maxWidth: '400px' }}>
-                    {passError && <div style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(239, 68, 68, 0.1)', padding: '0.5rem', borderRadius: '4px' }}>{passError}</div>}
-                    {passSuccess && <div style={{ color: 'var(--success)', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(34, 197, 94, 0.1)', padding: '0.5rem', borderRadius: '4px' }}>Password updated successfully!</div>}
+                    {passError && <div style={{ color: '#000000', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(0,0,0,0.1)', padding: '0.5rem', borderRadius: '4px' }}>{passError}</div>}
+                    {passSuccess && <div style={{ color: 'var(--success)', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(255,255,255,0.1)', padding: '0.5rem', borderRadius: '4px' }}>Password updated successfully!</div>}
                     
                     <div className={styles.inputGroup}>
                       <label>New Password</label>
@@ -2061,7 +2061,7 @@ export default function VendorDashboard() {
                         </span>
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <Link href={`/messages?vendorId=${order.customer_id}`} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#fff', textDecoration: 'none' }}>
+                        <Link href={`/messages?vendorId=${order.customer_id}`} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#FFFFFF', textDecoration: 'none' }}>
                           <MessageCircle size={14} /> Chat with Customer
                         </Link>
                         <button className="btn btn-ghost btn-sm" onClick={() => handlePrintInvoice(order)}>
@@ -2171,7 +2171,7 @@ export default function VendorDashboard() {
                         {order.status === 'pending' && (
                           <div className={styles.statusBox}>
                             {order.expires_at && new Date(order.expires_at) < new Date() ? (
-                               <span className={`${styles.statusBadge}`} style={{ background: '#ef4444', color: '#fff' }}>
+                               <span className={`${styles.statusBadge}`} style={{ background: '#000000', color: '#FFFFFF' }}>
                                  EXPIRED / CANCELLED
                                </span>
                             ) : (
@@ -2209,7 +2209,7 @@ export default function VendorDashboard() {
                         <strong>{review.user?.name || 'Anonymous'}</strong> on <span>{review.product?.title}</span>
                         <div className={styles.stars}>
                           {new Array(5).fill(0).map((_, i) => (
-                            <Star key={i} size={14} fill={i < review.rating ? "var(--secondary)" : "none"} stroke={i < review.rating ? "var(--secondary)" : "#ccc"} />
+                            <Star key={i} size={14} fill={i < review.rating ? "var(--secondary)" : "none"} stroke={i < review.rating ? "var(--secondary)" : "#FFFFFF"} />
                           ))}
                         </div>
                       </div>
@@ -2513,8 +2513,8 @@ export default function VendorDashboard() {
                        <button className="btn btn-ghost btn-sm" style={{ padding: '0 8px' }} onClick={() => updateStock(p.id, 1)}>+</button>
                     </div>
                     {p.is_draft && p.stock_count === 0 && p.updated_at && (
-                       <div style={{ marginBottom: '0.5rem', padding: '8px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                         <div style={{ fontSize: '0.65rem', color: '#ef4444', fontWeight: 800, marginBottom: '4px', textTransform: 'uppercase' }}>Auto-Delete In:</div>
+                       <div style={{ marginBottom: '0.5rem', padding: '8px', background: 'rgba(0,0,0,0.1)', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.2)' }}>
+                         <div style={{ fontSize: '0.65rem', color: '#000000', fontWeight: 800, marginBottom: '4px', textTransform: 'uppercase' }}>Auto-Delete In:</div>
                          <CountdownTimer 
                            expiryDate={new Date(new Date(p.updated_at).getTime() + 24 * 60 * 60 * 1000).toISOString()} 
                            compact 
@@ -2535,7 +2535,7 @@ export default function VendorDashboard() {
                       }}>
                         <Edit3 size={14} /> Edit
                       </button>
-                      <button className="btn btn-ghost btn-sm" style={{ border: '1px solid var(--border)', color: '#ef4444' }} onClick={async () => {
+                      <button className="btn btn-ghost btn-sm" style={{ border: '1px solid var(--border)', color: '#000000' }} onClick={async () => {
                         if (confirm('Are you sure you want to delete this product from your store?')) {
                           // 1. Check for active orders
                           const { count, error: checkError } = await supabase
@@ -2665,10 +2665,10 @@ export default function VendorDashboard() {
                   }}
                   multiLineConfig={{
                     keys: [
-                      { dataKey: 'projected', color: '#10b981', label: 'Projected Revenue', isProjected: true },
-                      { dataKey: 'realized', color: '#3b82f6', label: 'Realized Profits' },
-                      { dataKey: 'unrealized', color: '#f59e0b', label: 'Unrealized Profits' },
-                      { dataKey: 'failed', color: '#ef4444', label: 'Failed Orders' }
+                      { dataKey: 'projected', color: '#FFFFFF', label: 'Projected Revenue', isProjected: true },
+                      { dataKey: 'realized', color: '#000000', label: 'Realized Profits' },
+                      { dataKey: 'unrealized', color: '#FFFFFF', label: 'Unrealized Profits' },
+                      { dataKey: 'failed', color: '#000000', label: 'Failed Orders' }
                     ],
                     categorize: (row: Record<string, any>) => {
                       const val = Number(row.total_amount || row.amount || row.value || 0);
@@ -2738,14 +2738,14 @@ export default function VendorDashboard() {
                     Withdraw Funds
                   </button>
                 </div>
-                {!brand.bank_account_number && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.5rem' }}>Update your bank details in Settings to withdraw.</p>}
+                {!brand.bank_account_number && <p style={{ color: '#000000', fontSize: '0.8rem', marginTop: '0.5rem' }}>Update your bank details in Settings to withdraw.</p>}
                 <p className={styles.minWithdrawal}>Minimum withdrawal: Ã¢â€šÂ¦1,000</p>
               </div>
 
               <div className={styles.walletEscrow} style={{ width: '100%', maxWidth: 'none', flexDirection: 'row', gap: '2rem', padding: '1.5rem', justifyContent: 'space-around' }}>
                 <div>
                   <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Pending (Escrow)</span>
-                  <h3 style={{ fontSize: '1.2rem', margin: '0.25rem 0', color: '#f59e0b' }}>{formatPrice(wallet?.pending_balance || 0)}</h3>
+                  <h3 style={{ fontSize: '1.2rem', margin: '0.25rem 0', color: '#FFFFFF' }}>{formatPrice(wallet?.pending_balance || 0)}</h3>
                   <p style={{ fontSize: '0.7rem' }}>Held for 24hrs post-delivery</p>
                 </div>
                 <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
@@ -2824,7 +2824,7 @@ export default function VendorDashboard() {
             <div className={styles.promoGrid}>
               {/* Billboard Boost */}
               <div className={styles.promoOption} style={{ background: brand.billboard_boost_expires_at && new Date(brand.billboard_boost_expires_at) > new Date() ? 'var(--primary-soft)' : 'var(--bg-300)' }}>
-                <div className={styles.promoIcon}><Zap size={24} color="#f59e0b" /></div>
+                <div className={styles.promoIcon}><Zap size={24} color="#FFFFFF" /></div>
                 <h3>Billboard Boost</h3>
                 <p>Featured on homepage "Gold Collection".</p>
                 {brand.billboard_boost_expires_at && new Date(brand.billboard_boost_expires_at) > new Date() ? (
@@ -2846,7 +2846,7 @@ export default function VendorDashboard() {
                     </button>
                     <button 
                       className="btn btn-ghost btn-sm"
-                      style={{ color: '#ef4444', marginTop: '0.5rem' }}
+                      style={{ color: '#000000', marginTop: '0.5rem' }}
                       onClick={async () => {
                         if (!confirm('Remove your store from the billboard? This will not refund any credits.')) return;
                         const { error } = await supabase.from('brands').update({ billboard_boost_expires_at: null }).eq('id', brand.id);
@@ -2961,7 +2961,7 @@ export default function VendorDashboard() {
                          <input name="target_customer_id" placeholder="Optional" className="input" />
                       </div>
                       <div className="mb-2">
-                         <label style={{ fontSize: '0.8rem', color: '#f59e0b', fontWeight: 600 }}>Subsidiary Capital / Budget (₦)</label>
+                         <label style={{ fontSize: '0.8rem', color: '#FFFFFF', fontWeight: 600 }}>Subsidiary Capital / Budget (₦)</label>
                          <input name="subsidiary_capital" type="number" placeholder="Optional max budget (e.g. 5000)" className="input" />
                          <p style={{ fontSize: '0.7rem', color: 'var(--text-400)', marginTop: '2px' }}>Promo automatically ends when this budget is exhausted. Leave blank for unlimited.</p>
                       </div>
@@ -2985,7 +2985,7 @@ export default function VendorDashboard() {
                            <div style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginTop: '4px' }}>
                               Uses: {pc.current_uses || 0} / {pc.max_uses}
                            </div>
-                           {pc.expires_at && <div style={{ fontSize: '0.8rem', color: '#ef4444' }}>Expires: {new Date(pc.expires_at).toLocaleDateString()}</div>}
+                           {pc.expires_at && <div style={{ fontSize: '0.8rem', color: '#000000' }}>Expires: {new Date(pc.expires_at).toLocaleDateString()}</div>}
                         </div>
                      ))}
                   </div>
@@ -3039,7 +3039,7 @@ export default function VendorDashboard() {
                                 </button>
                                 <button 
                                   className="btn btn-ghost btn-sm"
-                                  style={{ color: '#ef4444' }}
+                                  style={{ color: '#000000' }}
                                   onClick={async () => {
                                     if (!confirm('Permanently delete this product?')) return;
                                     const { error } = await supabase.from('products').delete().eq('id', p.id);
@@ -3077,7 +3077,7 @@ export default function VendorDashboard() {
                                 </button>
                                 <button 
                                   className="btn btn-ghost btn-sm"
-                                  style={{ color: '#ef4444' }}
+                                  style={{ color: '#000000' }}
                                   onClick={async () => {
                                     if (!confirm('Permanently delete this product?')) return;
                                     const { error } = await supabase.from('products').delete().eq('id', p.id);
@@ -3176,12 +3176,12 @@ export default function VendorDashboard() {
                       }}
                     >
                       {tier.popular && !isActive && (
-                        <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#000', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 1rem', borderRadius: '999px', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+                        <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#000000', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 1rem', borderRadius: '999px', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
                           MOST POPULAR
                         </div>
                       )}
                       {isActive && (
-                        <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#000', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 1rem', borderRadius: '999px', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+                        <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#000000', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 1rem', borderRadius: '999px', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
                           ? ACTIVE
                         </div>
                       )}
@@ -3217,7 +3217,7 @@ export default function VendorDashboard() {
                           marginTop: 'auto',
                           background: isActive ? 'transparent' : `linear-gradient(135deg, ${tier.color || 'var(--primary)'}, ${tier.color || 'var(--primary)'}cc)`,
                           border: isActive ? `1px solid ${tier.color || 'var(--primary)'}` : 'none',
-                          color: isActive ? (tier.color || 'var(--primary)') : '#000',
+                          color: isActive ? (tier.color || 'var(--primary)') : '#000000',
                           fontWeight: 700,
                         }}
                       >
@@ -3239,12 +3239,12 @@ export default function VendorDashboard() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
                 {/* Billboard Boost */}
                 <div style={{ background: 'var(--bg-300)', border: '2px solid var(--accent-gold)', borderRadius: '16px', padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ position: 'absolute', top: 0, right: 0, padding: '0.5rem', background: 'var(--accent-gold)', color: '#000', fontSize: '0.6rem', fontWeight: 900 }}>TRENDY BOARD</div>
+                  <div style={{ position: 'absolute', top: 0, right: 0, padding: '0.5rem', background: 'var(--accent-gold)', color: '#000000', fontSize: '0.6rem', fontWeight: 900 }}>TRENDY BOARD</div>
                   <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>??</div>
                   <h3 style={{ fontSize: '1rem', color: 'var(--accent-gold)' }}>Campus Billboard</h3>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Get featured on the main homepage "The Gold Collection" billboard for 7 days.</p>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 900, color: '#fff' }}>₦500 <small>/week</small></span>
+                    <span style={{ fontWeight: 900, color: '#FFFFFF' }}>₦500 <small>/week</small></span>
                     <button className="btn btn-primary btn-sm" onClick={() => handleSubscribe({ id: 'billboard_boost', price: 500 })}>Activate 🚀</button>
                   </div>
                 </div>
@@ -3252,7 +3252,7 @@ export default function VendorDashboard() {
                 {boostRates.map(boost => (
                   <div key={boost.id} style={{ background: 'var(--bg-300)', border: `1px solid ${boost.popular ? 'var(--primary)' : 'var(--border)'}`, borderRadius: '14px', padding: '1.5rem', position: 'relative' }}>
                     {boost.popular && (
-                      <div style={{ position: 'absolute', top: '-12px', right: '1rem', background: 'var(--primary)', color: '#000', fontSize: '0.68rem', fontWeight: 800, padding: '0.25rem 0.75rem', borderRadius: '999px' }}>BEST VALUE</div>
+                      <div style={{ position: 'absolute', top: '-12px', right: '1rem', background: 'var(--primary)', color: '#000000', fontSize: '0.68rem', fontWeight: 800, padding: '0.25rem 0.75rem', borderRadius: '999px' }}>BEST VALUE</div>
                     )}
                     <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{getIcon(boost.id)}</div>
                     <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{boost.name}</div>
@@ -3275,10 +3275,10 @@ export default function VendorDashboard() {
 
               {/* -- Trial & Admin Notes -- */}
               {isTrialActive && (
-                <div style={{ marginTop: '2rem', padding: '1.25rem', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '12px' }}>
-                  <p style={{ color: '#60a5fa', fontWeight: 600, marginBottom: '0.5rem' }}>?? Free Trial Still Active</p>
+                <div style={{ marginTop: '2rem', padding: '1.25rem', background: 'rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.25)', borderRadius: '12px' }}>
+                  <p style={{ color: '#FFFFFF', fontWeight: 600, marginBottom: '0.5rem' }}>?? Free Trial Still Active</p>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-400)' }}>
-                    You have <strong style={{ color: '#fff' }}>{trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''}</strong> left on your free Full Power trial.
+                    You have <strong style={{ color: '#FFFFFF' }}>{trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''}</strong> left on your free Full Power trial.
                     Subscribe before it expires to keep your powers uninterrupted.
                   </p>
                 </div>
@@ -3291,12 +3291,12 @@ export default function VendorDashboard() {
         {activeTab === 'ai' && (
           <div style={{ padding: '2rem', maxWidth: 720, margin: '0 auto' }}>
             <div style={{ marginBottom: '2rem' }}>
-              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.4rem' }}>? AI Assistant <span style={{ fontSize: '0.7rem', color: 'var(--primary)', verticalAlign: 'middle', background: 'rgba(167,139,250,0.1)', padding: '2px 8px', borderRadius: '4px' }}>v3.1 LIVE</span></h2>
+              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.4rem' }}>? AI Assistant <span style={{ fontSize: '0.7rem', color: 'var(--primary)', verticalAlign: 'middle', background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '4px' }}>v3.1 LIVE</span></h2>
               <p style={{ color: 'var(--text-400)', fontSize: '0.9rem' }}>Your AI Copilot helps you manage your store, guides customers automatically, and keeps your shop running even when you're offline.</p>
             </div>
 
             {/* Master Toggle */}
-            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid rgba(167,139,250,0.2)' }}>
+            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid rgba(255,255,255,0.2)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>?? Enable AI Copilot</div>
@@ -3304,15 +3304,15 @@ export default function VendorDashboard() {
                 </div>
                 <button
                   onClick={() => handleUpdateAiSettings({ ai_enabled: !aiSettings?.ai_enabled })}
-                  style={{ width: 52, height: 28, borderRadius: '999px', border: 'none', cursor: 'pointer', transition: 'background 0.3s', background: aiSettings?.ai_enabled ? '#7c3aed' : 'var(--bg-300)', position: 'relative', flexShrink: 0 }}
+                  style={{ width: 52, height: 28, borderRadius: '999px', border: 'none', cursor: 'pointer', transition: 'background 0.3s', background: aiSettings?.ai_enabled ? '#000000' : 'var(--bg-300)', position: 'relative', flexShrink: 0 }}
                 >
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, transition: 'left 0.3s', left: aiSettings?.ai_enabled ? 26 : 4 }} />
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#FFFFFF', position: 'absolute', top: 3, transition: 'left 0.3s', left: aiSettings?.ai_enabled ? 26 : 4 }} />
                 </button>
               </div>
             </div>
 
             {/* Auto-Reply Toggle */}
-            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid rgba(167,139,250,0.2)', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
+            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid rgba(255,255,255,0.2)', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>?? Auto-Reply to Customers</div>
@@ -3320,15 +3320,15 @@ export default function VendorDashboard() {
                 </div>
                 <button
                   onClick={() => handleUpdateAiSettings({ auto_reply_enabled: !aiSettings?.auto_reply_enabled })}
-                  style={{ width: 52, height: 28, borderRadius: '999px', border: 'none', cursor: 'pointer', transition: 'background 0.3s', background: aiSettings?.auto_reply_enabled ? '#7c3aed' : 'var(--bg-300)', position: 'relative', flexShrink: 0 }}
+                  style={{ width: 52, height: 28, borderRadius: '999px', border: 'none', cursor: 'pointer', transition: 'background 0.3s', background: aiSettings?.auto_reply_enabled ? '#000000' : 'var(--bg-300)', position: 'relative', flexShrink: 0 }}
                 >
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, transition: 'left 0.3s', left: aiSettings?.auto_reply_enabled ? 26 : 4 }} />
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#FFFFFF', position: 'absolute', top: 3, transition: 'left 0.3s', left: aiSettings?.auto_reply_enabled ? 26 : 4 }} />
                 </button>
               </div>
             </div>
 
             {/* Custom Instructions */}
-            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid rgba(167,139,250,0.2)', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
+            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.2)', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
               <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>?? Custom AI Instructions</div>
               <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.75rem' }}>Tell the AI how to represent your brand. E.g. "Always greet customers with 'Hey boss!'", "Never negotiate on prices", "Speak in a friendly, casual tone".</div>
               <textarea
@@ -3336,7 +3336,7 @@ export default function VendorDashboard() {
                 value={aiSettings?.custom_instructions || ''}
                 onChange={e => setAiSettings({ ...aiSettings, custom_instructions: e.target.value })}
                 placeholder="e.g. Always be friendly and end replies with 'Shop now at our store!'"
-                style={{ width: '100%', background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.85rem', color: '#fff', fontSize: '0.85rem', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                style={{ width: '100%', background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.85rem', color: '#FFFFFF', fontSize: '0.85rem', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
               />
               <button
                 onClick={() => handleUpdateAiSettings({ custom_instructions: aiSettings?.custom_instructions })}
@@ -3349,11 +3349,11 @@ export default function VendorDashboard() {
             </div>
 
             {/* Open Copilot CTA */}
-            <div style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.15),rgba(167,139,250,0.08))', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(167,139,250,0.25)', textAlign: 'center' }}>
+            <div style={{ background: 'linear-gradient(135deg,rgba(0,0,0,0.15),rgba(255,255,255,0.08))', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.25)', textAlign: 'center' }}>
               <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>?</div>
               <div style={{ fontWeight: 700, marginBottom: '0.4rem' }}>Talk to your Copilot</div>
               <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Ask it anything: "What are my earnings?", "How do I add a product?", "Why is my balance pending?"</div>
-              <button onClick={() => setShowCopilot(true)} className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#7c3aed,#a78bfa)', border: 'none' }}>
+              <button onClick={() => setShowCopilot(true)} className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#000000,#FFFFFF)', border: 'none' }}>
                 Open AI Chat ?
               </button>
             </div>
@@ -3389,18 +3389,18 @@ export default function VendorDashboard() {
       {showCopilot && (
         <div style={{
           position: 'fixed', bottom: '6rem', right: '1.5rem', width: '360px', maxHeight: '500px',
-          background: 'var(--bg-200)', border: '1px solid rgba(167,139,250,0.35)', borderRadius: '20px',
-          boxShadow: '0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(167,139,250,0.12)',
+          background: 'var(--bg-200)', border: '1px solid rgba(255,255,255,0.35)', borderRadius: '20px',
+          boxShadow: '0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.12)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 9999,
           backdropFilter: 'blur(24px)'
         }}>
           {/* Header */}
-          <div style={{ padding: '1rem 1.25rem', background: 'linear-gradient(135deg,rgba(167,139,250,0.2),rgba(139,92,246,0.1))', borderBottom: '1px solid rgba(167,139,250,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ padding: '1rem 1.25rem', background: 'linear-gradient(135deg,rgba(255,255,255,0.2),rgba(0,0,0,0.1))', borderBottom: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#a78bfa,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>?</div>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#FFFFFF,#000000)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>?</div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>AI Copilot</div>
-                <div style={{ fontSize: '0.7rem', color: '#a78bfa' }}>Powered by Gemini</div>
+                <div style={{ fontSize: '0.7rem', color: '#FFFFFF' }}>Powered by Gemini</div>
               </div>
             </div>
             <button onClick={() => setShowCopilot(false)} style={{ background: 'none', border: 'none', color: 'var(--text-400)', cursor: 'pointer', padding: '4px' }}><X size={16} /></button>
@@ -3412,7 +3412,7 @@ export default function VendorDashboard() {
               <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                 <div style={{
                   maxWidth: '85%', padding: '0.65rem 0.9rem', borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                  background: msg.role === 'user' ? 'linear-gradient(135deg,#7c3aed,#6d28d9)' : 'var(--bg-300)',
+                  background: msg.role === 'user' ? 'linear-gradient(135deg,#000000,#000000)' : 'var(--bg-300)',
                   fontSize: '0.83rem', lineHeight: 1.5, whiteSpace: 'pre-wrap'
                 }}>
                   {msg.content}
@@ -3421,22 +3421,22 @@ export default function VendorDashboard() {
             ))}
             {copilotLoading && (
               <div style={{ display: 'flex', gap: '4px', padding: '0.5rem' }}>
-                {[0,1,2].map(i => <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#a78bfa', animation: `bounce 1.2s ${i * 0.2}s infinite` }} />)}
+                {[0,1,2].map(i => <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#FFFFFF', animation: `bounce 1.2s ${i * 0.2}s infinite` }} />)}
               </div>
             )}
           </div>
 
           {/* Input */}
-          <form onSubmit={handleCopilotSubmit} style={{ padding: '0.75rem', borderTop: '1px solid rgba(167,139,250,0.15)', display: 'flex', gap: '0.5rem' }}>
+          <form onSubmit={handleCopilotSubmit} style={{ padding: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.15)', display: 'flex', gap: '0.5rem' }}>
             <input
               value={copilotInput}
               onChange={e => setCopilotInput(e.target.value)}
               placeholder="Ask your AI anything..."
               disabled={copilotLoading}
-              style={{ flex: 1, background: 'var(--bg-300)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '999px', padding: '0.55rem 1rem', fontSize: '0.83rem', color: '#fff', outline: 'none' }}
+              style={{ flex: 1, background: 'var(--bg-300)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '999px', padding: '0.55rem 1rem', fontSize: '0.83rem', color: '#FFFFFF', outline: 'none' }}
             />
-            <button type="submit" disabled={copilotLoading || !copilotInput.trim()} style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              {copilotLoading ? <Loader2 size={14} className="anim-spin" color="#fff" /> : <ArrowRight size={14} color="#fff" />}
+            <button type="submit" disabled={copilotLoading || !copilotInput.trim()} style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#000000,#000000)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {copilotLoading ? <Loader2 size={14} className="anim-spin" color="#FFFFFF" /> : <ArrowRight size={14} color="#FFFFFF" />}
             </button>
           </form>
         </div>
@@ -3448,9 +3448,9 @@ export default function VendorDashboard() {
         title="Open AI Copilot"
         style={{
           position: 'fixed', bottom: '1.5rem', right: '1.5rem', width: '56px', height: '56px',
-          borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#a78bfa)',
+          borderRadius: '50%', background: 'linear-gradient(135deg,#000000,#FFFFFF)',
           border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 8px 32px rgba(124,58,237,0.5)', zIndex: 10000,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: 10000,
         }}
         onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
         onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}

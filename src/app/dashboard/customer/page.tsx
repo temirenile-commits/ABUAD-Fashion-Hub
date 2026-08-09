@@ -256,7 +256,7 @@ export default function CustomerDashboard() {
                       <span className={styles.orderId}>Order #{order.id.slice(0, 8).toUpperCase()}</span>
                       <span className={styles.orderDate}>{new Date(order.created_at).toLocaleDateString()}</span>
                     </div>
-                    <div className={`${styles.statusBadge} ${order.payment_system === 'manual' && order.status === 'pending' ? styles.pending_verification : styles[order.status]}`} style={order.payment_system === 'manual' && order.status === 'pending' ? { background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)' } : undefined}>
+                    <div className={`${styles.statusBadge} ${order.payment_system === 'manual' && order.status === 'pending' ? styles.pending_verification : styles[order.status]}`} style={order.payment_system === 'manual' && order.status === 'pending' ? { background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.2)' } : undefined}>
                        {(order.status === 'paid' || order.status === 'pending') && <Clock size={14} />}
                        {order.status === 'in_transit' && <Truck size={14} />}
                        {order.status === 'delivered' && <CheckCircle size={14} />}
@@ -275,7 +275,7 @@ export default function CustomerDashboard() {
                     </div>
                     <div className={styles.actions}>
                       {order.brands?.owner_id && (
-                        <Link href={`/messages?vendorId=${order.brands.owner_id}`} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#fff', textDecoration: 'none' }}>
+                        <Link href={`/messages?vendorId=${order.brands.owner_id}`} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#FFFFFF', textDecoration: 'none' }}>
                           <MessageCircle size={14} /> Chat Seller
                         </Link>
                       )}
@@ -295,7 +295,7 @@ export default function CustomerDashboard() {
                       {!['ready', 'picked_up', 'in_transit', 'delivered', 'confirmed', 'completed', 'cancelled', 'refunded'].includes(order.status) && (
                         <button 
                           className="btn btn-ghost btn-sm"
-                          style={{ color: '#ef4444' }}
+                          style={{ color: '#000000' }}
                           onClick={() => handleCancelOrder(order.id)}
                         >
                           Cancel Order
@@ -305,8 +305,8 @@ export default function CustomerDashboard() {
                   </div>
 
                   {order.payment_system === 'manual' && order.status === 'pending' && (
-                    <div style={{ margin: '0 1.5rem 1.rem', background: 'rgba(245, 158, 11, 0.04)', border: '1px dashed rgba(245, 158, 11, 0.3)', padding: '1rem', borderRadius: '12px', marginBottom: '1rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontWeight: 600, fontSize: '0.85rem', marginBottom: '4px' }}>
+                    <div style={{ margin: '0 1.5rem 1.rem', background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.3)', padding: '1rem', borderRadius: '12px', marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#FFFFFF', fontWeight: 600, fontSize: '0.85rem', marginBottom: '4px' }}>
                         <Clock size={16} /> Manual Payment Verification Pending
                       </div>
                       <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-300)', lineHeight: 1.5 }}>
@@ -338,7 +338,7 @@ export default function CustomerDashboard() {
 
                   {order.delivery_code && order.status !== 'delivered' && (
                     <div className={styles.deliveryCodeCard} style={{ margin: '0 1.5rem 1rem', background: 'var(--bg-200)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--primary-20)', position: 'relative', overflow: 'hidden' }}>
-                      <div style={{ position: 'absolute', top: 0, right: 0, padding: '4px 12px', background: 'var(--primary)', color: '#fff', fontSize: '10px', fontWeight: 800, borderRadius: '0 0 0 8px' }}>SECRET CODE</div>
+                      <div style={{ position: 'absolute', top: 0, right: 0, padding: '4px 12px', background: 'var(--primary)', color: '#FFFFFF', fontSize: '10px', fontWeight: 800, borderRadius: '0 0 0 8px' }}>SECRET CODE</div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
                           <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-400)' }}>Verification Code</p>
@@ -387,7 +387,7 @@ export default function CustomerDashboard() {
                     <div style={{ 
                       margin: '0 1.5rem 1.5rem', 
                       padding: '0.75rem 1rem', 
-                      background: 'rgba(235, 12, 122, 0.05)', 
+                      background: 'rgba(0,0,0,0.05)', 
                       border: '1px dashed var(--primary-40)', 
                       borderRadius: '8px',
                       display: 'flex',
@@ -419,7 +419,7 @@ export default function CustomerDashboard() {
                      <User size={32} color="var(--text-400)" />
                    </div>
                  )}
-                 <label style={{ position: 'absolute', bottom: -5, right: -5, background: 'var(--primary)', color: '#fff', borderRadius: '50%', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
+                 <label style={{ position: 'absolute', bottom: -5, right: -5, background: 'var(--primary)', color: '#FFFFFF', borderRadius: '50%', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
                    <input 
                      type="file" 
                      hidden 

@@ -46,11 +46,11 @@ export default function VendorAvailabilityTimer({
   return (
     <div style={{
       display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-      background: isAvailableNow ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
-      border: `1px solid ${isAvailableNow ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+      background: isAvailableNow ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
+      border: `1px solid ${isAvailableNow ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'}`,
       borderRadius: 999, padding: '3px 10px',
       fontSize: '0.72rem', fontWeight: 700,
-      color: isAvailableNow ? '#10b981' : '#ef4444'
+      color: isAvailableNow ? '#FFFFFF' : '#000000'
     }}>
       <Clock size={11} />
       {isAvailableNow

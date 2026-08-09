@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0,0,0,0.85);
   backdrop-filter: blur(8px);
   z-index: 9999;
   display: flex;
@@ -22,7 +22,7 @@
   max-width: 500px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -30,7 +30,7 @@
   position: absolute;
   top: 1.25rem;
   right: 1.25rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255,255,255,0.05);
   border: none;
   border-radius: 50%;
   width: 36px;
@@ -44,17 +44,17 @@
 }
 
 .closeBtn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: rgba(255,255,255,0.1);
+  color: #FFFFFF;
 }
 
 .iconCircle {
-  background: linear-gradient(135deg, var(--primary), #b8860b);
+  background: linear-gradient(135deg, var(--primary), #FFFFFF);
   height: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #000;
+  color: #000000;
 }
 
 .zap {
@@ -69,13 +69,13 @@
 .content h2 {
   font-size: 1.75rem;
   margin-bottom: 0.5rem;
-  color: #fff;
+  color: #FFFFFF;
 }
 
 .badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(255,255,255,0.1);
   color: var(--primary);
   border-radius: 99px;
   font-size: 0.75rem;
@@ -86,8 +86,8 @@
 }
 
 .infoBox {
-  background: rgba(255, 193, 7, 0.05);
-  border: 1px solid rgba(255, 193, 7, 0.2);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 12px;
   padding: 1rem;
   display: flex;
@@ -97,7 +97,7 @@
 }
 
 .warnIcon {
-  color: #ffc107;
+  color: #FFFFFF;
   flex-shrink: 0;
 }
 
@@ -150,7 +150,7 @@
 
 .updateBtn {
   background: var(--primary);
-  color: #000;
+  color: #000000;
   border: none;
   padding: 1rem;
   border-radius: 12px;
@@ -166,7 +166,7 @@
 .updateBtn:hover {
   transform: translateY(-2px);
   filter: brightness(1.1);
-  box-shadow: 0 10px 20px -5px rgba(212, 175, 55, 0.4);
+  box-shadow: 0 10px 20px -5px rgba(255,255,255,0.4);
 }
 
 .laterBtn {
@@ -181,8 +181,8 @@
 }
 
 .laterBtn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
+  background: rgba(255,255,255,0.05);
+  color: #FFFFFF;
 }
 
 .footer {
@@ -205,9 +205,9 @@
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(212, 175, 55, 0)); }
-  50% { transform: scale(1.1); filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.4)); }
-  100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(212, 175, 55, 0)); }
+  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
+  50% { transform: scale(1.1); filter: drop-shadow(0 0 15px rgba(255,255,255,0.4)); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
 }
 
 /* ===== Small phones: allow modal to fill width, allow scrolling in short viewports ===== */

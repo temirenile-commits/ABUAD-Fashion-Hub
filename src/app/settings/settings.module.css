@@ -67,10 +67,10 @@
 .saveRow { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.5rem; }
 
 .danger {
-  border-color: rgba(255, 80, 80, 0.35);
-  background: linear-gradient(180deg, var(--bg-200), rgba(255, 60, 60, 0.06));
+  border-color: rgba(255,255,255,0.35);
+  background: linear-gradient(180deg, var(--bg-200), rgba(0,0,0,0.06));
 }
-.dangerTitle { color: #ff6b6b; }
+.dangerTitle { color: #FFFFFF; }
 .dangerText { color: var(--text-400); font-size: 0.8rem; margin: 0 0 1rem; }
 
 /* Password strength meter */
@@ -86,7 +86,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0,0,0,0.75);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -95,13 +95,13 @@
 }
 .modal {
   background: var(--bg-200);
-  border: 1px solid rgba(255, 80, 80, 0.4);
+  border: 1px solid rgba(255,255,255,0.4);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   width: 100%;
   max-width: 420px;
 }
-.modal h3 { margin: 0 0 0.5rem; color: #ff6b6b; font-size: 1.1rem; }
+.modal h3 { margin: 0 0 0.5rem; color: #FFFFFF; font-size: 1.1rem; }
 .modal p { color: var(--text-300); font-size: 0.85rem; margin: 0 0 1rem; line-height: 1.5; }
 .modalActions { display: flex; gap: 0.75rem; margin-top: 1rem; }
 
@@ -116,12 +116,12 @@
   border-radius: var(--radius-md);
   padding: 0.75rem 1.25rem;
   font-size: 0.85rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
   z-index: 100;
   animation: toastIn 0.25s ease;
 }
-.toast.success { border-color: #25d366; }
-.toast.error { border-color: #ff5050; }
+.toast.success { border-color: #FFFFFF; }
+.toast.error { border-color: #FFFFFF; }
 @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
 @media (max-width: 600px) {

@@ -44,13 +44,13 @@ export default function DelicaciesPreview({ universityId }: { universityId?: str
     <section style={{ marginTop: '2.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <UtensilsCrossed size={22} style={{ color: '#f59e0b' }} />
+          <UtensilsCrossed size={22} style={{ color: '#FFFFFF' }} />
           <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>
             MasterCart Delicacies
           </h2>
           <span style={{
-            background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-            color: '#fff',
+            background: 'linear-gradient(135deg, #FFFFFF, #000000)',
+            color: '#FFFFFF',
             fontSize: '0.6rem',
             fontWeight: 700,
             padding: '2px 7px',
@@ -60,7 +60,7 @@ export default function DelicaciesPreview({ universityId }: { universityId?: str
         </div>
         <Link href="/delicacies" style={{
           display: 'flex', alignItems: 'center', gap: '0.3rem',
-          color: '#f59e0b', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none'
+          color: '#FFFFFF', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none'
         }}>
           View all <ArrowRight size={14} />
         </Link>
@@ -112,8 +112,8 @@ export default function DelicaciesPreview({ universityId }: { universityId?: str
                     {/* Availability badge */}
                     <span style={{
                       position: 'absolute', top: 6, right: 6,
-                      background: isOpen ? 'rgba(16,185,129,0.9)' : 'rgba(239,68,68,0.9)',
-                      color: '#fff', fontSize: '0.55rem', fontWeight: 700,
+                      background: isOpen ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.9)',
+                      color: '#FFFFFF', fontSize: '0.55rem', fontWeight: 700,
                       padding: '2px 6px', borderRadius: 999,
                       display: 'flex', alignItems: 'center', gap: 3
                     }}>
@@ -129,11 +129,11 @@ export default function DelicaciesPreview({ universityId }: { universityId?: str
                       {brand?.name || ''}
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#f59e0b', fontWeight: 800, fontSize: '0.9rem' }}>
+                      <span style={{ color: '#FFFFFF', fontWeight: 800, fontSize: '0.9rem' }}>
                         ₦{Number(item.price).toLocaleString()}
                       </span>
                       {item.rating && (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: '0.65rem', color: '#facc15' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: '0.65rem', color: '#FFFFFF' }}>
                           <Star size={10} fill="currentColor" />
                           {Number(item.rating).toFixed(1)}
                         </span>

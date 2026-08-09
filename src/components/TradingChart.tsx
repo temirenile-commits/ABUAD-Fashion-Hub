@@ -25,7 +25,7 @@ interface TradingChartProps {
   height?: number;
 }
 
-export default function TradingChart({ data, title, color = '#10b981', height = 300 }: TradingChartProps) {
+export default function TradingChart({ data, title, color = '#FFFFFF', height = 300 }: TradingChartProps) {
   // Generate a stable unique ID for the gradient to avoid collisions
   const uid = useId();
   const gradientId = `colorValue-${uid.replace(/:/g, '')}`;
@@ -57,16 +57,16 @@ export default function TradingChart({ data, title, color = '#10b981', height = 
             <YAxis 
               axisLine={false}
               tickLine={false}
-              tick={{ fill: '#64748b', fontSize: 10 }}
+              tick={{ fill: '#000000', fontSize: 10 }}
               domain={['auto', 'auto']}
             />
             <Tooltip 
               contentStyle={{ 
-                backgroundColor: '#0f172a', 
+                backgroundColor: '#000000', 
                 border: '1px solid var(--border)', 
                 borderRadius: '8px',
                 fontSize: '12px',
-                color: '#fff'
+                color: '#FFFFFF'
               }}
               itemStyle={{ color: color }}
               labelStyle={{ display: 'none' }}

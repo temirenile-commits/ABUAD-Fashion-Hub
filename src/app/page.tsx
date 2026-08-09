@@ -238,7 +238,7 @@ export default function Home() {
                     {reel.brands?.logo_url ? (
                       <img src={reel.brands.logo_url} alt="" className={styles.reelBrandLogo} />
                     ) : (
-                      <div className={styles.reelBrandLogo} style={{ background: 'var(--primary)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800 }}>
+                      <div className={styles.reelBrandLogo} style={{ background: 'var(--primary)', color: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800 }}>
                         {reel.brands?.name?.substring(0, 1)}
                       </div>
                     )}

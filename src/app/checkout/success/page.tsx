@@ -63,30 +63,30 @@ function SuccessContent() {
     return (
       <div className={`container ${styles.page}`}>
         <div className={`${styles.card} anim-fade-up`}>
-          <div className={styles.iconWrap} style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
-            <CheckCircle size={64} style={{ color: '#f59e0b' }} />
+          <div className={styles.iconWrap} style={{ background: 'rgba(255,255,255,0.1)', color: '#FFFFFF' }}>
+            <CheckCircle size={64} style={{ color: '#FFFFFF' }} />
           </div>
           
-          <h1 className={styles.title} style={{ color: '#f59e0b' }}>Transfer Details Received!</h1>
-          <div className={styles.refBadge} style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#d97706' }}>REF: {ref || 'MANUAL-PENDING'}</div>
+          <h1 className={styles.title} style={{ color: '#FFFFFF' }}>Transfer Details Received!</h1>
+          <div className={styles.refBadge} style={{ background: 'rgba(255,255,255,0.15)', color: '#FFFFFF' }}>REF: {ref || 'MANUAL-PENDING'}</div>
           
           <p className={styles.subtitle}>
             Your payment receipt has been submitted to the Super Admin for manual verification. 
             Orders remain pending and will be sent to the vendor immediately once approved.
           </p>
 
-          <div className={styles.escrowFlow} style={{ borderLeftColor: '#f59e0b', marginBottom: '2rem' }}>
+          <div className={styles.escrowFlow} style={{ borderLeftColor: '#FFFFFF', marginBottom: '2rem' }}>
             <div className={styles.flowItem}>
-              <ShieldCheck size={24} style={{ color: '#f59e0b' }} className={styles.flowIcon} />
+              <ShieldCheck size={24} style={{ color: '#FFFFFF' }} className={styles.flowIcon} />
               <div>
-                <h3 style={{ color: '#f59e0b' }}>Platform Verification: PENDING</h3>
+                <h3 style={{ color: '#FFFFFF' }}>Platform Verification: PENDING</h3>
                 <p>The admin matches the transaction reference to verify GTB receipt. This typically takes 5–15 minutes.</p>
               </div>
             </div>
           </div>
 
           <div className={styles.actions}>
-            <Link href="/dashboard/customer" className="btn btn-primary btn-lg" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', borderColor: '#d97706' }}>
+            <Link href="/dashboard/customer" className="btn btn-primary btn-lg" style={{ background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%)', borderColor: '#FFFFFF' }}>
               <Package size={18} /> View My Dashboard
             </Link>
             <Link href="/explore" className="btn btn-ghost">
@@ -121,10 +121,10 @@ function SuccessContent() {
     return (
       <div className={`container ${styles.page}`}>
         <div className={`${styles.card} anim-fade-up`}>
-          <div className={styles.iconWrap} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+          <div className={styles.iconWrap} style={{ background: 'rgba(0,0,0,0.1)', color: '#000000' }}>
             <Lock size={64} />
           </div>
-          <h1 className={styles.title} style={{ color: '#ef4444' }}>Payment Status Pending</h1>
+          <h1 className={styles.title} style={{ color: '#000000' }}>Payment Status Pending</h1>
           <p className={styles.subtitle}>
             We haven&apos;t received confirmation from your bank yet. If you have been debited, please tap the button below to force a manual sync.
           </p>

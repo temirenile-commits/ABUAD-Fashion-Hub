@@ -151,7 +151,7 @@ export default function ReviewSection({ productId }: { productId: string }) {
                 <p className={styles.reviewerName}>{review.user?.full_name || 'Anonymous'}</p>
                 <div className={styles.cardStars}>
                   {[1, 2, 3, 4, 5].map(s => (
-                    <Star key={s} size={12} fill={s <= review.rating ? "var(--primary)" : "none"} color={s <= review.rating ? "var(--primary)" : "#444"} />
+                    <Star key={s} size={12} fill={s <= review.rating ? "var(--primary)" : "none"} color={s <= review.rating ? "var(--primary)" : "#000000"} />
                   ))}
                   <span className={styles.date}>{timeAgo(review.created_at)} ago</span>
                 </div>

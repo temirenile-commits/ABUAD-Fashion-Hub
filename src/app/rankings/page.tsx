@@ -40,9 +40,9 @@ export default function RankingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+      <div className="min-h-screen bg-[#000000] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 text-[#eb0c7a] animate-spin" />
+          <Loader2 className="w-8 h-8 text-[#000000] animate-spin" />
           <p className="text-gray-400 font-medium">Calculating monthly rankings...</p>
         </div>
       </div>
@@ -50,10 +50,10 @@ export default function RankingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#000000] text-white">
       {/* Header Section */}
       <div className="relative pt-20 pb-12 flex items-center justify-center overflow-hidden border-b border-white/5">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#eb0c7a]/10 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#000000]/10 to-transparent pointer-events-none" />
         
         <div className="max-w-6xl w-full px-6 relative z-10">
           <div className="flex flex-col md:flex-row gap-12 items-center">
@@ -63,14 +63,14 @@ export default function RankingsPage() {
                 Back to Marketplace
               </Link>
               <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-[#eb0c7a]/10 rounded-2xl border border-[#eb0c7a]/20">
-                  <Trophy className="text-[#eb0c7a]" size={32} />
+                <div className="p-3 bg-[#000000]/10 rounded-2xl border border-[#000000]/20">
+                  <Trophy className="text-[#000000]" size={32} />
                 </div>
                 <div className="bg-green-500/10 text-green-500 text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-2 uppercase tracking-widest border border-green-500/20">
                   <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /> Live Economy
                 </div>
               </div>
-              <h1 className="text-5xl md:text-6xl font-black mb-4 tracking-tight leading-none">University <br /><span className="text-[#eb0c7a]">Leaderboard</span></h1>
+              <h1 className="text-5xl md:text-6xl font-black mb-4 tracking-tight leading-none">University <br /><span className="text-[#000000]">Leaderboard</span></h1>
               <p className="text-gray-400 text-lg max-w-md">
                 Live rankings based on monthly transaction volume and sales velocity across all campuses.
               </p>
@@ -84,7 +84,7 @@ export default function RankingsPage() {
                  multiLineConfig={{
                    keys: rankings.slice(0, 5).map((r, i) => ({
                      dataKey: r.id || `school_${i}`,
-                     color: ['#eb0c7a', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'][i % 5],
+                     color: ['#000000', '#000000', '#FFFFFF', '#FFFFFF', '#000000'][i % 5],
                      label: r.abbreviation || r.name,
                      isProjected: i === 0 // Pulse only the top university
                    })),
@@ -120,7 +120,7 @@ export default function RankingsPage() {
 
             {rankings.map((uni, index) => {
               const isTop3 = index < 3;
-              const medalColor = index === 0 ? '#f59e0b' : index === 1 ? '#94a3b8' : '#b45309';
+              const medalColor = index === 0 ? '#FFFFFF' : index === 1 ? '#FFFFFF' : '#000000';
               
               return (
                 <div 
@@ -156,9 +156,9 @@ export default function RankingsPage() {
                         )}
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold group-hover:text-[#eb0c7a] transition-colors">{uni.name}</h3>
+                        <h3 className="text-lg font-bold group-hover:text-[#000000] transition-colors">{uni.name}</h3>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs font-bold text-[#eb0c7a] bg-[#eb0c7a]/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          <span className="text-xs font-bold text-[#000000] bg-[#000000]/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
                             {uni.abbreviation}
                           </span>
                           <span className="text-xs text-gray-500 flex items-center gap-1">
@@ -201,7 +201,7 @@ export default function RankingsPage() {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body {
           font-family: 'Inter', sans-serif;
-          background: #050505;
+          background: #000000;
         }
       `}</style>
     </div>

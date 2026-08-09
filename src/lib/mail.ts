@@ -41,48 +41,48 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
 
 export const emailTemplates = {
   paymentSuccess: (name: string, orderId: string, amount: string, deliveryCode: string) => `
-    <div style="font-family: sans-serif; color: #1e1b4b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-      <div style="background: #eb0c7a; padding: 30px; text-align: center;">
+    <div style="font-family: sans-serif; color: #000000; max-width: 600px; margin: 0 auto; border: 1px solid #FFFFFF; border-radius: 12px; overflow: hidden;">
+      <div style="background: #000000; padding: 30px; text-align: center;">
         <h1 style="color: white; margin: 0; font-size: 24px;">Payment Secured! 🎉</h1>
       </div>
       <div style="padding: 30px;">
         <p>Hi ${name || 'Customer'},</p>
         <p>Your payment of <strong>${amount}</strong> for order <strong>#${orderId}</strong> has been successfully received and is now held in <strong>Escrow Protection</strong>.</p>
         
-        <div style="background: #fdf2f8; border: 2px dashed #eb0c7a; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
-          <h2 style="margin: 0; color: #eb0c7a; font-size: 14px; text-transform: uppercase;">Your Delivery Verification Code</h2>
+        <div style="background: #FFFFFF; border: 2px dashed #000000; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+          <h2 style="margin: 0; color: #000000; font-size: 14px; text-transform: uppercase;">Your Delivery Verification Code</h2>
           <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 10px 0;">${deliveryCode}</div>
-          <p style="margin: 0; font-size: 12px; color: #64748b;">Give this code to the delivery agent only when you receive your package.</p>
+          <p style="margin: 0; font-size: 12px; color: #000000;">Give this code to the delivery agent only when you receive your package.</p>
         </div>
 
         <p>The vendor has been notified and will begin processing your items shortly.</p>
-        <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <div style="background: #FFFFFF; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0;">Order Summary</h3>
           <p style="margin: 5px 0;">Order ID: #${orderId}</p>
           <p style="margin: 5px 0;">Status: Paid (Escrow)</p>
         </div>
         <p>Remember: Do not release the payment until you have received and inspected your items.</p>
-        <a href="https://abuadfashionista.com/dashboard/customer" style="display: inline-block; background: #eb0c7a; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">View Order Status</a>
+        <a href="https://abuadfashionista.com/dashboard/customer" style="display: inline-block; background: #000000; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">View Order Status</a>
       </div>
-      <div style="background: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
+      <div style="background: #FFFFFF; padding: 20px; text-align: center; font-size: 12px; color: #000000;">
         &copy; 2026 MasterCart. All rights reserved.
       </div>
     </div>
   `,
   paymentFailed: (name: string, reason: string) => `
-    <div style="font-family: sans-serif; color: #1e1b4b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-      <div style="background: #ef4444; padding: 30px; text-align: center;">
+    <div style="font-family: sans-serif; color: #000000; max-width: 600px; margin: 0 auto; border: 1px solid #FFFFFF; border-radius: 12px; overflow: hidden;">
+      <div style="background: #000000; padding: 30px; text-align: center;">
         <h1 style="color: white; margin: 0; font-size: 24px;">Payment Error ❌</h1>
       </div>
       <div style="padding: 30px;">
         <p>Hi ${name || 'Customer'},</p>
         <p>There was an issue with your recent transaction on MasterCart.</p>
-        <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0;">
-          <p style="margin: 0; color: #b91c1c;"><strong>Reason:</strong> ${reason || 'Transaction could not be completed.'}</p>
+        <div style="background: #FFFFFF; border-left: 4px solid #000000; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; color: #000000;"><strong>Reason:</strong> ${reason || 'Transaction could not be completed.'}</p>
         </div>
         <p>As a result, your items are still in your cart and have not been locked for shipping.</p>
         <p>Please try again or contact support if you have already been debited.</p>
-        <a href="https://mastercart.com/checkout" style="display: inline-block; background: #1e1b4b; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">Try Again</a>
+        <a href="https://mastercart.com/checkout" style="display: inline-block; background: #000000; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">Try Again</a>
       </div>
     </div>
   `

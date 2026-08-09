@@ -650,8 +650,8 @@ function CheckoutContent() {
               <h2 className={styles.sectionTitle}><CreditCard size={18} /> Payment Information</h2>
               
               {hasManual ? (
-                <div style={{ marginBottom: '1.5rem', padding: '1.25rem', background: 'rgba(245, 158, 11, 0.04)', borderRadius: 12, border: '1px dashed #f59e0b' }}>
-                  <h3 style={{ fontSize: '1rem', color: '#f59e0b', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ marginBottom: '1.5rem', padding: '1.25rem', background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: '1px dashed #FFFFFF' }}>
+                  <h3 style={{ fontSize: '1rem', color: '#FFFFFF', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <ShieldCheck size={18} /> Manual Bank Transfer Required
                   </h3>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-300)', marginBottom: '1rem' }}>
@@ -708,9 +708,9 @@ function CheckoutContent() {
                       </div>
                     )}
                     {senderAccount && (
-                      <div style={{ padding: '0.75rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '8px', fontSize: '0.85rem' }}>
-                        <span style={{ opacity: 0.7, display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '0.15rem', color: '#10b981' }}>Verified Account Name</span>
-                        <strong style={{ color: '#10b981' }}>{senderAccount}</strong>
+                      <div style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', fontSize: '0.85rem' }}>
+                        <span style={{ opacity: 0.7, display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '0.15rem', color: '#FFFFFF' }}>Verified Account Name</span>
+                        <strong style={{ color: '#FFFFFF' }}>{senderAccount}</strong>
                       </div>
                     )}
                   </div>
@@ -730,7 +730,7 @@ function CheckoutContent() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.9rem' }}>🎟️ Promo Code</label>
                 {promoApplied ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span style={{ color: '#10b981', fontWeight: 700 }}>✅ &quot;{promoApplied}&quot; applied — {promoAppliedData?.type === 'percentage' ? promoAppliedData.value + '%' : formatPrice(promoAppliedData?.value || 0)} off!</span>
+                    <span style={{ color: '#FFFFFF', fontWeight: 700 }}>✅ &quot;{promoApplied}&quot; applied — {promoAppliedData?.type === 'percentage' ? promoAppliedData.value + '%' : formatPrice(promoAppliedData?.value || 0)} off!</span>
                     <button className="btn btn-ghost btn-sm" onClick={() => { setPromoApplied(null); setPromoAppliedData(null); setPromoCode(''); }}>Remove</button>
                   </div>
                 ) : (
@@ -755,7 +755,7 @@ function CheckoutContent() {
                   className={`btn btn-primary btn-lg ${styles.payBtn}`}
                   onClick={handleManualCheckout}
                   disabled={loading || !senderBank || !senderAccount || !transferReference}
-                  style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', borderColor: '#d97706' }}
+                  style={{ background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%)', borderColor: '#FFFFFF' }}
                 >
                   {loading ? (
                     <>
@@ -830,8 +830,8 @@ function CheckoutContent() {
                       {isDelicacy && (commission > 0 || deliveryRate > 0) && (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', fontSize: '0.68rem', color: 'var(--text-400)', lineHeight: 1.5, marginTop: '2px' }}>
                           <span>Item: {formatPrice(activePrice * item.quantity)}</span>
-                          {commission > 0 && <span style={{ color: '#f59e0b' }}>Comm: +{formatPrice(commission * item.quantity)}</span>}
-                          {deliveryRate > 0 && <span style={{ color: '#3b82f6' }}>Delivery: +{formatPrice(deliveryRate * item.quantity)}</span>}
+                          {commission > 0 && <span style={{ color: '#FFFFFF' }}>Comm: +{formatPrice(commission * item.quantity)}</span>}
+                          {deliveryRate > 0 && <span style={{ color: '#000000' }}>Delivery: +{formatPrice(deliveryRate * item.quantity)}</span>}
                         </div>
                       )}
                     </div>
@@ -845,7 +845,7 @@ function CheckoutContent() {
                   <span>{formatPrice(orderTotal)}</span>
                 </div>
                 {promoSavings > 0 && (
-                  <div className={styles.totalRow} style={{ color: '#10b981' }}>
+                  <div className={styles.totalRow} style={{ color: '#FFFFFF' }}>
                     <span>Promo Discount ({promoAppliedData?.type === 'percentage' ? promoAppliedData.value + '%' : 'Applied'})</span>
                     <span>-{formatPrice(promoSavings)}</span>
                   </div>

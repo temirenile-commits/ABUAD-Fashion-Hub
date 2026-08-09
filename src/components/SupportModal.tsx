@@ -97,7 +97,7 @@ export default function SupportModal({ isOpen, onClose }: { isOpen: boolean, onC
            ) : (
               <div style={{ textAlign: 'center' }}>
                  <div className={styles.avatarWrap}>
-                    <MessageCircle size={32} color="#10b981" />
+                    <MessageCircle size={32} color="#FFFFFF" />
                  </div>
                  <h3 style={{ marginBottom: '0.5rem' }}>{currentNumber?.name || 'Support Agent'}</h3>
                  <p style={{ color: 'var(--text-300)', fontSize: '0.9rem', marginBottom: '1.5rem', padding: '0 1rem' }}>
@@ -110,7 +110,7 @@ export default function SupportModal({ isOpen, onClose }: { isOpen: boolean, onC
                        target="_blank" 
                        rel="noreferrer"
                        className="btn" 
-                       style={{ background: '#10b981', color: '#fff', width: '100%', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}
+                       style={{ background: '#FFFFFF', color: '#000000', width: '100%', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}
                     >
                        <MessageCircle size={18} /> Chat on WhatsApp
                     </a>
@@ -125,8 +125,8 @@ export default function SupportModal({ isOpen, onClose }: { isOpen: boolean, onC
                  </a>
 
                  {currentIndex < numbers.length - 1 && (
-                    <div style={{ padding: '1rem', background: 'rgba(245, 158, 11, 0.05)', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f59e0b', fontSize: '0.85rem', marginBottom: '0.75rem', justifyContent: 'center' }}>
+                    <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#FFFFFF', fontSize: '0.85rem', marginBottom: '0.75rem', justifyContent: 'center' }}>
                           <AlertTriangle size={14} /> Agent unavailable?
                        </div>
                        <button onClick={handleTryNext} className="btn btn-ghost btn-sm" style={{ width: '100%' }}>

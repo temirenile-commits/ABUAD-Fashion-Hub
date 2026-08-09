@@ -953,7 +953,7 @@ export default function DeliveryDashboard() {
                 width: 10,
                 height: 10,
                 borderRadius: '50%',
-                background: '#ef4444',
+                background: '#000000',
               }} />
             )}
             <RefreshCw size={18} className={refreshing ? 'anim-spin' : ''} />
@@ -1033,7 +1033,7 @@ export default function DeliveryDashboard() {
                           <span style={{ fontWeight: 700, fontSize: '1rem' }}>{group.label}</span>
                           <span
                             className={styles.badge}
-                            style={{ background: 'rgba(99,102,241,0.15)', color: '#818cf8' }}
+                            style={{ background: 'rgba(0,0,0,0.15)', color: '#FFFFFF' }}
                           >
                             {group.deliveries.length} order{group.deliveries.length > 1 ? 's' : ''}
                           </span>
@@ -1091,7 +1091,7 @@ export default function DeliveryDashboard() {
                               {delivery.orders?.is_preorder && (
                                 <span
                                   className={styles.badge}
-                                  style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}
+                                  style={{ background: 'rgba(255,255,255,0.15)', color: '#FFFFFF' }}
                                 >
                                   <Calendar size={10} style={{ marginRight: 3 }} />
                                   PRE-ORDER
@@ -1099,14 +1099,14 @@ export default function DeliveryDashboard() {
                               )}
                               <span
                                 className={styles.badge}
-                                style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--success)' }}
+                                style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--success)' }}
                               >
                                 READY FOR PICKUP
                               </span>
                               {delivery.orders?.products?.product_section && (
                                 <span
                                   className={styles.badge}
-                                  style={{ background: 'rgba(99,102,241,0.1)', color: '#818cf8' }}
+                                  style={{ background: 'rgba(0,0,0,0.1)', color: '#FFFFFF' }}
                                 >
                                   <Tag size={10} style={{ marginRight: 3 }} />
                                   {delivery.orders.products.product_section.toUpperCase()}
@@ -1140,12 +1140,12 @@ export default function DeliveryDashboard() {
                             style={{
                               marginTop: '0.75rem',
                               padding: '0.5rem 0.75rem',
-                              background: 'rgba(99,102,241,0.07)',
+                              background: 'rgba(0,0,0,0.07)',
                               borderRadius: 'var(--radius-sm)',
                               fontSize: '0.85rem',
                             }}
                           >
-                            <Info size={12} style={{ marginRight: 6, verticalAlign: 'middle', color: '#818cf8' }} />
+                            <Info size={12} style={{ marginRight: 6, verticalAlign: 'middle', color: '#FFFFFF' }} />
                             <strong>Item:</strong> {delivery.orders.products.title}
                           </div>
                         )}
@@ -1199,7 +1199,7 @@ export default function DeliveryDashboard() {
                         {delivery.orders?.is_preorder && (
                           <span
                             className={styles.badge}
-                            style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}
+                            style={{ background: 'rgba(255,255,255,0.15)', color: '#FFFFFF' }}
                           >
                             PRE-ORDER
                           </span>
@@ -1210,7 +1210,7 @@ export default function DeliveryDashboard() {
                         {delivery.orders?.products?.product_section && (
                           <span
                             className={styles.badge}
-                            style={{ background: 'rgba(99,102,241,0.1)', color: '#818cf8' }}
+                            style={{ background: 'rgba(0,0,0,0.1)', color: '#FFFFFF' }}
                           >
                             {delivery.orders.products.product_section.toUpperCase()}
                           </span>
@@ -1260,12 +1260,12 @@ export default function DeliveryDashboard() {
                       style={{
                         marginTop: '0.75rem',
                         padding: '0.5rem 0.75rem',
-                        background: 'rgba(99,102,241,0.07)',
+                        background: 'rgba(0,0,0,0.07)',
                         borderRadius: 'var(--radius-sm)',
                         fontSize: '0.85rem',
                       }}
                     >
-                      <Package size={12} style={{ marginRight: 6, verticalAlign: 'middle', color: '#818cf8' }} />
+                      <Package size={12} style={{ marginRight: 6, verticalAlign: 'middle', color: '#FFFFFF' }} />
                       <strong>Item:</strong> {delivery.orders.products.title}
                     </div>
                   )}
@@ -1281,7 +1281,7 @@ export default function DeliveryDashboard() {
                         </button>
                         <button
                           className="btn btn-outline w-full"
-                          style={{ borderColor: '#ef4444', color: '#ef4444', background: 'transparent' }}
+                          style={{ borderColor: '#000000', color: '#000000', background: 'transparent' }}
                           onClick={() => transferToPublic(delivery.id)}
                           disabled={processingId === delivery.id}
                         >
@@ -1361,7 +1361,7 @@ export default function DeliveryDashboard() {
                     <div
                       key={i}
                       style={{
-                        background: hasLiveOrders ? 'rgba(34,197,94,0.08)' : 'var(--bg-200)',
+                        background: hasLiveOrders ? 'rgba(255,255,255,0.08)' : 'var(--bg-200)',
                         border: `1px solid ${hasLiveOrders ? 'var(--success)' : 'var(--border)'}`,
                         borderRadius: 'var(--radius-md)',
                         padding: '1rem',
@@ -1379,7 +1379,7 @@ export default function DeliveryDashboard() {
                       {hasLiveOrders && (
                         <span
                           className={styles.badge}
-                          style={{ background: 'rgba(34,197,94,0.15)', color: 'var(--success)', width: 'fit-content' }}
+                          style={{ background: 'rgba(255,255,255,0.15)', color: 'var(--success)', width: 'fit-content' }}
                         >
                           ORDERS WAITING
                         </span>
@@ -1426,7 +1426,7 @@ export default function DeliveryDashboard() {
                   <div
                     key={req.id}
                     className={styles.historyItem}
-                    style={{ borderLeft: '3px solid #f59e0b' }}
+                    style={{ borderLeft: '3px solid #FFFFFF' }}
                   >
                     <div className={styles.historyMain}>
                       <div>
@@ -1436,7 +1436,7 @@ export default function DeliveryDashboard() {
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: 700, color: '#f59e0b' }}>
+                        <div style={{ fontWeight: 700, color: '#FFFFFF' }}>
                           -{formatPrice(req.amount_requested)}
                         </div>
                         <span className={styles.badge}>{req.status.toUpperCase()}</span>
@@ -1486,11 +1486,11 @@ export default function DeliveryDashboard() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {privateOrders.map((order) => {
                   const statusColors: Record<string, string> = {
-                    paid: '#6366f1',
-                    accepted: '#3b82f6',
-                    processing: '#f59e0b',
-                    ready: '#10b981',
-                    ready_for_pickup: '#10b981',
+                    paid: '#000000',
+                    accepted: '#000000',
+                    processing: '#FFFFFF',
+                    ready: '#FFFFFF',
+                    ready_for_pickup: '#FFFFFF',
                   };
                   return (
                     <div
@@ -1511,8 +1511,8 @@ export default function DeliveryDashboard() {
                             className={styles.badge}
                             style={{
                               marginLeft: '0.5rem',
-                              background: `${statusColors[order.status] || '#6b7280'}20`,
-                              color: statusColors[order.status] || '#6b7280',
+                              background: `${statusColors[order.status] || '#000000'}20`,
+                              color: statusColors[order.status] || '#000000',
                             }}
                           >
                             {order.status.replace('_', ' ').toUpperCase()}
@@ -1545,12 +1545,12 @@ export default function DeliveryDashboard() {
                           style={{
                             marginTop: '0.75rem',
                             padding: '0.5rem 0.75rem',
-                            background: 'rgba(99,102,241,0.07)',
+                            background: 'rgba(0,0,0,0.07)',
                             borderRadius: 'var(--radius-sm)',
                             fontSize: '0.85rem',
                           }}
                         >
-                          <Package size={12} style={{ marginRight: 6, verticalAlign: 'middle', color: '#818cf8' }} />
+                          <Package size={12} style={{ marginRight: 6, verticalAlign: 'middle', color: '#FFFFFF' }} />
                           <strong>Item:</strong> {order.products.title}
                         </div>
                       )}

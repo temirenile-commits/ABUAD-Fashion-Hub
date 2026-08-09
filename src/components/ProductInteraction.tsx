@@ -99,15 +99,15 @@ export default function ProductInteraction({ product }: Props) {
       {/* Selected Variant Price Preview */}
       {hasCustomVariantPrice && (
         <div style={{
-          background: 'rgba(235, 12, 122, 0.05)',
-          border: '1px solid rgba(235, 12, 122, 0.15)',
+          background: 'rgba(0,0,0,0.05)',
+          border: '1px solid rgba(0,0,0,0.15)',
           borderRadius: '12px',
           padding: '1rem',
           marginBottom: '1.5rem',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          boxShadow: '0 4px 20px rgba(235, 12, 122, 0.03)'
+          boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
         }}>
           <div>
             <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-400)', fontWeight: 600, letterSpacing: '0.5px' }}>Selected Option Price</span>

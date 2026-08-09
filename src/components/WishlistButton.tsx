@@ -72,13 +72,13 @@ export default function WishlistButton({ productId, size = 16, className }: Prop
         background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)', 
         border: 'none', borderRadius: '50%', width: '32px', height: '32px', 
         display: 'flex', alignItems: 'center', justifyContent: 'center', 
-        cursor: 'pointer', color: isWishlisted ? '#ef4444' : '#fff'
+        cursor: 'pointer', color: isWishlisted ? '#000000' : '#FFFFFF'
       } : undefined}
     >
       {processing ? (
         <Loader2 size={size} className="animate-spin" />
       ) : (
-        <Heart size={size} fill={isWishlisted ? "#ef4444" : "none"} color={isWishlisted ? "#ef4444" : "currentColor"} />
+        <Heart size={size} fill={isWishlisted ? "#000000" : "none"} color={isWishlisted ? "#000000" : "currentColor"} />
       )}
     </button>
   );

@@ -240,7 +240,7 @@ export default async function ProductPage({ params }: Props) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
               <h1 className={styles.productTitle}>{product.title}</h1>
               {product.is_preorder && (
-                <span className="badge" style={{ background: 'var(--primary)', color: '#000', fontWeight: 700, padding: '4px 8px', borderRadius: '4px' }}>
+                <span className="badge" style={{ background: 'var(--primary)', color: '#000000', fontWeight: 700, padding: '4px 8px', borderRadius: '4px' }}>
                   PRE-ORDER
                 </span>
               )}
@@ -268,7 +268,7 @@ export default async function ProductPage({ params }: Props) {
                     key={s}
                     size={14}
                     fill={s <= Math.round(stats.avg_rating) ? 'var(--primary)' : 'none'}
-                    color={s <= Math.round(stats.avg_rating) ? 'var(--primary)' : '#444'}
+                    color={s <= Math.round(stats.avg_rating) ? 'var(--primary)' : '#000000'}
                   />
                 ))}
               </div>
@@ -282,7 +282,7 @@ export default async function ProductPage({ params }: Props) {
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '4px', 
-                color: (product.stock_count || 0) > 0 ? '#10b981' : '#ef4444', 
+                color: (product.stock_count || 0) > 0 ? '#FFFFFF' : '#000000', 
                 fontWeight: 700,
                 fontSize: '0.85rem',
                 marginLeft: '8px'
@@ -310,7 +310,7 @@ export default async function ProductPage({ params }: Props) {
             {/* Location Availability */}
             {product.location_availability && (
               <div className={styles.locationBadge} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0', color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 600 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(245, 158, 11, 0.1)', padding: '4px 10px', borderRadius: '6px' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '6px' }}>
                    📍 {product.location_availability}
                 </span>
               </div>
@@ -352,7 +352,7 @@ export default async function ProductPage({ params }: Props) {
                   title="WhatsApp Alternative"
                   style={{ gap: '0.5rem', opacity: 0.7 }}
                 >
-                  <MessageCircle size={16} style={{ color: '#25D366' }} />
+                  <MessageCircle size={16} style={{ color: '#FFFFFF' }} />
                   Inquiry via WhatsApp
                 </a>
                 <WishlistButton productId={product.id} className="btn btn-ghost btn-icon" size={18} />

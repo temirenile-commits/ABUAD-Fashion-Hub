@@ -113,7 +113,7 @@ export default function SupportDashboard() {
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-100)' }}><Loader2 className="anim-spin" size={32} color="var(--primary)" /></div>;
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-100)', color: '#fff' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-100)', color: '#FFFFFF' }}>
       <header style={{ padding: '1.5rem 2rem', background: 'var(--bg-200)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0, fontSize: '1.5rem' }}>
@@ -135,7 +135,7 @@ export default function SupportDashboard() {
             <button 
               key={t.id} 
               onClick={() => setTab(t.id as Tab)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: tab === t.id ? 'var(--primary)' : 'transparent', color: tab === t.id ? '#000' : 'var(--text-200)', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, textAlign: 'left' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: tab === t.id ? 'var(--primary)' : 'transparent', color: tab === t.id ? '#000000' : 'var(--text-200)', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, textAlign: 'left' }}
             >
               <t.icon size={18} /> {t.label}
             </button>
@@ -163,8 +163,8 @@ export default function SupportDashboard() {
                       <td style={{ padding: '1rem 0', color: 'var(--text-300)' }}>#{o.id.slice(0, 8)}</td>
                       <td>{o.users?.name || o.users?.email}<br/><span style={{fontSize:'0.75rem',color:'var(--text-400)'}}>{o.users?.phone || 'No phone'}</span></td>
                       <td>{o.brands?.name}<br/><span style={{fontSize:'0.75rem',color:'var(--text-400)'}}>{o.brands?.phone || 'No phone'}</span></td>
-                      <td><span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', background: o.status === 'paid' ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.05)', color: o.status === 'paid' ? '#10b981' : '#fff' }}>{o.status}</span></td>
-                      <td style={{ fontWeight: 600, color: '#10b981' }}>₦{Number(o.total_amount).toLocaleString()}</td>
+                      <td><span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', background: o.status === 'paid' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)', color: o.status === 'paid' ? '#FFFFFF' : '#FFFFFF' }}>{o.status}</span></td>
+                      <td style={{ fontWeight: 600, color: '#FFFFFF' }}>₦{Number(o.total_amount).toLocaleString()}</td>
                     </tr>
                   ))}
                   {orders.length === 0 && <tr><td colSpan={5} style={{ padding: '2rem 0', textAlign: 'center', color: 'var(--text-400)' }}>No orders found</td></tr>}
@@ -191,7 +191,7 @@ export default function SupportDashboard() {
                       <td style={{ padding: '1rem 0', fontWeight: 600 }}>{c.name || 'Anonymous'}</td>
                       <td>{c.email}</td>
                       <td>{c.phone || 'N/A'}</td>
-                      <td><span style={{ color: c.status === 'active' ? '#10b981' : '#ef4444' }}>{c.status || 'active'}</span></td>
+                      <td><span style={{ color: c.status === 'active' ? '#FFFFFF' : '#000000' }}>{c.status || 'active'}</span></td>
                     </tr>
                   ))}
                 </tbody>
@@ -220,7 +220,7 @@ export default function SupportDashboard() {
                       <td>{v.whatsapp_number || 'N/A'}</td>
                       <td>
                         {v.whatsapp_number && (
-                           <a href={`https://wa.me/${v.whatsapp_number.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" style={{ color: '#10b981' }}>
+                           <a href={`https://wa.me/${v.whatsapp_number.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" style={{ color: '#FFFFFF' }}>
                              <MessageSquare size={14} /> Message
                            </a>
                         )}
@@ -288,7 +288,7 @@ export default function SupportDashboard() {
                       <tr key={t.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <td style={{ padding: '1rem 0', fontWeight: 600 }}>{t.member?.name || 'Unknown'}</td>
                         <td>{t.member?.email}</td>
-                        <td><span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', background: 'rgba(99,102,241,0.15)', color: '#818cf8' }}>{t.role === 'customer_support_agent' ? 'Support Agent' : t.role}</span></td>
+                        <td><span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', background: 'rgba(0,0,0,0.15)', color: '#FFFFFF' }}>{t.role === 'customer_support_agent' ? 'Support Agent' : t.role}</span></td>
                         <td>
                           {t.role === 'customer_support_agent' && (
                             <button className="btn btn-ghost text-red" onClick={() => { if(confirm('Fire this agent?')) apiAction('remove_agent', { teamId: t.id }) }}>

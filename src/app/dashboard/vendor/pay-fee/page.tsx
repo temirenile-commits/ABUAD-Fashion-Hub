@@ -91,7 +91,7 @@ export default function PayFeePage() {
         
         <div className="card" style={{ padding: '3rem 2rem', textAlign: 'center' }}>
           <div style={{ marginBottom: '2rem' }}>
-            <div style={{ width: '80px', height: '80px', background: 'rgba(201, 161, 74, 0.1)', color: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+            <div style={{ width: '80px', height: '80px', background: 'rgba(255,255,255,0.1)', color: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
               <ShieldCheck size={40} />
             </div>
             <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Account Approved!</h1>

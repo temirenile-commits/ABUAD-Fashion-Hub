@@ -243,11 +243,11 @@ export default function DelicaciesPage() {
               className={styles.searchInput}
             />
             {search.trim() && matchingVendors.length > 0 && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', borderRadius: '8px', marginTop: '4px', padding: '8px', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '4px', padding: '0 8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Chefs matching "{search}"</div>
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#FFFFFF', borderRadius: '8px', marginTop: '4px', padding: '8px', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                <div style={{ fontSize: '0.75rem', color: '#000000', marginBottom: '4px', padding: '0 8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Chefs matching "{search}"</div>
                 {matchingVendors.map(v => (
-                  <Link key={v.id} href={`/vendor/${v.id}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', textDecoration: 'none', color: '#000', borderRadius: '4px' }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#eee', overflow: 'hidden' }}>
+                  <Link key={v.id} href={`/vendor/${v.id}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', textDecoration: 'none', color: '#000000', borderRadius: '4px' }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#FFFFFF', overflow: 'hidden' }}>
                       {v.logo_url ? <img src={v.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '10px' }}>{v.name[0]}</span>}
                     </div>
                     <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{v.name}</span>
@@ -313,8 +313,8 @@ export default function DelicaciesPage() {
                   flex: '0 0 auto', padding: '10px 18px', borderRadius: '12px', border: 'none', cursor: 'pointer',
                   fontWeight: 600, fontSize: '0.82rem', transition: 'all 0.2s',
                   background: !selectedCafeteria ? 'var(--primary)' : 'var(--bg-100)',
-                  color: !selectedCafeteria ? '#fff' : 'var(--text-200)',
-                  boxShadow: !selectedCafeteria ? '0 2px 8px rgba(79,70,229,0.3)' : 'none',
+                  color: !selectedCafeteria ? '#FFFFFF' : 'var(--text-200)',
+                  boxShadow: !selectedCafeteria ? '0 2px 8px rgba(0,0,0,0.3)' : 'none',
                 }}
               >
                 All Cafeterias
@@ -329,8 +329,8 @@ export default function DelicaciesPage() {
                       flex: '0 0 auto', padding: '10px 18px', borderRadius: '12px', border: 'none', cursor: 'pointer',
                       fontWeight: 600, fontSize: '0.82rem', transition: 'all 0.2s',
                       background: selectedCafeteria === c.id ? 'var(--primary)' : 'var(--bg-100)',
-                      color: selectedCafeteria === c.id ? '#fff' : 'var(--text-200)',
-                      boxShadow: selectedCafeteria === c.id ? '0 2px 8px rgba(79,70,229,0.3)' : 'none',
+                      color: selectedCafeteria === c.id ? '#FFFFFF' : 'var(--text-200)',
+                      boxShadow: selectedCafeteria === c.id ? '0 2px 8px rgba(0,0,0,0.3)' : 'none',
                     }}
                   >
                     {c.name} <span style={{ opacity: 0.7, marginLeft: '4px' }}>({count})</span>
@@ -399,7 +399,7 @@ export default function DelicaciesPage() {
           {/* Top Chefs Section */}
           <div className={styles.hofSection}>
             <div className={styles.hofHeader}>
-              <Trophy size={20} style={{ color: '#f59e0b' }} />
+              <Trophy size={20} style={{ color: '#FFFFFF' }} />
               <span>Weekly Hall of Fame (Top Chefs)</span>
               <Link href="/delicacies/rankings" className={styles.viewFullLink} style={{ margin: 0, padding: 0, fontSize: '0.8rem' }}>View Full →</Link>
             </div>
@@ -421,7 +421,7 @@ export default function DelicaciesPage() {
           {/* Top Dishes Section */}
           <div className={styles.hofSection}>
             <div className={styles.hofHeader}>
-              <Star size={20} style={{ color: '#facc15' }} />
+              <Star size={20} style={{ color: '#FFFFFF' }} />
               <span>Dish of the Week (Top Rated)</span>
               <Link href="/delicacies/rankings?tab=products" className={styles.viewFullLink} style={{ margin: 0, padding: 0, fontSize: '0.8rem' }}>View All →</Link>
             </div>

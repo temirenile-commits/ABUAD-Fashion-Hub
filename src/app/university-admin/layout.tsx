@@ -33,9 +33,9 @@ export default function UniversityAdminLayout({ children }: { children: React.Re
 
   if (checking) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0a0a0f', color: '#fff', fontSize: '1.1rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#000000', color: '#FFFFFF', fontSize: '1.1rem' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 40, height: 40, border: '3px solid #7c3aed', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 1rem' }} />
+          <div style={{ width: 40, height: 40, border: '3px solid #000000', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 1rem' }} />
           Verifying access...
         </div>
       </div>
@@ -44,14 +44,14 @@ export default function UniversityAdminLayout({ children }: { children: React.Re
 
   if (denied) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0a0a0f', color: '#fff', textAlign: 'center', padding: '2rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#000000', color: '#FFFFFF', textAlign: 'center', padding: '2rem' }}>
         <div>
           <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🔒</div>
           <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Access Denied</h1>
-          <p style={{ color: '#888', marginBottom: '2rem' }}>You don&apos;t have university admin permissions.</p>
+          <p style={{ color: '#FFFFFF', marginBottom: '2rem' }}>You don&apos;t have university admin permissions.</p>
           <button
             onClick={() => router.push('/')}
-            style={{ padding: '0.75rem 2rem', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+            style={{ padding: '0.75rem 2rem', background: '#000000', color: '#FFFFFF', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
           >
             Return to Marketplace
           </button>

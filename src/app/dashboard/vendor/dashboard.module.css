@@ -16,8 +16,8 @@
 }
 
 .chefSidebar {
-  background: rgba(245, 158, 11, 0.03);
-  border-right: 1px solid rgba(245, 158, 11, 0.1);
+  background: rgba(255,255,255,0.03);
+  border-right: 1px solid rgba(255,255,255,0.1);
   padding-left: 1rem;
   padding-right: 1rem;
 }
@@ -38,7 +38,7 @@
   justify-content: center;
   font-family: var(--font-display);
   font-weight: 800;
-  color: #fff;
+  color: #FFFFFF;
   font-size: 1.1rem;
 }
 
@@ -81,22 +81,22 @@
 }
 
 .navActiveChef {
-  background: rgba(245, 158, 11, 0.1);
-  border-color: rgba(245, 158, 11, 0.3);
-  color: #f59e0b;
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.3);
+  color: #FFFFFF;
 }
 
 .navBadge {
   margin-left: auto;
-  background: #ff5252;
-  color: #fff;
+  background: #FFFFFF;
+  color: #000000;
   font-size: 0.7rem;
   font-weight: 700;
   padding: 0.1rem 0.4rem;
   border-radius: var(--radius-full);
   min-width: 1.2rem;
   text-align: center;
-  box-shadow: 0 0 10px rgba(255, 82, 82, 0.4);
+  box-shadow: 0 0 10px rgba(255,255,255,0.4);
 }
 
 /* Main */
@@ -146,7 +146,7 @@
 
 .statCardVibrant {
   background: var(--grad-brand-soft);
-  border-color: rgba(212, 175, 55, 0.3);
+  border-color: rgba(255,255,255,0.3);
 }
 
 .statHead {
@@ -172,7 +172,7 @@
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--success);
-  background: rgba(0, 200, 83, 0.1);
+  background: rgba(0,0,0,0.1);
   padding: 0.25rem 0.5rem;
   border-radius: var(--radius-full);
 }
@@ -334,21 +334,21 @@
 }
 
 .statusWarning {
-  background: rgba(212, 175, 55, 0.1);
-  color: #d4af37;
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: rgba(255,255,255,0.1);
+  color: #FFFFFF;
+  border: 1px solid rgba(255,255,255,0.2);
 }
 
 .statusInfo {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(0,0,0,0.1);
+  color: #000000;
+  border: 1px solid rgba(0,0,0,0.2);
 }
 
 .statusSuccess {
-  background: rgba(34, 197, 94, 0.1);
+  background: rgba(255,255,255,0.1);
   color: var(--success);
-  border: 1px solid rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(255,255,255,0.2);
 }
 
 .statusDesc {
@@ -626,8 +626,8 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.7);
-  color: #fff;
+  background: rgba(0,0,0,0.7);
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -692,7 +692,7 @@
 .invImg {
   position: relative;
   aspect-ratio: 16/9;
-  background: #000;
+  background: #000000;
 }
 
 .invImg img {
@@ -757,7 +757,7 @@
   aspect-ratio: 16/9;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  background: #000;
+  background: #000000;
   border: 1px solid var(--border);
 }
 
@@ -787,10 +787,10 @@
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(0,0,0,0.2);
   backdrop-filter: blur(8px);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #000000;
+  border: 1px solid rgba(0,0,0,0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -822,7 +822,7 @@
 
 .growthBar {
   flex: 1;
-  background: rgba(212, 175, 55, 0.2);
+  background: rgba(255,255,255,0.2);
   border-radius: 2px;
   transition: all 0.3s ease;
 }
@@ -837,7 +837,7 @@
 
 /* Escrow Specifics */
 .escrowBanner {
-  background: rgba(255, 171, 0, 0.05);
+  background: rgba(255,255,255,0.05);
   border: 1px dashed var(--warning);
   border-radius: var(--radius-md);
   padding: 1rem;
@@ -911,7 +911,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  color: #fff;
+  color: #FFFFFF;
   opacity: 0;
   transition: opacity 0.3s ease;
   cursor: pointer;
@@ -1052,7 +1052,7 @@
 }
 
 .removeBtn {
-  color: #ef4444;
+  color: #000000;
   cursor: pointer;
   background: none;
   border: none;
@@ -1133,9 +1133,9 @@
   border-radius: var(--radius-sm);
 }
 
-.statusBadgeSmall.pending { background: rgba(255,171,0,0.1); color: var(--warning); }
-.statusBadgeSmall.processing { background: rgba(59,130,246,0.1); color: #3b82f6; }
-.statusBadgeSmall.completed { background: rgba(0,200,83,0.1); color: var(--success); }
+.statusBadgeSmall.pending { background: rgba(255,255,255,0.1); color: var(--warning); }
+.statusBadgeSmall.processing { background: rgba(0,0,0,0.1); color: #000000; }
+.statusBadgeSmall.completed { background: rgba(0,0,0,0.1); color: var(--success); }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(15px); }
@@ -1150,13 +1150,13 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0,0,0,0.85);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  color: #fff;
+  color: #FFFFFF;
   text-align: center;
   animation: fadeIn 0.3s ease;
 }
@@ -1171,7 +1171,7 @@
 .paymentLoader {
   width: 60px;
   height: 60px;
-  border: 4px solid rgba(255, 255, 255, 0.1);
+  border: 4px solid rgba(255,255,255,0.1);
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -1212,8 +1212,8 @@
   align-items: center;
   gap: 1.25rem;
   padding: 1.25rem;
-  background: rgba(34, 197, 94, 0.05);
-  border: 1px solid rgba(34, 197, 94, 0.2);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: var(--radius-md);
   margin-top: 1rem;
 }
@@ -1276,7 +1276,7 @@
   margin: 1rem 1.25rem;
   padding: 4px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255,255,255,0.05);
 }
 
 .switchBtn {
@@ -1293,15 +1293,15 @@
 }
 
 .switchActive {
-  background: #fff;
-  color: #000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: #FFFFFF;
+  color: #000000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .switchActiveChef {
   background: var(--primary);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(235, 12, 122, 0.3);
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .nav {
@@ -1312,7 +1312,7 @@
   background: var(--grad-brand);
   padding: 2.5rem;
   border-radius: var(--radius-xl);
-  color: #fff;
+  color: #FFFFFF;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -1343,7 +1343,7 @@
 }
 
 .walletEscrow {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.1);
   backdrop-filter: blur(10px);
   border-radius: var(--radius-lg);
   display: flex;
@@ -1360,14 +1360,14 @@
 .loadingOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0,0,0,0.85);
   backdrop-filter: blur(8px);
   z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: #fff;
+  color: #FFFFFF;
 }
 
 .loadingContent {
@@ -1409,7 +1409,7 @@
 .restrictedIcon {
   width: 80px;
   height: 80px;
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(255,255,255,0.1);
   color: var(--warning);
   display: flex;
   align-items: center;
@@ -1432,13 +1432,13 @@
 
 /* Share Button */
 .shareButton {
-  background: rgba(59, 130, 246, 0.1) !important;
-  color: #3b82f6 !important;
+  background: rgba(0,0,0,0.1) !important;
+  color: #000000 !important;
 }
 
 .shareButton:hover {
-  background: #3b82f6 !important;
-  color: #fff !important;
+  background: #000000 !important;
+  color: #FFFFFF !important;
 }
 
 .powerCenter {
@@ -1451,7 +1451,7 @@
   align-items: center;
   padding: 1.5rem 2rem;
   background: var(--bg-200);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -1462,7 +1462,7 @@
   font-size: 1.25rem;
   font-weight: 800;
   margin: 0;
-  color: #fff;
+  color: #FFFFFF;
 }
 
 .headerTitle p {
@@ -1488,29 +1488,29 @@
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.05em;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 .kitchenOpen {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(255,255,255,0.1);
+  color: #FFFFFF;
+  border-color: rgba(255,255,255,0.3);
 }
 
 .kitchenOpen .toggleDot {
-  background: #10b981;
-  box-shadow: 0 0 10px #10b981;
+  background: #FFFFFF;
+  box-shadow: 0 0 10px #FFFFFF;
   animation: pulse 1.5s infinite;
 }
 
 .kitchenClosed {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(0,0,0,0.1);
+  color: #000000;
+  border-color: rgba(0,0,0,0.3);
 }
 
 .kitchenClosed .toggleDot {
-  background: #ef4444;
+  background: #000000;
 }
 
 .toggleDot {
@@ -1533,7 +1533,7 @@
   top: -4px;
   right: -4px;
   background: var(--primary);
-  color: #fff;
+  color: #FFFFFF;
   font-size: 0.6rem;
   font-weight: 800;
   min-width: 16px;

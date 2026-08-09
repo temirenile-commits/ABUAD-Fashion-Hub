@@ -101,10 +101,10 @@
   gap: 0.5rem;
 }
 
-.paid { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-.ready { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-.picked_up, .in_transit { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-.delivered, .confirmed, .completed { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+.paid { background: rgba(255,255,255,0.1); color: #FFFFFF; }
+.ready { background: rgba(255,255,255,0.1); color: #FFFFFF; }
+.picked_up, .in_transit { background: rgba(0,0,0,0.1); color: #000000; }
+.delivered, .confirmed, .completed { background: rgba(255,255,255,0.2); color: #FFFFFF; }
 
 .orderBody {
   padding: 1.5rem;
@@ -215,15 +215,15 @@
   background: var(--bg-100);
   transition: all 0.2s;
   text-align: left;
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid #000000;
 }
 
 .logoutCard:hover {
-  background: rgba(239, 68, 68, 0.05);
+  background: rgba(0,0,0,0.05);
   transform: translateY(-4px);
 }
 
-.logoutCard h3 { color: #ef4444; font-size: 1.1rem; }
+.logoutCard h3 { color: #000000; font-size: 1.1rem; }
 .logoutCard p { font-size: 0.85rem; color: var(--text-400); }
 
 /* Timeline Styles */
@@ -294,7 +294,7 @@
 .completed .stepCircle {
   background: var(--primary);
   border-color: var(--primary);
-  color: #fff;
+  color: #FFFFFF;
 }
 
 .completed .stepLabel {

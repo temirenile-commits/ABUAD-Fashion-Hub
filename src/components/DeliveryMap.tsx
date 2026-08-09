@@ -74,8 +74,8 @@ export default function DeliveryMap({ lat, lng, riderName }: DeliveryMapProps) {
         const riderIcon = L.divIcon({
             className: 'rider-marker',
             html: `
-                <div style="background: var(--primary); width: 40px; height: 40px; border-radius: 50%; border: 3px solid #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18h14M15 6a3 3 0 1 0-6 0v4H7a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-2V6z"/></svg>
+                <div style="background: var(--primary); width: 40px; height: 40px; border-radius: 50%; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18h14M15 6a3 3 0 1 0-6 0v4H7a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-2V6z"/></svg>
                 </div>
             `,
             iconSize: [40, 40],

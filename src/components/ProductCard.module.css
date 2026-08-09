@@ -32,7 +32,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 3 / 4; /* Standard fashion portrait ratio */
-  background: #111;
+  background: #000000;
   overflow: hidden;
   border-radius: 6px; 
   margin: 0.25rem; 
@@ -54,7 +54,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background: #000;
+  background: #000000;
 }
 
 .playOverlay {
@@ -64,13 +64,13 @@
   transform: translate(-50%, -50%);
   width: 60px;
   height: 60px;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0,0,0,0.4);
   backdrop-filter: blur(4px);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: #FFFFFF;
   opacity: 0;
   transition: all 0.3s ease;
   pointer-events: none;
@@ -85,7 +85,7 @@
   opacity: 1;
   transform: translate(-50%, -50%) scale(1.1);
   background: var(--primary);
-  color: #000;
+  color: #000000;
 }
 
 .discountBadge {
@@ -93,7 +93,7 @@
   top: 0.5rem;
   right: 0.5rem;
   background: var(--primary-light);
-  color: #000;
+  color: #000000;
   font-size: 0.7rem;
   font-weight: 800;
   padding: 0.25rem 0.5rem;
@@ -105,8 +105,8 @@
   position: absolute;
   bottom: 0.5rem;
   left: 0.5rem;
-  background: #3b82f6;
-  color: #fff;
+  background: #000000;
+  color: #FFFFFF;
   font-size: 0.65rem;
   font-weight: 700;
   padding: 0.2rem 0.4rem;
@@ -121,8 +121,8 @@
   position: absolute;
   bottom: 0.5rem;
   right: 0.5rem;
-  background: #fbbf24; /* ABUAD Gold/Amber */
-  color: #000;
+  background: #FFFFFF; /* ABUAD Gold/Amber */
+  color: #000000;
   font-size: 0.65rem;
   font-weight: 800;
   padding: 0.2rem 0.4rem;
@@ -137,8 +137,8 @@
   position: absolute;
   bottom: 0.5rem;
   right: 0.5rem;
-  background: #94a3b8; /* Slate gray */
-  color: #fff;
+  background: #FFFFFF; /* Slate gray */
+  color: #000000;
   font-size: 0.65rem;
   font-weight: 700;
   padding: 0.2rem 0.4rem;
@@ -260,7 +260,7 @@
 
 .quickAdd:hover {
   background: var(--primary);
-  color: #000;
+  color: #000000;
 }
 
 .downloadBtn {
@@ -268,8 +268,8 @@
   top: 0.5rem;
   left: 0.5rem;
   z-index: 10;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
+  background: rgba(0,0,0,0.6);
+  color: #FFFFFF;
   border-radius: 50%;
   padding: 0.4rem;
   display: flex;
@@ -277,12 +277,12 @@
   justify-content: center;
   backdrop-filter: blur(4px);
   transition: all 0.2s;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 .downloadBtn:hover {
   background: var(--primary);
-  color: #000;
+  color: #000000;
   transform: scale(1.1);
 }
 
@@ -291,8 +291,8 @@
   top: 0.5rem;
   right: 2.5rem; /* Next to discount badge or on its own */
   z-index: 10;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
+  background: rgba(0,0,0,0.6);
+  color: #FFFFFF;
   border-radius: 50%;
   padding: 0.4rem;
   display: flex;
@@ -300,12 +300,12 @@
   justify-content: center;
   backdrop-filter: blur(4px);
   transition: all 0.2s;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 .shareBtn:hover {
   background: var(--secondary);
-  color: #fff;
+  color: #FFFFFF;
   transform: scale(1.1);
 }
 

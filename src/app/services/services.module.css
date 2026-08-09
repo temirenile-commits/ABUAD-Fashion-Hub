@@ -20,7 +20,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: #FFFFFF;
   flex-shrink: 0;
 }
 
@@ -58,7 +58,7 @@
 
 .typeActive {
   background: var(--primary-soft);
-  border-color: rgba(255, 45, 85, 0.4);
+  border-color: rgba(0,0,0,0.4);
   color: var(--primary);
 }
 
@@ -126,8 +126,8 @@
   border-radius: var(--radius-full);
   font-size: 0.72rem;
   font-weight: 600;
-  color: #3b82f6;
-  border: 1px solid rgba(59,130,246,0.3);
+  color: #000000;
+  border: 1px solid rgba(0,0,0,0.3);
 }
 
 /* Card Body */
@@ -206,7 +206,7 @@
 /* Provider CTA */
 .providerCta {
   background: var(--grad-brand-soft);
-  border: 1px solid rgba(255,45,85,0.15);
+  border: 1px solid rgba(0,0,0,0.15);
   border-radius: var(--radius-xl);
   padding: 2.5rem;
   text-align: center;

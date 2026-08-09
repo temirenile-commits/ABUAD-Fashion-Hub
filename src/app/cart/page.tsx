@@ -39,7 +39,7 @@ export default function CartPage() {
                     <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{item.title}</h3>
                     <button 
                       onClick={() => removeFromCart(item.id)}
-                      style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.2rem' }}
+                      style={{ background: 'none', border: 'none', color: '#000000', cursor: 'pointer', padding: '0.2rem' }}
                       aria-label="Remove item"
                     >
                       <Trash2 size={16} />

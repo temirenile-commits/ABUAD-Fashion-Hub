@@ -39,7 +39,7 @@
   aspect-ratio: 16/9; /* YouTube standard */
   border-radius: 12px; /* YouTube standard radius */
   overflow: hidden;
-  background: #000;
+  background: #000000;
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
@@ -47,7 +47,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain; /* YouTube style */
-  background: #000;
+  background: #000000;
 }
 
 .mainImgEl {
@@ -74,9 +74,9 @@
   bottom: 1rem;
   right: 1rem;
   z-index: 5;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0,0,0,0.6);
   backdrop-filter: blur(4px);
-  color: #fff;
+  color: #FFFFFF;
   padding: 0.4rem 0.8rem;
   border-radius: 8px;
   font-size: 0.7rem;
@@ -97,7 +97,7 @@
 
 .downloadBtn:hover {
   background: var(--primary);
-  color: #000;
+  color: #000000;
 }
 
 .thumbs {
@@ -272,7 +272,7 @@
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 1rem;
-  color: #fff;
+  color: #FFFFFF;
   flex-shrink: 0;
   position: relative;
   overflow: hidden;

@@ -43,7 +43,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               <h3 style={{ color: 'var(--primary)', marginBottom: '1rem', fontSize: '1rem' }}>MasterCart</h3>
               <p style={{ lineHeight: '1.6', opacity: 0.8 }}>The premier digital fashion marketplace for students and entrepreneurs at your University.</p>
               {/* Sponsor Badge */}
-              <div style={{ marginTop: '1rem', padding: '0.6rem 0.9rem', background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.25)', borderRadius: '8px', display: 'inline-block' }}>
+              <div style={{ marginTop: '1rem', padding: '0.6rem 0.9rem', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: '8px', display: 'inline-block' }}>
                 <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sponsored &amp; Under</p>
                 <p style={{ margin: '2px 0 0', fontWeight: 700, color: 'var(--accent-gold)', fontSize: '0.78rem' }}>MIGHTY SEEDS EXCEL INVESTMENT LTD.</p>
               </div>

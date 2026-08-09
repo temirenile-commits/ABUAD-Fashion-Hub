@@ -1,18 +1,18 @@
 /* ── Container ─────────────────────────────────────────────── */
 .container {
-  background: #0b0b0f;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: #000000;
+  border: 1px solid rgba(255,255,255,0.07);
   border-radius: 16px;
   padding: 1.5rem;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   transition: border-color 0.15s;
 }
 
 .flashBorder {
-  border-color: rgba(235, 12, 122, 0.7) !important;
-  box-shadow: 0 0 0 2px rgba(235, 12, 122, 0.15);
+  border-color: rgba(0,0,0,0.7) !important;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.15);
 }
 
 /* ── Header ─────────────────────────────────────────────────── */
@@ -26,14 +26,14 @@
 .titleGroup h3 {
   font-size: 0.95rem;
   font-weight: 800;
-  color: #f1f5f9;
+  color: #FFFFFF;
   margin: 0;
   letter-spacing: 0.02em;
 }
 
 .titleGroup p {
   font-size: 0.72rem;
-  color: #475569;
+  color: #000000;
   margin: 0.2rem 0 0;
 }
 
@@ -42,27 +42,27 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: rgba(16, 185, 129, 0.08);
-  color: #10b981;
+  background: rgba(255,255,255,0.08);
+  color: #FFFFFF;
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 0.62rem;
   font-weight: 900;
   letter-spacing: 0.1em;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(255,255,255,0.2);
 }
 
 .liveDot {
   width: 6px;
   height: 6px;
-  background: #10b981;
+  background: #FFFFFF;
   border-radius: 50%;
   animation: livePulse 1.4s ease-in-out infinite;
 }
 
 @keyframes livePulse {
-  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
-  50%       { opacity: 0.6; transform: scale(1.3); box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.7); }
+  50%       { opacity: 0.6; transform: scale(1.3); box-shadow: 0 0 0 6px rgba(255,255,255,0); }
 }
 
 /* ── Price ticker ───────────────────────────────────────────── */
@@ -70,14 +70,14 @@
   font-family: 'Courier New', monospace;
   font-size: 1.1rem;
   font-weight: 800;
-  color: #f1f5f9;
+  color: #FFFFFF;
   letter-spacing: 0.02em;
   transition: color 0.15s;
 }
 
 @keyframes tickerBlink {
-  0%, 100% { color: #f1f5f9; }
-  50%       { color: #10b981; }
+  0%, 100% { color: #FFFFFF; }
+  50%       { color: #FFFFFF; }
 }
 
 .tickerFlash {
@@ -100,7 +100,7 @@
 .controlBtn {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
-  color: #64748b;
+  color: #000000;
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 0.65rem;
@@ -110,11 +110,11 @@
   transition: all 0.15s;
   letter-spacing: 0.05em;
 }
-.controlBtn:hover { background: rgba(255,255,255,0.08); color: #94a3b8; }
+.controlBtn:hover { background: rgba(255,255,255,0.08); color: #FFFFFF; }
 .controlActive {
-  background: var(--primary, #eb0c7a) !important;
-  border-color: var(--primary, #eb0c7a) !important;
-  color: #fff !important;
+  background: var(--primary, #000000) !important;
+  border-color: var(--primary, #000000) !important;
+  color: #FFFFFF !important;
 }
 
 .trendPill {
@@ -127,14 +127,14 @@
   font-weight: 800;
   font-family: monospace;
 }
-.trendUp   { background: rgba(16,185,129,0.1);  color: #10b981; border: 1px solid rgba(16,185,129,0.2); }
-.trendDown { background: rgba(239,68,68,0.1);   color: #ef4444; border: 1px solid rgba(239,68,68,0.2);  }
+.trendUp   { background: rgba(255,255,255,0.1);  color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2); }
+.trendDown { background: rgba(0,0,0,0.1);   color: #000000; border: 1px solid rgba(0,0,0,0.2);  }
 
 /* ── Chart area ─────────────────────────────────────────────── */
 .chartArea {
   position: relative;
   width: 100%;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0,0,0,0.25);
   border: 1px solid rgba(255,255,255,0.04);
   border-radius: 8px;
   overflow: hidden;
@@ -166,7 +166,7 @@
   justify-content: center;
   height: 100%;
   gap: 0.75rem;
-  color: #334155;
+  color: #000000;
   font-size: 0.8rem;
 }
 
@@ -177,12 +177,12 @@
   gap: 0;
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(255,255,255,0.05);
 }
 
 .footerStat {
   padding: 0 1rem;
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid rgba(255,255,255,0.05);
 }
 .footerStat:first-child { padding-left: 0; }
 .footerStat:last-child  { border-right: none; }
@@ -190,7 +190,7 @@
 .footerStat span {
   display: block;
   font-size: 0.62rem;
-  color: #475569;
+  color: #000000;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -200,28 +200,28 @@
 .footerStat strong {
   font-size: 0.95rem;
   font-weight: 800;
-  color: #f1f5f9;
+  color: #FFFFFF;
   font-family: 'Courier New', monospace;
   font-variant-numeric: tabular-nums;
 }
 
-.statUp   { color: #10b981 !important; }
-.statDown { color: #ef4444 !important; }
+.statUp   { color: #FFFFFF !important; }
+.statDown { color: #000000 !important; }
 
 /* ── Tooltip ─────────────────────────────────────────────────── */
 .tooltip {
-  background: rgba(8, 8, 12, 0.97);
+  background: rgba(0,0,0,0.97);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 10px;
   padding: 0.75rem 1rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
 }
 
 .tooltipLabel {
   font-size: 0.62rem;
   font-weight: 700;
-  color: #64748b;
+  color: #000000;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 0.35rem;
@@ -231,13 +231,13 @@
 .tooltipVal {
   font-size: 1.1rem;
   font-weight: 900;
-  color: #f1f5f9;
+  color: #FFFFFF;
   font-family: 'Courier New', monospace;
 }
 
 .tooltipCum {
   font-size: 0.7rem;
-  color: #64748b;
+  color: #000000;
   margin-top: 0.3rem;
   font-family: monospace;
 }

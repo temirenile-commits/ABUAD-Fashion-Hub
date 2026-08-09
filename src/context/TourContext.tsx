@@ -72,7 +72,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
       driverRef.current = driver({
         showProgress: true,
         animate: true,
-        overlayColor: 'rgba(0, 0, 0, 0.75)',
+        overlayColor: 'rgba(0,0,0,0.75)',
         steps: pageSteps.map((p) => ({
           element: p.step.element,
           popover: {

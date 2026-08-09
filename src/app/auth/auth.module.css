@@ -49,7 +49,7 @@
   font-family: var(--font-display);
   font-weight: 900;
   font-size: 1.2rem;
-  color: #fff;
+  color: #FFFFFF;
   margin-bottom: 0.5rem;
 }
 
@@ -80,7 +80,7 @@
 
 .roleActive {
   background: var(--primary-soft);
-  border-color: rgba(255,45,85,0.4);
+  border-color: rgba(0,0,0,0.4);
   color: var(--primary);
 }
 
@@ -151,7 +151,7 @@
   padding: 0.9rem;
   /* Match the primary gold Sign In button exactly */
   background: var(--grad-brand);
-  color: #121212;
+  color: #000000;
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -165,7 +165,7 @@
 }
 .googleBtn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 0 28px rgba(201, 161, 74, 0.6);
+  box-shadow: 0 0 28px rgba(255,255,255,0.6);
 }
 .googleBtn:active { transform: translateY(0); }
 .googleBtn:disabled {

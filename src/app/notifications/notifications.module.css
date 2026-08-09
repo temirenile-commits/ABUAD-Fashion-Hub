@@ -71,14 +71,14 @@
 
 .unread {
   border-left: 4px solid var(--primary);
-  background: rgba(212, 175, 55, 0.05);
+  background: rgba(255,255,255,0.05);
 }
 
 .iconBox {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #1a1a1a;
+  background: #000000;
   color: var(--primary);
   display: flex;
   align-items: center;
@@ -90,8 +90,8 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #1a1a1a;
-  color: #3b82f6;
+  background: #000000;
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -111,7 +111,7 @@
 
 .itemHeader h4 {
   font-size: 1rem;
-  color: #fff;
+  color: #FFFFFF;
 }
 
 .time {
@@ -150,7 +150,7 @@
 
 .promoCard h4, .helpBox h4 {
   margin: 1rem 0 0.5rem;
-  color: #fff;
+  color: #FFFFFF;
 }
 
 .promoCard p, .helpBox p {

@@ -243,10 +243,10 @@ export default function SettingsPage() {
                       background:
                         i <= pwStrength
                           ? pwStrength <= 1
-                            ? '#ff5050'
+                            ? '#FFFFFF'
                             : pwStrength <= 2
-                              ? '#f0a030'
-                              : '#25d366'
+                              ? '#FFFFFF'
+                              : '#FFFFFF'
                           : 'var(--bg-400)',
                     }}
                   />
@@ -279,8 +279,8 @@ export default function SettingsPage() {
           <button
             className="btn btn-sm"
             style={{
-              background: 'linear-gradient(135deg, #b02a2a, #ff4d4d)',
-              color: '#fff',
+              background: 'linear-gradient(135deg, #000000, #FFFFFF)',
+              color: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
               gap: '0.4rem',
@@ -323,7 +323,7 @@ export default function SettingsPage() {
               </button>
               <button
                 className="btn btn-sm"
-                style={{ background: 'linear-gradient(135deg, #b02a2a, #ff4d4d)', color: '#fff' }}
+                style={{ background: 'linear-gradient(135deg, #000000, #FFFFFF)', color: '#FFFFFF' }}
                 onClick={handleDeleteAccount}
                 disabled={deleting || confirmText.trim().toUpperCase() !== 'DELETE'}
               >

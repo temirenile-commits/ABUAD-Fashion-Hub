@@ -136,8 +136,8 @@ export default function TermsPage() {
           marginTop: '3rem',
           padding: '2rem',
           borderRadius: '16px',
-          background: 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(212,175,55,0.05))',
-          border: '1px solid rgba(212,175,55,0.3)',
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+          border: '1px solid rgba(255,255,255,0.3)',
           textAlign: 'center',
         }}>
           <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-400)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Sponsored & Proudly Under</p>

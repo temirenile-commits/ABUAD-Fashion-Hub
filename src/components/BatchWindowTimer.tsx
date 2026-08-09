@@ -41,17 +41,17 @@ export default function BatchWindowTimer({ onBatchClose }: BatchWindowTimerProps
   return (
     <div style={{
       background: urgent
-        ? 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05))'
-        : 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04))',
-      border: `1px solid ${urgent ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.25)'}`,
+        ? 'linear-gradient(135deg, rgba(0,0,0,0.15), rgba(0,0,0,0.05))'
+        : 'linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04))',
+      border: `1px solid ${urgent ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.25)'}`,
       borderRadius: 12,
       padding: '0.9rem 1rem',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: urgent ? '#ef4444' : '#f59e0b' }}>
+        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: urgent ? '#000000' : '#FFFFFF' }}>
           {urgent ? '⚡ Batch closing soon!' : '🕐 Current Batch Window'}
         </span>
-        <span style={{ fontWeight: 800, fontSize: '1.1rem', fontVariantNumeric: 'tabular-nums', color: urgent ? '#ef4444' : '#f59e0b' }}>
+        <span style={{ fontWeight: 800, fontSize: '1.1rem', fontVariantNumeric: 'tabular-nums', color: urgent ? '#000000' : '#FFFFFF' }}>
           {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
         </span>
       </div>
@@ -59,7 +59,7 @@ export default function BatchWindowTimer({ onBatchClose }: BatchWindowTimerProps
         <div style={{
           height: '100%',
           width: `${pct}%`,
-          background: urgent ? '#ef4444' : '#f59e0b',
+          background: urgent ? '#000000' : '#FFFFFF',
           borderRadius: 99,
           transition: 'width 1s linear'
         }} />

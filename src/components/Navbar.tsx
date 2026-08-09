@@ -163,7 +163,7 @@ export default function Navbar() {
                   <div className={styles.iconWrap}>
                     <Bell size={20} />
                     {unreadCount > 0 && (
-                      <span className={styles.cartBadge} style={{ background: '#ef4444', color: '#fff' }}>
+                      <span className={styles.cartBadge} style={{ background: '#000000', color: '#FFFFFF' }}>
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
@@ -229,9 +229,9 @@ export default function Navbar() {
                   </Link>
                 )}
                 {(role === 'university_admin' || role === 'admin') && (
-                  <Link href="/university-admin" className={styles.moduleItem} style={{ borderLeft: '3px solid #3b82f6', background: 'rgba(59,130,246,0.05)' }}>
-                    <ShieldCheck size={18} style={{ color: '#3b82f6' }} />
-                    <span style={{ color: '#3b82f6', fontWeight: 600 }}>University Admin Dashboard</span>
+                  <Link href="/university-admin" className={styles.moduleItem} style={{ borderLeft: '3px solid #000000', background: 'rgba(0,0,0,0.05)' }}>
+                    <ShieldCheck size={18} style={{ color: '#000000' }} />
+                    <span style={{ color: '#000000', fontWeight: 600 }}>University Admin Dashboard</span>
                   </Link>
                 )}
                 {(role === 'vendor' || role === 'admin' || isVendorOwner) && (
@@ -243,7 +243,7 @@ export default function Navbar() {
                       </Link>
                     )}
                     {(user?.brand?.marketplace_type === 'delicacies' || user?.brand?.marketplace_type === 'both') && (
-                      <Link href="/dashboard/delicacies" className={styles.moduleItem} style={{ borderLeft: '3px solid var(--primary)', background: 'rgba(235,12,122,0.05)' }}>
+                      <Link href="/dashboard/delicacies" className={styles.moduleItem} style={{ borderLeft: '3px solid var(--primary)', background: 'rgba(0,0,0,0.05)' }}>
                         <UtensilsCrossed size={18} style={{ color: 'var(--primary)' }} />
                         <span style={{ color: 'var(--primary)', fontWeight: 600 }}>Chief Chef Dashboard</span>
                       </Link>
@@ -304,7 +304,7 @@ export default function Navbar() {
       {/* Category Quick Bar */}
       <div className={styles.categoryBar}>
         <div className={`container-wide ${styles.categoryInner}`}>
-          <Link href="/delicacies" className={styles.catPill} id="tour-category-delicacies" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: '#fff', border: 'none', fontWeight: 700 }}>
+          <Link href="/delicacies" className={styles.catPill} id="tour-category-delicacies" style={{ background: 'linear-gradient(135deg, #FFFFFF, #000000)', color: '#FFFFFF', border: 'none', fontWeight: 700 }}>
             🍔 Delicacies
           </Link>
 

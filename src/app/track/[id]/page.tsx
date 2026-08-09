@@ -53,11 +53,11 @@ function getCurrentStepIndex(steps: typeof ALL_STEPS, currentStatus: string) {
 }
 
 function getStatusColor(status: string) {
-  if (['completed', 'confirmed', 'delivered'].includes(status)) return 'var(--success, #22c55e)';
-  if (['in_transit', 'picked_up'].includes(status)) return '#3b82f6';
-  if (['ready', 'ready_for_pickup', 'processing', 'accepted'].includes(status)) return '#f59e0b';
+  if (['completed', 'confirmed', 'delivered'].includes(status)) return 'var(--success, #FFFFFF)';
+  if (['in_transit', 'picked_up'].includes(status)) return '#000000';
+  if (['ready', 'ready_for_pickup', 'processing', 'accepted'].includes(status)) return '#FFFFFF';
   if (['paid', 'preorder_paid'].includes(status)) return 'var(--primary)';
-  if (['cancelled', 'failed'].includes(status)) return '#ef4444';
+  if (['cancelled', 'failed'].includes(status)) return '#000000';
   return 'var(--text-400)';
 }
 
@@ -147,7 +147,7 @@ export default function TrackingPage() {
 
   if (error || !order) return (
     <div className={styles.errorPage}>
-      <AlertTriangle size={48} color="#ef4444" />
+      <AlertTriangle size={48} color="#000000" />
       <h2>Tracking Error</h2>
       <p>{error}</p>
       <Link href="/dashboard/customer" className="btn btn-primary">Back to Dashboard</Link>
@@ -236,7 +236,7 @@ export default function TrackingPage() {
                       style={{
                         background: isDone ? accentColor : isActive ? `${accentColor}20` : 'var(--bg-300)',
                         borderColor: isDone || isActive ? accentColor : 'var(--border)',
-                        color: isDone ? '#000' : isActive ? accentColor : 'var(--text-400)',
+                        color: isDone ? '#000000' : isActive ? accentColor : 'var(--text-400)',
                       }}
                     >
                       {isDone
@@ -263,7 +263,7 @@ export default function TrackingPage() {
 
               {isCancelled && (
                 <div className={styles.cancelledNote}>
-                  <AlertTriangle size={16} color="#ef4444" />
+                  <AlertTriangle size={16} color="#000000" />
                   Order {order.status === 'failed' ? 'failed' : 'was cancelled'}.
                   {order.rejection_reason && ` Reason: ${order.rejection_reason}`}
                 </div>

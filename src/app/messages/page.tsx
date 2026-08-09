@@ -306,7 +306,7 @@ function MessagesContent() {
                 placeholder="e.g. +234..." 
                 value={myPhone}
                 onChange={(e) => setMyPhone(e.target.value)}
-                style={{ flex: 1, padding: '4px 8px', fontSize: '0.8rem', background: 'var(--bg-100)', border: '1px solid var(--border)', color: '#fff', borderRadius: '4px' }}
+                style={{ flex: 1, padding: '4px 8px', fontSize: '0.8rem', background: 'var(--bg-100)', border: '1px solid var(--border)', color: '#FFFFFF', borderRadius: '4px' }}
               />
               <button 
                 type="button"
@@ -470,7 +470,7 @@ function MessagesContent() {
                       rel="noopener noreferrer" 
                       className="btn btn-whatsapp btn-sm" 
                       title={`WhatsApp ${activePartner.name}`} 
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#25D366', color: '#fff', border: 'none', width: '32px', height: '32px', borderRadius: '50%' }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', color: '#000000', border: 'none', width: '32px', height: '32px', borderRadius: '50%' }}
                     >
                       <MessageCircle size={15} />
                     </a>
@@ -529,7 +529,7 @@ function MessagesContent() {
                     )}
 
                     <div className={styles.messageFooter}>
-                      {msg.answered_by_ai && <span style={{ color: '#f59e0b', fontSize: '0.7rem', marginRight: '6px', fontWeight: 'bold' }}>✨ AI</span>}
+                      {msg.answered_by_ai && <span style={{ color: '#FFFFFF', fontSize: '0.7rem', marginRight: '6px', fontWeight: 'bold' }}>✨ AI</span>}
                       <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       {msg.sender_id === user.id && (
                         msg.is_read ? <CheckCheck size={12} className={styles.readIcon} /> : <Check size={12} className={styles.sentIcon} />
@@ -541,7 +541,7 @@ function MessagesContent() {
             </div>
 
             {uploadingMedia && (
-              <div style={{ padding: '0.75rem 1.5rem', background: 'rgba(212, 175, 55, 0.1)', color: 'var(--primary)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', borderTop: '1px solid var(--border)' }}>
+              <div style={{ padding: '0.75rem 1.5rem', background: 'rgba(255,255,255,0.1)', color: 'var(--primary)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', borderTop: '1px solid var(--border)' }}>
                 <span>Uploading your media attachment...</span>
               </div>
             )}

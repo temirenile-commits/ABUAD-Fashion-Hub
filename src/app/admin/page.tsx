@@ -751,7 +751,7 @@ export default function AdminDashboard() {
         {loading ? <div className={styles.loadingState}><Loader2 size={32} className="spin" /></div> : (
           <div className={styles.content}>
             {error && (
-              <div style={{ background: '#fef2f2', border: '1px solid #fee2e2', padding: '1rem', borderRadius: '8px', color: '#b91c1c', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ background: '#FFFFFF', border: '1px solid #FFFFFF', padding: '1rem', borderRadius: '8px', color: '#000000', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <AlertTriangle size={20} />
                 <div>
                   <div style={{ fontWeight: 700 }}>System Error</div>
@@ -763,8 +763,8 @@ export default function AdminDashboard() {
               <>
                 {pendingVendors.length > 0 && (
                   <div style={{
-                    background: 'rgba(245, 158, 11, 0.1)',
-                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    background: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.3)',
                     borderRadius: '12px',
                     padding: '1.25rem',
                     marginBottom: '1.5rem',
@@ -775,8 +775,8 @@ export default function AdminDashboard() {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                       <div style={{
-                        background: '#f59e0b',
-                        color: '#fff',
+                        background: '#FFFFFF',
+                        color: '#000000',
                         borderRadius: '50%',
                         width: '40px',
                         height: '40px',
@@ -789,7 +789,7 @@ export default function AdminDashboard() {
                         ⚠️
                       </div>
                       <div>
-                        <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: '#f59e0b' }}>
+                        <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: '#FFFFFF' }}>
                           Pending Vendor Verifications ({pendingVendors.length})
                         </h4>
                         <p style={{ margin: '4px 0 0', fontSize: '0.85rem', opacity: 0.8 }}>
@@ -799,7 +799,7 @@ export default function AdminDashboard() {
                     </div>
                     <button 
                       className="btn btn-sm btn-warning"
-                      style={{ background: '#f59e0b', borderColor: '#f59e0b', color: '#fff', fontWeight: 600 }}
+                      style={{ background: '#FFFFFF', borderColor: '#FFFFFF', color: '#000000', fontWeight: 600 }}
                       onClick={() => setActiveTab('vendors')}
                     >
                       Review Now
@@ -808,15 +808,15 @@ export default function AdminDashboard() {
                 )}
                 <div className={styles.statsGrid}>
                 {[
-                  { label: 'Users', val: stats.userCount, color: '#3b82f6', Icon: Users },
-                  { label: 'Brands', val: stats.brandCount, color: '#10b981', Icon: Store },
-                  { label: 'Products', val: stats.productCount, color: '#c9a14a', Icon: ShoppingBag },
-                  { label: 'Revenue', val: `₦${stats.totalRevenue.toLocaleString()}`, color: '#eb0c7a', Icon: TrendingUp },
-                  { label: 'Commission', val: `₦${(stats.totalCommission || 0).toLocaleString()}`, color: '#10b981', Icon: Activity },
-                  { label: 'Delivery', val: `₦${(stats.totalDelivery || 0).toLocaleString()}`, color: '#f59e0b', Icon: Tag },
-                  { label: 'Subsidies', val: `₦${(stats.totalSubsidies || 0).toLocaleString()}`, color: '#f59e0b', Icon: Tag },
-                  { label: 'Product Views', val: (stats.totalProductViews || 0).toLocaleString(), color: '#8b5cf6', Icon: Eye },
-                  { label: 'Profile Visits', val: (stats.totalProfileViews || 0).toLocaleString(), color: '#ec4899', Icon: Users },
+                  { label: 'Users', val: stats.userCount, color: '#000000', Icon: Users },
+                  { label: 'Brands', val: stats.brandCount, color: '#FFFFFF', Icon: Store },
+                  { label: 'Products', val: stats.productCount, color: '#FFFFFF', Icon: ShoppingBag },
+                  { label: 'Revenue', val: `₦${stats.totalRevenue.toLocaleString()}`, color: '#000000', Icon: TrendingUp },
+                  { label: 'Commission', val: `₦${(stats.totalCommission || 0).toLocaleString()}`, color: '#FFFFFF', Icon: Activity },
+                  { label: 'Delivery', val: `₦${(stats.totalDelivery || 0).toLocaleString()}`, color: '#FFFFFF', Icon: Tag },
+                  { label: 'Subsidies', val: `₦${(stats.totalSubsidies || 0).toLocaleString()}`, color: '#FFFFFF', Icon: Tag },
+                  { label: 'Product Views', val: (stats.totalProductViews || 0).toLocaleString(), color: '#000000', Icon: Eye },
+                  { label: 'Profile Visits', val: (stats.totalProfileViews || 0).toLocaleString(), color: '#FFFFFF', Icon: Users },
                 ].map(({ label, val, color, Icon }) => (
                   <div className={styles.statCard} key={label}>
                     <div className={styles.statInfo}><p>{label}</p><h3>{val}</h3></div>
@@ -838,7 +838,7 @@ export default function AdminDashboard() {
                   </div>
                   <select 
                     className="form-input" 
-                    style={{ maxWidth: '280px', background: 'var(--bg-300)', border: '1px solid var(--border)', color: '#fff', padding: '0.5rem 1rem', borderRadius: '8px' }}
+                    style={{ maxWidth: '280px', background: 'var(--bg-300)', border: '1px solid var(--border)', color: '#FFFFFF', padding: '0.5rem 1rem', borderRadius: '8px' }}
                     value={manualPaymentUniFilter}
                     onChange={(e) => setManualPaymentUniFilter(e.target.value)}
                   >
@@ -856,7 +856,7 @@ export default function AdminDashboard() {
                   <div style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                       <span style={{ fontSize: '0.75rem', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.5px' }}>📅 Daily Manual Sales (Today)</span>
-                      <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#10b981', margin: '0.5rem 0 0.25rem' }}>
+                      <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFFFFF', margin: '0.5rem 0 0.25rem' }}>
                         ₦{orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status === 'approved' && new Date(o.created_at).toDateString() === new Date().toDateString() && (manualPaymentUniFilter === 'all' || o.university_id === manualPaymentUniFilter)).reduce((sum, o) => sum + Number(o.total_amount), 0).toLocaleString()}
                       </h2>
                     </div>
@@ -869,7 +869,7 @@ export default function AdminDashboard() {
                   <div style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                       <span style={{ fontSize: '0.75rem', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.5px' }}>⏳ Pending Verification Queue</span>
-                      <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#f59e0b', margin: '0.5rem 0 0.25rem' }}>
+                      <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFFFFF', margin: '0.5rem 0 0.25rem' }}>
                         {orders.filter(o => o.payment_system === 'manual' && o.status === 'pending' && o.manual_payment_status === 'pending' && (manualPaymentUniFilter === 'all' || o.university_id === manualPaymentUniFilter)).length}
                       </h2>
                     </div>
@@ -891,7 +891,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* 2. PLATFORM BANK ACCOUNT CONFIGURATION CARD */}
-                <div style={{ background: 'linear-gradient(135deg, var(--bg-200), rgba(235,12,122,0.03))', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.5rem' }}>
+                <div style={{ background: 'linear-gradient(135deg, var(--bg-200), rgba(0,0,0,0.03))', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                     <div>
                       <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -913,7 +913,7 @@ export default function AdminDashboard() {
                     <div style={{ display: 'flex', gap: '2rem', marginTop: '1.25rem', flexWrap: 'wrap', background: 'var(--bg-300)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
                       <div>
                         <span style={{ fontSize: '0.7rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>BANK NAME</span>
-                        <strong style={{ color: '#fff', fontSize: '1rem' }}>{manualBankSettings?.bank_name || 'ACCESS BANK'}</strong>
+                        <strong style={{ color: '#FFFFFF', fontSize: '1rem' }}>{manualBankSettings?.bank_name || 'ACCESS BANK'}</strong>
                       </div>
                       <div>
                         <span style={{ fontSize: '0.7rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>ACCOUNT NUMBER</span>
@@ -921,7 +921,7 @@ export default function AdminDashboard() {
                       </div>
                       <div>
                         <span style={{ fontSize: '0.7rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>ACCOUNT NAME</span>
-                        <strong style={{ color: '#fff', fontSize: '1rem' }}>{manualBankSettings?.account_name || 'Enioluwa Temitope Olaide'}</strong>
+                        <strong style={{ color: '#FFFFFF', fontSize: '1rem' }}>{manualBankSettings?.account_name || 'Enioluwa Temitope Olaide'}</strong>
                       </div>
                     </div>
                   ) : (
@@ -1014,7 +1014,7 @@ export default function AdminDashboard() {
                   >
                     Pending Transfers
                     {orders.filter(o => o.payment_system === 'manual' && o.status === 'pending' && o.manual_payment_status === 'pending').length > 0 && (
-                      <span className={styles.badgeCount} style={{ background: '#f59e0b', color: '#fff', marginLeft: '6px', fontSize: '0.65rem' }}>
+                      <span className={styles.badgeCount} style={{ background: '#FFFFFF', color: '#000000', marginLeft: '6px', fontSize: '0.65rem' }}>
                         {orders.filter(o => o.payment_system === 'manual' && o.status === 'pending' && o.manual_payment_status === 'pending').length}
                       </span>
                     )}
@@ -1037,8 +1037,8 @@ export default function AdminDashboard() {
 
                     {orders.filter(o => o.payment_system === 'manual' && o.status === 'pending' && o.manual_payment_status === 'pending').length === 0 ? (
                       <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-400)' }}>
-                        <ShieldCheck size={48} style={{ color: '#10b981', marginBottom: '1rem', opacity: 0.6 }} />
-                        <h4 style={{ margin: 0, color: '#fff', fontWeight: 600 }}>All Clear!</h4>
+                        <ShieldCheck size={48} style={{ color: '#FFFFFF', marginBottom: '1rem', opacity: 0.6 }} />
+                        <h4 style={{ margin: 0, color: '#FFFFFF', fontWeight: 600 }}>All Clear!</h4>
                         <p className={styles.subText} style={{ marginTop: '0.25rem' }}>No pending manual transfers waiting to be verified.</p>
                       </div>
                     ) : (
@@ -1059,7 +1059,7 @@ export default function AdminDashboard() {
                           >
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--primary)', background: 'rgba(235,12,122,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem' }}>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--primary)', background: 'rgba(0,0,0,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem' }}>
                                   ORDER #{o.id.slice(0, 8).toUpperCase()}
                                 </span>
                                 <span className={styles.subText} style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -1070,17 +1070,17 @@ export default function AdminDashboard() {
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '0.25rem' }}>
                                 <div>
                                   <span className={styles.subText} style={{ fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Customer</span>
-                                  <strong style={{ fontSize: '0.9rem', color: '#fff' }}>{o.users?.name || 'Customer'}</strong>
+                                  <strong style={{ fontSize: '0.9rem', color: '#FFFFFF' }}>{o.users?.name || 'Customer'}</strong>
                                   <span className={styles.subText} style={{ display: 'block', fontSize: '0.8rem' }}>{o.users?.email}</span>
                                 </div>
                                 <div>
                                   <span className={styles.subText} style={{ fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Vendor / Store</span>
-                                  <strong style={{ fontSize: '0.9rem', color: '#fff' }}>{o.brands?.name || 'Culinary Vendor'}</strong>
+                                  <strong style={{ fontSize: '0.9rem', color: '#FFFFFF' }}>{o.brands?.name || 'Culinary Vendor'}</strong>
                                 </div>
                                 <div>
                                   <span className={styles.subText} style={{ fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Submitted Bank Details</span>
                                   <div style={{ background: 'var(--bg-300)', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-                                    <div>🏛️ <strong style={{ color: '#fff' }}>{o.manual_payment_details?.sender_bank || '—'}</strong></div>
+                                    <div>🏛️ <strong style={{ color: '#FFFFFF' }}>{o.manual_payment_details?.sender_bank || '—'}</strong></div>
                                     <div style={{ margin: '2px 0' }}>👤 {o.manual_payment_details?.account_name || '—'}</div>
                                     <div style={{ fontFamily: 'monospace', color: 'var(--primary)', fontWeight: 600 }}>🔑 Ref: {o.manual_payment_details?.receipt_code || '—'}</div>
                                   </div>
@@ -1091,13 +1091,13 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1rem' }}>
                               <div style={{ textAlign: 'right' }}>
                                 <span className={styles.subText} style={{ fontSize: '0.75rem' }}>Total Amount</span>
-                                <h3 style={{ color: '#10b981', margin: 0, fontWeight: 800, fontSize: '1.5rem' }}>₦{o.total_amount.toLocaleString()}</h3>
+                                <h3 style={{ color: '#FFFFFF', margin: 0, fontWeight: 800, fontSize: '1.5rem' }}>₦{o.total_amount.toLocaleString()}</h3>
                               </div>
 
                               <div style={{ display: 'flex', gap: '0.75rem' }}>
                                 <button 
                                   className="btn btn-ghost" 
-                                  style={{ color: '#ef4444', border: '1px solid #ef4444', height: '38px', fontSize: '0.85rem' }}
+                                  style={{ color: '#000000', border: '1px solid #000000', height: '38px', fontSize: '0.85rem' }}
                                   disabled={!!actionLoading}
                                   onClick={async () => {
                                     const reason = prompt('Please enter the reason for rejecting this manual payment receipt:');
@@ -1125,7 +1125,7 @@ export default function AdminDashboard() {
                                 </button>
                                 <button 
                                   className="btn btn-primary" 
-                                  style={{ background: '#10b981', borderColor: '#10b981', height: '38px', fontSize: '0.85rem', color: '#fff', fontWeight: 700 }}
+                                  style={{ background: '#FFFFFF', borderColor: '#FFFFFF', height: '38px', fontSize: '0.85rem', color: '#000000', fontWeight: 700 }}
                                   disabled={!!actionLoading}
                                   onClick={async () => {
                                     if (!confirm(`Are you absolutely sure you want to approve this GTB manual transfer of ₦${o.total_amount.toLocaleString()}? This will notify the kitchen to start cooking.`)) return;
@@ -1170,7 +1170,7 @@ export default function AdminDashboard() {
                     {orders.filter(o => o.payment_system === 'manual' && o.manual_payment_status !== 'pending').length === 0 ? (
                       <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-400)' }}>
                         <Clock size={48} style={{ color: 'var(--primary)', marginBottom: '1rem', opacity: 0.6 }} />
-                        <h4 style={{ margin: 0, color: '#fff', fontWeight: 600 }}>Log is Empty</h4>
+                        <h4 style={{ margin: 0, color: '#FFFFFF', fontWeight: 600 }}>Log is Empty</h4>
                         <p className={styles.subText} style={{ marginTop: '0.25rem' }}>No historical verifications recorded yet.</p>
                       </div>
                     ) : (
@@ -1207,15 +1207,15 @@ export default function AdminDashboard() {
                                   <div className={styles.subText} style={{ fontFamily: 'monospace' }}>Ref: {o.manual_payment_details?.receipt_code || '—'}</div>
                                 </td>
                                 <td>
-                                  <strong style={{ color: '#fff' }}>₦{o.total_amount.toLocaleString()}</strong>
+                                  <strong style={{ color: '#FFFFFF' }}>₦{o.total_amount.toLocaleString()}</strong>
                                 </td>
                                 <td>
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <span className={`badge`} style={{ width: 'fit-content', textTransform: 'uppercase', background: o.manual_payment_status === 'approved' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: o.manual_payment_status === 'approved' ? '#10b981' : '#ef4444' }}>
+                                    <span className={`badge`} style={{ width: 'fit-content', textTransform: 'uppercase', background: o.manual_payment_status === 'approved' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', color: o.manual_payment_status === 'approved' ? '#FFFFFF' : '#000000' }}>
                                       {o.manual_payment_status === 'approved' ? '✓ Verified' : '✗ Rejected'}
                                     </span>
                                     {o.manual_payment_status === 'rejected' && o.manual_payment_details?.rejection_reason && (
-                                      <span className={styles.subText} style={{ color: '#ef4444', fontSize: '0.75rem', maxWidth: '200px' }}>
+                                      <span className={styles.subText} style={{ color: '#000000', fontSize: '0.75rem', maxWidth: '200px' }}>
                                         Reason: {o.manual_payment_details.rejection_reason}
                                       </span>
                                     )}
@@ -1259,7 +1259,7 @@ export default function AdminDashboard() {
                         <td>
                           {v.universities ? (
                             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span className="badge badge-primary" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', width: 'fit-content' }}>🎓 {v.universities.abbreviation}</span>
+                              <span className="badge badge-primary" style={{ background: 'rgba(0,0,0,0.1)', color: '#000000', width: 'fit-content' }}>🎓 {v.universities.abbreviation}</span>
                               <span className={styles.subText} style={{ fontSize: '0.65rem' }}>{v.universities.name}</span>
                             </div>
                           ) : (
@@ -1278,12 +1278,12 @@ export default function AdminDashboard() {
                         <td>
                           <div className={styles.actionRow} style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
                             <button className="btn btn-ghost btn-sm" onClick={() => setSelectedVendor(v)} title="Review Details"><Eye size={14} /></button>
-                            <button className="btn btn-ghost btn-sm" style={{ color: '#f59e0b' }} onClick={() => { if(confirm('Reset this vendor to free mode?')) adminAction('reset_vendor_to_free', { brandId: v.id }) }} title="Reset to Free Mode"><RefreshCw size={14} /></button>
+                            <button className="btn btn-ghost btn-sm" style={{ color: '#FFFFFF' }} onClick={() => { if(confirm('Reset this vendor to free mode?')) adminAction('reset_vendor_to_free', { brandId: v.id }) }} title="Reset to Free Mode"><RefreshCw size={14} /></button>
                             {/* Chief Chef grant/revoke */}
                             {v.marketplace_type !== 'delicacies' ? (
                               <button
                                 className="btn btn-ghost btn-sm"
-                                style={{ color: '#eb0c7a', fontSize: '0.7rem', gap: '2px' }}
+                                style={{ color: '#000000', fontSize: '0.7rem', gap: '2px' }}
                                 title="Switch to MasterCart Delicacies"
                                 onClick={() => { if(confirm(`Switch ${v.name} to MasterCart Delicacies? They will lose access to the general marketplace.`)) adminAction('grant_chef_access', { brandId: v.id }) }}
                               >
@@ -1292,14 +1292,14 @@ export default function AdminDashboard() {
                             ) : (
                               <button
                                 className="btn btn-ghost btn-sm"
-                                style={{ color: '#94a3b8', fontSize: '0.7rem' }}
+                                style={{ color: '#FFFFFF', fontSize: '0.7rem' }}
                                 title="Switch to General Marketplace"
                                 onClick={() => { if(confirm(`Switch ${v.name} to General Marketplace? They will lose access to the Delicacies marketplace.`)) adminAction('revoke_chef_access', { brandId: v.id }) }}
                               >
                                 🛍️ Switch to General
                               </button>
                             )}
-                            <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => { if(confirm('Suspend this vendor?')) adminAction('suspend_vendor', { brandId: v.id }) }} title="Suspend Vendor"><Trash2 size={14} /></button>
+                            <button className="btn btn-ghost btn-sm" style={{ color: '#000000' }} onClick={() => { if(confirm('Suspend this vendor?')) adminAction('suspend_vendor', { brandId: v.id }) }} title="Suspend Vendor"><Trash2 size={14} /></button>
                           </div>
                         </td>
                       </tr>
@@ -1350,19 +1350,19 @@ export default function AdminDashboard() {
                                 <td>
                                   {v.universities ? (
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                      <span className="badge badge-primary" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', width: 'fit-content' }}>🎓 {v.universities.abbreviation}</span>
+                                      <span className="badge badge-primary" style={{ background: 'rgba(0,0,0,0.1)', color: '#000000', width: 'fit-content' }}>🎓 {v.universities.abbreviation}</span>
                                     </div>
                                   ) : (
                                     <span className={styles.subText}>General Marketplace</span>
                                   )}
                                 </td>
                                 <td>
-                                  <span className="badge badge-verified" style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6', fontWeight: 600 }}>
+                                  <span className="badge badge-verified" style={{ background: 'rgba(0,0,0,0.1)', color: '#000000', fontWeight: 600 }}>
                                     {vendorOrders.length} {vendorOrders.length === 1 ? 'Order' : 'Orders'}
                                   </span>
                                 </td>
                                 <td>
-                                  <div style={{ fontWeight: 700, color: '#10b981' }}>
+                                  <div style={{ fontWeight: 700, color: '#FFFFFF' }}>
                                     ₦{totalRevenue.toLocaleString()}
                                   </div>
                                 </td>
@@ -1433,15 +1433,15 @@ export default function AdminDashboard() {
                         </div>
                         <div style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem' }}>
                           <div style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase', fontWeight: 700 }} className={styles.subText}>Completed Revenue</div>
-                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#10b981', marginTop: '0.25rem' }}>₦{totalRevenue.toLocaleString()}</div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#FFFFFF', marginTop: '0.25rem' }}>₦{totalRevenue.toLocaleString()}</div>
                         </div>
                         <div style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem' }}>
                           <div style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase', fontWeight: 700 }} className={styles.subText}>Paid Orders</div>
-                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#3b82f6', marginTop: '0.25rem' }}>{paidCount}</div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#000000', marginTop: '0.25rem' }}>{paidCount}</div>
                         </div>
                         <div style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem' }}>
                           <div style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase', fontWeight: 700 }} className={styles.subText}>Pending Orders</div>
-                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b', marginTop: '0.25rem' }}>{pendingCount}</div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#FFFFFF', marginTop: '0.25rem' }}>{pendingCount}</div>
                         </div>
                       </div>
 
@@ -1484,7 +1484,7 @@ export default function AdminDashboard() {
                                 <td>₦{Number(o.total_amount).toLocaleString()}</td>
                                 <td>
                                   {o.status === 'pending' && o.expires_at && new Date(o.expires_at) < new Date() ? (
-                                    <span className="badge badge-cancelled" style={{ background: '#ef4444' }}>EXPIRED</span>
+                                    <span className="badge badge-cancelled" style={{ background: '#000000' }}>EXPIRED</span>
                                   ) : (
                                     <span className={`badge badge-${o.status}`}>{o.status}</span>
                                   )}
@@ -1528,8 +1528,8 @@ export default function AdminDashboard() {
                     Recycle Bin ({filterBy(deletedUsers, ['name', 'email']).length})
                     {deletedUsers.length > 0 && (
                       <span style={{
-                        background: '#ef4444',
-                        color: '#fff',
+                        background: '#000000',
+                        color: '#FFFFFF',
                         borderRadius: '10px',
                         padding: '2px 6px',
                         fontSize: '10px',
@@ -1571,7 +1571,7 @@ export default function AdminDashboard() {
                               <span className="badge badge-outline" style={{ textTransform: 'capitalize' }}>{u.role}</span>
                             </td>
                             <td>
-                              <div style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 600 }}>
+                              <div style={{ fontSize: '0.75rem', color: '#000000', fontWeight: 600 }}>
                                 🗓️ {u.deleted_at ? new Date(u.deleted_at).toLocaleString() : 'N/A'}
                               </div>
                               {u.deleted_reason && (
@@ -1584,14 +1584,14 @@ export default function AdminDashboard() {
                               <div className={styles.actionRow} style={{ gap: '0.5rem' }}>
                                 <button 
                                   className="btn btn-xs" 
-                                  style={{ background: '#10b981', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                                  style={{ background: '#FFFFFF', color: '#000000', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}
                                   onClick={() => { if(confirm('Restore this user account?')) adminAction('restore_user', { userId: u.id }) }}
                                 >
                                   Restore
                                 </button>
                                 <button 
                                   className="btn btn-xs" 
-                                  style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                                  style={{ background: '#000000', color: '#FFFFFF', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}
                                   onClick={() => { if(confirm('PERMANENTLY delete this user? This cannot be undone.')) adminAction('permanent_delete_user', { userId: u.id }) }}
                                 >
                                   Hard Delete
@@ -1667,7 +1667,7 @@ export default function AdminDashboard() {
                                  {u.role !== 'admin' && (
                                    <button 
                                      className="btn btn-ghost btn-sm" 
-                                     style={{ color: '#ef4444' }} 
+                                     style={{ color: '#000000' }} 
                                      onClick={() => {
                                        const reason = prompt('Reason for soft-deleting this user:');
                                        if (reason !== null) {
@@ -1742,7 +1742,7 @@ export default function AdminDashboard() {
                           )}
                         </td>
                         <td>
-                          <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => confirm('Delete this product?') && adminAction('delete_product', { productId: p.id })}>
+                          <button className="btn btn-ghost btn-sm" style={{ color: '#000000' }} onClick={() => confirm('Delete this product?') && adminAction('delete_product', { productId: p.id })}>
                             <Trash2 size={14} />
                           </button>
                         </td>
@@ -1812,7 +1812,7 @@ export default function AdminDashboard() {
                       </select>
 
                       <div className="mb-2">
-                         <label style={{ fontSize: '0.8rem', color: '#f59e0b', fontWeight: 600 }}>Subsidiary Capital / Budget (₦)</label>
+                         <label style={{ fontSize: '0.8rem', color: '#FFFFFF', fontWeight: 600 }}>Subsidiary Capital / Budget (₦)</label>
                          <input 
                             type="number" 
                             className="input" 
@@ -1854,7 +1854,7 @@ export default function AdminDashboard() {
                                 <CreditCard size={14} style={{ marginRight: '8px' }} /> Authorize Funding Source
                              </button>
                          ) : (
-                             <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderRadius: '4px', textAlign: 'center', fontSize: '0.8rem', fontWeight: 600 }}>
+                             <div style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', borderRadius: '4px', textAlign: 'center', fontSize: '0.8rem', fontWeight: 600 }}>
                                 <ShieldCheck size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'text-bottom' }} /> Funding Authorized ({((promoForm as any).funding_reference as string).substring(0, 8)}...)
                              </div>
                          )}
@@ -1879,7 +1879,7 @@ export default function AdminDashboard() {
                             <div className={styles.subText} style={{ fontSize: '0.8rem' }}>{pc.type === 'percentage' ? `${pc.value}% off` : `₦${pc.value} off`}</div>
                             <div style={{ fontSize: '0.7rem', marginTop: '4px' }}>Uses: <strong>{pc.current_uses || 0}</strong> / {pc.max_uses}</div>
                             {pc.subsidiary_capital && pc.subsidiary_capital > 0 && (
-                              <div style={{ fontSize: '0.7rem', marginTop: '2px', color: '#f59e0b' }}>
+                              <div style={{ fontSize: '0.7rem', marginTop: '2px', color: '#FFFFFF' }}>
                                 Budget: <strong>₦{Number(pc.capital_used || 0).toLocaleString()}</strong> / ₦{Number(pc.subsidiary_capital).toLocaleString()}
                               </div>
                             )}
@@ -1887,7 +1887,7 @@ export default function AdminDashboard() {
                             {(pc as any).min_purchase_amount > 0 && <div style={{ fontSize: '0.7rem', color: 'var(--text-400)', marginTop: '2px' }}>Min Spend: ₦{(pc as any).min_purchase_amount}</div>}
                             {pc.products && <div style={{ fontSize: '0.7rem', color: 'var(--primary)', marginTop: '2px' }}>Target Product: {pc.products.title.substring(0, 20)}...</div>}
                           </div>
-                          <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444', padding: '4px' }} onClick={() => confirm('Delete this code?') && adminAction('delete_promo_code', { codeId: pc.id })}><Trash2 size={14} /></button>
+                          <button className="btn btn-ghost btn-sm" style={{ color: '#000000', padding: '4px' }} onClick={() => confirm('Delete this code?') && adminAction('delete_promo_code', { codeId: pc.id })}><Trash2 size={14} /></button>
                         </div>
                       </div>
                     ))}
@@ -1914,7 +1914,7 @@ export default function AdminDashboard() {
                             {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at!) > new Date()).map(v => (
                                <tr key={v.id}>
                                   <td>{v.name}</td>
-                                  <td>{new Date(v.billboard_boost_expires_at!).toLocaleDateString()}</td><td><button className="btn btn-ghost btn-sm" style={{ color: "#ef4444" }} onClick={() => confirm("Remove from billboard?") && adminAction("remove_billboard", { brandId: v.id })}><Trash2 size={14} /></button></td>
+                                  <td>{new Date(v.billboard_boost_expires_at!).toLocaleDateString()}</td><td><button className="btn btn-ghost btn-sm" style={{ color: "#000000" }} onClick={() => confirm("Remove from billboard?") && adminAction("remove_billboard", { brandId: v.id })}><Trash2 size={14} /></button></td>
                                </tr>
                             ))}
                             {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at!) > new Date()).length === 0 && (
@@ -1932,7 +1932,7 @@ export default function AdminDashboard() {
                                <tr key={p.id}>
                                   <td>{p.title}</td>
                                   <td style={{ color: 'var(--primary)', fontWeight: 700 }}>₦{Number(p.flash_sale_price || p.price).toLocaleString()}</td>
-                                  <td>{p.brands?.name}</td><td><button className="btn btn-ghost btn-sm" style={{ color: "#ef4444" }} onClick={() => confirm("End flash sale?") && adminAction("remove_flash_sale", { productId: p.id })}><Trash2 size={14} /></button></td>
+                                  <td>{p.brands?.name}</td><td><button className="btn btn-ghost btn-sm" style={{ color: "#000000" }} onClick={() => confirm("End flash sale?") && adminAction("remove_flash_sale", { productId: p.id })}><Trash2 size={14} /></button></td>
                                </tr>
                             ))}
                             {products.filter(p => p.is_flash_sale).length === 0 && (
@@ -2009,7 +2009,7 @@ export default function AdminDashboard() {
                               </div>
                               <button 
                                 className="btn btn-ghost btn-sm" 
-                                style={{ color: '#ef4444' }}
+                                style={{ color: '#000000' }}
                                 onClick={async () => {
                                   if (!confirm('Remove this billboard from the homepage?')) return;
                                   try {
@@ -2083,7 +2083,7 @@ export default function AdminDashboard() {
                                   <ShoppingBag size={14} />
                                 </button>
                               )}
-                              <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444', gap: '4px' }} onClick={() => confirm('Delete this section?') && adminAction('delete_homepage_section', { id: sec.id })}>
+                              <button className="btn btn-ghost btn-sm" style={{ color: '#000000', gap: '4px' }} onClick={() => confirm('Delete this section?') && adminAction('delete_homepage_section', { id: sec.id })}>
                                 <Trash2 size={14} /> <span>Delete</span>
                               </button>
                             </div>
@@ -2396,7 +2396,7 @@ export default function AdminDashboard() {
                         <td>₦{Number(o.total_amount).toLocaleString()}</td>
                         <td>
                           {o.status === 'pending' && o.expires_at && new Date(o.expires_at) < new Date() ? (
-                            <span className="badge badge-cancelled" style={{ background: '#ef4444' }}>EXPIRED</span>
+                            <span className="badge badge-cancelled" style={{ background: '#000000' }}>EXPIRED</span>
                           ) : (
                             <span className={`badge badge-${o.status}`}>{o.status}</span>
                           )}
@@ -2446,7 +2446,7 @@ export default function AdminDashboard() {
                             {['delivered', 'received'].includes(o.status) ? (
                                <span className="badge" style={{ background: 'var(--success)' }}>Payout Eligible</span>
                             ) : o.status === 'cancelled_delivery' ? (
-                               <span className="badge" style={{ background: '#ef4444' }}>Refund Initiated</span>
+                               <span className="badge" style={{ background: '#000000' }}>Refund Initiated</span>
                             ) : (
                                <span className="badge" style={{ background: 'var(--bg-300)', color: 'var(--text-300)' }}>Locked in Escrow</span>
                             )}
@@ -2779,7 +2779,7 @@ export default function AdminDashboard() {
                               </td>
                               <td>₦{Number(o.total_amount).toLocaleString()}</td>
                               <td>₦{feeCharged.toLocaleString()}</td>
-                              <td style={{ fontWeight: 700, color: '#ef4444' }}>₦{refundable.toLocaleString()}</td>
+                              <td style={{ fontWeight: 700, color: '#000000' }}>₦{refundable.toLocaleString()}</td>
                               <td><span className={`badge badge-${o.status}`}>{o.status.toUpperCase()}</span></td>
                               <td>{hours}h ago</td>
                             </tr>
@@ -2797,9 +2797,9 @@ export default function AdminDashboard() {
                  {/* ── SUMMARY CARDS ── */}
                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
                    {[
-                     { label: 'Pending Payouts', val: payoutStats.pendingCount, color: '#f59e0b', sub: `₦${payoutStats.totalPendingAmount.toLocaleString()} owed` },
-                     { label: 'Total Confirmed', val: `₦${payoutStats.totalPaidAmount.toLocaleString()}`, color: '#10b981', sub: 'Successfully paid' },
-                     { label: 'Promo Subsidies', val: `₦${(stats.totalSubsidies || 0).toLocaleString()}`, color: '#8b5cf6', sub: 'Admin-funded discounts' },
+                     { label: 'Pending Payouts', val: payoutStats.pendingCount, color: '#FFFFFF', sub: `₦${payoutStats.totalPendingAmount.toLocaleString()} owed` },
+                     { label: 'Total Confirmed', val: `₦${payoutStats.totalPaidAmount.toLocaleString()}`, color: '#FFFFFF', sub: 'Successfully paid' },
+                     { label: 'Promo Subsidies', val: `₦${(stats.totalSubsidies || 0).toLocaleString()}`, color: '#000000', sub: 'Admin-funded discounts' },
                    ].map(c => (
                      <div key={c.label} style={{ background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem 1.25rem' }}>
                        <div style={{ fontSize: '0.72rem', color: 'var(--text-400)', marginBottom: '0.25rem' }}>{c.label}</div>
@@ -2819,7 +2819,7 @@ export default function AdminDashboard() {
                        style={{
                          padding: '4px 12px', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', border: 'none',
                          background: payoutStatusFilter === f ? 'var(--primary)' : 'var(--bg-300)',
-                         color: payoutStatusFilter === f ? '#fff' : 'var(--text-200)'
+                         color: payoutStatusFilter === f ? '#FFFFFF' : 'var(--text-200)'
                        }}
                      >{f.charAt(0).toUpperCase() + f.slice(1)}</button>
                    ))}
@@ -2855,17 +2855,17 @@ export default function AdminDashboard() {
                                </td>
                                <td className={styles.subText}>{brand?.universities?.abbreviation || 'General'}</td>
                                <td>
-                                 <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '6px', background: rec.product_section === 'delicacies' ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)', color: rec.product_section === 'delicacies' ? '#f59e0b' : '#3b82f6', fontWeight: 700 }}>
+                                 <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '6px', background: rec.product_section === 'delicacies' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', color: rec.product_section === 'delicacies' ? '#FFFFFF' : '#000000', fontWeight: 700 }}>
                                    {rec.product_section === 'delicacies' ? '🍴 Delicacies' : '👗 Fashion'}
                                  </span>
                                </td>
                                <td>₦{Number(rec.gross_amount).toLocaleString()}</td>
-                               <td style={{ color: '#ef4444' }}>-₦{Number(rec.commission_deduction).toLocaleString()}</td>
-                               <td style={{ color: '#10b981', fontWeight: 800 }}>₦{Number(rec.net_payout).toLocaleString()}</td>
+                               <td style={{ color: '#000000' }}>-₦{Number(rec.commission_deduction).toLocaleString()}</td>
+                               <td style={{ color: '#FFFFFF', fontWeight: 800 }}>₦{Number(rec.net_payout).toLocaleString()}</td>
                                <td>
                                  <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700,
-                                   background: rec.status === 'confirmed' ? 'rgba(16,185,129,0.1)' : rec.status === 'transferred' ? 'rgba(59,130,246,0.1)' : 'rgba(245,158,11,0.1)',
-                                   color: rec.status === 'confirmed' ? '#10b981' : rec.status === 'transferred' ? '#3b82f6' : '#f59e0b'
+                                   background: rec.status === 'confirmed' ? 'rgba(255,255,255,0.1)' : rec.status === 'transferred' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)',
+                                   color: rec.status === 'confirmed' ? '#FFFFFF' : rec.status === 'transferred' ? '#000000' : '#FFFFFF'
                                  }}>
                                    {rec.status.toUpperCase()}
                                  </span>
@@ -2889,7 +2889,7 @@ export default function AdminDashboard() {
                                      <button
                                        className="btn btn-sm"
                                        disabled={confirmingRecord === rec.id}
-                                       style={{ fontSize: '0.7rem', background: '#10b981', color: '#fff', border: 'none' }}
+                                       style={{ fontSize: '0.7rem', background: '#FFFFFF', color: '#000000', border: 'none' }}
                                        onClick={async () => {
                                          setConfirmingRecord(rec.id);
                                          await adminAction('confirm_payout_record', { recordId: rec.id });
@@ -2946,7 +2946,7 @@ export default function AdminDashboard() {
                                  <span className={styles.subText} style={{ fontSize: '0.65rem' }}>📍 {req.universities?.abbreviation || 'General'}</span>
                                </div>
                              </td>
-                             <td style={{ color: '#f59e0b', fontWeight: 'bold' }}>₦{Number(req.amount_requested).toLocaleString()}</td>
+                             <td style={{ color: '#FFFFFF', fontWeight: 'bold' }}>₦{Number(req.amount_requested).toLocaleString()}</td>
                              <td><span className={`badge badge-${req.status}`}>{req.status}</span></td>
                              <td className={styles.subText}>{new Date(req.created_at || '').toLocaleDateString()}</td>
                              <td>
@@ -2972,7 +2972,7 @@ export default function AdminDashboard() {
                          <div><strong>Vendor:</strong> {payoutRecordModal.brands?.name}</div>
                          <div><strong>Bank:</strong> {payoutRecordModal.brands?.bank_name} — {payoutRecordModal.brands?.bank_account_number}</div>
                          <div><strong>Account Name:</strong> {payoutRecordModal.brands?.bank_account_name || payoutRecordModal.brands?.account_name || '—'}</div>
-                         <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#10b981', marginTop: '0.5rem' }}>Amount: ₦{Number(payoutRecordModal.net_payout).toLocaleString()}</div>
+                         <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#FFFFFF', marginTop: '0.5rem' }}>Amount: ₦{Number(payoutRecordModal.net_payout).toLocaleString()}</div>
                        </div>
                        <div style={{ marginBottom: '1rem' }}>
                          <label style={{ fontSize: '0.82rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>Bank Transfer Reference *</label>
@@ -3186,9 +3186,9 @@ export default function AdminDashboard() {
                         <p className={styles.subText}>Configure fixed prices for the 3 official booster tiers on this campus.</p>
                         <div className={styles.settingsGrid} style={{ marginTop: '1.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                            {[
-                             { id: 'rodeo', name: 'RODEO BOOSTER', visibility: 50, color: '#3b82f6' },
-                             { id: 'nitro', name: 'NITRO BOOSTER', visibility: 150, color: '#a855f7' },
-                             { id: 'apex', name: 'APEX BOOSTER', visibility: 500, color: '#ef4444' }
+                             { id: 'rodeo', name: 'RODEO BOOSTER', visibility: 50, color: '#000000' },
+                             { id: 'nitro', name: 'NITRO BOOSTER', visibility: 150, color: '#FFFFFF' },
+                             { id: 'apex', name: 'APEX BOOSTER', visibility: 500, color: '#000000' }
                            ].map(boost => {
                              const boostConfig = (uniConfig.boosters || {})[boost.id] || { price: 0 };
                              return (
@@ -3287,7 +3287,7 @@ export default function AdminDashboard() {
                          <td>{r.comment}</td>
                          <td>{new Date(r.created_at).toLocaleDateString()}</td>
                          <td>
-                           <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => adminAction('delete_review', { reviewId: r.id })}>
+                           <button className="btn btn-ghost btn-sm" style={{ color: '#000000' }} onClick={() => adminAction('delete_review', { reviewId: r.id })}>
                              <Trash2 size={14} />
                            </button>
                          </td>
@@ -3374,7 +3374,7 @@ export default function AdminDashboard() {
                     <p className={styles.subText}>Monitor live sales velocity, product price effects, and vendor performance trends.</p>
                   </div>
                   <div style={{ display: 'flex', gap: '1rem' }}>
-                     <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => confirm('⚠️ DANGER: Reset all market reviews and product ratings to 0?') && adminAction('reset_all_reviews', {})}>
+                     <button className="btn btn-ghost btn-sm" style={{ color: '#000000' }} onClick={() => confirm('⚠️ DANGER: Reset all market reviews and product ratings to 0?') && adminAction('reset_all_reviews', {})}>
                        <Trash2 size={14} /> Reset Market Reviews to 0
                      </button>
                      <button className="btn btn-primary btn-sm" onClick={() => adminAction('recalculate_ratings', {})}>
@@ -3397,10 +3397,10 @@ export default function AdminDashboard() {
                         realtimeConfig={{ table: 'orders' }}
                         multiLineConfig={{
                           keys: [
-                            { dataKey: 'projected', color: '#10b981', label: 'Global Projected', isProjected: true },
-                            { dataKey: 'realized', color: '#3b82f6', label: 'Global Realized' },
-                            { dataKey: 'unrealized', color: '#f59e0b', label: 'Global Unrealized' },
-                            { dataKey: 'failed', color: '#ef4444', label: 'Global Failed' }
+                            { dataKey: 'projected', color: '#FFFFFF', label: 'Global Projected', isProjected: true },
+                            { dataKey: 'realized', color: '#000000', label: 'Global Realized' },
+                            { dataKey: 'unrealized', color: '#FFFFFF', label: 'Global Unrealized' },
+                            { dataKey: 'failed', color: '#000000', label: 'Global Failed' }
                           ],
                           categorize: (row: Record<string, any>) => {
                             const val = Number(row.total_amount || 0);
@@ -3449,7 +3449,7 @@ export default function AdminDashboard() {
                           <td>Clothing</td>
                           <td>₦{Number(v.avg_price || 0).toLocaleString()}</td>
                           <td>{v.total_sales || 0}</td>
-                          <td style={{ color: '#10b981' }}>+12.5%</td>
+                          <td style={{ color: '#FFFFFF' }}>+12.5%</td>
                         </tr>
                       ))}
                     </tbody>
@@ -3496,9 +3496,9 @@ export default function AdminDashboard() {
                                   <td>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '120px' }}>
                                       <div style={{ flex: 1, height: '6px', background: 'var(--bg-300)', borderRadius: '10px', overflow: 'hidden' }}>
-                                        <div style={{ width: `${Math.min((u as any).volatility || 0, 100)}%`, height: '100%', background: (u as any).volatility > 40 ? '#10b981' : (u as any).volatility > 15 ? '#f59e0b' : '#ef4444', borderRadius: '10px', transition: 'width 0.4s ease' }} />
+                                        <div style={{ width: `${Math.min((u as any).volatility || 0, 100)}%`, height: '100%', background: (u as any).volatility > 40 ? '#FFFFFF' : (u as any).volatility > 15 ? '#FFFFFF' : '#000000', borderRadius: '10px', transition: 'width 0.4s ease' }} />
                                       </div>
-                                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: (u as any).volatility > 40 ? '#10b981' : (u as any).volatility > 15 ? '#f59e0b' : '#ef4444', minWidth: '36px' }}>
+                                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: (u as any).volatility > 40 ? '#FFFFFF' : (u as any).volatility > 15 ? '#FFFFFF' : '#000000', minWidth: '36px' }}>
                                         {(u as any).volatility || 0}%
                                       </span>
                                     </div>
@@ -3701,10 +3701,10 @@ export default function AdminDashboard() {
                     {uniStats && (
                       <div className={styles.statsGrid} style={{ padding: '2rem 2rem 0 2rem', marginBottom: 0 }}>
                         {[
-                          { label: 'Campus Users', val: uniStats.userCount, color: '#3b82f6', Icon: Users },
-                          { label: 'Local Vendors', val: uniStats.brandCount, color: '#10b981', Icon: Store },
-                          { label: 'Uni Revenue', val: `₦${Number(uniStats.totalRevenue || 0).toLocaleString()}`, color: '#f59e0b', Icon: ShoppingCart },
-                          { label: 'Live Products', val: uniStats.productCount, color: '#8b5cf6', Icon: ShoppingBag },
+                          { label: 'Campus Users', val: uniStats.userCount, color: '#000000', Icon: Users },
+                          { label: 'Local Vendors', val: uniStats.brandCount, color: '#FFFFFF', Icon: Store },
+                          { label: 'Uni Revenue', val: `₦${Number(uniStats.totalRevenue || 0).toLocaleString()}`, color: '#FFFFFF', Icon: ShoppingCart },
+                          { label: 'Live Products', val: uniStats.productCount, color: '#000000', Icon: ShoppingBag },
                         ].map(({ label, val, color, Icon }) => (
                           <div className={styles.statCard} key={label} style={{ background: 'var(--bg-200)' }}>
                             <div className={styles.statInfo}><p>{label}</p><h3>{val}</h3></div>
@@ -3844,7 +3844,7 @@ export default function AdminDashboard() {
                                       <strong style={{ fontSize: '0.85rem' }}>{m.member?.name}</strong>
                                       <span className="badge badge-primary" style={{ fontSize: '0.65rem', width: 'fit-content', marginTop: '4px' }}>{m.role || 'Campus Staff'}</span>
                                     </div>
-                                    <Trash2 size={14} style={{ color: '#ef4444', cursor: 'pointer' }} onClick={async () => {
+                                    <Trash2 size={14} style={{ color: '#000000', cursor: 'pointer' }} onClick={async () => {
                                       if(!confirm('Remove this member?')) return;
                                       await adminFetch('/api/admin', { method: 'POST', body: JSON.stringify({ action: 'remove_team_member', teamId: m.id }) });
                                       fetchUniData(selectedUniId!);
@@ -4018,7 +4018,7 @@ export default function AdminDashboard() {
                         {categories.filter(c => c.type === categorySubTab).map((cat: any) => (
                           <tr key={cat.id} style={{ borderBottom: '1px solid var(--border)' }}>
                             <td style={{ fontSize: '1.5rem', width: '60px', textAlign: 'center', padding: '0.75rem' }}>{cat.icon || '📦'}</td>
-                            <td style={{ padding: '0.75rem' }}><strong style={{ color: '#fff' }}>{cat.name}</strong></td>
+                            <td style={{ padding: '0.75rem' }}><strong style={{ color: '#FFFFFF' }}>{cat.name}</strong></td>
                             <td style={{ fontFamily: 'monospace', color: 'var(--primary)', padding: '0.75rem' }}>{cat.slug}</td>
                             <td style={{ padding: '0.75rem' }}>
                               {cat.university_id ? (
@@ -4026,14 +4026,14 @@ export default function AdminDashboard() {
                                   🎓 {cat.universities?.abbreviation || cat.universities?.name || 'Campus Custom'}
                                 </span>
                               ) : (
-                                <span className="badge" style={{ fontSize: '0.65rem', background: 'rgba(99,102,241,0.15)', color: '#818cf8' }}>
+                                <span className="badge" style={{ fontSize: '0.65rem', background: 'rgba(0,0,0,0.15)', color: '#FFFFFF' }}>
                                   🌍 Global
                                 </span>
                               )}
                             </td>
                             <td style={{ padding: '0.75rem' }}>{cat.sort_order || 0}</td>
                             <td style={{ padding: '0.75rem' }}>
-                              <span className={`badge ${cat.is_active ? 'badge-verified' : 'badge-offline'}`} style={{ background: cat.is_active ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)', color: cat.is_active ? '#10b981' : '#888' }}>
+                              <span className={`badge ${cat.is_active ? 'badge-verified' : 'badge-offline'}`} style={{ background: cat.is_active ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)', color: cat.is_active ? '#FFFFFF' : '#FFFFFF' }}>
                                 {cat.is_active ? 'Active' : 'Inactive'}
                               </span>
                             </td>
@@ -4058,7 +4058,7 @@ export default function AdminDashboard() {
                                 </button>
                                 <button 
                                   className="btn btn-sm btn-ghost"
-                                  style={{ color: '#ef4444' }}
+                                  style={{ color: '#000000' }}
                                   onClick={async () => {
                                     if (confirm('Delete this category? Products under this category will lose their linkage.')) {
                                       await adminAction('delete_category', { id: cat.id });
@@ -4073,7 +4073,7 @@ export default function AdminDashboard() {
                         ))}
                         {categories.filter(c => c.type === categorySubTab).length === 0 && (
                           <tr>
-                            <td colSpan={7} style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>
+                            <td colSpan={7} style={{ textAlign: 'center', color: '#FFFFFF', padding: '2rem' }}>
                               No categories listed in this section yet.
                             </td>
                           </tr>
@@ -4166,7 +4166,7 @@ export default function AdminDashboard() {
                     <label className={styles.subText} style={{ display: 'block', marginBottom: '0.3rem' }}>Delivery Scope</label>
                     <select 
                       className="input-sm" 
-                      style={{ width: '100%', background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.3rem', color: '#fff' }}
+                      style={{ width: '100%', background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.3rem', color: '#FFFFFF' }}
                       defaultValue={selectedVendor.delivery_scope || 'in-school'}
                       onChange={(e) => adminAction('update_delivery_config', { brandId: selectedVendor.id, scope: e.target.value })}
                     >
@@ -4178,7 +4178,7 @@ export default function AdminDashboard() {
                     <label className={styles.subText} style={{ display: 'block', marginBottom: '0.3rem' }}>Assigned System</label>
                     <select 
                       className="input-sm" 
-                      style={{ width: '100%', background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.3rem', color: '#fff' }}
+                      style={{ width: '100%', background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.3rem', color: '#FFFFFF' }}
                       defaultValue={selectedVendor.assigned_delivery_system || 'platform'}
                       onChange={(e) => adminAction('update_delivery_config', { brandId: selectedVendor.id, system: e.target.value })}
                     >
@@ -4234,7 +4234,7 @@ export default function AdminDashboard() {
                 <h3>Admin Decision</h3>
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                   <button className="btn btn-primary" onClick={() => adminAction('approve_vendor', { brandId: selectedVendor.id })}>Approve & Grant Dashboard</button>
-                  <button className="btn btn-ghost" style={{ color: '#ef4444' }} onClick={() => adminAction('reject_vendor', { brandId: selectedVendor.id })}>Reject</button>
+                  <button className="btn btn-ghost" style={{ color: '#000000' }} onClick={() => adminAction('reject_vendor', { brandId: selectedVendor.id })}>Reject</button>
                 </div>
               </div>
               <div className={styles.modalSection}>
@@ -4242,7 +4242,7 @@ export default function AdminDashboard() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '1rem' }}>
                   <button 
                     className="btn btn-ghost btn-sm" 
-                    style={{ color: '#ef4444', border: '1px solid #ef4444' }}
+                    style={{ color: '#000000', border: '1px solid #000000' }}
                     onClick={() => { if(confirm('Reset this vendor to Free Tier?')) adminAction('reset_vendor_to_free', { brandId: selectedVendor.id }) }}
                   >
                     <RefreshCw size={14} /> Reset to Free Tier
@@ -4329,7 +4329,7 @@ export default function AdminDashboard() {
           />
           <button
             onClick={() => setEnlargedImg(null)}
-            style={{ position: 'absolute', top: 24, right: 24, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', padding: 10, cursor: 'pointer', color: '#fff' }}
+            style={{ position: 'absolute', top: 24, right: 24, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', padding: 10, cursor: 'pointer', color: '#FFFFFF' }}
           >
             <XCircle size={28} />
           </button>
@@ -4410,10 +4410,10 @@ export default function AdminDashboard() {
 
       {showCategoryModal && (
         <div className={styles.modalOverlay} onClick={() => setShowCategoryModal(false)}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-100)', color: '#fff', borderRadius: '12px', border: '1px solid var(--border)', maxWidth: '450px', width: '100%' }}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-100)', color: '#FFFFFF', borderRadius: '12px', border: '1px solid var(--border)', maxWidth: '450px', width: '100%' }}>
             <div className={styles.modalHeader} style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 style={{ fontSize: '1.2rem', margin: 0 }}>{categoryForm.id ? '🔧 Edit Category' : '🎒 Add Category'}</h2>
-              <button onClick={() => setShowCategoryModal(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}><XCircle size={24} /></button>
+              <button onClick={() => setShowCategoryModal(false)} style={{ background: 'none', border: 'none', color: '#FFFFFF', cursor: 'pointer' }}><XCircle size={24} /></button>
             </div>
             <div className={styles.modalBody} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div className="form-group">
@@ -4421,7 +4421,7 @@ export default function AdminDashboard() {
                 <input 
                   type="text" 
                   className="form-input" 
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#fff' }}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#FFFFFF' }}
                   placeholder="e.g. Traditional Wears / Native Delicacies"
                   value={categoryForm.name}
                   onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })}
@@ -4431,7 +4431,7 @@ export default function AdminDashboard() {
                 <label className="form-label" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.35rem' }}>Type</label>
                 <select 
                   className="form-input" 
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#fff' }}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#FFFFFF' }}
                   value={categoryForm.type}
                   onChange={e => setCategoryForm({ ...categoryForm, type: e.target.value })}
                 >
@@ -4443,7 +4443,7 @@ export default function AdminDashboard() {
                 <label className="form-label" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.35rem' }}>Scope / Assignment</label>
                 <select 
                   className="form-input" 
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#fff' }}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#FFFFFF' }}
                   value={categoryForm.university_id || ''}
                   onChange={e => setCategoryForm({ ...categoryForm, university_id: e.target.value })}
                 >
@@ -4458,7 +4458,7 @@ export default function AdminDashboard() {
                 <input 
                   type="text" 
                   className="form-input" 
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#fff' }}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#FFFFFF' }}
                   placeholder="e.g. 🍔 / 👕 / 📦"
                   maxLength={4}
                   value={categoryForm.icon}
@@ -4470,7 +4470,7 @@ export default function AdminDashboard() {
                 <input 
                   type="number" 
                   className="form-input" 
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#fff' }}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', background: 'var(--bg-200)', border: '1px solid var(--border)', color: '#FFFFFF' }}
                   value={categoryForm.sort_order}
                   onChange={e => setCategoryForm({ ...categoryForm, sort_order: Number(e.target.value) })}
                 />

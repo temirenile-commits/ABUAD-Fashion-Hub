@@ -2,7 +2,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0,0,0,0.8);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   z-index: 99999;
@@ -21,7 +21,7 @@
   width: 100%;
   max-width: 420px;
   padding: 0 1.75rem 1.5rem;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
@@ -154,7 +154,7 @@
 
 .nextBtn {
   background: var(--primary);
-  color: #000;
+  color: #000000;
   border: none;
   padding: 0.7rem 1.4rem;
   border-radius: 10px;

@@ -35,7 +35,7 @@
 
 .text h4 {
   font-size: 0.9rem;
-  color: #fff;
+  color: #FFFFFF;
 }
 
 .text p {
@@ -44,7 +44,7 @@
 }
 
 .banner {
-  background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
+  background: linear-gradient(135deg, #000000 0%, #000000 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 1.5rem 1rem;
@@ -59,7 +59,7 @@
   align-items: center;
   gap: 0.4rem;
   background: var(--primary);
-  color: #000;
+  color: #000000;
   width: fit-content;
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
@@ -87,7 +87,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: #000;
+  color: #000000;
   font-weight: 800;
   font-size: 0.85rem;
   cursor: pointer;

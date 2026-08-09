@@ -4,7 +4,7 @@
   height: 100%;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  background: #000;
+  background: #000000;
 }
 
 .inner {
@@ -53,7 +53,7 @@
 
 .sub {
   font-size: 1.1rem;
-  color: #fff;
+  color: #FFFFFF;
   opacity: 0.9;
   max-width: 400px;
 }
@@ -64,7 +64,7 @@
   transform: translateY(-50%);
   background: rgba(0,0,0,0.5);
   border: 1px solid rgba(255,255,255,0.1);
-  color: #fff;
+  color: #FFFFFF;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -78,7 +78,7 @@
 
 .navBtn:hover {
   background: var(--primary);
-  color: #000;
+  color: #000000;
 }
 
 .prev { left: 1rem; }

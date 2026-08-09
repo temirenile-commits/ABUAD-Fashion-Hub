@@ -53,7 +53,7 @@ export default function CountdownTimer({ expiryDate, onExpiry, compact = false }
 
   if (timeLeft.expired) {
     return (
-      <div style={{ fontSize: compact ? '0.7rem' : '0.85rem', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+      <div style={{ fontSize: compact ? '0.7rem' : '0.85rem', color: '#FFFFFF', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
         <CheckCircle size={compact ? 12 : 14} />
         <span>Arriving Now</span>
       </div>
@@ -65,11 +65,11 @@ export default function CountdownTimer({ expiryDate, onExpiry, compact = false }
       display: 'flex', 
       alignItems: 'center', 
       gap: '0.4rem',
-      background: 'rgba(59, 130, 246, 0.1)',
-      color: '#3b82f6',
+      background: 'rgba(0,0,0,0.1)',
+      color: '#000000',
       padding: compact ? '2px 6px' : '4px 10px',
       borderRadius: '6px',
-      border: '1px solid rgba(59, 130, 246, 0.2)',
+      border: '1px solid rgba(0,0,0,0.2)',
       fontSize: compact ? '0.7rem' : '0.8rem',
       fontWeight: 700,
       width: 'fit-content'
