@@ -55,7 +55,7 @@ export default function BatchWindowTimer({ onBatchClose }: BatchWindowTimerProps
           {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
         </span>
       </div>
-      <div style={{ height: 4, background: '#18181B', borderRadius: 99 }}>
+      <div style={{ height: 4, background: '#121214', borderRadius: 99 }}>
         <div style={{
           height: '100%',
           width: `${pct}%`,

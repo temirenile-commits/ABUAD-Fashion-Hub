@@ -42,7 +42,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: #1F1F23;
+  background: #121214;
   color: #FFFFFF;
   padding: 4px 10px;
   border-radius: 999px;
@@ -98,7 +98,7 @@
 }
 
 .controlBtn {
-  background: #18181B;
+  background: #121214;
   border: 1px solid #27272A;
   color: #000000;
   padding: 4px 10px;
@@ -110,7 +110,7 @@
   transition: all 0.15s;
   letter-spacing: 0.05em;
 }
-.controlBtn:hover { background: #1F1F23; color: #FFFFFF; }
+.controlBtn:hover { background: #121214; color: #FFFFFF; }
 .controlActive {
   background: var(--primary, #000000) !important;
   border-color: var(--primary, #000000) !important;
@@ -127,7 +127,7 @@
   font-weight: 800;
   font-family: monospace;
 }
-.trendUp   { background: #1F1F23;  color: #FFFFFF; border: 1px solid #3F3F46; }
+.trendUp   { background: #121214;  color: #FFFFFF; border: 1px solid #3F3F46; }
 .trendDown { background: rgba(255,255,255,0.06);   color: #FFFFFF; border: 1px solid #3F3F46;  }
 
 /* ── Chart area ─────────────────────────────────────────────── */
@@ -151,7 +151,7 @@
 
 .scrollContainer::-webkit-scrollbar { height: 3px; }
 .scrollContainer::-webkit-scrollbar-thumb {
-  background: #1F1F23;
+  background: #121214;
   border-radius: 10px;
 }
 

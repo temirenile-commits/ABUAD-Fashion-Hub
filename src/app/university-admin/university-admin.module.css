@@ -208,7 +208,7 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.25rem 0.65rem;
-  background: #1F1F23;
+  background: #121214;
   border: 1px solid #3F3F46;
   border-radius: 100px;
   font-size: 0.68rem;
@@ -245,7 +245,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.9rem;
-  background: #1F1F23;
+  background: #121214;
   border: 1px solid #27272A;
   border-radius: 8px;
   color: #FFFFFF;
@@ -270,7 +270,7 @@
 
 .refreshBtn {
   padding: 0.5rem;
-  background: #1F1F23;
+  background: #121214;
   border: 1px solid #27272A;
   border-radius: 8px;
   color: #FFFFFF;
@@ -407,7 +407,7 @@
   text-transform: uppercase;
   letter-spacing: 0.8px;
   color: #000000;
-  background: #18181B;
+  background: #121214;
   border-bottom: 1px solid #27272A;
 }
 
@@ -491,7 +491,7 @@
 .badgeOffline  { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #3F3F46; }
 .badgeGold { background: #27272A; color: #FFFFFF; border: 1px solid #3F3F46; }
 .badgeInfo { background: rgba(0,0,0,0.15); color: #FFFFFF; border: 1px solid #A1A1AA; }
-.badgeGhost { background: #1F1F23; color: #FFFFFF; border: 1px solid #27272A; }
+.badgeGhost { background: #121214; color: #FFFFFF; border: 1px solid #27272A; }
 
 /* ─── Action Buttons ──────────────────────────────────────── */
 .actionRow {
@@ -505,7 +505,7 @@
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
   border: 1px solid #27272A;
-  background: #18181B;
+  background: #121214;
   color: #FFFFFF;
   font-size: 0.75rem;
   font-weight: 600;
@@ -519,12 +519,12 @@
 .btnSm:hover { border-color: #A1A1AA; color: #FFFFFF; }
 
 .btnApprove { color: #FFFFFF !important; border-color: #3F3F46 !important; }
-.btnApprove:hover { background: #1F1F23 !important; }
+.btnApprove:hover { background: #121214 !important; }
 
 .btnReject { color: #000000 !important; border-color: #3F3F46 !important; }
 .btnReject:hover { background: rgba(0,0,0,0.1) !important; }
 
-.btnDelete { color: #FFFFFF !important; border: 1px solid #3F3F46 !important; background: rgba(255,255,255,0.05) !important; }
+.btnDelete { color: #F87171 !important; border: 1px solid rgba(220,38,38,0.4) !important; background: rgba(220,38,38,0.1) !important; }
 .btnDelete:hover { background: #000000 !important; color: #FFFFFF !important; }
 
 .btnPrimary {
@@ -579,7 +579,7 @@
 .formInput {
   width: 100%;
   padding: 0.65rem 0.9rem;
-  background: #18181B;
+  background: #121214;
   border: 1px solid #27272A;
   border-radius: 8px;
   color: #FFFFFF;
@@ -597,7 +597,7 @@
 .formSelect {
   width: 100%;
   padding: 0.65rem 0.9rem;
-  background: #18181B;
+  background: #121214;
   border: 1px solid #27272A;
   border-radius: 8px;
   color: #FFFFFF;
@@ -615,7 +615,7 @@
 }
 
 .insightCard {
-  background: #18181B;
+  background: #121214;
   border: 1px solid #27272A;
   border-radius: 12px;
   padding: 1.25rem;
@@ -684,7 +684,7 @@
 }
 
 .teamCard {
-  background: #18181B;
+  background: #121214;
   border: 1px solid #27272A;
   border-radius: 12px;
   padding: 1.25rem;

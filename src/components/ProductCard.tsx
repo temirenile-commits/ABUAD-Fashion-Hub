@@ -289,7 +289,7 @@ export default function ProductCard({ product }: Props) {
                 marginLeft: 'auto', 
                 fontSize: '0.75rem', 
                 fontWeight: 700, 
-                color: (product.stock_count || 0) > 0 ? '#FFFFFF' : '#000000' 
+                color: (product.stock_count || 0) > 0 ? '#FFFFFF' : '#F87171' 
               }}>
                 {(product.stock_count || 0) > 0 ? `${product.stock_count} In Stock` : 'Out of Stock'}
               </div>

@@ -67,7 +67,8 @@ function ToastItem({ toast, onRemove }: { toast: Toast, onRemove: (id: string) =
     <div
       style={{
         pointerEvents: 'auto',
-        background: isError ? '#1F1F23' : isSuccess ? '#27272A' : '#1F1F23',
+        background: isError ? '#121214' : isSuccess ? '#27272A' : '#121214',
+        borderLeft: isError ? '3px solid #DC2626' : isSuccess ? '3px solid #4ADE80' : '3px solid #D4AF37',
         color: isError ? '#FFFFFF' : isSuccess ? '#FFFFFF' : '#FFFFFF',
         padding: '12px 20px',
         borderRadius: '8px',
@@ -89,7 +90,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast, onRemove: (id: string) =
         }
       `}</style>
       
-      {isSuccess ? <CheckCircle size={20} /> : isError ? <XCircle size={20} /> : <div style={{width: 20, height: 20}} />}
+      {isSuccess ? <CheckCircle size={20} style={{ color: '#4ADE80' }} /> : isError ? <XCircle size={20} style={{ color: '#DC2626' }} /> : <div style={{width: 20, height: 20}} />}
       
       <div style={{ flex: 1 }}>{toast.message}</div>
       

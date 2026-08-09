@@ -344,7 +344,7 @@ export default function UniversityAdminPage() {
                 <>
                   {vendors.filter((v: any) => v.verification_status === "pending").length > 0 && (
                     <div style={{
-                      background: '#1F1F23',
+                      background: '#121214',
                       border: '1px solid #A1A1AA',
                       borderRadius: '12px',
                       padding: '1.25rem',
@@ -356,7 +356,7 @@ export default function UniversityAdminPage() {
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{
-                          background: '#1F1F23',
+                          background: '#121214',
                           color: '#000000',
                           borderRadius: '50%',
                           width: '40px',
@@ -380,7 +380,7 @@ export default function UniversityAdminPage() {
                       </div>
                       <button 
                         className={styles.btnSm}
-                        style={{ background: '#1F1F23', color: '#000000', border: 'none', fontWeight: 600, padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
+                        style={{ background: '#121214', color: '#000000', border: 'none', fontWeight: 600, padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
                         onClick={() => setTab('vendors')}
                       >
                         Review Now
@@ -458,14 +458,14 @@ export default function UniversityAdminPage() {
                   <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                     <button 
                       className={`${styles.btnSm} ${customersSubTab === 'all' ? styles.btnApprove : styles.btnReject}`}
-                      style={{ background: customersSubTab === 'all' ? 'var(--primary)' : '#18181B', color: '#FFFFFF', border: '1px solid var(--border)' }}
+                      style={{ background: customersSubTab === 'all' ? 'var(--primary)' : '#121214', color: '#FFFFFF', border: '1px solid var(--border)' }}
                       onClick={() => setCustomersSubTab('all')}
                     >
                       Active Users ({filter(customers, ["name", "email", "display_name"]).length})
                     </button>
                     <button 
                       className={`${styles.btnSm} ${customersSubTab === 'deleted' ? styles.btnApprove : styles.btnReject}`}
-                      style={{ background: customersSubTab === 'deleted' ? 'var(--primary)' : '#18181B', color: '#FFFFFF', border: '1px solid var(--border)', position: 'relative' }}
+                      style={{ background: customersSubTab === 'deleted' ? 'var(--primary)' : '#121214', color: '#FFFFFF', border: '1px solid var(--border)', position: 'relative' }}
                       onClick={() => setCustomersSubTab('deleted')}
                     >
                       Recycle Bin ({filter(deletedUsers, ["name", "email"]).length})
@@ -517,7 +517,7 @@ export default function UniversityAdminPage() {
                                 <div className={styles.actionRow} style={{ gap: '0.5rem' }}>
                                   <button 
                                     className={styles.btnSm} 
-                                    style={{ background: '#1F1F23', color: '#000000', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 10px' }}
+                                    style={{ background: '#121214', color: '#000000', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 10px' }}
                                     onClick={() => { if (confirm('Restore this user account?')) action('restore_user', { userId: c.id }) }}
                                   >
                                     Restore
@@ -540,7 +540,7 @@ export default function UniversityAdminPage() {
                                 <div className={styles.actionRow} style={{ gap: '0.5rem' }}>
                                   <button 
                                     className={styles.btnSm} 
-                                    style={{ background: '#18181B', border: '1px solid var(--border)' }}
+                                    style={{ background: '#121214', border: '1px solid var(--border)' }}
                                     onClick={() => action("toggle_user_status", { userId: c.id, status: c.status === "active" ? "suspended" : "active" })}
                                   >
                                     {c.status === "active" ? "Suspend" : "Activate"}
@@ -861,7 +861,7 @@ export default function UniversityAdminPage() {
                             <div className={styles.insightAbbr}>{u.abbreviation}</div>
                           </div>
                           {i === 0 && (
-                            <span className={styles.badge} style={{ background: '#18181B', color: '#FFFFFF', fontSize: '0.65rem', fontWeight: 800 }}>
+                            <span className={styles.badge} style={{ background: '#121214', color: '#FFFFFF', fontSize: '0.65rem', fontWeight: 800 }}>
                               🔥 MOST VOLATILE
                             </span>
                           )}
@@ -984,7 +984,7 @@ export default function UniversityAdminPage() {
                             <td>{p.brands?.name}</td>
                             <td>
                                <span className={styles.badge} style={{ 
-                                  background: p.visibility_type === 'global' ? 'rgba(0,0,0,0.15)' : '#18181B', 
+                                  background: p.visibility_type === 'global' ? 'rgba(0,0,0,0.15)' : '#121214', 
                                   color: p.visibility_type === 'global' ? '#FFFFFF' : 'var(--text-200)',
                                   fontSize: '0.65rem'
                                }}>
@@ -1404,13 +1404,13 @@ export default function UniversityAdminPage() {
                               <td>
                                  {account.is_active ? (
                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'flex-start' }}>
-                                     <span style={{ background: '#1F1F23', color: '#FFFFFF', border: '1px solid #A1A1AA', borderRadius: '6px', padding: '2px 8px', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                       <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#1F1F23', display: 'inline-block' }}></span>
+                                     <span style={{ background: '#121214', color: '#FFFFFF', border: '1px solid #A1A1AA', borderRadius: '6px', padding: '2px 8px', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                       <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#121214', display: 'inline-block' }}></span>
                                        Active at Checkout
                                      </span>
                                      <button
                                        className={styles.btnSm}
-                                       style={{ fontSize: '0.7rem', background: '#18181B', color: '#FFFFFF', border: '1px solid rgba(0,0,0,0.2)' }}
+                                       style={{ fontSize: '0.7rem', background: '#121214', color: '#FFFFFF', border: '1px solid rgba(0,0,0,0.2)' }}
                                        onClick={() => action('toggle_bank_active', { id: account.id, is_active: false })}
                                        disabled={!!actionLoading}
                                      >
@@ -1478,14 +1478,14 @@ export default function UniversityAdminPage() {
                     <button 
                       onClick={() => setManualQueueSubTab('pending')}
                       className={`${styles.btnSm} ${manualQueueSubTab === 'pending' ? styles.btnApprove : styles.btnReject}`}
-                      style={{ background: manualQueueSubTab === 'pending' ? 'var(--primary)' : '#18181B', color: '#FFFFFF', border: '1px solid var(--border)' }}
+                      style={{ background: manualQueueSubTab === 'pending' ? 'var(--primary)' : '#121214', color: '#FFFFFF', border: '1px solid var(--border)' }}
                     >
                       Pending Queue ({manualOrders.filter(o => o.status === 'pending' && o.manual_payment_status === 'pending').length})
                     </button>
                     <button 
                       onClick={() => setManualQueueSubTab('history')}
                       className={`${styles.btnSm} ${manualQueueSubTab === 'history' ? styles.btnApprove : styles.btnReject}`}
-                      style={{ background: manualQueueSubTab === 'history' ? 'var(--primary)' : '#18181B', color: '#FFFFFF', border: '1px solid var(--border)' }}
+                      style={{ background: manualQueueSubTab === 'history' ? 'var(--primary)' : '#121214', color: '#FFFFFF', border: '1px solid var(--border)' }}
                     >
                       Verification History
                     </button>
@@ -1573,7 +1573,7 @@ export default function UniversityAdminPage() {
                                   </button>
                                   <button 
                                     className={styles.btnPrimary} 
-                                    style={{ background: '#1F1F23', borderColor: '#27272A', height: '38px', color: '#000000', fontWeight: 700 }}
+                                    style={{ background: '#121214', borderColor: '#27272A', height: '38px', color: '#000000', fontWeight: 700 }}
                                     disabled={!!actionLoading}
                                     onClick={async () => {
                                       if (confirm(`Verify GTB transfer of ₦${Number(o.total_amount || 0).toLocaleString()}? This authorizes the vendor store to fulfill the order.`)) {
@@ -1644,7 +1644,7 @@ export default function UniversityAdminPage() {
                                   </td>
                                   <td>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                      <span className={styles.badge} style={{ width: 'fit-content', background: o.manual_payment_status === 'approved' ? '#1F1F23' : 'rgba(0,0,0,0.1)', color: o.manual_payment_status === 'approved' ? '#FFFFFF' : '#000000' }}>
+                                      <span className={styles.badge} style={{ width: 'fit-content', background: o.manual_payment_status === 'approved' ? '#121214' : 'rgba(0,0,0,0.1)', color: o.manual_payment_status === 'approved' ? '#FFFFFF' : '#000000' }}>
                                         {o.manual_payment_status === 'approved' ? '✓ Verified' : '✗ Rejected'}
                                       </span>
                                       {o.manual_payment_status === 'rejected' && o.manual_payment_details?.rejection_reason && (
@@ -1673,14 +1673,14 @@ export default function UniversityAdminPage() {
                     <button 
                       onClick={() => setCategorySubTab('edible')}
                       className={`${styles.btnSm} ${categorySubTab === 'edible' ? styles.btnApprove : styles.btnReject}`}
-                      style={{ background: categorySubTab === 'edible' ? 'var(--primary)' : '#18181B', color: '#FFFFFF', border: '1px solid var(--border)' }}
+                      style={{ background: categorySubTab === 'edible' ? 'var(--primary)' : '#121214', color: '#FFFFFF', border: '1px solid var(--border)' }}
                     >
                       🍱 Edible Categories
                     </button>
                     <button 
                       onClick={() => setCategorySubTab('non_edible')}
                       className={`${styles.btnSm} ${categorySubTab === 'non_edible' ? styles.btnApprove : styles.btnReject}`}
-                      style={{ background: categorySubTab === 'non_edible' ? 'var(--primary)' : '#18181B', color: '#FFFFFF', border: '1px solid var(--border)' }}
+                      style={{ background: categorySubTab === 'non_edible' ? 'var(--primary)' : '#121214', color: '#FFFFFF', border: '1px solid var(--border)' }}
                     >
                       👕 Non-Edible Categories
                     </button>

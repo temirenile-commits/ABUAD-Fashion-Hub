@@ -159,11 +159,11 @@ export default function SupportDashboard() {
                 </thead>
                 <tbody>
                   {orders.map(o => (
-                    <tr key={o.id} style={{ borderBottom: '1px solid #18181B' }}>
+                    <tr key={o.id} style={{ borderBottom: '1px solid #121214' }}>
                       <td style={{ padding: '1rem 0', color: 'var(--text-300)' }}>#{o.id.slice(0, 8)}</td>
                       <td>{o.users?.name || o.users?.email}<br/><span style={{fontSize:'0.75rem',color:'var(--text-400)'}}>{o.users?.phone || 'No phone'}</span></td>
                       <td>{o.brands?.name}<br/><span style={{fontSize:'0.75rem',color:'var(--text-400)'}}>{o.brands?.phone || 'No phone'}</span></td>
-                      <td><span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', background: o.status === 'paid' ? '#1F1F23' : '#18181B', color: o.status === 'paid' ? '#FFFFFF' : '#FFFFFF' }}>{o.status}</span></td>
+                      <td><span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', background: o.status === 'paid' ? '#121214' : '#121214', color: o.status === 'paid' ? '#FFFFFF' : '#FFFFFF' }}>{o.status}</span></td>
                       <td style={{ fontWeight: 600, color: '#FFFFFF' }}>₦{Number(o.total_amount).toLocaleString()}</td>
                     </tr>
                   ))}
@@ -187,7 +187,7 @@ export default function SupportDashboard() {
                 </thead>
                 <tbody>
                   {customers.map(c => (
-                    <tr key={c.id} style={{ borderBottom: '1px solid #18181B' }}>
+                    <tr key={c.id} style={{ borderBottom: '1px solid #121214' }}>
                       <td style={{ padding: '1rem 0', fontWeight: 600 }}>{c.name || 'Anonymous'}</td>
                       <td>{c.email}</td>
                       <td>{c.phone || 'N/A'}</td>
@@ -214,7 +214,7 @@ export default function SupportDashboard() {
                 </thead>
                 <tbody>
                   {vendors.map(v => (
-                    <tr key={v.id} style={{ borderBottom: '1px solid #18181B' }}>
+                    <tr key={v.id} style={{ borderBottom: '1px solid #121214' }}>
                       <td style={{ padding: '1rem 0', fontWeight: 600 }}>{v.name}</td>
                       <td>{v.users?.email}</td>
                       <td>{v.whatsapp_number || 'N/A'}</td>
@@ -285,7 +285,7 @@ export default function SupportDashboard() {
                   </thead>
                   <tbody>
                     {team.map(t => (
-                      <tr key={t.id} style={{ borderBottom: '1px solid #18181B' }}>
+                      <tr key={t.id} style={{ borderBottom: '1px solid #121214' }}>
                         <td style={{ padding: '1rem 0', fontWeight: 600 }}>{t.member?.name || 'Unknown'}</td>
                         <td>{t.member?.email}</td>
                         <td><span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', background: 'rgba(0,0,0,0.15)', color: '#FFFFFF' }}>{t.role === 'customer_support_agent' ? 'Support Agent' : t.role}</span></td>

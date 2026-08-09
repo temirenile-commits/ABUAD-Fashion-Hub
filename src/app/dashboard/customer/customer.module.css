@@ -101,8 +101,8 @@
   gap: 0.5rem;
 }
 
-.paid { background: #1F1F23; color: #FFFFFF; }
-.ready { background: #1F1F23; color: #FFFFFF; }
+.paid { background: #121214; color: #FFFFFF; }
+.ready { background: #121214; color: #FFFFFF; }
 .picked_up, .in_transit { background: rgba(0,0,0,0.1); color: #000000; }
 .delivered, .confirmed, .completed { background: #27272A; color: #FFFFFF; }
 

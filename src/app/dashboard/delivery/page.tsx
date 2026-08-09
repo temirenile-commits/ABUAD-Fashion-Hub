@@ -1091,7 +1091,7 @@ export default function DeliveryDashboard() {
                               {delivery.orders?.is_preorder && (
                                 <span
                                   className={styles.badge}
-                                  style={{ background: '#1F1F23', color: '#FFFFFF' }}
+                                  style={{ background: '#121214', color: '#FFFFFF' }}
                                 >
                                   <Calendar size={10} style={{ marginRight: 3 }} />
                                   PRE-ORDER
@@ -1099,7 +1099,7 @@ export default function DeliveryDashboard() {
                               )}
                               <span
                                 className={styles.badge}
-                                style={{ background: '#1F1F23', color: 'var(--success)' }}
+                                style={{ background: '#121214', color: 'var(--success)' }}
                               >
                                 READY FOR PICKUP
                               </span>
@@ -1199,7 +1199,7 @@ export default function DeliveryDashboard() {
                         {delivery.orders?.is_preorder && (
                           <span
                             className={styles.badge}
-                            style={{ background: '#1F1F23', color: '#FFFFFF' }}
+                            style={{ background: '#121214', color: '#FFFFFF' }}
                           >
                             PRE-ORDER
                           </span>
@@ -1361,7 +1361,7 @@ export default function DeliveryDashboard() {
                     <div
                       key={i}
                       style={{
-                        background: hasLiveOrders ? '#18181B' : 'var(--bg-200)',
+                        background: hasLiveOrders ? '#121214' : 'var(--bg-200)',
                         border: `1px solid ${hasLiveOrders ? 'var(--success)' : 'var(--border)'}`,
                         borderRadius: 'var(--radius-md)',
                         padding: '1rem',
@@ -1379,7 +1379,7 @@ export default function DeliveryDashboard() {
                       {hasLiveOrders && (
                         <span
                           className={styles.badge}
-                          style={{ background: '#1F1F23', color: 'var(--success)', width: 'fit-content' }}
+                          style={{ background: '#121214', color: 'var(--success)', width: 'fit-content' }}
                         >
                           ORDERS WAITING
                         </span>

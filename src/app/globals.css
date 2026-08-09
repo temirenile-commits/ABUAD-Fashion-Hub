@@ -7,58 +7,58 @@
    ============================================ */
 
 :root {
-  /* Core Palette - Pure Black base with Zinc Depth Grays for elevation */
+  /* Core Palette - Pure Black base with Deep Zinc surfaces and Ash borders */
   --bg-000: #000000;
-  --bg-100: #18181B; /* Zinc 900 - elevated surfaces, cards, dropdowns */
-  --bg-200: #1F1F23; /* Zinc 875 - modals, elevated cards */
-  --bg-300: #27272A; /* Zinc 800 - inputs, separators, tertiary surfaces */
-  --bg-400: #3F3F46; /* Zinc 700 - active states, selection highlights */
+  --bg-100: #121214; /* Deep Zinc - elevated surfaces, cards, dropdowns */
+  --bg-200: #16161A; /* Deep Zinc +1 - modals, elevated cards */
+  --bg-300: #27272A; /* Ash - inputs, separators, tertiary surfaces */
+  --bg-400: #2A1B3D; /* Deep Purple - hover overlays, active surfaces */
   /* Text */
   --text-100: #FFFFFF;
   --text-200: #FFFFFF;
-  --text-300: #E4E4E7; /* Zinc 300 - secondary text */
-  --text-400: #A1A1AA; /* Zinc 400 - placeholder, inactive, hints */
-  --text-500: #71717A; /* Zinc 500 - disabled, muted metadata */
-  /* ─── LOGO GOLD — Neutralized to depth zinc per monochrome spec ─── */
-  --logo-gold: #E4E4E7;
-  /* Primary Brand */
-  --primary: #FFFFFF;
-  --primary-light: #FFFFFF;
-  --primary-dark: #000000;
-  --primary-hover: #18181B; /* brightness shift instead of color shift */
-  --primary-soft: rgba(255,255,255,0.08);
-  --primary-glow: 0 0 24px rgba(255,255,255,0.18);
-  /* Secondary */
-  --secondary: #E4E4E7;
-  --secondary-hover: #18181B;
-  --secondary-soft: rgba(255,255,255,0.06);
-  --secondary-glow: 0 0 20px rgba(255,255,255,0.12);
+  --text-300: #A1A1AA; /* Ash Grey - secondary text */
+  --text-400: #A1A1AA; /* Ash Grey - placeholder, inactive, hints */
+  --text-500: #71717A; /* Muted Ash - disabled, muted metadata */
+  /* Logo gold restored to true metallic gold */
+  --logo-gold: #D4AF37;
+  /* Primary Brand - Metallic Gold for luxury actions */
+  --primary: #D4AF37;
+  --primary-light: #E5C76B;
+  --primary-dark: #B08D20;
+  --primary-hover: #E5C76B; /* gold brightness lift on hover */
+  --primary-soft: rgba(212,175,55,0.15);
+  --primary-glow: 0 0 24px rgba(212,175,55,0.35);
+  /* Secondary - Deep Purple overlays */
+  --secondary: #A1A1AA;
+  --secondary-hover: #2A1B3D;
+  --secondary-soft: rgba(42,27,61,0.6);
+  --secondary-glow: 0 0 20px rgba(42,27,61,0.8);
   /* Accent */
-  --accent-gold: #E4E4E7;
-  --accent: #E4E4E7;
+  --accent-gold: #D4AF37;
+  --accent: #A1A1AA;
   --accent-rgb: 161, 161, 170;
-  --accent-soft: rgba(255,255,255,0.08);
-  /* Functional - muted semantic feedback with distinct iconography */
-  --success: #71717A; /* muted zinc; pair with check iconography */
-  --error: #A1A1AA; /* muted zinc; pair with X iconography */
-  --warning: #A1A1AA; /* muted zinc; pair with alert iconography */
-  --info: #E4E4E7;
-  /* Borders - Zinc structural visibility */
+  --accent-soft: rgba(161,161,170,0.12);
+  /* Functional - urgency hierarchy */
+  --success: #16A34A; /* muted green, success states */
+  --error: #DC2626; /* Crimson - error/delete/urgency ONLY */
+  --warning: #D97706; /* muted amber - low stock / caution */
+  --info: #A1A1AA;
+  /* Borders - Ash structural visibility */
   --border: #27272A;
   --border-hover: #3F3F46;
-  --border-active: #A1A1AA;
-  /* Gradients - Monochrome depth sweep */
-  --grad-brand: linear-gradient(135deg, #000000 0%, #27272A 35%, #3F3F46 65%, #18181B 100%);
-  --grad-brand-soft: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
-  --grad-dark: linear-gradient(180deg, #000000 0%, #18181B 100%);
+  --border-active: #D4AF37; /* gold marks active focus */
+  /* Gradients - Black/Purple ambient with Gold luxury sweep */
+  --grad-brand: linear-gradient(135deg, #D4AF37 0%, #B08D20 45%, #E5C76B 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(212,175,55,0.12) 0%, rgba(42,27,61,0.4) 100%);
+  --grad-dark: linear-gradient(180deg, #000000 0%, #121214 100%);
   --grad-card: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.92) 100%);
-  --grad-gold-shimmer: linear-gradient(90deg, #000000 0%, #3F3F46 40%, #A1A1AA 60%, #000000 100%);
+  --grad-gold-shimmer: linear-gradient(90deg, #B08D20 0%, #E5C76B 40%, #D4AF37 60%, #B08D20 100%);
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.6);
   --shadow-md: 0 4px 20px rgba(0,0,0,0.7);
   --shadow-lg: 0 8px 40px rgba(0,0,0,0.8);
   --shadow-card: 0 2px 12px rgba(0,0,0,0.5);
-  --shadow-gold: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-gold: 0 4px 24px rgba(212,175,55,0.3);
   /* Radii */
   --radius-sm: 6px;
   --radius-md: 12px;
@@ -210,12 +210,12 @@ input, textarea, select, button { font-family: inherit; }
 
 .btn-primary {
   background: var(--grad-brand);
-  color: #FFFFFF;
+  color: #000000;
   box-shadow: var(--primary-glow);
 }
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 0 28px rgba(0,0,0,0.5);
+  box-shadow: 0 0 28px rgba(212,175,55,0.5);
 }
 .btn-primary:active { transform: translateY(0); }
 
@@ -225,7 +225,7 @@ input, textarea, select, button { font-family: inherit; }
   border: 1px solid var(--border);
 }
 .btn-secondary:hover {
-  background: var(--bg-400);
+  background: var(--bg-400); /* deep purple hover overlay */
   border-color: var(--border-hover);
 }
 
@@ -235,7 +235,7 @@ input, textarea, select, button { font-family: inherit; }
   border: 1px solid var(--border);
 }
 .btn-ghost:hover {
-  background: var(--bg-300);
+  background: var(--bg-400); /* deep purple hover overlay */
   color: var(--text-100);
 }
 
@@ -275,19 +275,19 @@ input, textarea, select, button { font-family: inherit; }
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
-.badge-brand { background: var(--primary-soft); color: var(--primary); border: 1px solid #3F3F46; }
-.badge-gold { background: var(--secondary-soft); color: var(--secondary); border: 1px solid #27272A; }
-.badge-teal { background: var(--accent-soft); color: var(--accent); border: 1px solid #27272A; }
-.badge-success { background: rgba(255,255,255,0.1); color: var(--success); border: 1px solid #27272A; }
-.badge-error { background: rgba(255,255,255,0.06); color: #FFFFFF; border: 1px solid #3F3F46; }
+.badge-brand { background: rgba(212,175,55,0.12); color: #D4AF37; border: 1px solid rgba(212,175,55,0.35); }
+.badge-gold { background: rgba(212,175,55,0.12); color: #D4AF37; border: 1px solid rgba(212,175,55,0.35); }
+.badge-teal { background: rgba(161,161,170,0.12); color: #A1A1AA; border: 1px solid #27272A; }
+.badge-success { background: rgba(22,163,74,0.15); color: #4ADE80; border: 1px solid rgba(22,163,74,0.4); }
+.badge-error { background: rgba(220,38,38,0.15); color: #F87171; border: 1px solid rgba(220,38,38,0.4); }
 .badge-neutral { background: var(--bg-300); color: var(--text-300); border: 1px solid var(--border); }
-.badge-flash { background: var(--grad-brand); color: #FFFFFF; }
+.badge-flash { background: #DC2626; color: #FFFFFF; } /* Crimson - urgency sale badges ONLY */
 
 /* ============================================
    FORM UTILITIES
    ============================================ */
 .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
-.form-label { font-size: 0.85rem; font-weight: 600; color: var(--text-200); }
+.form-label { font-size: 0.85rem; font-weight: 600; color: var(--text-300); }
 
 .form-input {
   width: 100%;
@@ -301,8 +301,8 @@ input, textarea, select, button { font-family: inherit; }
 }
 .form-input:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0,0,0,0.15);
+  border-color: var(--primary); /* gold focus */
+  box-shadow: 0 0 0 3px rgba(212,175,55,0.25);
 }
 .form-input::placeholder { color: var(--text-400); }
 
@@ -320,7 +320,7 @@ input, textarea, select, button { font-family: inherit; }
   background-repeat: no-repeat;
   background-position: right 1rem center;
 }
-.form-select:focus { outline: none; border-color: #A1A1AA; box-shadow: 0 0 0 2px #000000, 0 0 0 4px #FFFFFF; }
+.form-select:focus { outline: none; border-color: #D4AF37; box-shadow: 0 0 0 2px #000000, 0 0 0 4px rgba(212,175,55,0.5); }
 
 /* ============================================
    TEXT UTILITIES
@@ -383,7 +383,7 @@ input, textarea, select, button { font-family: inherit; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-100); }
 ::-webkit-scrollbar-thumb { background: var(--bg-400); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-400); }
+::-webkit-scrollbar-thumb:hover { background: #A1A1AA; }
 
 /* ============================================
    DIVIDER
@@ -458,7 +458,7 @@ pre { max-width: 100%; overflow-x: auto; }
    STAR RATING
    ============================================ */
 .stars { display: flex; gap: 2px; }
-.star-filled { color: #FFFFFF; }
+.star-filled { color: #D4AF37; }
 .star-empty { color: #A1A1AA; }
 
 /* ============================================

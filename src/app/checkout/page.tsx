@@ -650,7 +650,7 @@ function CheckoutContent() {
               <h2 className={styles.sectionTitle}><CreditCard size={18} /> Payment Information</h2>
               
               {hasManual ? (
-                <div style={{ marginBottom: '1.5rem', padding: '1.25rem', background: '#18181B', borderRadius: 12, border: '1px dashed #27272A' }}>
+                <div style={{ marginBottom: '1.5rem', padding: '1.25rem', background: '#121214', borderRadius: 12, border: '1px dashed #27272A' }}>
                   <h3 style={{ fontSize: '1rem', color: '#FFFFFF', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <ShieldCheck size={18} /> Manual Bank Transfer Required
                   </h3>
@@ -708,7 +708,7 @@ function CheckoutContent() {
                       </div>
                     )}
                     {senderAccount && (
-                      <div style={{ padding: '0.75rem', background: '#1F1F23', border: '1px solid #3F3F46', borderRadius: '8px', fontSize: '0.85rem' }}>
+                      <div style={{ padding: '0.75rem', background: '#121214', border: '1px solid #3F3F46', borderRadius: '8px', fontSize: '0.85rem' }}>
                         <span style={{ opacity: 0.7, display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '0.15rem', color: '#FFFFFF' }}>Verified Account Name</span>
                         <strong style={{ color: '#FFFFFF' }}>{senderAccount}</strong>
                       </div>

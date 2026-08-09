@@ -82,7 +82,7 @@ export default function ResetPasswordPage() {
         </div>
 
         {errorMsg && (
-          <div style={{ padding: '0.75rem', background: '#18181B', color: '#FFFFFF', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.85rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <div style={{ padding: '0.75rem', background: '#121214', color: '#FFFFFF', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.85rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <AlertCircle size={16} />
             {errorMsg}
           </div>

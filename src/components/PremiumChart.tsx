@@ -415,8 +415,8 @@ export default function PremiumChart({
                     dataKey="time"
                     stroke="#000000"
                     tick={{ fill: '#000000', fontSize: 10, fontFamily: 'monospace' }}
-                    tickLine={{ stroke: '#1F1F23' }}
-                    axisLine={{ stroke: '#18181B' }}
+                    tickLine={{ stroke: '#121214' }}
+                    axisLine={{ stroke: '#121214' }}
                     minTickGap={50}
                   />
 
@@ -425,15 +425,15 @@ export default function PremiumChart({
                     tickCount={6}
                     stroke="#000000"
                     tick={{ fill: '#000000', fontSize: 10, fontFamily: 'monospace' }}
-                    tickLine={{ stroke: '#1F1F23' }}
-                    axisLine={{ stroke: '#18181B' }}
+                    tickLine={{ stroke: '#121214' }}
+                    axisLine={{ stroke: '#121214' }}
                     tickFormatter={(v: number) => yFmt(v, valuePrefix)}
                     width={72}
                   />
 
                   <Tooltip
                     content={<CustomTooltip valuePrefix={valuePrefix} valueSuffix={valueSuffix} keys={multiLineConfig.keys} />}
-                    cursor={{ stroke: '#1F1F23', strokeWidth: 1, strokeDasharray: '4 4' }}
+                    cursor={{ stroke: '#121214', strokeWidth: 1, strokeDasharray: '4 4' }}
                   />
                   <Legend wrapperStyle={{ fontSize: '10px', fontFamily: 'monospace', paddingTop: '10px' }} />
 

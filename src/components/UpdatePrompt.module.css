@@ -30,7 +30,7 @@
   position: absolute;
   top: 1.25rem;
   right: 1.25rem;
-  background: #1F1F23;
+  background: #121214;
   border: none;
   border-radius: 50%;
   width: 36px;
@@ -44,7 +44,7 @@
 }
 
 .closeBtn:hover {
-  background: #1F1F23;
+  background: #121214;
   color: #FFFFFF;
 }
 
@@ -75,7 +75,7 @@
 .badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;
-  background: #1F1F23;
+  background: #121214;
   color: var(--primary);
   border-radius: 99px;
   font-size: 0.75rem;
@@ -86,7 +86,7 @@
 }
 
 .infoBox {
-  background: #1F1F23;
+  background: #121214;
   border: 1px solid #3F3F46;
   border-radius: 12px;
   padding: 1rem;
@@ -181,7 +181,7 @@
 }
 
 .laterBtn:hover {
-  background: #1F1F23;
+  background: #121214;
   color: #FFFFFF;
 }
 

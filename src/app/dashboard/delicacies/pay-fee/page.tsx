@@ -91,14 +91,14 @@ export default function PayFeePage() {
         
         <div className="card" style={{ padding: '3rem 2rem', textAlign: 'center' }}>
           <div style={{ marginBottom: '2rem' }}>
-            <div style={{ width: '80px', height: '80px', background: '#1F1F23', color: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+            <div style={{ width: '80px', height: '80px', background: '#121214', color: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
               <ShieldCheck size={40} />
             </div>
             <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Account Approved!</h1>
             <p style={{ color: 'var(--text-300)' }}>Your brand <strong>{brand.name}</strong> has been verified. To activate your store and start selling, a one-time activation fee is required.</p>
           </div>
 
-          <div style={{ background: '#18181B', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', border: '1px solid #27272A' }}>
+          <div style={{ background: '#121214', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', border: '1px solid #27272A' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
               <span>Activation Fee {brand.university_id ? '(University Vendor)' : '(General Nationwide Vendor)'}</span>
               <span style={{ fontWeight: 600 }}>₦{brand.university_id ? '2,000' : '15,000'}.00</span>

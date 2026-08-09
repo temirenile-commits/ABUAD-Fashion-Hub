@@ -63,12 +63,12 @@ function SuccessContent() {
     return (
       <div className={`container ${styles.page}`}>
         <div className={`${styles.card} anim-fade-up`}>
-          <div className={styles.iconWrap} style={{ background: '#1F1F23', color: '#FFFFFF' }}>
+          <div className={styles.iconWrap} style={{ background: '#121214', color: '#FFFFFF' }}>
             <CheckCircle size={64} style={{ color: '#FFFFFF' }} />
           </div>
           
           <h1 className={styles.title} style={{ color: '#FFFFFF' }}>Transfer Details Received!</h1>
-          <div className={styles.refBadge} style={{ background: '#1F1F23', color: '#FFFFFF' }}>REF: {ref || 'MANUAL-PENDING'}</div>
+          <div className={styles.refBadge} style={{ background: '#121214', color: '#FFFFFF' }}>REF: {ref || 'MANUAL-PENDING'}</div>
           
           <p className={styles.subtitle}>
             Your payment receipt has been submitted to the Super Admin for manual verification. 
@@ -121,7 +121,7 @@ function SuccessContent() {
     return (
       <div className={`container ${styles.page}`}>
         <div className={`${styles.card} anim-fade-up`}>
-          <div className={styles.iconWrap} style={{ background: '#18181B', color: '#FFFFFF' }}>
+          <div className={styles.iconWrap} style={{ background: '#121214', color: '#FFFFFF' }}>
             <Lock size={64} />
           </div>
           <h1 className={styles.title} style={{ color: '#000000' }}>Payment Status Pending</h1>

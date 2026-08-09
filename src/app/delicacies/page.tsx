@@ -243,11 +243,11 @@ export default function DelicaciesPage() {
               className={styles.searchInput}
             />
             {search.trim() && matchingVendors.length > 0 && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#1F1F23', borderRadius: '8px', marginTop: '4px', padding: '8px', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#121214', borderRadius: '8px', marginTop: '4px', padding: '8px', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                 <div style={{ fontSize: '0.75rem', color: '#000000', marginBottom: '4px', padding: '0 8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Chefs matching "{search}"</div>
                 {matchingVendors.map(v => (
                   <Link key={v.id} href={`/vendor/${v.id}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', textDecoration: 'none', color: '#000000', borderRadius: '4px' }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#1F1F23', overflow: 'hidden' }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#121214', overflow: 'hidden' }}>
                       {v.logo_url ? <img src={v.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '10px' }}>{v.name[0]}</span>}
                     </div>
                     <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{v.name}</span>

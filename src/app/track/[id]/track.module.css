@@ -126,7 +126,7 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.3rem 0.75rem;
-  background: #1F1F23;
+  background: #121214;
   border: 1px solid #3F3F46;
   border-radius: 999px;
   font-size: 0.65rem;
@@ -141,7 +141,7 @@
 }
 
 @keyframes pillFlash {
-  0%, 100% { background: #1F1F23; }
+  0%, 100% { background: #121214; }
   50%       { background: #27272A; }
 }
 
@@ -420,7 +420,7 @@
   gap: 0.75rem;
   align-items: flex-start;
   padding: 1rem;
-  background: #1F1F23;
+  background: #121214;
   border: 1px solid #3F3F46;
   border-radius: 12px;
   font-size: 0.8rem;

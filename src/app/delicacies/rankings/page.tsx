@@ -18,8 +18,8 @@ interface RankEntry {
 }
 
 const BADGE_CONFIG: Record<string, { emoji: string; color: string; bg: string }> = {
-  gold:   { emoji: '🥇', color: '#FFFFFF', bg: '#1F1F23' },
-  silver: { emoji: '🥈', color: '#FFFFFF', bg: '#1F1F23' },
+  gold:   { emoji: '🥇', color: '#FFFFFF', bg: '#121214' },
+  silver: { emoji: '🥈', color: '#FFFFFF', bg: '#121214' },
   bronze: { emoji: '🥉', color: '#000000', bg: 'rgba(0,0,0,0.15)' },
 };
 
@@ -85,7 +85,7 @@ export default function DelicaciesRankingsPage() {
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{
-                width: 64, height: 64, borderRadius: 16, background: '#1F1F23',
+                width: 64, height: 64, borderRadius: 16, background: '#121214',
                 display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
                 <Trophy size={36} style={{ color: '#FFFFFF' }} />

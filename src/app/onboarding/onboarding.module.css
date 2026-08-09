@@ -55,7 +55,7 @@
 }
 
 .stepDone {
-  background: #1F1F23;
+  background: #121214;
   border-color: var(--success);
   color: var(--success);
 }

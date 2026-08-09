@@ -751,7 +751,7 @@ export default function AdminDashboard() {
         {loading ? <div className={styles.loadingState}><Loader2 size={32} className="spin" /></div> : (
           <div className={styles.content}>
             {error && (
-              <div style={{ background: '#1F1F23', border: '1px solid #27272A', padding: '1rem', borderRadius: '8px', color: '#000000', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ background: '#121214', border: '1px solid #27272A', padding: '1rem', borderRadius: '8px', color: '#000000', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <AlertTriangle size={20} />
                 <div>
                   <div style={{ fontWeight: 700 }}>System Error</div>
@@ -763,7 +763,7 @@ export default function AdminDashboard() {
               <>
                 {pendingVendors.length > 0 && (
                   <div style={{
-                    background: '#1F1F23',
+                    background: '#121214',
                     border: '1px solid #A1A1AA',
                     borderRadius: '12px',
                     padding: '1.25rem',
@@ -799,7 +799,7 @@ export default function AdminDashboard() {
                     </div>
                     <button 
                       className="btn btn-sm btn-warning"
-                      style={{ background: '#1F1F23', borderColor: '#27272A', color: '#000000', fontWeight: 600 }}
+                      style={{ background: '#121214', borderColor: '#27272A', color: '#000000', fontWeight: 600 }}
                       onClick={() => setActiveTab('vendors')}
                     >
                       Review Now
@@ -1014,7 +1014,7 @@ export default function AdminDashboard() {
                   >
                     Pending Transfers
                     {orders.filter(o => o.payment_system === 'manual' && o.status === 'pending' && o.manual_payment_status === 'pending').length > 0 && (
-                      <span className={styles.badgeCount} style={{ background: '#1F1F23', color: '#000000', marginLeft: '6px', fontSize: '0.65rem' }}>
+                      <span className={styles.badgeCount} style={{ background: '#121214', color: '#000000', marginLeft: '6px', fontSize: '0.65rem' }}>
                         {orders.filter(o => o.payment_system === 'manual' && o.status === 'pending' && o.manual_payment_status === 'pending').length}
                       </span>
                     )}
@@ -1125,7 +1125,7 @@ export default function AdminDashboard() {
                                 </button>
                                 <button 
                                   className="btn btn-primary" 
-                                  style={{ background: '#1F1F23', borderColor: '#27272A', height: '38px', fontSize: '0.85rem', color: '#000000', fontWeight: 700 }}
+                                  style={{ background: '#121214', borderColor: '#27272A', height: '38px', fontSize: '0.85rem', color: '#000000', fontWeight: 700 }}
                                   disabled={!!actionLoading}
                                   onClick={async () => {
                                     if (!confirm(`Are you absolutely sure you want to approve this GTB manual transfer of ₦${o.total_amount.toLocaleString()}? This will notify the kitchen to start cooking.`)) return;
@@ -1211,7 +1211,7 @@ export default function AdminDashboard() {
                                 </td>
                                 <td>
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <span className={`badge`} style={{ width: 'fit-content', textTransform: 'uppercase', background: o.manual_payment_status === 'approved' ? '#1F1F23' : 'rgba(0,0,0,0.1)', color: o.manual_payment_status === 'approved' ? '#FFFFFF' : '#000000' }}>
+                                    <span className={`badge`} style={{ width: 'fit-content', textTransform: 'uppercase', background: o.manual_payment_status === 'approved' ? '#121214' : 'rgba(0,0,0,0.1)', color: o.manual_payment_status === 'approved' ? '#FFFFFF' : '#000000' }}>
                                       {o.manual_payment_status === 'approved' ? '✓ Verified' : '✗ Rejected'}
                                     </span>
                                     {o.manual_payment_status === 'rejected' && o.manual_payment_details?.rejection_reason && (
@@ -1259,7 +1259,7 @@ export default function AdminDashboard() {
                         <td>
                           {v.universities ? (
                             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span className="badge badge-primary" style={{ background: '#18181B', color: '#FFFFFF', width: 'fit-content' }}>🎓 {v.universities.abbreviation}</span>
+                              <span className="badge badge-primary" style={{ background: '#121214', color: '#FFFFFF', width: 'fit-content' }}>🎓 {v.universities.abbreviation}</span>
                               <span className={styles.subText} style={{ fontSize: '0.65rem' }}>{v.universities.name}</span>
                             </div>
                           ) : (
@@ -1299,7 +1299,7 @@ export default function AdminDashboard() {
                                 🛍️ Switch to General
                               </button>
                             )}
-                            <button className="btn btn-ghost btn-sm" style={{ color: '#000000' }} onClick={() => { if(confirm('Suspend this vendor?')) adminAction('suspend_vendor', { brandId: v.id }) }} title="Suspend Vendor"><Trash2 size={14} /></button>
+                            <button className="btn btn-ghost btn-sm" style={{ color: '#DC2626' }} onClick={() => { if(confirm('Suspend this vendor?')) adminAction('suspend_vendor', { brandId: v.id }) }} title="Suspend Vendor"><Trash2 size={14} /></button>
                           </div>
                         </td>
                       </tr>
@@ -1350,14 +1350,14 @@ export default function AdminDashboard() {
                                 <td>
                                   {v.universities ? (
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                      <span className="badge badge-primary" style={{ background: '#18181B', color: '#FFFFFF', width: 'fit-content' }}>🎓 {v.universities.abbreviation}</span>
+                                      <span className="badge badge-primary" style={{ background: '#121214', color: '#FFFFFF', width: 'fit-content' }}>🎓 {v.universities.abbreviation}</span>
                                     </div>
                                   ) : (
                                     <span className={styles.subText}>General Marketplace</span>
                                   )}
                                 </td>
                                 <td>
-                                  <span className="badge badge-verified" style={{ background: '#18181B', color: '#FFFFFF', fontWeight: 600 }}>
+                                  <span className="badge badge-verified" style={{ background: '#121214', color: '#FFFFFF', fontWeight: 600 }}>
                                     {vendorOrders.length} {vendorOrders.length === 1 ? 'Order' : 'Orders'}
                                   </span>
                                 </td>
@@ -1584,7 +1584,7 @@ export default function AdminDashboard() {
                               <div className={styles.actionRow} style={{ gap: '0.5rem' }}>
                                 <button 
                                   className="btn btn-xs" 
-                                  style={{ background: '#1F1F23', color: '#000000', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                                  style={{ background: '#121214', color: '#000000', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}
                                   onClick={() => { if(confirm('Restore this user account?')) adminAction('restore_user', { userId: u.id }) }}
                                 >
                                   Restore
@@ -1721,7 +1721,7 @@ export default function AdminDashboard() {
                         </td>
                         <td>₦{Number(p.price).toLocaleString()}</td>
                         <td>
-                          <span className={styles.badge} style={{ background: p.visibility_type === 'global' ? 'var(--primary-soft)' : '#1F1F23', color: p.visibility_type === 'global' ? 'var(--primary)' : 'var(--text-100)' }}>
+                          <span className={styles.badge} style={{ background: p.visibility_type === 'global' ? 'var(--primary-soft)' : '#121214', color: p.visibility_type === 'global' ? 'var(--primary)' : 'var(--text-100)' }}>
                             {p.visibility_type === 'global' ? '🌍 Global' : '🎓 Campus'}
                           </span>
                         </td>
@@ -1742,7 +1742,7 @@ export default function AdminDashboard() {
                           )}
                         </td>
                         <td>
-                          <button className="btn btn-ghost btn-sm" style={{ color: '#000000' }} onClick={() => confirm('Delete this product?') && adminAction('delete_product', { productId: p.id })}>
+                          <button className="btn btn-ghost btn-sm" style={{ color: '#DC2626' }} onClick={() => confirm('Delete this product?') && adminAction('delete_product', { productId: p.id })}>
                             <Trash2 size={14} />
                           </button>
                         </td>
@@ -1854,7 +1854,7 @@ export default function AdminDashboard() {
                                 <CreditCard size={14} style={{ marginRight: '8px' }} /> Authorize Funding Source
                              </button>
                          ) : (
-                             <div style={{ padding: '0.5rem', background: '#1F1F23', color: '#FFFFFF', borderRadius: '4px', textAlign: 'center', fontSize: '0.8rem', fontWeight: 600 }}>
+                             <div style={{ padding: '0.5rem', background: '#121214', color: '#FFFFFF', borderRadius: '4px', textAlign: 'center', fontSize: '0.8rem', fontWeight: 600 }}>
                                 <ShieldCheck size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'text-bottom' }} /> Funding Authorized ({((promoForm as any).funding_reference as string).substring(0, 8)}...)
                              </div>
                          )}
@@ -1887,7 +1887,7 @@ export default function AdminDashboard() {
                             {(pc as any).min_purchase_amount > 0 && <div style={{ fontSize: '0.7rem', color: 'var(--text-400)', marginTop: '2px' }}>Min Spend: ₦{(pc as any).min_purchase_amount}</div>}
                             {pc.products && <div style={{ fontSize: '0.7rem', color: 'var(--primary)', marginTop: '2px' }}>Target Product: {pc.products.title.substring(0, 20)}...</div>}
                           </div>
-                          <button className="btn btn-ghost btn-sm" style={{ color: '#000000', padding: '4px' }} onClick={() => confirm('Delete this code?') && adminAction('delete_promo_code', { codeId: pc.id })}><Trash2 size={14} /></button>
+                          <button className="btn btn-ghost btn-sm" style={{ color: '#DC2626', padding: '4px' }} onClick={() => confirm('Delete this code?') && adminAction('delete_promo_code', { codeId: pc.id })}><Trash2 size={14} /></button>
                         </div>
                       </div>
                     ))}
@@ -1914,7 +1914,7 @@ export default function AdminDashboard() {
                             {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at!) > new Date()).map(v => (
                                <tr key={v.id}>
                                   <td>{v.name}</td>
-                                  <td>{new Date(v.billboard_boost_expires_at!).toLocaleDateString()}</td><td><button className="btn btn-ghost btn-sm" style={{ color: "#000000" }} onClick={() => confirm("Remove from billboard?") && adminAction("remove_billboard", { brandId: v.id })}><Trash2 size={14} /></button></td>
+                                  <td>{new Date(v.billboard_boost_expires_at!).toLocaleDateString()}</td><td><button className="btn btn-ghost btn-sm" style={{ color: "#DC2626" }} onClick={() => confirm("Remove from billboard?") && adminAction("remove_billboard", { brandId: v.id })}><Trash2 size={14} /></button></td>
                                </tr>
                             ))}
                             {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at!) > new Date()).length === 0 && (
@@ -1932,7 +1932,7 @@ export default function AdminDashboard() {
                                <tr key={p.id}>
                                   <td>{p.title}</td>
                                   <td style={{ color: 'var(--primary)', fontWeight: 700 }}>₦{Number(p.flash_sale_price || p.price).toLocaleString()}</td>
-                                  <td>{p.brands?.name}</td><td><button className="btn btn-ghost btn-sm" style={{ color: "#000000" }} onClick={() => confirm("End flash sale?") && adminAction("remove_flash_sale", { productId: p.id })}><Trash2 size={14} /></button></td>
+                                  <td>{p.brands?.name}</td><td><button className="btn btn-ghost btn-sm" style={{ color: "#DC2626" }} onClick={() => confirm("End flash sale?") && adminAction("remove_flash_sale", { productId: p.id })}><Trash2 size={14} /></button></td>
                                </tr>
                             ))}
                             {products.filter(p => p.is_flash_sale).length === 0 && (
@@ -1943,7 +1943,7 @@ export default function AdminDashboard() {
                    </div>
                  </div>
 
-                 <div style={{ marginTop: '3rem', padding: '2rem', background: '#18181B', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                 <div style={{ marginTop: '3rem', padding: '2rem', background: '#121214', borderRadius: '12px', border: '1px solid var(--border)' }}>
                     <h3>➕ Add Manual Billboard</h3>
                     <p className={styles.subText} style={{ marginBottom: '1.5rem' }}>Upload a custom promotional banner for the homepage slider.</p>
                     
@@ -2083,7 +2083,7 @@ export default function AdminDashboard() {
                                   <ShoppingBag size={14} />
                                 </button>
                               )}
-                              <button className="btn btn-ghost btn-sm" style={{ color: '#000000', gap: '4px' }} onClick={() => confirm('Delete this section?') && adminAction('delete_homepage_section', { id: sec.id })}>
+                              <button className="btn btn-ghost btn-sm" style={{ color: '#DC2626', gap: '4px' }} onClick={() => confirm('Delete this section?') && adminAction('delete_homepage_section', { id: sec.id })}>
                                 <Trash2 size={14} /> <span>Delete</span>
                               </button>
                             </div>
@@ -2314,7 +2314,7 @@ export default function AdminDashboard() {
                   </tbody>
                 </table></div>
 
-                <div style={{ marginTop: '3rem', padding: '2rem', background: '#18181B', borderRadius: '12px', border: '1px solid var(--border)' }} id="tour-admin-delivery">
+                <div style={{ marginTop: '3rem', padding: '2rem', background: '#121214', borderRadius: '12px', border: '1px solid var(--border)' }} id="tour-admin-delivery">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                     <Activity size={20} color="var(--primary)" />
                     <h3 style={{ margin: 0 }}>Logistics & Delivery Configuration</h3>
@@ -2855,7 +2855,7 @@ export default function AdminDashboard() {
                                </td>
                                <td className={styles.subText}>{brand?.universities?.abbreviation || 'General'}</td>
                                <td>
-                                 <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '6px', background: rec.product_section === 'delicacies' ? '#1F1F23' : 'rgba(0,0,0,0.1)', color: rec.product_section === 'delicacies' ? '#FFFFFF' : '#000000', fontWeight: 700 }}>
+                                 <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '6px', background: rec.product_section === 'delicacies' ? '#121214' : 'rgba(0,0,0,0.1)', color: rec.product_section === 'delicacies' ? '#FFFFFF' : '#000000', fontWeight: 700 }}>
                                    {rec.product_section === 'delicacies' ? '🍴 Delicacies' : '👗 Fashion'}
                                  </span>
                                </td>
@@ -2864,7 +2864,7 @@ export default function AdminDashboard() {
                                <td style={{ color: '#FFFFFF', fontWeight: 800 }}>₦{Number(rec.net_payout).toLocaleString()}</td>
                                <td>
                                  <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700,
-                                   background: rec.status === 'confirmed' ? '#1F1F23' : rec.status === 'transferred' ? 'rgba(0,0,0,0.1)' : '#1F1F23',
+                                   background: rec.status === 'confirmed' ? '#121214' : rec.status === 'transferred' ? 'rgba(0,0,0,0.1)' : '#121214',
                                    color: rec.status === 'confirmed' ? '#FFFFFF' : rec.status === 'transferred' ? '#000000' : '#FFFFFF'
                                  }}>
                                    {rec.status.toUpperCase()}
@@ -2889,7 +2889,7 @@ export default function AdminDashboard() {
                                      <button
                                        className="btn btn-sm"
                                        disabled={confirmingRecord === rec.id}
-                                       style={{ fontSize: '0.7rem', background: '#1F1F23', color: '#000000', border: 'none' }}
+                                       style={{ fontSize: '0.7rem', background: '#121214', color: '#000000', border: 'none' }}
                                        onClick={async () => {
                                          setConfirmingRecord(rec.id);
                                          await adminAction('confirm_payout_record', { recordId: rec.id });
@@ -3844,7 +3844,7 @@ export default function AdminDashboard() {
                                       <strong style={{ fontSize: '0.85rem' }}>{m.member?.name}</strong>
                                       <span className="badge badge-primary" style={{ fontSize: '0.65rem', width: 'fit-content', marginTop: '4px' }}>{m.role || 'Campus Staff'}</span>
                                     </div>
-                                    <Trash2 size={14} style={{ color: '#000000', cursor: 'pointer' }} onClick={async () => {
+                                    <Trash2 size={14} style={{ color: '#DC2626', cursor: 'pointer' }} onClick={async () => {
                                       if(!confirm('Remove this member?')) return;
                                       await adminFetch('/api/admin', { method: 'POST', body: JSON.stringify({ action: 'remove_team_member', teamId: m.id }) });
                                       fetchUniData(selectedUniId!);
@@ -3853,7 +3853,7 @@ export default function AdminDashboard() {
                                   </div>
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.5rem' }}>
                                     {m.permissions?.map((p: string) => (
-                                      <span key={p} className="badge badge-ghost" style={{ fontSize: '0.6rem', padding: '0.1rem 0.4rem', background: '#18181B' }}>{p}</span>
+                                      <span key={p} className="badge badge-ghost" style={{ fontSize: '0.6rem', padding: '0.1rem 0.4rem', background: '#121214' }}>{p}</span>
                                     ))}
                                   </div>
                                 </div>
@@ -4033,7 +4033,7 @@ export default function AdminDashboard() {
                             </td>
                             <td style={{ padding: '0.75rem' }}>{cat.sort_order || 0}</td>
                             <td style={{ padding: '0.75rem' }}>
-                              <span className={`badge ${cat.is_active ? 'badge-verified' : 'badge-offline'}`} style={{ background: cat.is_active ? '#1F1F23' : '#18181B', color: cat.is_active ? '#FFFFFF' : '#FFFFFF' }}>
+                              <span className={`badge ${cat.is_active ? 'badge-verified' : 'badge-offline'}`} style={{ background: cat.is_active ? '#121214' : '#121214', color: cat.is_active ? '#FFFFFF' : '#FFFFFF' }}>
                                 {cat.is_active ? 'Active' : 'Inactive'}
                               </span>
                             </td>
@@ -4329,7 +4329,7 @@ export default function AdminDashboard() {
           />
           <button
             onClick={() => setEnlargedImg(null)}
-            style={{ position: 'absolute', top: 24, right: 24, background: '#1F1F23', border: 'none', borderRadius: '50%', padding: 10, cursor: 'pointer', color: '#FFFFFF' }}
+            style={{ position: 'absolute', top: 24, right: 24, background: '#121214', border: 'none', borderRadius: '50%', padding: 10, cursor: 'pointer', color: '#FFFFFF' }}
           >
             <XCircle size={28} />
           </button>

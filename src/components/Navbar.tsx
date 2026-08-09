@@ -230,7 +230,7 @@ export default function Navbar() {
                 )}
                 {(role === 'university_admin' || role === 'admin') && (
                   <Link href="/university-admin" className={styles.moduleItem} style={{ borderLeft: '3px solid #000000', background: 'rgba(0,0,0,0.05)' }}>
-                    <ShieldCheck size={18} style={{ color: '#000000' }} />
+                    <ShieldCheck size={18} style={{ color: '#D4AF37' }} />
                     <span style={{ color: '#000000', fontWeight: 600 }}>University Admin Dashboard</span>
                   </Link>
                 )}

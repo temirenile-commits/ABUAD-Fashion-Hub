@@ -51,8 +51,8 @@ export default function DeliveryInvoicePage() {
   const order = delivery.order;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#1F1F23', padding: '20px', color: '#000000' }}>
-      <div style={{ maxWidth: '600px', margin: '0 auto', background: '#1F1F23', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+    <div style={{ minHeight: '100vh', background: '#121214', padding: '20px', color: '#000000' }}>
+      <div style={{ maxWidth: '600px', margin: '0 auto', background: '#121214', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
         
         {/* Header - Non-Printable */}
         <div style={{ padding: '15px 20px', background: '#000000', color: '#FFFFFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="no-print">
@@ -100,7 +100,7 @@ export default function DeliveryInvoicePage() {
             </div>
           </div>
 
-          <div style={{ background: '#1F1F23', border: '1px solid #27272A', borderRadius: '8px', padding: '20px', marginBottom: '30px' }}>
+          <div style={{ background: '#121214', border: '1px solid #27272A', borderRadius: '8px', padding: '20px', marginBottom: '30px' }}>
             <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#FFFFFF', textTransform: 'uppercase', marginBottom: '12px' }}>Item Details</p>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
@@ -145,7 +145,7 @@ export default function DeliveryInvoicePage() {
           </div>
         </div>
 
-        <div style={{ padding: '20px', background: '#1F1F23', textAlign: 'center', fontSize: '0.7rem', color: '#000000' }}>
+        <div style={{ padding: '20px', background: '#121214', textAlign: 'center', fontSize: '0.7rem', color: '#000000' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginBottom: '5px', color: '#000000' }}>
             <ShieldCheck size={14} color="var(--success)" /> Verified by MasterCart Logistics
           </div>

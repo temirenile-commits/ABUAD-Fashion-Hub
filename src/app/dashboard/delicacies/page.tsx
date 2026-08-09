@@ -1397,7 +1397,7 @@ export default function VendorDashboard() {
               <Link href="/" className={styles.navItem} style={{ marginBottom: '0.5rem', color: 'var(--secondary)' }}>
                 <Home size={18} /> Marketplace Hub
               </Link>
-              <div className={styles.navDivider} style={{ height: '1px', background: '#18181B', marginBottom: '1rem' }} />
+              <div className={styles.navDivider} style={{ height: '1px', background: '#121214', marginBottom: '1rem' }} />
 
               <button className={`${styles.navItem} ${activeTab === 'overview' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('overview')}>
                 <TrendingUp size={18} /> Overview
@@ -1437,19 +1437,19 @@ export default function VendorDashboard() {
               <button className={`${styles.navItem} ${activeTab === 'plans' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('plans')} style={{ color: 'var(--primary)', background: activeTab === 'plans' ? 'var(--primary-soft)' : 'transparent' }}>
                 <Crown size={18} /> Plans & Upgrade
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'ai' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('ai')} style={{ color: '#FFFFFF', background: activeTab === 'ai' ? '#1F1F23' : 'transparent' }}>
+              <button className={`${styles.navItem} ${activeTab === 'ai' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('ai')} style={{ color: '#FFFFFF', background: activeTab === 'ai' ? '#121214' : 'transparent' }}>
                 <Zap size={18} /> AI Assistant
               </button>
 
               {userRole === 'admin' && (
-                <Link href="/admin" className={styles.navItem} style={{ color: 'var(--accent-gold)', marginTop: '0.5rem', background: '#18181B' }}>
+                <Link href="/admin" className={styles.navItem} style={{ color: 'var(--accent-gold)', marginTop: '0.5rem', background: '#121214' }}>
                   <ShieldCheck size={18} /> Admin Control Panel
                 </Link>
               )}
 
-              <div className={styles.navDivider} style={{ height: '1px', background: '#18181B', margin: '1rem 0' }} />
+              <div className={styles.navDivider} style={{ height: '1px', background: '#121214', margin: '1rem 0' }} />
               
-              <div className={styles.navDivider} style={{ height: '1px', background: '#18181B', margin: '1rem 0' }} />
+              <div className={styles.navDivider} style={{ height: '1px', background: '#121214', margin: '1rem 0' }} />
 
               <button
                 className={styles.navItem}
@@ -1662,7 +1662,7 @@ export default function VendorDashboard() {
                     <button onClick={() => setActiveTab('plans')} style={{ color: '#000000', fontWeight: 600, background: 'none', border: 'none', padding: 0, textDecoration: 'underline', cursor: 'pointer' }}>Running Low! Top Up</button>
                   ) : 'Ready for new listings'}
                 </div>
-                <div className={styles.growthBadge} style={{ background: '#1F1F23', color: '#FFFFFF' }}>Real-time</div>
+                <div className={styles.growthBadge} style={{ background: '#121214', color: '#FFFFFF' }}>Real-time</div>
               </div>
             </div>
 
@@ -2018,7 +2018,7 @@ export default function VendorDashboard() {
                   </div>
                   <div className={styles.compactPricingGrid}>
                     {boostRates.map((boost) => (
-                      <div key={boost.id} className={styles.compactPricingCard} style={boost.id === 'billboard' ? { border: '2px solid #27272A', background: '#18181B' } : {}}>
+                      <div key={boost.id} className={styles.compactPricingCard} style={boost.id === 'billboard' ? { border: '2px solid #27272A', background: '#121214' } : {}}>
                         <div className={styles.tierHeader}>
                           {boost.id === 'billboard' ? <Star size={24} color="#FFFFFF" /> : <Zap size={24} color="var(--primary)" />}
                           <div>
@@ -2053,7 +2053,7 @@ export default function VendorDashboard() {
 
                   <form onSubmit={handlePasswordChange} style={{ maxWidth: '400px' }}>
                     {passError && <div style={{ color: '#000000', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(0,0,0,0.1)', padding: '0.5rem', borderRadius: '4px' }}>{passError}</div>}
-                    {passSuccess && <div style={{ color: 'var(--success)', fontSize: '0.8rem', marginBottom: '1rem', background: '#1F1F23', padding: '0.5rem', borderRadius: '4px' }}>Password updated successfully!</div>}
+                    {passSuccess && <div style={{ color: 'var(--success)', fontSize: '0.8rem', marginBottom: '1rem', background: '#121214', padding: '0.5rem', borderRadius: '4px' }}>Password updated successfully!</div>}
                     
                     <div className={styles.inputGroup}>
                       <label>New Password</label>
@@ -2140,13 +2140,13 @@ export default function VendorDashboard() {
                         )}
                         {order.status === 'preorder_paid' && (
                           <div className={styles.statusBox}>
-                            <div style={{ marginBottom: '0.5rem', padding: '0.4rem 0.75rem', background: '#1F1F23', border: '1px solid #A1A1AA', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <div style={{ marginBottom: '0.5rem', padding: '0.4rem 0.75rem', background: '#121214', border: '1px solid #A1A1AA', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                               <Clock size={12} /> Pre-order Received & Secured
                             </div>
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-400)', marginBottom: '0.5rem', margin: '0 0 0.5rem 0' }}>
                               Prepare this order. When it&apos;s ready, tap below to dispatch the delivery agent.
                             </p>
-                            <button className="btn btn-primary btn-sm" style={{ width: '100%', background: '#1F1F23', borderColor: '#27272A' }} onClick={() => updateOrderStatus(order.id, 'ready_for_pickup')}>
+                            <button className="btn btn-primary btn-sm" style={{ width: '100%', background: '#121214', borderColor: '#27272A' }} onClick={() => updateOrderStatus(order.id, 'ready_for_pickup')}>
                               <CheckCircle size={14} /> Mark as Ready for Pickup
                             </button>
                           </div>
@@ -2563,7 +2563,7 @@ export default function VendorDashboard() {
                               style={{
                                 display: 'flex', alignItems: 'center', gap: '6px',
                                 padding: '8px 14px', borderRadius: '10px', cursor: 'pointer',
-                                background: isSelected ? '#1F1F23' : 'var(--bg-200)',
+                                background: isSelected ? '#121214' : 'var(--bg-200)',
                                 border: `1.5px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
                                 fontSize: '0.82rem', fontWeight: 500, transition: 'all 0.2s',
                               }}
@@ -2894,7 +2894,7 @@ export default function VendorDashboard() {
                   <h3 style={{ fontSize: '1.2rem', margin: '0.25rem 0', color: '#FFFFFF' }}>{formatPrice(wallet?.pending_balance || 0)}</h3>
                   <p style={{ fontSize: '0.7rem' }}>Held for 24hrs post-delivery</p>
                 </div>
-                <div style={{ width: '1px', background: '#1F1F23' }}></div>
+                <div style={{ width: '1px', background: '#121214' }}></div>
                 <div>
                   <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Lifetime Earnings</span>
                   <h3 style={{ fontSize: '1.2rem', margin: '0.25rem 0', color: 'var(--primary)' }}>
@@ -3019,12 +3019,12 @@ export default function VendorDashboard() {
               {/* Delicacies Premium Billboard */}
               <div className={styles.promoOption} style={{ 
                 border: '2px solid #27272A', 
-                background: activeDelicaciesBillboard ? '#1F1F23' : 'var(--bg-300)'
+                background: activeDelicaciesBillboard ? '#121214' : 'var(--bg-300)'
               }}>
                 <div className={styles.promoIcon}><UtensilsCrossed size={24} color="#FFFFFF" /></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <h3 style={{ margin: 0 }}>Delicacies Billboard</h3>
-                  <span className="badge badge-primary" style={{ background: '#1F1F23' }}>PREMIUM</span>
+                  <span className="badge badge-primary" style={{ background: '#121214' }}>PREMIUM</span>
                 </div>
                 <p>Featured in the main carousel on the Delicacies Marketplace. Drive massive visibility to your campus eats.</p>
                 
@@ -3053,7 +3053,7 @@ export default function VendorDashboard() {
                     </div>
                     <button 
                       className="btn btn-primary btn-sm" 
-                      style={{ background: '#1F1F23', border: 'none', width: '100%' }}
+                      style={{ background: '#121214', border: 'none', width: '100%' }}
                       onClick={handleBuyDelicaciesBillboard}
                       disabled={buyingDelicaciesBillboard}
                     >
@@ -3157,7 +3157,7 @@ export default function VendorDashboard() {
                         <div key={pc.id} style={{ padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px', marginBottom: '0.5rem' }}>
                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                               <strong>{pc.code}</strong>
-                              <span style={{ color: 'var(--primary)' }}>{pc.type === 'percentage' ? `${pc.value}% off` : `₦${pc.value} off`}</span>
+                              <span style={{ color: '#DC2626', fontWeight: 700 }}>{pc.type === 'percentage' ? `${pc.value}% off` : `₦${pc.value} off`}</span>
                            </div>
                            <div style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginTop: '4px' }}>
                               Uses: {pc.current_uses || 0} / {pc.max_uses}
@@ -3358,7 +3358,7 @@ export default function VendorDashboard() {
         {activeTab === 'ai' && (
           <div style={{ padding: '2rem', maxWidth: 720, margin: '0 auto' }}>
             <div style={{ marginBottom: '2rem' }}>
-              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.4rem' }}>? AI Assistant <span style={{ fontSize: '0.7rem', color: 'var(--primary)', verticalAlign: 'middle', background: '#1F1F23', padding: '2px 8px', borderRadius: '4px' }}>v3.1 LIVE</span></h2>
+              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.4rem' }}>? AI Assistant <span style={{ fontSize: '0.7rem', color: 'var(--primary)', verticalAlign: 'middle', background: '#121214', padding: '2px 8px', borderRadius: '4px' }}>v3.1 LIVE</span></h2>
               <p style={{ color: 'var(--text-400)', fontSize: '0.9rem' }}>Your AI Copilot helps you manage your store, guides customers automatically, and keeps your shop running even when you're offline.</p>
             </div>
 
@@ -3373,7 +3373,7 @@ export default function VendorDashboard() {
                   onClick={() => handleUpdateAiSettings({ ai_enabled: !aiSettings?.ai_enabled })}
                   style={{ width: 52, height: 28, borderRadius: '999px', border: 'none', cursor: 'pointer', transition: 'background 0.3s', background: aiSettings?.ai_enabled ? '#000000' : 'var(--bg-300)', position: 'relative', flexShrink: 0 }}
                 >
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#1F1F23', position: 'absolute', top: 3, transition: 'left 0.3s', left: aiSettings?.ai_enabled ? 26 : 4 }} />
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#121214', position: 'absolute', top: 3, transition: 'left 0.3s', left: aiSettings?.ai_enabled ? 26 : 4 }} />
                 </button>
               </div>
             </div>
@@ -3389,7 +3389,7 @@ export default function VendorDashboard() {
                   onClick={() => handleUpdateAiSettings({ auto_reply_enabled: !aiSettings?.auto_reply_enabled })}
                   style={{ width: 52, height: 28, borderRadius: '999px', border: 'none', cursor: 'pointer', transition: 'background 0.3s', background: aiSettings?.auto_reply_enabled ? '#000000' : 'var(--bg-300)', position: 'relative', flexShrink: 0 }}
                 >
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#1F1F23', position: 'absolute', top: 3, transition: 'left 0.3s', left: aiSettings?.auto_reply_enabled ? 26 : 4 }} />
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#121214', position: 'absolute', top: 3, transition: 'left 0.3s', left: aiSettings?.auto_reply_enabled ? 26 : 4 }} />
                 </button>
               </div>
             </div>
@@ -3488,7 +3488,7 @@ export default function VendorDashboard() {
             ))}
             {copilotLoading && (
               <div style={{ display: 'flex', gap: '4px', padding: '0.5rem' }}>
-                {[0,1,2].map(i => <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#1F1F23', animation: `bounce 1.2s ${i * 0.2}s infinite` }} />)}
+                {[0,1,2].map(i => <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#121214', animation: `bounce 1.2s ${i * 0.2}s infinite` }} />)}
               </div>
             )}
           </div>

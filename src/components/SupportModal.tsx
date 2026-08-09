@@ -110,7 +110,7 @@ export default function SupportModal({ isOpen, onClose }: { isOpen: boolean, onC
                        target="_blank" 
                        rel="noreferrer"
                        className="btn" 
-                       style={{ background: '#1F1F23', color: '#000000', width: '100%', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}
+                       style={{ background: '#121214', color: '#000000', width: '100%', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}
                     >
                        <MessageCircle size={18} /> Chat on WhatsApp
                     </a>
@@ -125,7 +125,7 @@ export default function SupportModal({ isOpen, onClose }: { isOpen: boolean, onC
                  </a>
 
                  {currentIndex < numbers.length - 1 && (
-                    <div style={{ padding: '1rem', background: '#18181B', borderRadius: '8px', border: '1px solid #3F3F46' }}>
+                    <div style={{ padding: '1rem', background: '#121214', borderRadius: '8px', border: '1px solid #3F3F46' }}>
                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#FFFFFF', fontSize: '0.85rem', marginBottom: '0.75rem', justifyContent: 'center' }}>
                           <AlertTriangle size={14} /> Agent unavailable?
                        </div>
