@@ -256,7 +256,7 @@ export default function CustomerDashboard() {
                       <span className={styles.orderId}>Order #{order.id.slice(0, 8).toUpperCase()}</span>
                       <span className={styles.orderDate}>{new Date(order.created_at).toLocaleDateString()}</span>
                     </div>
-                    <div className={`${styles.statusBadge} ${order.payment_system === 'manual' && order.status === 'pending' ? styles.pending_verification : styles[order.status]}`} style={order.payment_system === 'manual' && order.status === 'pending' ? { background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.2)' } : undefined}>
+                    <div className={`${styles.statusBadge} ${order.payment_system === 'manual' && order.status === 'pending' ? styles.pending_verification : styles[order.status]}`} style={order.payment_system === 'manual' && order.status === 'pending' ? { background: '#1F1F23', color: '#FFFFFF', border: '1px solid #3F3F46' } : undefined}>
                        {(order.status === 'paid' || order.status === 'pending') && <Clock size={14} />}
                        {order.status === 'in_transit' && <Truck size={14} />}
                        {order.status === 'delivered' && <CheckCircle size={14} />}
@@ -305,7 +305,7 @@ export default function CustomerDashboard() {
                   </div>
 
                   {order.payment_system === 'manual' && order.status === 'pending' && (
-                    <div style={{ margin: '0 1.5rem 1.rem', background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.3)', padding: '1rem', borderRadius: '12px', marginBottom: '1rem' }}>
+                    <div style={{ margin: '0 1.5rem 1.rem', background: '#18181B', border: '1px dashed #A1A1AA', padding: '1rem', borderRadius: '12px', marginBottom: '1rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#FFFFFF', fontWeight: 600, fontSize: '0.85rem', marginBottom: '4px' }}>
                         <Clock size={16} /> Manual Payment Verification Pending
                       </div>

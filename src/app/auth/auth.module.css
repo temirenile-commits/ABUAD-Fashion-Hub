@@ -80,7 +80,7 @@
 
 .roleActive {
   background: var(--primary-soft);
-  border-color: rgba(0,0,0,0.4);
+  border-color: #A1A1AA;
   color: var(--primary);
 }
 
@@ -178,8 +178,8 @@
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  /* White G so it reads clearly against the gold gradient */
-  filter: grayscale(1) brightness(2);
+  /* Full-color Google G preserved; brightened for dark zinc button */
+  filter: brightness(1.35);
 }
 
 .divText {

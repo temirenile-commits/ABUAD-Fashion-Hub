@@ -64,7 +64,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         {errorMsg && (
-          <div style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.1)', color: '#000000', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
+          <div style={{ padding: '0.75rem', background: '#18181B', color: '#FFFFFF', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
             {errorMsg}
           </div>
         )}

@@ -63,12 +63,12 @@ function SuccessContent() {
     return (
       <div className={`container ${styles.page}`}>
         <div className={`${styles.card} anim-fade-up`}>
-          <div className={styles.iconWrap} style={{ background: 'rgba(255,255,255,0.1)', color: '#FFFFFF' }}>
+          <div className={styles.iconWrap} style={{ background: '#1F1F23', color: '#FFFFFF' }}>
             <CheckCircle size={64} style={{ color: '#FFFFFF' }} />
           </div>
           
           <h1 className={styles.title} style={{ color: '#FFFFFF' }}>Transfer Details Received!</h1>
-          <div className={styles.refBadge} style={{ background: 'rgba(255,255,255,0.15)', color: '#FFFFFF' }}>REF: {ref || 'MANUAL-PENDING'}</div>
+          <div className={styles.refBadge} style={{ background: '#1F1F23', color: '#FFFFFF' }}>REF: {ref || 'MANUAL-PENDING'}</div>
           
           <p className={styles.subtitle}>
             Your payment receipt has been submitted to the Super Admin for manual verification. 
@@ -86,7 +86,7 @@ function SuccessContent() {
           </div>
 
           <div className={styles.actions}>
-            <Link href="/dashboard/customer" className="btn btn-primary btn-lg" style={{ background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%)', borderColor: '#FFFFFF' }}>
+            <Link href="/dashboard/customer" className="btn btn-primary btn-lg" style={{ background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%)', borderColor: '#27272A' }}>
               <Package size={18} /> View My Dashboard
             </Link>
             <Link href="/explore" className="btn btn-ghost">
@@ -121,7 +121,7 @@ function SuccessContent() {
     return (
       <div className={`container ${styles.page}`}>
         <div className={`${styles.card} anim-fade-up`}>
-          <div className={styles.iconWrap} style={{ background: 'rgba(0,0,0,0.1)', color: '#000000' }}>
+          <div className={styles.iconWrap} style={{ background: '#18181B', color: '#FFFFFF' }}>
             <Lock size={64} />
           </div>
           <h1 className={styles.title} style={{ color: '#000000' }}>Payment Status Pending</h1>

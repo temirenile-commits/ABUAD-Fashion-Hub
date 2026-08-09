@@ -101,10 +101,10 @@
   gap: 0.5rem;
 }
 
-.paid { background: rgba(255,255,255,0.1); color: #FFFFFF; }
-.ready { background: rgba(255,255,255,0.1); color: #FFFFFF; }
+.paid { background: #1F1F23; color: #FFFFFF; }
+.ready { background: #1F1F23; color: #FFFFFF; }
 .picked_up, .in_transit { background: rgba(0,0,0,0.1); color: #000000; }
-.delivered, .confirmed, .completed { background: rgba(255,255,255,0.2); color: #FFFFFF; }
+.delivered, .confirmed, .completed { background: #27272A; color: #FFFFFF; }
 
 .orderBody {
   padding: 1.5rem;

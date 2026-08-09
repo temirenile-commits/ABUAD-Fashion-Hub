@@ -1397,7 +1397,7 @@ export default function VendorDashboard() {
               <Link href="/" className={styles.navItem} style={{ marginBottom: '0.5rem', color: 'var(--secondary)' }}>
                 <Home size={18} /> Marketplace Hub
               </Link>
-              <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '1rem' }} />
+              <div className={styles.navDivider} style={{ height: '1px', background: '#18181B', marginBottom: '1rem' }} />
 
               <button className={`${styles.navItem} ${activeTab === 'overview' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('overview')}>
                 <TrendingUp size={18} /> Overview
@@ -1437,19 +1437,19 @@ export default function VendorDashboard() {
               <button className={`${styles.navItem} ${activeTab === 'plans' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('plans')} style={{ color: 'var(--primary)', background: activeTab === 'plans' ? 'var(--primary-soft)' : 'transparent' }}>
                 <Crown size={18} /> Plans & Upgrade
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'ai' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('ai')} style={{ color: '#FFFFFF', background: activeTab === 'ai' ? 'rgba(255,255,255,0.1)' : 'transparent' }}>
+              <button className={`${styles.navItem} ${activeTab === 'ai' ? (isChef ? styles.navActiveChef : styles.navActive) : ''}`} onClick={() => setActiveTab('ai')} style={{ color: '#FFFFFF', background: activeTab === 'ai' ? '#1F1F23' : 'transparent' }}>
                 <Zap size={18} /> AI Assistant
               </button>
 
               {userRole === 'admin' && (
-                <Link href="/admin" className={styles.navItem} style={{ color: 'var(--accent-gold)', marginTop: '0.5rem', background: 'rgba(255,255,255,0.05)' }}>
+                <Link href="/admin" className={styles.navItem} style={{ color: 'var(--accent-gold)', marginTop: '0.5rem', background: '#18181B' }}>
                   <ShieldCheck size={18} /> Admin Control Panel
                 </Link>
               )}
 
-              <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0' }} />
+              <div className={styles.navDivider} style={{ height: '1px', background: '#18181B', margin: '1rem 0' }} />
               
-              <div className={styles.navDivider} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0' }} />
+              <div className={styles.navDivider} style={{ height: '1px', background: '#18181B', margin: '1rem 0' }} />
 
               <button
                 className={styles.navItem}
@@ -1562,7 +1562,7 @@ export default function VendorDashboard() {
             )}
 
             {!isTrialActive && !isSubActive && (
-              <div className={`${styles.escrowBanner} mb-4`} style={{ background: 'rgba(0,0,0,0.1)', borderColor: '#000000', marginBottom: '1.5rem' }}>
+              <div className={`${styles.escrowBanner} mb-4`} style={{ background: 'rgba(0,0,0,0.1)', borderColor: '#27272A', marginBottom: '1.5rem' }}>
                 <AlertTriangle className={styles.escrowIcon} style={{ color: '#000000' }} />
                 <div className={styles.escrowText}>
                   <h4 style={{ color: '#000000' }}>Low Brand Power</h4>
@@ -1662,7 +1662,7 @@ export default function VendorDashboard() {
                     <button onClick={() => setActiveTab('plans')} style={{ color: '#000000', fontWeight: 600, background: 'none', border: 'none', padding: 0, textDecoration: 'underline', cursor: 'pointer' }}>Running Low! Top Up</button>
                   ) : 'Ready for new listings'}
                 </div>
-                <div className={styles.growthBadge} style={{ background: 'rgba(255,255,255,0.1)', color: '#FFFFFF' }}>Real-time</div>
+                <div className={styles.growthBadge} style={{ background: '#1F1F23', color: '#FFFFFF' }}>Real-time</div>
               </div>
             </div>
 
@@ -2018,7 +2018,7 @@ export default function VendorDashboard() {
                   </div>
                   <div className={styles.compactPricingGrid}>
                     {boostRates.map((boost) => (
-                      <div key={boost.id} className={styles.compactPricingCard} style={boost.id === 'billboard' ? { border: '2px solid #FFFFFF', background: 'rgba(255,255,255,0.05)' } : {}}>
+                      <div key={boost.id} className={styles.compactPricingCard} style={boost.id === 'billboard' ? { border: '2px solid #27272A', background: '#18181B' } : {}}>
                         <div className={styles.tierHeader}>
                           {boost.id === 'billboard' ? <Star size={24} color="#FFFFFF" /> : <Zap size={24} color="var(--primary)" />}
                           <div>
@@ -2053,7 +2053,7 @@ export default function VendorDashboard() {
 
                   <form onSubmit={handlePasswordChange} style={{ maxWidth: '400px' }}>
                     {passError && <div style={{ color: '#000000', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(0,0,0,0.1)', padding: '0.5rem', borderRadius: '4px' }}>{passError}</div>}
-                    {passSuccess && <div style={{ color: 'var(--success)', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(255,255,255,0.1)', padding: '0.5rem', borderRadius: '4px' }}>Password updated successfully!</div>}
+                    {passSuccess && <div style={{ color: 'var(--success)', fontSize: '0.8rem', marginBottom: '1rem', background: '#1F1F23', padding: '0.5rem', borderRadius: '4px' }}>Password updated successfully!</div>}
                     
                     <div className={styles.inputGroup}>
                       <label>New Password</label>
@@ -2140,13 +2140,13 @@ export default function VendorDashboard() {
                         )}
                         {order.status === 'preorder_paid' && (
                           <div className={styles.statusBox}>
-                            <div style={{ marginBottom: '0.5rem', padding: '0.4rem 0.75rem', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <div style={{ marginBottom: '0.5rem', padding: '0.4rem 0.75rem', background: '#1F1F23', border: '1px solid #A1A1AA', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                               <Clock size={12} /> Pre-order Received & Secured
                             </div>
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-400)', marginBottom: '0.5rem', margin: '0 0 0.5rem 0' }}>
                               Prepare this order. When it&apos;s ready, tap below to dispatch the delivery agent.
                             </p>
-                            <button className="btn btn-primary btn-sm" style={{ width: '100%', background: '#FFFFFF', borderColor: '#FFFFFF' }} onClick={() => updateOrderStatus(order.id, 'ready_for_pickup')}>
+                            <button className="btn btn-primary btn-sm" style={{ width: '100%', background: '#1F1F23', borderColor: '#27272A' }} onClick={() => updateOrderStatus(order.id, 'ready_for_pickup')}>
                               <CheckCircle size={14} /> Mark as Ready for Pickup
                             </button>
                           </div>
@@ -2563,7 +2563,7 @@ export default function VendorDashboard() {
                               style={{
                                 display: 'flex', alignItems: 'center', gap: '6px',
                                 padding: '8px 14px', borderRadius: '10px', cursor: 'pointer',
-                                background: isSelected ? 'rgba(255,255,255,0.15)' : 'var(--bg-200)',
+                                background: isSelected ? '#1F1F23' : 'var(--bg-200)',
                                 border: `1.5px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
                                 fontSize: '0.82rem', fontWeight: 500, transition: 'all 0.2s',
                               }}
@@ -2894,7 +2894,7 @@ export default function VendorDashboard() {
                   <h3 style={{ fontSize: '1.2rem', margin: '0.25rem 0', color: '#FFFFFF' }}>{formatPrice(wallet?.pending_balance || 0)}</h3>
                   <p style={{ fontSize: '0.7rem' }}>Held for 24hrs post-delivery</p>
                 </div>
-                <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
+                <div style={{ width: '1px', background: '#1F1F23' }}></div>
                 <div>
                   <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Lifetime Earnings</span>
                   <h3 style={{ fontSize: '1.2rem', margin: '0.25rem 0', color: 'var(--primary)' }}>
@@ -3018,13 +3018,13 @@ export default function VendorDashboard() {
 
               {/* Delicacies Premium Billboard */}
               <div className={styles.promoOption} style={{ 
-                border: '2px solid #FFFFFF', 
-                background: activeDelicaciesBillboard ? 'rgba(255,255,255,0.1)' : 'var(--bg-300)'
+                border: '2px solid #27272A', 
+                background: activeDelicaciesBillboard ? '#1F1F23' : 'var(--bg-300)'
               }}>
                 <div className={styles.promoIcon}><UtensilsCrossed size={24} color="#FFFFFF" /></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <h3 style={{ margin: 0 }}>Delicacies Billboard</h3>
-                  <span className="badge badge-primary" style={{ background: '#FFFFFF' }}>PREMIUM</span>
+                  <span className="badge badge-primary" style={{ background: '#1F1F23' }}>PREMIUM</span>
                 </div>
                 <p>Featured in the main carousel on the Delicacies Marketplace. Drive massive visibility to your campus eats.</p>
                 
@@ -3053,7 +3053,7 @@ export default function VendorDashboard() {
                     </div>
                     <button 
                       className="btn btn-primary btn-sm" 
-                      style={{ background: '#FFFFFF', border: 'none', width: '100%' }}
+                      style={{ background: '#1F1F23', border: 'none', width: '100%' }}
                       onClick={handleBuyDelicaciesBillboard}
                       disabled={buyingDelicaciesBillboard}
                     >
@@ -3358,12 +3358,12 @@ export default function VendorDashboard() {
         {activeTab === 'ai' && (
           <div style={{ padding: '2rem', maxWidth: 720, margin: '0 auto' }}>
             <div style={{ marginBottom: '2rem' }}>
-              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.4rem' }}>? AI Assistant <span style={{ fontSize: '0.7rem', color: 'var(--primary)', verticalAlign: 'middle', background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '4px' }}>v3.1 LIVE</span></h2>
+              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.4rem' }}>? AI Assistant <span style={{ fontSize: '0.7rem', color: 'var(--primary)', verticalAlign: 'middle', background: '#1F1F23', padding: '2px 8px', borderRadius: '4px' }}>v3.1 LIVE</span></h2>
               <p style={{ color: 'var(--text-400)', fontSize: '0.9rem' }}>Your AI Copilot helps you manage your store, guides customers automatically, and keeps your shop running even when you're offline.</p>
             </div>
 
             {/* Master Toggle */}
-            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid rgba(255,255,255,0.2)' }}>
+            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid #3F3F46' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>?? Enable AI Copilot</div>
@@ -3373,13 +3373,13 @@ export default function VendorDashboard() {
                   onClick={() => handleUpdateAiSettings({ ai_enabled: !aiSettings?.ai_enabled })}
                   style={{ width: 52, height: 28, borderRadius: '999px', border: 'none', cursor: 'pointer', transition: 'background 0.3s', background: aiSettings?.ai_enabled ? '#000000' : 'var(--bg-300)', position: 'relative', flexShrink: 0 }}
                 >
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#FFFFFF', position: 'absolute', top: 3, transition: 'left 0.3s', left: aiSettings?.ai_enabled ? 26 : 4 }} />
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#1F1F23', position: 'absolute', top: 3, transition: 'left 0.3s', left: aiSettings?.ai_enabled ? 26 : 4 }} />
                 </button>
               </div>
             </div>
 
             {/* Auto-Reply Toggle */}
-            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid rgba(255,255,255,0.2)', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
+            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid #3F3F46', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>?? Auto-Reply to Customers</div>
@@ -3389,13 +3389,13 @@ export default function VendorDashboard() {
                   onClick={() => handleUpdateAiSettings({ auto_reply_enabled: !aiSettings?.auto_reply_enabled })}
                   style={{ width: 52, height: 28, borderRadius: '999px', border: 'none', cursor: 'pointer', transition: 'background 0.3s', background: aiSettings?.auto_reply_enabled ? '#000000' : 'var(--bg-300)', position: 'relative', flexShrink: 0 }}
                 >
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#FFFFFF', position: 'absolute', top: 3, transition: 'left 0.3s', left: aiSettings?.auto_reply_enabled ? 26 : 4 }} />
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#1F1F23', position: 'absolute', top: 3, transition: 'left 0.3s', left: aiSettings?.auto_reply_enabled ? 26 : 4 }} />
                 </button>
               </div>
             </div>
 
             {/* Custom Instructions */}
-            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.2)', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
+            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid #3F3F46', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
               <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>?? Custom AI Instructions</div>
               <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.75rem' }}>Tell the AI how to represent your brand. E.g. "Always greet customers with 'Hey boss!'", "Never negotiate on prices", "Speak in a friendly, casual tone".</div>
               <textarea
@@ -3416,7 +3416,7 @@ export default function VendorDashboard() {
             </div>
 
             {/* Open Copilot CTA */}
-            <div style={{ background: 'linear-gradient(135deg,rgba(0,0,0,0.15),rgba(255,255,255,0.08))', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.25)', textAlign: 'center' }}>
+            <div style={{ background: 'linear-gradient(135deg,rgba(0,0,0,0.15),rgba(255,255,255,0.08))', borderRadius: '16px', padding: '1.5rem', border: '1px solid #3F3F46', textAlign: 'center' }}>
               <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>?</div>
               <div style={{ fontWeight: 700, marginBottom: '0.4rem' }}>Talk to your Copilot</div>
               <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Ask it anything: "What are my earnings?", "How do I add a product?", "Why is my balance pending?"</div>
@@ -3456,13 +3456,13 @@ export default function VendorDashboard() {
       {showCopilot && (
         <div style={{
           position: 'fixed', bottom: '6rem', right: '1.5rem', width: '360px', maxHeight: '500px',
-          background: 'var(--bg-200)', border: '1px solid rgba(255,255,255,0.35)', borderRadius: '20px',
+          background: 'var(--bg-200)', border: '1px solid #A1A1AA', borderRadius: '20px',
           boxShadow: '0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.12)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 9999,
           backdropFilter: 'blur(24px)'
         }}>
           {/* Header */}
-          <div style={{ padding: '1rem 1.25rem', background: 'linear-gradient(135deg,rgba(255,255,255,0.2),rgba(0,0,0,0.1))', borderBottom: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ padding: '1rem 1.25rem', background: 'linear-gradient(135deg,rgba(255,255,255,0.2),rgba(0,0,0,0.1))', borderBottom: '1px solid #27272A', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#FFFFFF,#000000)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>?</div>
               <div>
@@ -3488,19 +3488,19 @@ export default function VendorDashboard() {
             ))}
             {copilotLoading && (
               <div style={{ display: 'flex', gap: '4px', padding: '0.5rem' }}>
-                {[0,1,2].map(i => <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#FFFFFF', animation: `bounce 1.2s ${i * 0.2}s infinite` }} />)}
+                {[0,1,2].map(i => <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#1F1F23', animation: `bounce 1.2s ${i * 0.2}s infinite` }} />)}
               </div>
             )}
           </div>
 
           {/* Input */}
-          <form onSubmit={handleCopilotSubmit} style={{ padding: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.15)', display: 'flex', gap: '0.5rem' }}>
+          <form onSubmit={handleCopilotSubmit} style={{ padding: '0.75rem', borderTop: '1px solid #27272A', display: 'flex', gap: '0.5rem' }}>
             <input
               value={copilotInput}
               onChange={e => setCopilotInput(e.target.value)}
               placeholder="Ask your AI anything..."
               disabled={copilotLoading}
-              style={{ flex: 1, background: 'var(--bg-300)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '999px', padding: '0.55rem 1rem', fontSize: '0.83rem', color: '#FFFFFF', outline: 'none' }}
+              style={{ flex: 1, background: 'var(--bg-300)', border: '1px solid #3F3F46', borderRadius: '999px', padding: '0.55rem 1rem', fontSize: '0.83rem', color: '#FFFFFF', outline: 'none' }}
             />
             <button type="submit" disabled={copilotLoading || !copilotInput.trim()} style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#000000,#000000)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               {copilotLoading ? <Loader2 size={14} className="anim-spin" color="#FFFFFF" /> : <ArrowRight size={14} color="#FFFFFF" />}

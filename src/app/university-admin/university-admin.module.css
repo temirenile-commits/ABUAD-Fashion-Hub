@@ -13,7 +13,7 @@
   width: 260px;
   min-height: 100vh;
   background: linear-gradient(180deg, #000000 0%, #000000 100%);
-  border-right: 1px solid rgba(0,0,0,0.15);
+  border-right: 1px solid #3F3F46;
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -24,7 +24,7 @@
 
 .sidebarHeader {
   padding: 1.75rem 1.5rem 1.25rem;
-  border-bottom: 1px solid rgba(0,0,0,0.12);
+  border-bottom: 1px solid #27272A;
 }
 
 .logoMark {
@@ -61,7 +61,7 @@
   gap: 0.4rem;
   padding: 0.3rem 0.75rem;
   background: rgba(0,0,0,0.12);
-  border: 1px solid rgba(0,0,0,0.25);
+  border: 1px solid #3F3F46;
   border-radius: 100px;
   font-size: 0.7rem;
   font-weight: 600;
@@ -146,7 +146,7 @@
 
 .sidebarFooter {
   padding: 1rem 1.25rem;
-  border-top: 1px solid rgba(0,0,0,0.12);
+  border-top: 1px solid #27272A;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -182,7 +182,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 2rem;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid #27272A;
   background: rgba(0,0,0,0.8);
   backdrop-filter: blur(12px);
   position: sticky;
@@ -208,8 +208,8 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.25rem 0.65rem;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.25);
+  background: #1F1F23;
+  border: 1px solid #3F3F46;
   border-radius: 100px;
   font-size: 0.68rem;
   font-weight: 700;
@@ -245,8 +245,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.9rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: #1F1F23;
+  border: 1px solid #27272A;
   border-radius: 8px;
   color: #FFFFFF;
   font-size: 0.85rem;
@@ -254,7 +254,7 @@
 }
 
 .searchBar:focus-within {
-  border-color: rgba(0,0,0,0.4);
+  border-color: #A1A1AA;
 }
 
 .searchBar input {
@@ -270,8 +270,8 @@
 
 .refreshBtn {
   padding: 0.5rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: #1F1F23;
+  border: 1px solid #27272A;
   border-radius: 8px;
   color: #FFFFFF;
   cursor: pointer;
@@ -279,7 +279,7 @@
   display: flex;
 }
 
-.refreshBtn:hover { color: #FFFFFF; border-color: rgba(0,0,0,0.3); }
+.refreshBtn:hover { color: #FFFFFF; border-color: #A1A1AA; }
 
 .spin { animation: spin 0.8s linear infinite; }
 
@@ -309,7 +309,7 @@
 
 .statCard {
   background: rgba(0,0,0,0.8);
-  border: 1px solid rgba(255,255,255,0.07);
+  border: 1px solid #27272A;
   border-radius: 14px;
   padding: 1.4rem;
   display: flex;
@@ -329,7 +329,7 @@
 }
 
 .statCard:hover {
-  border-color: rgba(0,0,0,0.25);
+  border-color: #3F3F46;
   transform: translateY(-2px);
 }
 
@@ -362,14 +362,14 @@
 /* ─── Section Card ────────────────────────────────────────── */
 .sectionCard {
   background: rgba(0,0,0,0.9);
-  border: 1px solid rgba(255,255,255,0.07);
+  border: 1px solid #27272A;
   border-radius: 16px;
   overflow: hidden;
 }
 
 .sectionHeader {
   padding: 1.5rem 1.75rem;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid #27272A;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -407,13 +407,13 @@
   text-transform: uppercase;
   letter-spacing: 0.8px;
   color: #000000;
-  background: rgba(255,255,255,0.02);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  background: #18181B;
+  border-bottom: 1px solid #27272A;
 }
 
 .table td {
   padding: 0.9rem 1.25rem;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid #27272A;
   color: #FFFFFF;
   vertical-align: middle;
 }
@@ -444,7 +444,7 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: linear-gradient(135deg, rgba(0,0,0,0.2), rgba(255,255,255,0.2));
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -461,7 +461,7 @@
   border-radius: 8px;
   object-fit: cover;
   background: var(--bg-200);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid #27272A;
 }
 
 /* ─── Badges ──────────────────────────────────────────────── */
@@ -477,21 +477,21 @@
   text-transform: uppercase;
 }
 
-.badgeVerified { background: rgba(255,255,255,0.12); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2); }
-.badgePending  { background: rgba(255,255,255,0.12); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2); }
-.badgeRejected { background: rgba(0,0,0,0.12);  color: #000000; border: 1px solid rgba(0,0,0,0.2); }
-.badgeSuspended { background: rgba(0,0,0,0.12); color: #000000; border: 1px solid rgba(0,0,0,0.2); }
-.badgeGlobal   { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid rgba(0,0,0,0.2); }
-.badgeLocal    { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid rgba(0,0,0,0.2); }
-.badgeAdmin    { background: rgba(0,0,0,0.12); color: #000000; border: 1px solid rgba(0,0,0,0.2); }
-.badgeStaff    { background: rgba(255,255,255,0.12); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2); }
-.badgePaid     { background: rgba(255,255,255,0.12); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2); }
-.badgeCancelled{ background: rgba(0,0,0,0.12); color: #000000; border: 1px solid rgba(0,0,0,0.2); }
-.badgeActive   { background: rgba(255,255,255,0.12); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2); }
-.badgeOffline  { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid rgba(0,0,0,0.2); }
-.badgeGold { background: rgba(255,255,255,0.15); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.3); }
-.badgeInfo { background: rgba(0,0,0,0.15); color: #FFFFFF; border: 1px solid rgba(0,0,0,0.3); }
-.badgeGhost { background: rgba(255,255,255,0.05); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.1); }
+.badgeVerified { background: #27272A; color: #FFFFFF; border: 1px solid #3F3F46; }
+.badgePending  { background: #27272A; color: #FFFFFF; border: 1px solid #3F3F46; }
+.badgeRejected { background: rgba(0,0,0,0.12);  color: #FFFFFF; border: 1px solid #3F3F46; }
+.badgeSuspended { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #3F3F46; }
+.badgeGlobal   { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #3F3F46; }
+.badgeLocal    { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #3F3F46; }
+.badgeAdmin    { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #3F3F46; }
+.badgeStaff    { background: #27272A; color: #FFFFFF; border: 1px solid #3F3F46; }
+.badgePaid     { background: #27272A; color: #FFFFFF; border: 1px solid #3F3F46; }
+.badgeCancelled{ background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #3F3F46; }
+.badgeActive   { background: #27272A; color: #FFFFFF; border: 1px solid #3F3F46; }
+.badgeOffline  { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #3F3F46; }
+.badgeGold { background: #27272A; color: #FFFFFF; border: 1px solid #3F3F46; }
+.badgeInfo { background: rgba(0,0,0,0.15); color: #FFFFFF; border: 1px solid #A1A1AA; }
+.badgeGhost { background: #1F1F23; color: #FFFFFF; border: 1px solid #27272A; }
 
 /* ─── Action Buttons ──────────────────────────────────────── */
 .actionRow {
@@ -504,8 +504,8 @@
 .btnSm {
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid #27272A;
+  background: #18181B;
   color: #FFFFFF;
   font-size: 0.75rem;
   font-weight: 600;
@@ -516,15 +516,15 @@
   gap: 0.3rem;
 }
 
-.btnSm:hover { border-color: rgba(0,0,0,0.35); color: #FFFFFF; }
+.btnSm:hover { border-color: #A1A1AA; color: #FFFFFF; }
 
-.btnApprove { color: #FFFFFF !important; border-color: rgba(255,255,255,0.25) !important; }
-.btnApprove:hover { background: rgba(255,255,255,0.1) !important; }
+.btnApprove { color: #FFFFFF !important; border-color: #3F3F46 !important; }
+.btnApprove:hover { background: #1F1F23 !important; }
 
-.btnReject { color: #000000 !important; border-color: rgba(0,0,0,0.25) !important; }
+.btnReject { color: #000000 !important; border-color: #3F3F46 !important; }
 .btnReject:hover { background: rgba(0,0,0,0.1) !important; }
 
-.btnDelete { color: #000000 !important; border: 1px solid rgba(0,0,0,0.15) !important; background: rgba(0,0,0,0.05) !important; }
+.btnDelete { color: #FFFFFF !important; border: 1px solid #3F3F46 !important; background: rgba(255,255,255,0.05) !important; }
 .btnDelete:hover { background: #000000 !important; color: #FFFFFF !important; }
 
 .btnPrimary {
@@ -579,8 +579,8 @@
 .formInput {
   width: 100%;
   padding: 0.65rem 0.9rem;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: #18181B;
+  border: 1px solid #27272A;
   border-radius: 8px;
   color: #FFFFFF;
   font-size: 0.875rem;
@@ -591,14 +591,14 @@
   resize: vertical;
 }
 
-.formInput:focus { border-color: rgba(0,0,0,0.4); }
+.formInput:focus { border-color: #A1A1AA; }
 .formInput::placeholder { color: #000000; }
 
 .formSelect {
   width: 100%;
   padding: 0.65rem 0.9rem;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: #18181B;
+  border: 1px solid #27272A;
   border-radius: 8px;
   color: #FFFFFF;
   font-size: 0.875rem;
@@ -615,8 +615,8 @@
 }
 
 .insightCard {
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: #18181B;
+  border: 1px solid #27272A;
   border-radius: 12px;
   padding: 1.25rem;
   position: relative;
@@ -625,7 +625,7 @@
 }
 
 .insightCard.myUniversity {
-  border-color: rgba(0,0,0,0.35);
+  border-color: #A1A1AA;
 }
 
 .insightCard.myUniversity::after {
@@ -660,7 +660,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.35rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid #27272A;
   font-size: 0.8rem;
 }
 
@@ -684,8 +684,8 @@
 }
 
 .teamCard {
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: #18181B;
+  border: 1px solid #27272A;
   border-radius: 12px;
   padding: 1.25rem;
 }
@@ -721,7 +721,7 @@
 .permBadge {
   padding: 0.2rem 0.55rem;
   background: rgba(0,0,0,0.1);
-  border: 1px solid rgba(0,0,0,0.2);
+  border: 1px solid #3F3F46;
   border-radius: 6px;
   font-size: 0.68rem;
   font-weight: 600;
@@ -733,14 +733,14 @@
   display: flex;
   gap: 0.5rem;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid #27272A;
   flex-wrap: wrap;
 }
 
 .filterBtn {
   padding: 0.3rem 0.85rem;
   border-radius: 100px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid #27272A;
   background: transparent;
   color: #000000;
   font-size: 0.75rem;
@@ -749,15 +749,15 @@
   transition: all 0.15s;
 }
 
-.filterBtn:hover { color: #FFFFFF; border-color: rgba(0,0,0,0.3); }
-.filterActive { background: rgba(0,0,0,0.15) !important; color: #FFFFFF !important; border-color: rgba(0,0,0,0.35) !important; }
+.filterBtn:hover { color: #FFFFFF; border-color: #A1A1AA; }
+.filterActive { background: rgba(0,0,0,0.15) !important; color: #FFFFFF !important; border-color: #A1A1AA !important; }
 
 /* ─── Error / Empty ───────────────────────────────────────── */
 .errorBox {
   margin: 1.5rem;
   padding: 1rem 1.25rem;
   background: rgba(0,0,0,0.08);
-  border: 1px solid rgba(0,0,0,0.2);
+  border: 1px solid #3F3F46;
   border-radius: 10px;
   color: #FFFFFF;
   font-size: 0.85rem;
@@ -789,7 +789,7 @@
 
 .modal {
   background: #000000;
-  border: 1px solid rgba(0,0,0,0.25);
+  border: 1px solid #3F3F46;
   border-radius: 16px;
   padding: 2rem;
   width: 100%;

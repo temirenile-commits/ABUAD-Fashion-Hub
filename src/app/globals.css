@@ -7,81 +7,68 @@
    ============================================ */
 
 :root {
-  /* Core Palette - Pure Black */
+  /* Core Palette - Pure Black base with Zinc Depth Grays for elevation */
   --bg-000: #000000;
-  --bg-100: #000000;
-  --bg-200: #000000;
-  --bg-300: #000000;
-  --bg-400: #000000;
-
+  --bg-100: #18181B; /* Zinc 900 - elevated surfaces, cards, dropdowns */
+  --bg-200: #1F1F23; /* Zinc 875 - modals, elevated cards */
+  --bg-300: #27272A; /* Zinc 800 - inputs, separators, tertiary surfaces */
+  --bg-400: #3F3F46; /* Zinc 700 - active states, selection highlights */
   /* Text */
   --text-100: #FFFFFF;
   --text-200: #FFFFFF;
-  --text-300: #FFFFFF;
-  --text-400: #000000;
-  --text-500: #000000;
-
-  /* ─── LOGO GOLD — Exact colour from the MasterCart logo ─── */
-  /* Sampled from logo: warm antique gold #FFFFFF */
-  --logo-gold: #FFFFFF;
-
-  /* Primary Brand: Warm Antique Gold (matches logo exactly) */
+  --text-300: #E4E4E7; /* Zinc 300 - secondary text */
+  --text-400: #A1A1AA; /* Zinc 400 - placeholder, inactive, hints */
+  --text-500: #71717A; /* Zinc 500 - disabled, muted metadata */
+  /* ─── LOGO GOLD — Neutralized to depth zinc per monochrome spec ─── */
+  --logo-gold: #E4E4E7;
+  /* Primary Brand */
   --primary: #FFFFFF;
   --primary-light: #FFFFFF;
   --primary-dark: #000000;
-  --primary-hover: #FFFFFF;
-  --primary-soft: rgba(255,255,255,0.12);
-  --primary-glow: 0 0 24px rgba(255,255,255,0.45);
-
-  /* Secondary: Slightly deeper logo gold for variation */
-  --secondary: #FFFFFF;
-  --secondary-hover: #000000;
-  --secondary-soft: rgba(255,255,255,0.12);
-  --secondary-glow: 0 0 20px rgba(255,255,255,0.35);
-
-  /* Accent Gold: Lighter highlight, top of the logo letters */
-  --accent-gold: #FFFFFF;
-  --accent: #FFFFFF;
-  --accent-rgb: 0, 0, 0;
-  --accent-soft: rgba(255,255,255,0.15);
-
-  /* Functional */
-  --success: #000000;
-  --error: #FFFFFF;
-  --warning: #FFFFFF;
-  --info: #000000;
-
-  /* Borders — Warm Antique Gold */
-  --border: rgba(255,255,255,0.18);
-  --border-hover: rgba(255,255,255,0.35);
-  --border-active: rgba(255,255,255,0.65);
-
-  /* Gradients - Warm Antique Gold Metallic (matches logo light-to-dark sweep) */
-  --grad-brand: linear-gradient(135deg, #000000 0%, #FFFFFF 35%, #FFFFFF 65%, #FFFFFF 100%);
-  --grad-brand-soft: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%);
-  --grad-dark: linear-gradient(180deg, #000000 0%, #000000 100%);
+  --primary-hover: #18181B; /* brightness shift instead of color shift */
+  --primary-soft: rgba(255,255,255,0.08);
+  --primary-glow: 0 0 24px rgba(255,255,255,0.18);
+  /* Secondary */
+  --secondary: #E4E4E7;
+  --secondary-hover: #18181B;
+  --secondary-soft: rgba(255,255,255,0.06);
+  --secondary-glow: 0 0 20px rgba(255,255,255,0.12);
+  /* Accent */
+  --accent-gold: #E4E4E7;
+  --accent: #E4E4E7;
+  --accent-rgb: 161, 161, 170;
+  --accent-soft: rgba(255,255,255,0.08);
+  /* Functional - muted semantic feedback with distinct iconography */
+  --success: #71717A; /* muted zinc; pair with check iconography */
+  --error: #A1A1AA; /* muted zinc; pair with X iconography */
+  --warning: #A1A1AA; /* muted zinc; pair with alert iconography */
+  --info: #E4E4E7;
+  /* Borders - Zinc structural visibility */
+  --border: #27272A;
+  --border-hover: #3F3F46;
+  --border-active: #A1A1AA;
+  /* Gradients - Monochrome depth sweep */
+  --grad-brand: linear-gradient(135deg, #000000 0%, #27272A 35%, #3F3F46 65%, #18181B 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  --grad-dark: linear-gradient(180deg, #000000 0%, #18181B 100%);
   --grad-card: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.92) 100%);
-  --grad-gold-shimmer: linear-gradient(90deg, #000000 0%, #FFFFFF 40%, #FFFFFF 60%, #000000 100%);
-
+  --grad-gold-shimmer: linear-gradient(90deg, #000000 0%, #3F3F46 40%, #A1A1AA 60%, #000000 100%);
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.6);
   --shadow-md: 0 4px 20px rgba(0,0,0,0.7);
   --shadow-lg: 0 8px 40px rgba(0,0,0,0.8);
   --shadow-card: 0 2px 12px rgba(0,0,0,0.5);
-  --shadow-gold: 0 4px 24px rgba(255,255,255,0.3);
-
+  --shadow-gold: 0 4px 24px rgba(0,0,0,0.4);
   /* Radii */
   --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-full: 999px;
-
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-display: 'Outfit', 'Inter', sans-serif;
   --font-serif: 'Playfair Display', Georgia, serif;
-
   /* Transitions */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
@@ -103,9 +90,9 @@
   --text-400: #FFFFFF;
   --text-500: #FFFFFF;
 
-  --border: rgba(0,0,0,0.08);
-  --border-hover: rgba(255,255,255,0.35);
-  --border-active: rgba(255,255,255,0.65);
+  --border: #27272A;
+  --border-hover: #A1A1AA;
+  --border-active: #A1A1AA;
   
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
   --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
@@ -152,7 +139,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 a { color: inherit; text-decoration: none; }
-img { max-width: 100%; display: block; filter: grayscale(100%); }
+img { max-width: 100%; display: block; }
+video { max-width: 100%; display: block; }
+picture { max-width: 100%; display: block; }
+/* Asset protection: product thumbnails, avatars, and user media keep full color */
+img, video, picture { filter: none !important; }
 input, textarea, select, button { font-family: inherit; }
 
 /* ============================================
@@ -249,13 +240,15 @@ input, textarea, select, button { font-family: inherit; }
 }
 
 .btn-whatsapp {
-  background: #FFFFFF;
-  color: #000000;
-  box-shadow: 0 0 16px rgba(255,255,255,0.35);
+  background: #27272A;
+  color: #FFFFFF;
+  border: 1px solid #3F3F46;
+  box-shadow: 0 0 16px rgba(255,255,255,0.05);
 }
 .btn-whatsapp:hover {
-  background: #FFFFFF;
-  box-shadow: 0 0 24px rgba(255,255,255,0.5);
+  background: #3F3F46; /* brightness shift instead of color shift */
+  border-color: #A1A1AA;
+  box-shadow: 0 0 24px rgba(255,255,255,0.1);
   transform: translateY(-1px);
 }
 
@@ -282,11 +275,11 @@ input, textarea, select, button { font-family: inherit; }
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
-.badge-brand { background: var(--primary-soft); color: var(--primary); border: 1px solid rgba(0,0,0,0.2); }
-.badge-gold { background: var(--secondary-soft); color: var(--secondary); border: 1px solid rgba(255,255,255,0.2); }
-.badge-teal { background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(255,255,255,0.2); }
-.badge-success { background: rgba(255,255,255,0.1); color: var(--success); border: 1px solid rgba(255,255,255,0.2); }
-.badge-error { background: rgba(0,0,0,0.1); color: #000000; border: 1px solid rgba(0,0,0,0.2); }
+.badge-brand { background: var(--primary-soft); color: var(--primary); border: 1px solid #3F3F46; }
+.badge-gold { background: var(--secondary-soft); color: var(--secondary); border: 1px solid #27272A; }
+.badge-teal { background: var(--accent-soft); color: var(--accent); border: 1px solid #27272A; }
+.badge-success { background: rgba(255,255,255,0.1); color: var(--success); border: 1px solid #27272A; }
+.badge-error { background: rgba(255,255,255,0.06); color: #FFFFFF; border: 1px solid #3F3F46; }
 .badge-neutral { background: var(--bg-300); color: var(--text-300); border: 1px solid var(--border); }
 .badge-flash { background: var(--grad-brand); color: #FFFFFF; }
 
@@ -327,7 +320,7 @@ input, textarea, select, button { font-family: inherit; }
   background-repeat: no-repeat;
   background-position: right 1rem center;
 }
-.form-select:focus { outline: none; border-color: var(--primary); }
+.form-select:focus { outline: none; border-color: #A1A1AA; box-shadow: 0 0 0 2px #000000, 0 0 0 4px #FFFFFF; }
 
 /* ============================================
    TEXT UTILITIES
@@ -465,8 +458,8 @@ pre { max-width: 100%; overflow-x: auto; }
    STAR RATING
    ============================================ */
 .stars { display: flex; gap: 2px; }
-.star-filled { color: var(--secondary); }
-.star-empty { color: var(--text-400); }
+.star-filled { color: #FFFFFF; }
+.star-empty { color: #A1A1AA; }
 
 /* ============================================
    SPINNER / LOADING
@@ -477,8 +470,8 @@ pre { max-width: 100%; overflow-x: auto; }
   display: inline-block;
   width: 24px;
   height: 24px;
-  border: 2px solid rgba(255,255,255,0.15);
-  border-top-color: var(--primary);
+  border: 2px solid #27272A;
+  border-top-color: #FFFFFF;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }

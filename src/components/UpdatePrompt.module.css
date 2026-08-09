@@ -30,7 +30,7 @@
   position: absolute;
   top: 1.25rem;
   right: 1.25rem;
-  background: rgba(255,255,255,0.05);
+  background: #1F1F23;
   border: none;
   border-radius: 50%;
   width: 36px;
@@ -44,7 +44,7 @@
 }
 
 .closeBtn:hover {
-  background: rgba(255,255,255,0.1);
+  background: #1F1F23;
   color: #FFFFFF;
 }
 
@@ -75,7 +75,7 @@
 .badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;
-  background: rgba(255,255,255,0.1);
+  background: #1F1F23;
   color: var(--primary);
   border-radius: 99px;
   font-size: 0.75rem;
@@ -86,8 +86,8 @@
 }
 
 .infoBox {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: #1F1F23;
+  border: 1px solid #3F3F46;
   border-radius: 12px;
   padding: 1rem;
   display: flex;
@@ -181,7 +181,7 @@
 }
 
 .laterBtn:hover {
-  background: rgba(255,255,255,0.05);
+  background: #1F1F23;
   color: #FFFFFF;
 }
 

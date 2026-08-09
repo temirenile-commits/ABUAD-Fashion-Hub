@@ -72,8 +72,8 @@
 }
 
 .leaderFirst {
-  border-color: rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.04);
+  border-color: #3F3F46;
+  background: #18181B;
 }
 
 .leaderRank { font-size: 1.5rem; flex-shrink: 0; }

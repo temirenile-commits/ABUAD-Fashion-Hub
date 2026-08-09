@@ -47,7 +47,7 @@ export default function VendorAvailabilityTimer({
     <div style={{
       display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
       background: isAvailableNow ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
-      border: `1px solid ${isAvailableNow ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'}`,
+      border: `1px solid ${isAvailableNow ? '#3F3F46' : 'rgba(0,0,0,0.3)'}`,
       borderRadius: 999, padding: '3px 10px',
       fontSize: '0.72rem', fontWeight: 700,
       color: isAvailableNow ? '#FFFFFF' : '#000000'

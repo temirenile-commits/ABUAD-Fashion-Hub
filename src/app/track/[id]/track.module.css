@@ -126,8 +126,8 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.3rem 0.75rem;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.3);
+  background: #1F1F23;
+  border: 1px solid #3F3F46;
   border-radius: 999px;
   font-size: 0.65rem;
   font-weight: 800;
@@ -141,8 +141,8 @@
 }
 
 @keyframes pillFlash {
-  0%, 100% { background: rgba(255,255,255,0.1); }
-  50%       { background: rgba(255,255,255,0.3); }
+  0%, 100% { background: #1F1F23; }
+  50%       { background: #27272A; }
 }
 
 .liveDot {
@@ -308,7 +308,7 @@
   color: #000000;
   padding: 0.75rem 1rem;
   background: rgba(0,0,0,0.08);
-  border: 1px solid rgba(0,0,0,0.2);
+  border: 1px solid #3F3F46;
   border-radius: 8px;
   margin-top: 1rem;
 }
@@ -420,8 +420,8 @@
   gap: 0.75rem;
   align-items: flex-start;
   padding: 1rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: #1F1F23;
+  border: 1px solid #3F3F46;
   border-radius: 12px;
   font-size: 0.8rem;
   color: var(--text-300);

@@ -55,7 +55,7 @@
 }
 
 .statusOnline {
-  background: rgba(255,255,255,0.1);
+  background: #1F1F23;
   color: var(--success);
   border: 1px solid var(--success);
 }
@@ -157,7 +157,7 @@
 }
 
 .pickup { background: rgba(0,0,0,0.1); color: #000000; }
-.dropoff { background: rgba(255,255,255,0.1); color: #FFFFFF; }
+.dropoff { background: #1F1F23; color: #FFFFFF; }
 
 .tags { display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap; }
 

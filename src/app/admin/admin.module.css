@@ -80,7 +80,7 @@
 }
 
 .navItem:hover {
-  background: rgba(255,255,255,0.05);
+  background: #1F1F23;
   color: var(--text-100);
 }
 

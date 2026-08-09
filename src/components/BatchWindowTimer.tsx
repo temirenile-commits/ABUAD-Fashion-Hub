@@ -43,7 +43,7 @@ export default function BatchWindowTimer({ onBatchClose }: BatchWindowTimerProps
       background: urgent
         ? 'linear-gradient(135deg, rgba(0,0,0,0.15), rgba(0,0,0,0.05))'
         : 'linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04))',
-      border: `1px solid ${urgent ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.25)'}`,
+      border: `1px solid ${urgent ? 'rgba(0,0,0,0.3)' : '#27272A'}`,
       borderRadius: 12,
       padding: '0.9rem 1rem',
     }}>
@@ -55,7 +55,7 @@ export default function BatchWindowTimer({ onBatchClose }: BatchWindowTimerProps
           {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
         </span>
       </div>
-      <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 99 }}>
+      <div style={{ height: 4, background: '#18181B', borderRadius: 99 }}>
         <div style={{
           height: '100%',
           width: `${pct}%`,

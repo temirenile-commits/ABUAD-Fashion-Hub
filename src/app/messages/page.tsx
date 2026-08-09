@@ -461,7 +461,7 @@ function MessagesContent() {
               <div className={styles.headerActions}>
                 {partnerPhone ? (
                   <>
-                    <a href={`tel:${partnerPhone}`} className="btn btn-ghost btn-sm" title={`Call ${activePartner.name}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%' }}>
+                    <a href={`tel:${partnerPhone}`} className="btn btn-ghost btn-sm" title={`Call ${activePartner.name}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', background: '#18181B', borderRadius: '50%' }}>
                       <Phone size={15} />
                     </a>
                     <a 
@@ -481,7 +481,7 @@ function MessagesContent() {
                     className="btn btn-ghost btn-sm" 
                     title="No phone number provided" 
                     onClick={() => alert(`${activePartner.name} has not set a phone number yet.`)}
-                    style={{ opacity: 0.5, width: '32px', height: '32px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ opacity: 0.5, width: '32px', height: '32px', background: '#18181B', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     <Phone size={15} />
                   </button>
@@ -541,7 +541,7 @@ function MessagesContent() {
             </div>
 
             {uploadingMedia && (
-              <div style={{ padding: '0.75rem 1.5rem', background: 'rgba(255,255,255,0.1)', color: 'var(--primary)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', borderTop: '1px solid var(--border)' }}>
+              <div style={{ padding: '0.75rem 1.5rem', background: '#1F1F23', color: 'var(--primary)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', borderTop: '1px solid var(--border)' }}>
                 <span>Uploading your media attachment...</span>
               </div>
             )}

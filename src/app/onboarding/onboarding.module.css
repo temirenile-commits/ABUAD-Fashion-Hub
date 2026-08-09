@@ -55,7 +55,7 @@
 }
 
 .stepDone {
-  background: rgba(255,255,255,0.1);
+  background: #1F1F23;
   border-color: var(--success);
   color: var(--success);
 }
@@ -174,7 +174,7 @@
 
 .optActive {
   background: var(--primary-soft);
-  border-color: rgba(0,0,0,0.4);
+  border-color: #A1A1AA;
   color: var(--primary);
 }
 

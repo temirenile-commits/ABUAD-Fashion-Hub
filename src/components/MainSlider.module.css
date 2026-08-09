@@ -63,7 +63,7 @@
   top: 50%;
   transform: translateY(-50%);
   background: rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid #27272A;
   color: #FFFFFF;
   width: 40px;
   height: 40px;
@@ -98,7 +98,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.3);
+  background: #27272A;
   cursor: pointer;
   transition: all 0.2s;
 }

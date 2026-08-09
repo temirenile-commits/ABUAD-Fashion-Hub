@@ -310,7 +310,7 @@ export default async function ProductPage({ params }: Props) {
             {/* Location Availability */}
             {product.location_availability && (
               <div className={styles.locationBadge} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0', color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 600 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '6px' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#1F1F23', padding: '4px 10px', borderRadius: '6px' }}>
                    📍 {product.location_availability}
                 </span>
               </div>

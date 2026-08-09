@@ -69,7 +69,7 @@ export default function WishlistButton({ productId, size = 16, className }: Prop
       aria-label="Toggle wishlist"
       style={!className ? {
         position: 'absolute', top: '0.5rem', right: '0.5rem', zIndex: 10, 
-        background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)', 
+        background: '#27272A', backdropFilter: 'blur(4px)', 
         border: 'none', borderRadius: '50%', width: '32px', height: '32px', 
         display: 'flex', alignItems: 'center', justifyContent: 'center', 
         cursor: 'pointer', color: isWishlisted ? '#000000' : '#FFFFFF'

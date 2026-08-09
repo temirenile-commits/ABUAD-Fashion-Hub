@@ -1,7 +1,7 @@
 /* ── Container ─────────────────────────────────────────────── */
 .container {
   background: #000000;
-  border: 1px solid rgba(255,255,255,0.07);
+  border: 1px solid #27272A;
   border-radius: 16px;
   padding: 1.5rem;
   position: relative;
@@ -11,7 +11,7 @@
 }
 
 .flashBorder {
-  border-color: rgba(0,0,0,0.7) !important;
+  border-color: #A1A1AA !important;
   box-shadow: 0 0 0 2px rgba(0,0,0,0.15);
 }
 
@@ -42,14 +42,14 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: rgba(255,255,255,0.08);
+  background: #1F1F23;
   color: #FFFFFF;
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 0.62rem;
   font-weight: 900;
   letter-spacing: 0.1em;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid #3F3F46;
 }
 
 .liveDot {
@@ -98,8 +98,8 @@
 }
 
 .controlBtn {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: #18181B;
+  border: 1px solid #27272A;
   color: #000000;
   padding: 4px 10px;
   border-radius: 6px;
@@ -110,7 +110,7 @@
   transition: all 0.15s;
   letter-spacing: 0.05em;
 }
-.controlBtn:hover { background: rgba(255,255,255,0.08); color: #FFFFFF; }
+.controlBtn:hover { background: #1F1F23; color: #FFFFFF; }
 .controlActive {
   background: var(--primary, #000000) !important;
   border-color: var(--primary, #000000) !important;
@@ -127,15 +127,15 @@
   font-weight: 800;
   font-family: monospace;
 }
-.trendUp   { background: rgba(255,255,255,0.1);  color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2); }
-.trendDown { background: rgba(0,0,0,0.1);   color: #000000; border: 1px solid rgba(0,0,0,0.2);  }
+.trendUp   { background: #1F1F23;  color: #FFFFFF; border: 1px solid #3F3F46; }
+.trendDown { background: rgba(255,255,255,0.06);   color: #FFFFFF; border: 1px solid #3F3F46;  }
 
 /* ── Chart area ─────────────────────────────────────────────── */
 .chartArea {
   position: relative;
   width: 100%;
   background: rgba(0,0,0,0.25);
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid #27272A;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -151,7 +151,7 @@
 
 .scrollContainer::-webkit-scrollbar { height: 3px; }
 .scrollContainer::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
+  background: #1F1F23;
   border-radius: 10px;
 }
 
@@ -177,12 +177,12 @@
   gap: 0;
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid #27272A;
 }
 
 .footerStat {
   padding: 0 1rem;
-  border-right: 1px solid rgba(255,255,255,0.05);
+  border-right: 1px solid #27272A;
 }
 .footerStat:first-child { padding-left: 0; }
 .footerStat:last-child  { border-right: none; }
@@ -212,7 +212,7 @@
 .tooltip {
   background: rgba(0,0,0,0.97);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid #27272A;
   border-radius: 10px;
   padding: 0.75rem 1rem;
   box-shadow: 0 10px 30px rgba(0,0,0,0.6);

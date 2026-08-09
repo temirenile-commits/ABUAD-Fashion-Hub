@@ -35,7 +35,7 @@ export default function UniversityAdminLayout({ children }: { children: React.Re
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#000000', color: '#FFFFFF', fontSize: '1.1rem' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 40, height: 40, border: '3px solid #000000', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 1rem' }} />
+          <div style={{ width: 40, height: 40, border: '3px solid #27272A', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 1rem' }} />
           Verifying access...
         </div>
       </div>
