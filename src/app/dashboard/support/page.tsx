@@ -245,7 +245,7 @@ export default function SupportDashboard() {
                            <div style={{ fontWeight: 600 }}>{num.name}</div>
                            <div style={{ fontSize: '0.8rem', color: 'var(--text-400)' }}>{num.phone} • {num.is_whatsapp ? 'WhatsApp Enabled' : 'Calls Only'}</div>
                         </div>
-                        <button className="btn btn-icon text-red" onClick={() => apiAction('update_numbers', { numbers: supportNumbers.filter((_, idx) => idx !== i) })}><Trash2 size={16} /></button>
+                        <button className="btn btn-icon text-status" onClick={() => apiAction('update_numbers', { numbers: supportNumbers.filter((_, idx) => idx !== i) })}><Trash2 size={16} /></button>
                      </div>
                   ))}
                   {supportNumbers.length === 0 && <div style={{ color: 'var(--text-400)' }}>No support numbers configured.</div>}
@@ -291,7 +291,7 @@ export default function SupportDashboard() {
                         <td><span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', background: 'rgba(0,0,0,0.15)', color: '#FFFFFF' }}>{t.role === 'customer_support_agent' ? 'Support Agent' : t.role}</span></td>
                         <td>
                           {t.role === 'customer_support_agent' && (
-                            <button className="btn btn-ghost text-red" onClick={() => { if(confirm('Fire this agent?')) apiAction('remove_agent', { teamId: t.id }) }}>
+                            <button className="btn btn-ghost text-status" onClick={() => { if(confirm('Fire this agent?')) apiAction('remove_agent', { teamId: t.id }) }}>
                                <Trash2 size={14} />
                             </button>
                           )}

@@ -495,7 +495,7 @@ function CheckoutContent() {
         <div className={styles.secureOverlay}>
            <div className={styles.secureBox}>
               <div className={styles.lockPulse}>
-                 <Lock size={40} className={styles.goldLock} />
+                 <Lock size={40} className={styles.accentLock} />
               </div>
               <h2>Secure Payment Hub</h2>
               <p>Connecting to Paystack Gateway...</p>
@@ -708,7 +708,7 @@ function CheckoutContent() {
                       </div>
                     )}
                     {senderAccount && (
-                      <div style={{ padding: '0.75rem', background: '#121214', border: '1px solid #3F3F46', borderRadius: '8px', fontSize: '0.85rem' }}>
+                      <div style={{ padding: '0.75rem', background: '#121214', border: '1px solid #27272A', borderRadius: '8px', fontSize: '0.85rem' }}>
                         <span style={{ opacity: 0.7, display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '0.15rem', color: '#FFFFFF' }}>Verified Account Name</span>
                         <strong style={{ color: '#FFFFFF' }}>{senderAccount}</strong>
                       </div>

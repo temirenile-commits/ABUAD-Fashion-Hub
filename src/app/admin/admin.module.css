@@ -7,7 +7,7 @@
 
 .sidebar {
   width: 240px;
-  background-color: #FFFFFF; /* Darker admin purple */
+  background-color: #FFFFFF; /* Darker admin Green */
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;

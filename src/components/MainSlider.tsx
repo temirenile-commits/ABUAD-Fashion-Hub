@@ -73,7 +73,7 @@ export default function MainSlider() {
         setSlides(mergedSlides.slice(0, 8)); // Limit total slides
       } else {
         setSlides([
-          { id: 1, image: '/gold_fashion_banner_1_1776541486791.png', title: 'The Gold Collection', sub: 'Discover premium campus fashion redefined.', link: null },
+          { id: 1, image: '/gold_fashion_banner_1_1776541486791.png', title: 'The Green Collection', sub: 'Discover premium campus fashion redefined.', link: null },
           { id: 2, image: '/gold_fashion_banner_2_1776541653764.png', title: 'Luxury Accessories', sub: 'Elevate your style with metallic accents.', link: null }
         ]);
       }

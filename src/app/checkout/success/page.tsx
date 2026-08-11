@@ -86,7 +86,7 @@ function SuccessContent() {
           </div>
 
           <div className={styles.actions}>
-            <Link href="/dashboard/customer" className="btn btn-primary btn-lg" style={{ background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%)', borderColor: '#27272A' }}>
+            <Link href="/dashboard/customer" className="btn btn-primary btn-lg" style={{ background: 'var(--primary)', borderColor: 'var(--primary)', color: '#000000' }}>
               <Package size={18} /> View My Dashboard
             </Link>
             <Link href="/explore" className="btn btn-ghost">

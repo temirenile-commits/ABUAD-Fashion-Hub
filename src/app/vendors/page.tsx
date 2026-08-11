@@ -113,7 +113,7 @@ export default function VendorsPage() {
             <div className={styles.sectionHead}>
               <div className={styles.sectionTitle}>
                 <h2>New Brands</h2>
-                <span className={`badge badge-gold`}>{unverified.length}</span>
+                <span className={`badge badge-brand`}>{unverified.length}</span>
               </div>
             </div>
             <div className={styles.grid}>

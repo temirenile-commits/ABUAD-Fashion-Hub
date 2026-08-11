@@ -245,7 +245,7 @@ export default async function ProductPage({ params }: Props) {
                 </span>
               )}
               {product.award_history && (product.award_history as any[]).length > 0 && (
-                <div className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px' }}>
+                <div className="badge badge-brand" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px' }}>
                   <Trophy size={12} /> {(product.award_history as any[])[0].title}
                 </div>
               )}

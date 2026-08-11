@@ -80,7 +80,7 @@
 
 .roleActive {
   background: var(--primary-soft);
-  border-color: #A1A1AA;
+  border-color: #A0A0A0;
   color: var(--primary);
 }
 
@@ -149,7 +149,7 @@
   gap: 0.75rem;
   margin-top: 1.25rem;
   padding: 0.9rem;
-  /* Match the primary gold Sign In button exactly */
+  /* Match the primary Green Sign In button exactly */
   background: var(--grad-brand);
   color: #000000;
   font-size: 0.95rem;
@@ -178,8 +178,7 @@
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  /* Full-color Google G preserved; brightened for dark zinc button */
-  filter: brightness(1.35);
+  /* Full-color Google G remains unaltered. */
 }
 
 .divText {

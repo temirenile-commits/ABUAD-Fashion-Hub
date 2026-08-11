@@ -174,7 +174,7 @@
 
 .optActive {
   background: var(--primary-soft);
-  border-color: #A1A1AA;
+  border-color: #A0A0A0;
   color: var(--primary);
 }
 

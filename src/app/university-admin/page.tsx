@@ -345,7 +345,7 @@ export default function UniversityAdminPage() {
                   {vendors.filter((v: any) => v.verification_status === "pending").length > 0 && (
                     <div style={{
                       background: '#121214',
-                      border: '1px solid #A1A1AA',
+                      border: '1px solid #A0A0A0',
                       borderRadius: '12px',
                       padding: '1.25rem',
                       marginBottom: '1.5rem',
@@ -1404,7 +1404,7 @@ export default function UniversityAdminPage() {
                               <td>
                                  {account.is_active ? (
                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'flex-start' }}>
-                                     <span style={{ background: '#121214', color: '#FFFFFF', border: '1px solid #A1A1AA', borderRadius: '6px', padding: '2px 8px', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                     <span style={{ background: '#121214', color: '#FFFFFF', border: '1px solid #A0A0A0', borderRadius: '6px', padding: '2px 8px', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#121214', display: 'inline-block' }}></span>
                                        Active at Checkout
                                      </span>

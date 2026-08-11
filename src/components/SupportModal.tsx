@@ -125,7 +125,7 @@ export default function SupportModal({ isOpen, onClose }: { isOpen: boolean, onC
                  </a>
 
                  {currentIndex < numbers.length - 1 && (
-                    <div style={{ padding: '1rem', background: '#121214', borderRadius: '8px', border: '1px solid #3F3F46' }}>
+                    <div style={{ padding: '1rem', background: '#121214', borderRadius: '8px', border: '1px solid #27272A' }}>
                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#FFFFFF', fontSize: '0.85rem', marginBottom: '0.75rem', justifyContent: 'center' }}>
                           <AlertTriangle size={14} /> Agent unavailable?
                        </div>

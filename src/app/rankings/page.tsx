@@ -43,7 +43,7 @@ export default function RankingsPage() {
       <div className="min-h-screen bg-[#000000] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 text-[#000000] animate-spin" />
-          <p className="text-gray-400 font-medium">Calculating monthly rankings...</p>
+          <p className="text-muted font-medium">Calculating monthly rankings...</p>
         </div>
       </div>
     );
@@ -58,7 +58,7 @@ export default function RankingsPage() {
         <div className="max-w-6xl w-full px-6 relative z-10">
           <div className="flex flex-col md:flex-row gap-12 items-center">
             <div className="flex-1 text-left">
-              <Link href="/" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-8 group">
+              <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted hover:text-white transition-colors mb-8 group">
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                 Back to Marketplace
               </Link>
@@ -66,12 +66,12 @@ export default function RankingsPage() {
                 <div className="p-3 bg-[#000000]/10 rounded-2xl border border-[#000000]/20">
                   <Trophy className="text-[#000000]" size={32} />
                 </div>
-                <div className="bg-green-500/10 text-green-500 text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-2 uppercase tracking-widest border border-green-500/20">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /> Live Economy
+                <div className="bg-primary-soft text-status text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-2 uppercase tracking-widest border border-primary">
+                  <span className="w-2 h-2 bg-primary rounded-full animate-pulse" /> Live Economy
                 </div>
               </div>
               <h1 className="text-5xl md:text-6xl font-black mb-4 tracking-tight leading-none">University <br /><span className="text-[#000000]">Leaderboard</span></h1>
-              <p className="text-gray-400 text-lg max-w-md">
+              <p className="text-muted text-lg max-w-md">
                 Live rankings based on monthly transaction volume and sales velocity across all campuses.
               </p>
             </div>
@@ -108,12 +108,12 @@ export default function RankingsPage() {
 
       <main className="max-w-4xl mx-auto px-6 py-12">
         {error ? (
-          <div className="p-8 bg-red-500/10 border border-red-500/20 rounded-2xl text-center">
-            <p className="text-red-400 font-medium">{error}</p>
+          <div className="p-8 bg-primary-soft border border-primary rounded-2xl text-center">
+            <p className="text-status font-medium">{error}</p>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center justify-between px-6 mb-6 text-sm font-bold text-gray-500 uppercase tracking-widest">
+            <div className="flex items-center justify-between px-6 mb-6 text-sm font-bold text-muted uppercase tracking-widest">
               <span>Campus Rankings</span>
               <span>Monthly Volume</span>
             </div>
@@ -137,9 +137,9 @@ export default function RankingsPage() {
                       {isTop3 ? (
                         <Medal size={40} style={{ color: medalColor }} className="absolute opacity-20" />
                       ) : (
-                        <span className="text-2xl font-black text-gray-700">#{index + 1}</span>
+                        <span className="text-2xl font-black text-muted">#{index + 1}</span>
                       )}
-                      <span className={`text-xl font-black relative ${isTop3 ? 'text-white' : 'text-gray-400'}`}>
+                      <span className={`text-xl font-black relative ${isTop3 ? 'text-white' : 'text-muted'}`}>
                         {index + 1}
                       </span>
                     </div>
@@ -152,7 +152,7 @@ export default function RankingsPage() {
                              <img src={uni.logo_url} alt={uni.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                           </div>
                         ) : (
-                          <MapPin size={24} className="text-gray-500" />
+                          <MapPin size={24} className="text-muted" />
                         )}
                       </div>
                       <div>
@@ -161,7 +161,7 @@ export default function RankingsPage() {
                           <span className="text-xs font-bold text-[#000000] bg-[#000000]/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
                             {uni.abbreviation}
                           </span>
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <span className="text-xs text-muted flex items-center gap-1">
                              <Activity size={12} /> Active Ecosystem
                           </span>
                         </div>
@@ -174,7 +174,7 @@ export default function RankingsPage() {
                     <div className="text-xl md:text-2xl font-black text-white tabular-nums">
                       ₦{uni.monthly_revenue.toLocaleString()}
                     </div>
-                    <div className="flex items-center justify-end gap-1 text-xs font-bold text-green-500 mt-1 uppercase tracking-tighter">
+                    <div className="flex items-center justify-end gap-1 text-xs font-bold text-status mt-1 uppercase tracking-tighter">
                       <TrendingUp size={12} /> Live Growth
                     </div>
                   </div>
@@ -184,14 +184,14 @@ export default function RankingsPage() {
 
             {rankings.length === 0 && (
               <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
-                <p className="text-gray-500 font-medium">No universities are currently active in the rankings.</p>
+                <p className="text-muted font-medium">No universities are currently active in the rankings.</p>
               </div>
             )}
           </div>
         )}
 
         <footer className="mt-20 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             Ratings are updated in real-time. Calculated based on delivered orders since the 1st of the current month.
           </p>
         </footer>

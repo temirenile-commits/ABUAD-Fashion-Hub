@@ -392,7 +392,7 @@
   border-radius: 999px;
 }
 
-.open { background: #3F3F46; color: #FFFFFF; }
+.open { background: #27272A; color: #FFFFFF; }
 .closed { background: rgba(0,0,0,0.9); color: #FFFFFF; }
 
 .shareOverlay {
@@ -405,7 +405,7 @@
 .cardShareBtn {
   background: rgba(0,0,0,0.4) !important;
   backdrop-filter: blur(4px);
-  border: 1px solid #3F3F46 !important;
+  border: 1px solid #27272A !important;
   color: white !important;
   padding: 6px !important;
   width: 28px !important;
@@ -603,7 +603,7 @@
   align-items: center;
   gap: 1rem;
   background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(0,0,0,0.08));
-  border: 1px solid #3F3F46;
+  border: 1px solid #27272A;
   border-radius: 14px;
   padding: 1.25rem 1.5rem;
   margin-top: 2.5rem;

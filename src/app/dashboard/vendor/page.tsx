@@ -1389,7 +1389,7 @@ export default function VendorDashboard() {
               </button>
 
               {userRole === 'admin' && (
-                <Link href="/admin" className={styles.navItem} style={{ color: 'var(--accent-gold)', marginTop: '0.5rem', background: '#121214' }}>
+                <Link href="/admin" className={styles.navItem} style={{ color: 'var(--primary)', marginTop: '0.5rem', background: '#121214' }}>
                   <ShieldCheck size={18} /> Admin Control Panel
                 </Link>
               )}
@@ -1653,13 +1653,13 @@ export default function VendorDashboard() {
 
 
             {userRole === 'admin' && (
-              <div className={styles.adminQuickLink} style={{ marginTop: '2rem', padding: '2rem', borderRadius: '16px', background: 'var(--bg-300)', border: '2px solid var(--accent-gold)', boxShadow: '0 0 30px rgba(255,255,255,0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1rem' }}>
-                <ShieldCheck size={48} color="var(--accent-gold)" />
+              <div className={styles.adminQuickLink} style={{ marginTop: '2rem', padding: '2rem', borderRadius: '16px', background: 'var(--bg-300)', border: '2px solid var(--primary)', boxShadow: '0 0 30px rgba(255,255,255,0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1rem' }}>
+                <ShieldCheck size={48} color="var(--primary)" />
                 <div>
-                  <h2 style={{ color: 'var(--accent-gold)', marginBottom: '0.5rem' }}>Global Admin Console</h2>
+                  <h2 style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>Global Admin Console</h2>
                   <p style={{ color: 'var(--text-300)', maxWidth: '400px' }}>You have root access to manage all vendors, products, and financial transactions on the platform.</p>
                 </div>
-                <Link href="/admin" className="btn btn-primary" style={{ background: 'var(--accent-gold)', borderColor: 'var(--accent-gold)', color: '#000000', fontWeight: 'bold', padding: '1rem 3rem' }}>ENTER ADMIN DASHBOARD</Link>
+                <Link href="/admin" className="btn btn-primary" style={{ background: 'var(--primary)', borderColor: 'var(--primary)', color: '#000000', fontWeight: 'bold', padding: '1rem 3rem' }}>ENTER ADMIN DASHBOARD</Link>
               </div>
             )}
           </div>
@@ -2826,7 +2826,7 @@ export default function VendorDashboard() {
               <div className={styles.promoOption} style={{ background: brand.billboard_boost_expires_at && new Date(brand.billboard_boost_expires_at) > new Date() ? 'var(--primary-soft)' : 'var(--bg-300)' }}>
                 <div className={styles.promoIcon}><Zap size={24} color="#FFFFFF" /></div>
                 <h3>Billboard Boost</h3>
-                <p>Featured on homepage "Gold Collection".</p>
+                <p>Featured on homepage "Green Collection".</p>
                 {brand.billboard_boost_expires_at && new Date(brand.billboard_boost_expires_at) > new Date() ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <div className={styles.activeStatus}>
@@ -3215,9 +3215,9 @@ export default function VendorDashboard() {
                         onClick={() => handleSubscribe({ id: tier.id, price: tier.price })}
                         style={{
                           marginTop: 'auto',
-                          background: isActive ? 'transparent' : `linear-gradient(135deg, ${tier.color || 'var(--primary)'}, ${tier.color || 'var(--primary)'}cc)`,
-                          border: isActive ? `1px solid ${tier.color || 'var(--primary)'}` : 'none',
-                          color: isActive ? (tier.color || 'var(--primary)') : '#000000',
+                          background: isActive ? 'var(--bg-300)' : 'var(--primary)',
+                          border: isActive ? '1px solid var(--border)' : 'none',
+                          color: isActive ? 'var(--text-300)' : '#000000',
                           fontWeight: 700,
                         }}
                       >
@@ -3238,11 +3238,11 @@ export default function VendorDashboard() {
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
                 {/* Billboard Boost */}
-                <div style={{ background: 'var(--bg-300)', border: '2px solid var(--accent-gold)', borderRadius: '16px', padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ position: 'absolute', top: 0, right: 0, padding: '0.5rem', background: 'var(--accent-gold)', color: '#000000', fontSize: '0.6rem', fontWeight: 900 }}>TRENDY BOARD</div>
+                <div style={{ background: 'var(--bg-300)', border: '2px solid var(--primary)', borderRadius: '16px', padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: 0, right: 0, padding: '0.5rem', background: 'var(--primary)', color: '#000000', fontSize: '0.6rem', fontWeight: 900 }}>TRENDY BOARD</div>
                   <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>??</div>
-                  <h3 style={{ fontSize: '1rem', color: 'var(--accent-gold)' }}>Campus Billboard</h3>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Get featured on the main homepage "The Gold Collection" billboard for 7 days.</p>
+                  <h3 style={{ fontSize: '1rem', color: 'var(--primary)' }}>Campus Billboard</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Get featured on the main homepage "The Green Collection" billboard for 7 days.</p>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontWeight: 900, color: '#FFFFFF' }}>₦500 <small>/week</small></span>
                     <button className="btn btn-primary btn-sm" onClick={() => handleSubscribe({ id: 'billboard_boost', price: 500 })}>Activate 🚀</button>
@@ -3296,7 +3296,7 @@ export default function VendorDashboard() {
             </div>
 
             {/* Master Toggle */}
-            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid #3F3F46' }}>
+            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid #27272A' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>?? Enable AI Copilot</div>
@@ -3312,7 +3312,7 @@ export default function VendorDashboard() {
             </div>
 
             {/* Auto-Reply Toggle */}
-            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid #3F3F46', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
+            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid #27272A', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>?? Auto-Reply to Customers</div>
@@ -3328,7 +3328,7 @@ export default function VendorDashboard() {
             </div>
 
             {/* Custom Instructions */}
-            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid #3F3F46', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
+            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid #27272A', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
               <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>?? Custom AI Instructions</div>
               <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.75rem' }}>Tell the AI how to represent your brand. E.g. "Always greet customers with 'Hey boss!'", "Never negotiate on prices", "Speak in a friendly, casual tone".</div>
               <textarea
@@ -3349,11 +3349,11 @@ export default function VendorDashboard() {
             </div>
 
             {/* Open Copilot CTA */}
-            <div style={{ background: 'linear-gradient(135deg,rgba(0,0,0,0.15),rgba(255,255,255,0.08))', borderRadius: '16px', padding: '1.5rem', border: '1px solid #3F3F46', textAlign: 'center' }}>
+            <div style={{ background: 'linear-gradient(135deg,rgba(0,0,0,0.15),rgba(255,255,255,0.08))', borderRadius: '16px', padding: '1.5rem', border: '1px solid #27272A', textAlign: 'center' }}>
               <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>?</div>
               <div style={{ fontWeight: 700, marginBottom: '0.4rem' }}>Talk to your Copilot</div>
               <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Ask it anything: "What are my earnings?", "How do I add a product?", "Why is my balance pending?"</div>
-              <button onClick={() => setShowCopilot(true)} className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#000000,#FFFFFF)', border: 'none' }}>
+              <button onClick={() => setShowCopilot(true)} className="btn btn-primary" style={{ background: 'var(--primary)', border: 'none', color: '#000000' }}>
                 Open AI Chat ?
               </button>
             </div>
@@ -3389,7 +3389,7 @@ export default function VendorDashboard() {
       {showCopilot && (
         <div style={{
           position: 'fixed', bottom: '6rem', right: '1.5rem', width: '360px', maxHeight: '500px',
-          background: 'var(--bg-200)', border: '1px solid #A1A1AA', borderRadius: '20px',
+          background: 'var(--bg-200)', border: '1px solid #A0A0A0', borderRadius: '20px',
           boxShadow: '0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.12)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 9999,
           backdropFilter: 'blur(24px)'
@@ -3433,7 +3433,7 @@ export default function VendorDashboard() {
               onChange={e => setCopilotInput(e.target.value)}
               placeholder="Ask your AI anything..."
               disabled={copilotLoading}
-              style={{ flex: 1, background: 'var(--bg-300)', border: '1px solid #3F3F46', borderRadius: '999px', padding: '0.55rem 1rem', fontSize: '0.83rem', color: '#FFFFFF', outline: 'none' }}
+              style={{ flex: 1, background: 'var(--bg-300)', border: '1px solid #27272A', borderRadius: '999px', padding: '0.55rem 1rem', fontSize: '0.83rem', color: '#FFFFFF', outline: 'none' }}
             />
             <button type="submit" disabled={copilotLoading || !copilotInput.trim()} style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#000000,#000000)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               {copilotLoading ? <Loader2 size={14} className="anim-spin" color="#FFFFFF" /> : <ArrowRight size={14} color="#FFFFFF" />}

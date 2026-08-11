@@ -87,7 +87,7 @@
 
 .infoBox {
   background: #121214;
-  border: 1px solid #3F3F46;
+  border: 1px solid #27272A;
   border-radius: 12px;
   padding: 1rem;
   display: flex;
@@ -165,7 +165,6 @@
 
 .updateBtn:hover {
   transform: translateY(-2px);
-  filter: brightness(1.1);
   box-shadow: 0 10px 20px -5px rgba(255,255,255,0.4);
 }
 
@@ -205,9 +204,9 @@
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
-  50% { transform: scale(1.1); filter: drop-shadow(0 0 15px rgba(255,255,255,0.4)); }
-  100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
 
 /* ===== Small phones: allow modal to fill width, allow scrolling in short viewports ===== */

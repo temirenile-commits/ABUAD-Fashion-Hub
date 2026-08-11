@@ -23,7 +23,7 @@ export default function ProductInteraction({ product }: Props) {
   const activePrice = calculateActivePrice(product.price, product.variants, selectedVariants);
   const hasCustomVariantPrice = activePrice !== Number(product.price);
 
-  // Group variants by type (e.g. Size: ["S", "M", "L"], Color: ["Red", "Blue"])
+  // Group variants by type (e.g. Size: ["S", "M", "L"], Color: ["Green", "Blue"])
   const variantsByType = (product.variants || []).reduce((acc: Record<string, string[]>, v: any) => {
     if (!acc[v.type]) acc[v.type] = [];
     if (!acc[v.type].includes(v.value)) acc[v.type].push(v.value);

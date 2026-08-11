@@ -13,7 +13,7 @@
   width: 260px;
   min-height: 100vh;
   background: linear-gradient(180deg, #000000 0%, #000000 100%);
-  border-right: 1px solid #3F3F46;
+  border-right: 1px solid #27272A;
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -61,7 +61,7 @@
   gap: 0.4rem;
   padding: 0.3rem 0.75rem;
   background: rgba(0,0,0,0.12);
-  border: 1px solid #3F3F46;
+  border: 1px solid #27272A;
   border-radius: 100px;
   font-size: 0.7rem;
   font-weight: 600;
@@ -209,7 +209,7 @@
   gap: 0.35rem;
   padding: 0.25rem 0.65rem;
   background: #121214;
-  border: 1px solid #3F3F46;
+  border: 1px solid #27272A;
   border-radius: 100px;
   font-size: 0.68rem;
   font-weight: 700;
@@ -254,7 +254,7 @@
 }
 
 .searchBar:focus-within {
-  border-color: #A1A1AA;
+  border-color: #A0A0A0;
 }
 
 .searchBar input {
@@ -279,7 +279,7 @@
   display: flex;
 }
 
-.refreshBtn:hover { color: #FFFFFF; border-color: #A1A1AA; }
+.refreshBtn:hover { color: #FFFFFF; border-color: #A0A0A0; }
 
 .spin { animation: spin 0.8s linear infinite; }
 
@@ -329,7 +329,7 @@
 }
 
 .statCard:hover {
-  border-color: #3F3F46;
+  border-color: #27272A;
   transform: translateY(-2px);
 }
 
@@ -477,20 +477,20 @@
   text-transform: uppercase;
 }
 
-.badgeVerified { background: #27272A; color: #FFFFFF; border: 1px solid #3F3F46; }
-.badgePending  { background: #27272A; color: #FFFFFF; border: 1px solid #3F3F46; }
-.badgeRejected { background: rgba(0,0,0,0.12);  color: #FFFFFF; border: 1px solid #3F3F46; }
-.badgeSuspended { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #3F3F46; }
-.badgeGlobal   { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #3F3F46; }
-.badgeLocal    { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #3F3F46; }
-.badgeAdmin    { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #3F3F46; }
-.badgeStaff    { background: #27272A; color: #FFFFFF; border: 1px solid #3F3F46; }
-.badgePaid     { background: #27272A; color: #FFFFFF; border: 1px solid #3F3F46; }
-.badgeCancelled{ background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #3F3F46; }
-.badgeActive   { background: #27272A; color: #FFFFFF; border: 1px solid #3F3F46; }
-.badgeOffline  { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #3F3F46; }
-.badgeGold { background: #27272A; color: #FFFFFF; border: 1px solid #3F3F46; }
-.badgeInfo { background: rgba(0,0,0,0.15); color: #FFFFFF; border: 1px solid #A1A1AA; }
+.badgeVerified { background: #27272A; color: #FFFFFF; border: 1px solid #27272A; }
+.badgePending  { background: #27272A; color: #FFFFFF; border: 1px solid #27272A; }
+.badgeRejected { background: rgba(0,0,0,0.12);  color: #FFFFFF; border: 1px solid #27272A; }
+.badgeSuspended { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #27272A; }
+.badgeGlobal   { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #27272A; }
+.badgeLocal    { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #27272A; }
+.badgeAdmin    { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #27272A; }
+.badgeStaff    { background: #27272A; color: #FFFFFF; border: 1px solid #27272A; }
+.badgePaid     { background: #27272A; color: #FFFFFF; border: 1px solid #27272A; }
+.badgeCancelled{ background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #27272A; }
+.badgeActive   { background: #27272A; color: #FFFFFF; border: 1px solid #27272A; }
+.badgeOffline  { background: rgba(0,0,0,0.12); color: #FFFFFF; border: 1px solid #27272A; }
+.badgeGold { background: #27272A; color: #FFFFFF; border: 1px solid #27272A; }
+.badgeInfo { background: rgba(0,0,0,0.15); color: #FFFFFF; border: 1px solid #A0A0A0; }
 .badgeGhost { background: #121214; color: #FFFFFF; border: 1px solid #27272A; }
 
 /* ─── Action Buttons ──────────────────────────────────────── */
@@ -516,15 +516,15 @@
   gap: 0.3rem;
 }
 
-.btnSm:hover { border-color: #A1A1AA; color: #FFFFFF; }
+.btnSm:hover { border-color: #A0A0A0; color: #FFFFFF; }
 
-.btnApprove { color: #FFFFFF !important; border-color: #3F3F46 !important; }
+.btnApprove { color: #FFFFFF !important; border-color: #27272A !important; }
 .btnApprove:hover { background: #121214 !important; }
 
-.btnReject { color: #000000 !important; border-color: #3F3F46 !important; }
+.btnReject { color: #000000 !important; border-color: #27272A !important; }
 .btnReject:hover { background: rgba(0,0,0,0.1) !important; }
 
-.btnDelete { color: #F87171 !important; border: 1px solid rgba(220,38,38,0.4) !important; background: rgba(220,38,38,0.1) !important; }
+.btnDelete { color: #10B981 !important; border: 1px solid rgba(16,185,129,0.4) !important; background: rgba(16,185,129,0.1) !important; }
 .btnDelete:hover { background: #000000 !important; color: #FFFFFF !important; }
 
 .btnPrimary {
@@ -591,7 +591,7 @@
   resize: vertical;
 }
 
-.formInput:focus { border-color: #A1A1AA; }
+.formInput:focus { border-color: #A0A0A0; }
 .formInput::placeholder { color: #000000; }
 
 .formSelect {
@@ -625,7 +625,7 @@
 }
 
 .insightCard.myUniversity {
-  border-color: #A1A1AA;
+  border-color: #A0A0A0;
 }
 
 .insightCard.myUniversity::after {
@@ -721,7 +721,7 @@
 .permBadge {
   padding: 0.2rem 0.55rem;
   background: rgba(0,0,0,0.1);
-  border: 1px solid #3F3F46;
+  border: 1px solid #27272A;
   border-radius: 6px;
   font-size: 0.68rem;
   font-weight: 600;
@@ -749,15 +749,15 @@
   transition: all 0.15s;
 }
 
-.filterBtn:hover { color: #FFFFFF; border-color: #A1A1AA; }
-.filterActive { background: rgba(0,0,0,0.15) !important; color: #FFFFFF !important; border-color: #A1A1AA !important; }
+.filterBtn:hover { color: #FFFFFF; border-color: #A0A0A0; }
+.filterActive { background: rgba(0,0,0,0.15) !important; color: #FFFFFF !important; border-color: #A0A0A0 !important; }
 
 /* ─── Error / Empty ───────────────────────────────────────── */
 .errorBox {
   margin: 1.5rem;
   padding: 1rem 1.25rem;
   background: rgba(0,0,0,0.08);
-  border: 1px solid #3F3F46;
+  border: 1px solid #27272A;
   border-radius: 10px;
   color: #FFFFFF;
   font-size: 0.85rem;
@@ -789,7 +789,7 @@
 
 .modal {
   background: #000000;
-  border: 1px solid #3F3F46;
+  border: 1px solid #27272A;
   border-radius: 16px;
   padding: 2rem;
   width: 100%;

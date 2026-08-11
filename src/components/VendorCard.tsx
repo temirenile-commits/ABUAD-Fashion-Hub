@@ -73,7 +73,7 @@ export default function VendorCard({ vendor, layout = 'grid' }: Props) {
           )}
         </div>
 
-        <span className={`badge badge-teal ${styles.categoryBadge}`}>
+        <span className={`badge badge-brand ${styles.categoryBadge}`}>
           {vendor.category || 'Fashion'}
         </span>
 

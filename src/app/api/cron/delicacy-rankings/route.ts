@@ -108,8 +108,8 @@ export async function GET() {
       byUniversity[uid].push(r);
     }
 
-    const REWARD_SHARES = [0.5, 0.3, 0.2]; // Gold, Silver, Bronze get 50/30/20% of pool
-    const BADGES = ['gold', 'silver', 'bronze'];
+    const REWARD_SHARES = [0.5, 0.3, 0.2]; // Green, Silver, Bronze get 50/30/20% of pool
+    const BADGES = ['Green', 'silver', 'bronze'];
 
     for (const [uid, group] of Object.entries(byUniversity)) {
       group.sort((a, b) => Number(b.score) - Number(a.score));

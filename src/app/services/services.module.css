@@ -58,7 +58,7 @@
 
 .typeActive {
   background: var(--primary-soft);
-  border-color: #A1A1AA;
+  border-color: #A0A0A0;
   color: var(--primary);
 }
 
@@ -127,7 +127,7 @@
   font-size: 0.72rem;
   font-weight: 600;
   color: #000000;
-  border: 1px solid #A1A1AA;
+  border: 1px solid #A0A0A0;
 }
 
 /* Card Body */
@@ -206,7 +206,7 @@
 /* Provider CTA */
 .providerCta {
   background: var(--grad-brand-soft);
-  border: 1px solid #3F3F46;
+  border: 1px solid #27272A;
   border-radius: var(--radius-xl);
   padding: 2.5rem;
   text-align: center;

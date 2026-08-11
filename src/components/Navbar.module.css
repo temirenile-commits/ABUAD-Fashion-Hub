@@ -254,7 +254,7 @@
 }
 
 .adminModuleLink {
-  color: var(--accent-gold) !important;
+  color: var(--primary) !important;
 }
 
 .logoutModuleBtn {

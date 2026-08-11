@@ -11,7 +11,7 @@
 }
 
 .flashBorder {
-  border-color: #A1A1AA !important;
+  border-color: #A0A0A0 !important;
   box-shadow: 0 0 0 2px rgba(0,0,0,0.15);
 }
 
@@ -49,7 +49,7 @@
   font-size: 0.62rem;
   font-weight: 900;
   letter-spacing: 0.1em;
-  border: 1px solid #3F3F46;
+  border: 1px solid #27272A;
 }
 
 .liveDot {
@@ -127,8 +127,8 @@
   font-weight: 800;
   font-family: monospace;
 }
-.trendUp   { background: #121214;  color: #FFFFFF; border: 1px solid #3F3F46; }
-.trendDown { background: rgba(255,255,255,0.06);   color: #FFFFFF; border: 1px solid #3F3F46;  }
+.trendUp   { background: #121214;  color: #FFFFFF; border: 1px solid #27272A; }
+.trendDown { background: rgba(255,255,255,0.06);   color: #FFFFFF; border: 1px solid #27272A;  }
 
 /* ── Chart area ─────────────────────────────────────────────── */
 .chartArea {

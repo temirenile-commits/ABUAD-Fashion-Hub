@@ -86,7 +86,7 @@ export default function ServicesPage() {
                       className={styles.img}
                     />
                     <div className={styles.imgGradient} />
-                    <span className={`badge badge-gold ${styles.typeBadge}`}>
+                    <span className={`badge badge-brand ${styles.typeBadge}`}>
                       {svc.service_type}
                     </span>
                     {brand?.verified && (

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext } from 'react';
 
-type Theme = 'light' | 'dark';
+type Theme = 'dark';
 
 interface ThemeContextType {
   theme: Theme;
@@ -11,35 +11,16 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+/**
+ * The marketplace uses one intentionally strict visual system. The context is
+ * retained for compatibility with existing consumers, but alternate themes are
+ * not exposed or persisted.
+ */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark');
-
-  useEffect(() => {
-    const initTheme = async () => {
-      // 1. Check local storage
-      const savedTheme = localStorage.getItem('theme') as Theme;
-      if (savedTheme) {
-        setTheme(savedTheme);
-        document.documentElement.classList.toggle('light-mode', savedTheme === 'light');
-      } else {
-        // 2. Check system preference
-        const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-        setTheme(systemTheme);
-        document.documentElement.classList.toggle('light-mode', systemTheme === 'light');
-      }
-    };
-    initTheme();
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.classList.toggle('light-mode', newTheme === 'light');
-  };
+  const toggleTheme = () => undefined;
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme: 'dark', toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -734,7 +734,7 @@ export default function AdminDashboard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <h1>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h1>
             {!loading && !error && (
-              <span className="badge badge-verified" style={{ fontSize: '0.65rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span className="badge badge-brand" style={{ fontSize: '0.65rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Activity size={10} /> ADMIN LIVE
               </span>
             )}
@@ -764,7 +764,7 @@ export default function AdminDashboard() {
                 {pendingVendors.length > 0 && (
                   <div style={{
                     background: '#121214',
-                    border: '1px solid #A1A1AA',
+                    border: '1px solid #A0A0A0',
                     borderRadius: '12px',
                     padding: '1.25rem',
                     marginBottom: '1.5rem',
@@ -1125,7 +1125,7 @@ export default function AdminDashboard() {
                                 </button>
                                 <button 
                                   className="btn btn-primary" 
-                                  style={{ background: '#121214', borderColor: '#27272A', height: '38px', fontSize: '0.85rem', color: '#000000', fontWeight: 700 }}
+                                  style={{ background: 'var(--primary)', borderColor: 'var(--primary)', height: '38px', fontSize: '0.85rem', color: '#000000', fontWeight: 700 }}
                                   disabled={!!actionLoading}
                                   onClick={async () => {
                                     if (!confirm(`Are you absolutely sure you want to approve this GTB manual transfer of ₦${o.total_amount.toLocaleString()}? This will notify the kitchen to start cooking.`)) return;
@@ -1299,7 +1299,7 @@ export default function AdminDashboard() {
                                 🛍️ Switch to General
                               </button>
                             )}
-                            <button className="btn btn-ghost btn-sm" style={{ color: '#DC2626' }} onClick={() => { if(confirm('Suspend this vendor?')) adminAction('suspend_vendor', { brandId: v.id }) }} title="Suspend Vendor"><Trash2 size={14} /></button>
+                            <button className="btn btn-ghost btn-sm" style={{ color: '#10B981' }} onClick={() => { if(confirm('Suspend this vendor?')) adminAction('suspend_vendor', { brandId: v.id }) }} title="Suspend Vendor"><Trash2 size={14} /></button>
                           </div>
                         </td>
                       </tr>
@@ -1357,7 +1357,7 @@ export default function AdminDashboard() {
                                   )}
                                 </td>
                                 <td>
-                                  <span className="badge badge-verified" style={{ background: '#121214', color: '#FFFFFF', fontWeight: 600 }}>
+                                  <span className="badge badge-brand" style={{ background: '#121214', color: '#FFFFFF', fontWeight: 600 }}>
                                     {vendorOrders.length} {vendorOrders.length === 1 ? 'Order' : 'Orders'}
                                   </span>
                                 </td>
@@ -1742,7 +1742,7 @@ export default function AdminDashboard() {
                           )}
                         </td>
                         <td>
-                          <button className="btn btn-ghost btn-sm" style={{ color: '#DC2626' }} onClick={() => confirm('Delete this product?') && adminAction('delete_product', { productId: p.id })}>
+                          <button className="btn btn-ghost btn-sm" style={{ color: '#10B981' }} onClick={() => confirm('Delete this product?') && adminAction('delete_product', { productId: p.id })}>
                             <Trash2 size={14} />
                           </button>
                         </td>
@@ -1887,7 +1887,7 @@ export default function AdminDashboard() {
                             {(pc as any).min_purchase_amount > 0 && <div style={{ fontSize: '0.7rem', color: 'var(--text-400)', marginTop: '2px' }}>Min Spend: ₦{(pc as any).min_purchase_amount}</div>}
                             {pc.products && <div style={{ fontSize: '0.7rem', color: 'var(--primary)', marginTop: '2px' }}>Target Product: {pc.products.title.substring(0, 20)}...</div>}
                           </div>
-                          <button className="btn btn-ghost btn-sm" style={{ color: '#DC2626', padding: '4px' }} onClick={() => confirm('Delete this code?') && adminAction('delete_promo_code', { codeId: pc.id })}><Trash2 size={14} /></button>
+                          <button className="btn btn-ghost btn-sm" style={{ color: '#10B981', padding: '4px' }} onClick={() => confirm('Delete this code?') && adminAction('delete_promo_code', { codeId: pc.id })}><Trash2 size={14} /></button>
                         </div>
                       </div>
                     ))}
@@ -1914,7 +1914,7 @@ export default function AdminDashboard() {
                             {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at!) > new Date()).map(v => (
                                <tr key={v.id}>
                                   <td>{v.name}</td>
-                                  <td>{new Date(v.billboard_boost_expires_at!).toLocaleDateString()}</td><td><button className="btn btn-ghost btn-sm" style={{ color: "#DC2626" }} onClick={() => confirm("Remove from billboard?") && adminAction("remove_billboard", { brandId: v.id })}><Trash2 size={14} /></button></td>
+                                  <td>{new Date(v.billboard_boost_expires_at!).toLocaleDateString()}</td><td><button className="btn btn-ghost btn-sm" style={{ color: "#10B981" }} onClick={() => confirm("Remove from billboard?") && adminAction("remove_billboard", { brandId: v.id })}><Trash2 size={14} /></button></td>
                                </tr>
                             ))}
                             {vendors.filter(v => v.billboard_boost_expires_at && new Date(v.billboard_boost_expires_at!) > new Date()).length === 0 && (
@@ -1932,7 +1932,7 @@ export default function AdminDashboard() {
                                <tr key={p.id}>
                                   <td>{p.title}</td>
                                   <td style={{ color: 'var(--primary)', fontWeight: 700 }}>₦{Number(p.flash_sale_price || p.price).toLocaleString()}</td>
-                                  <td>{p.brands?.name}</td><td><button className="btn btn-ghost btn-sm" style={{ color: "#DC2626" }} onClick={() => confirm("End flash sale?") && adminAction("remove_flash_sale", { productId: p.id })}><Trash2 size={14} /></button></td>
+                                  <td>{p.brands?.name}</td><td><button className="btn btn-ghost btn-sm" style={{ color: "#10B981" }} onClick={() => confirm("End flash sale?") && adminAction("remove_flash_sale", { productId: p.id })}><Trash2 size={14} /></button></td>
                                </tr>
                             ))}
                             {products.filter(p => p.is_flash_sale).length === 0 && (
@@ -2064,14 +2064,14 @@ export default function AdminDashboard() {
                             {sec.description && <div className={styles.subText} style={{ fontSize: '0.75rem' }}>{sec.description}</div>}
                           </td>
                           <td>
-                            <span className={`badge ${sec.type === 'manual' ? 'badge-gold' : 'badge-verified'}`}>
+                            <span className={`badge ${sec.type === 'manual' ? 'badge-brand' : 'badge-brand'}`}>
                               {sec.type.toUpperCase()}
                             </span>
                             {sec.type === 'automated' && <div className={styles.subText} style={{ fontSize: '0.65rem', marginTop: '4px' }}>Rule: {sec.auto_rule?.criteria}</div>}
                           </td>
-                          <td><span className="badge badge-ghost">{sec.layout_type}</span></td>
+                          <td><span className="badge badge-neutral">{sec.layout_type}</span></td>
                           <td>{sec.priority}</td>
-                          <td><span className={sec.is_active ? 'text-green' : 'text-red'}>{sec.is_active ? 'Active' : 'Inactive'}</span></td>
+                          <td><span className={sec.is_active ? 'text-status' : 'text-status'}>{sec.is_active ? 'Active' : 'Inactive'}</span></td>
                           <td>{sec.universities?.abbreviation || 'Global'}</td>
                           <td>
                             <div className={styles.actionRow}>
@@ -2083,7 +2083,7 @@ export default function AdminDashboard() {
                                   <ShoppingBag size={14} />
                                 </button>
                               )}
-                              <button className="btn btn-ghost btn-sm" style={{ color: '#DC2626', gap: '4px' }} onClick={() => confirm('Delete this section?') && adminAction('delete_homepage_section', { id: sec.id })}>
+                              <button className="btn btn-ghost btn-sm" style={{ color: '#10B981', gap: '4px' }} onClick={() => confirm('Delete this section?') && adminAction('delete_homepage_section', { id: sec.id })}>
                                 <Trash2 size={14} /> <span>Delete</span>
                               </button>
                             </div>
@@ -2276,7 +2276,7 @@ export default function AdminDashboard() {
                           </select>
                         </td>
                         <td>
-                          <span className={`badge ${agent.is_active ? 'badge-verified' : 'badge-pending'}`}>
+                          <span className={`badge ${agent.is_active ? 'badge-brand' : 'badge-pending'}`}>
                               {agent.is_active ? 'Online' : 'Offline'}
                           </span>
                         </td>
@@ -3505,7 +3505,7 @@ export default function AdminDashboard() {
                                   </td>
                                   <td>
                                     <button 
-                                      className="btn btn-icon text-red" 
+                                      className="btn btn-icon text-status"
                                       onClick={async (e) => {
                                         e.stopPropagation();
                                         if (!confirm(`Delete ${u.name}? This will affect all associated vendors.`)) return;
@@ -3649,7 +3649,7 @@ export default function AdminDashboard() {
                                   <td>
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                                       {adminTeam.map(m => (
-                                        <div key={m.id} className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <div key={m.id} className="badge badge-brand" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                           {m.member?.name} ({m.role})
                                           <XCircle size={12} style={{ cursor: 'pointer' }} onClick={async () => {
                                             await adminFetch('/api/admin', { method: 'POST', body: JSON.stringify({ action: 'remove_team_member', teamId: m.id }) });
@@ -3662,7 +3662,7 @@ export default function AdminDashboard() {
                                   </td>
                                   <td>
                                     <button 
-                                      className="btn btn-ghost text-red"
+                                      className="btn btn-ghost text-status"
                                       onClick={async () => {
                                         if (!confirm(`Revoke admin status for ${admin.name}?`)) return;
                                         await adminFetch('/api/universities', { method: 'POST', body: JSON.stringify({ action: 'revoke_admin', userId: admin.id }) });
@@ -3693,7 +3693,7 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                           <span className="badge badge-verified">Active Ecosystem</span>
+                           <span className="badge badge-brand">Active Ecosystem</span>
                         </div>
                       </div>
                     </div>
@@ -3740,9 +3740,9 @@ export default function AdminDashboard() {
                                       <div className={styles.subText}>{u.email}</div>
                                     </td>
                                     <td>
-                                      <span className={`badge ${u.role === 'admin' ? 'badge-verified' : u.role === 'vendor' ? 'badge-gold' : 'badge-ghost'}`}>{u.role}</span>
+                                      <span className={`badge ${u.role === 'admin' ? 'badge-brand' : u.role === 'vendor' ? 'badge-brand' : 'badge-neutral'}`}>{u.role}</span>
                                     </td>
-                                    <td><span className={u.status === 'active' ? 'text-green' : 'text-red'}>{u.status}</span></td>
+                                    <td><span className={u.status === 'active' ? 'text-status' : 'text-status'}>{u.status}</span></td>
                                     <td className={styles.subText}>{new Date(u.created_at || '').toLocaleDateString()}</td>
                                     <td>
                                       <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -3844,7 +3844,7 @@ export default function AdminDashboard() {
                                       <strong style={{ fontSize: '0.85rem' }}>{m.member?.name}</strong>
                                       <span className="badge badge-primary" style={{ fontSize: '0.65rem', width: 'fit-content', marginTop: '4px' }}>{m.role || 'Campus Staff'}</span>
                                     </div>
-                                    <Trash2 size={14} style={{ color: '#DC2626', cursor: 'pointer' }} onClick={async () => {
+                                    <Trash2 size={14} style={{ color: '#10B981', cursor: 'pointer' }} onClick={async () => {
                                       if(!confirm('Remove this member?')) return;
                                       await adminFetch('/api/admin', { method: 'POST', body: JSON.stringify({ action: 'remove_team_member', teamId: m.id }) });
                                       fetchUniData(selectedUniId!);
@@ -3853,7 +3853,7 @@ export default function AdminDashboard() {
                                   </div>
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.5rem' }}>
                                     {m.permissions?.map((p: string) => (
-                                      <span key={p} className="badge badge-ghost" style={{ fontSize: '0.6rem', padding: '0.1rem 0.4rem', background: '#121214' }}>{p}</span>
+                                      <span key={p} className="badge badge-neutral" style={{ fontSize: '0.6rem', padding: '0.1rem 0.4rem', background: '#121214' }}>{p}</span>
                                     ))}
                                   </div>
                                 </div>
@@ -3930,8 +3930,8 @@ export default function AdminDashboard() {
                           <p className={styles.subText} style={{ fontSize: '0.75rem' }}>Note: Out-campus agents set their own base fees; this markup is added on top.</p>
                         </div>
 
-                        <div className={styles.settingsBox} style={{ background: 'var(--bg-200)', border: '1px solid var(--gold)', marginTop: '1rem' }}>
-                          <h4 style={{ color: 'var(--gold)', marginBottom: '1rem' }}>Commission & Revenue</h4>
+                        <div className={styles.settingsBox} style={{ background: 'var(--bg-200)', border: '1px solid var(--primary)', marginTop: '1rem' }}>
+                          <h4 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Commission & Revenue</h4>
                           <p className={styles.subText} style={{ marginBottom: '1rem' }}>Platform commission rate applied to all sales in this university.</p>
                           
                           <div className="mb-3">
@@ -4022,7 +4022,7 @@ export default function AdminDashboard() {
                             <td style={{ fontFamily: 'monospace', color: 'var(--primary)', padding: '0.75rem' }}>{cat.slug}</td>
                             <td style={{ padding: '0.75rem' }}>
                               {cat.university_id ? (
-                                <span className="badge badge-verified" style={{ fontSize: '0.65rem' }}>
+                                <span className="badge badge-brand" style={{ fontSize: '0.65rem' }}>
                                   🎓 {cat.universities?.abbreviation || cat.universities?.name || 'Campus Custom'}
                                 </span>
                               ) : (
@@ -4033,7 +4033,7 @@ export default function AdminDashboard() {
                             </td>
                             <td style={{ padding: '0.75rem' }}>{cat.sort_order || 0}</td>
                             <td style={{ padding: '0.75rem' }}>
-                              <span className={`badge ${cat.is_active ? 'badge-verified' : 'badge-offline'}`} style={{ background: cat.is_active ? '#121214' : '#121214', color: cat.is_active ? '#FFFFFF' : '#FFFFFF' }}>
+                              <span className={`badge ${cat.is_active ? 'badge-brand' : 'badge-offline'}`} style={{ background: cat.is_active ? '#121214' : '#121214', color: cat.is_active ? '#FFFFFF' : '#FFFFFF' }}>
                                 {cat.is_active ? 'Active' : 'Inactive'}
                               </span>
                             </td>

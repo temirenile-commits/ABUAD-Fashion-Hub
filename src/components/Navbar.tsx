@@ -2,11 +2,10 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Search, Heart, User, Menu, X, Store, Home, Layers, LogOut, LayoutDashboard, ShoppingBag, MessageCircle, Bell, ShieldCheck, Sun, Moon, UtensilsCrossed, Trophy } from 'lucide-react';
+import { Search, Heart, User, Menu, X, Store, Home, Layers, LogOut, LayoutDashboard, ShoppingBag, MessageCircle, Bell, ShieldCheck, UtensilsCrossed, Trophy } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/context/CartContext';
 import { useNotifications } from '@/context/NotificationContext';
-import { useTheme } from '@/context/ThemeContext';
 import CartDrawer from './CartDrawer';
 import HelpCenter from './HelpCenter';
 import styles from './Navbar.module.css';
@@ -14,7 +13,6 @@ import styles from './Navbar.module.css';
 export default function Navbar() {
   const { getItemCount } = useCart();
   const { unreadCount, requestPermission, permission, markAllRead } = useNotifications();
-  const { theme, toggleTheme } = useTheme();
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
@@ -142,14 +140,6 @@ export default function Navbar() {
 
         {/* Actions (Right) */}
         <div className={styles.actions}>
-          <button 
-            className={styles.themeToggle} 
-            onClick={toggleTheme} 
-            aria-label="Toggle theme"
-          >
-            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-          </button>
-
           {user ? (
             <>
               {/* Notification (Always Visible) */}
@@ -230,7 +220,7 @@ export default function Navbar() {
                 )}
                 {(role === 'university_admin' || role === 'admin') && (
                   <Link href="/university-admin" className={styles.moduleItem} style={{ borderLeft: '3px solid #000000', background: 'rgba(0,0,0,0.05)' }}>
-                    <ShieldCheck size={18} style={{ color: '#D4AF37' }} />
+                    <ShieldCheck size={18} style={{ color: '#10B981' }} />
                     <span style={{ color: '#000000', fontWeight: 600 }}>University Admin Dashboard</span>
                   </Link>
                 )}

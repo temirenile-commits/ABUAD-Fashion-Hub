@@ -139,14 +139,14 @@ export default async function VendorPage({ params, searchParams }: Props) {
                 </div>
               )}
             </div>
-            <span className={`badge badge-teal`}>{vendor.brand_type || 'General / Non-Edibles'}</span>
+            <span className={`badge badge-brand`}>{vendor.brand_type || 'General / Non-Edibles'}</span>
             <p className={styles.description}>{vendor.description}</p>
             
             {/* Award History Badges */}
             {vendor.award_history && (vendor.award_history as any[]).length > 0 && (
               <div className={styles.awardHistory} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
                 {(vendor.award_history as any[]).map((award, i) => (
-                  <div key={i} className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px' }}>
+                  <div key={i} className="badge badge-brand" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px' }}>
                     <Trophy size={12} /> {award.title} • {award.week}
                   </div>
                 ))}

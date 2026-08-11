@@ -92,7 +92,7 @@
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  background: #DC2626; /* Crimson - sale badge ONLY */
+  background: #10B981; /* Accent - sale badge ONLY */
   color: #FFFFFF;
   font-size: 0.7rem;
   font-weight: 800;
@@ -105,13 +105,13 @@
   position: absolute;
   bottom: 0.5rem;
   left: 0.5rem;
-  background: rgba(212,175,55,0.12);
-  color: #D4AF37;
+  background: rgba(16,185,129,0.12);
+  color: #10B981;
   font-size: 0.65rem;
   font-weight: 700;
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
-  border: 1px solid rgba(212,175,55,0.35);
+  border: 1px solid rgba(16,185,129,0.35);
   display: flex;
   align-items: center;
   gap: 0.2rem;
@@ -122,7 +122,7 @@
   position: absolute;
   bottom: 0.5rem;
   right: 0.5rem;
-  background: #FFFFFF; /* ABUAD Gold/Amber */
+  background: #FFFFFF; /* ABUAD campus badge */
   color: #000000;
   font-size: 0.65rem;
   font-weight: 800;
@@ -138,7 +138,7 @@
   position: absolute;
   bottom: 0.5rem;
   right: 0.5rem;
-  background: #FFFFFF; /* Slate gray */
+  background: #FFFFFF; /* Global marketplace badge */
   color: #000000;
   font-size: 0.65rem;
   font-weight: 700;
@@ -339,7 +339,7 @@
   top: 0.5rem;
   left: 50%;
   transform: translateX(-50%);
-  background: #DC2626; /* Crimson - out of stock urgency */
+  background: #10B981; /* Accent - out of stock urgency */
   color: #FFFFFF;
   font-size: 0.7rem;
   font-weight: 800;

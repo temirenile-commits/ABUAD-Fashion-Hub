@@ -18,7 +18,7 @@ interface RankEntry {
 }
 
 const BADGE_CONFIG: Record<string, { emoji: string; color: string; bg: string }> = {
-  gold:   { emoji: '🥇', color: '#FFFFFF', bg: '#121214' },
+  Green:   { emoji: '🥇', color: '#FFFFFF', bg: '#121214' },
   silver: { emoji: '🥈', color: '#FFFFFF', bg: '#121214' },
   bronze: { emoji: '🥉', color: '#000000', bg: 'rgba(0,0,0,0.15)' },
 };
@@ -150,7 +150,7 @@ export default function DelicaciesRankingsPage() {
               <div style={{ display: 'flex', gap: '1rem', marginBottom: '2.5rem' }}>
                 {top3.map((r) => {
                   const brand = Array.isArray(r.brands) ? r.brands[0] : r.brands;
-                  const cfg = r.badge ? BADGE_CONFIG[r.badge] : BADGE_CONFIG.gold;
+                  const cfg = r.badge ? BADGE_CONFIG[r.badge] : BADGE_CONFIG.Green;
                   return (
                     <div key={r.id} style={{
                       flex: 1, background: 'var(--bg-100)',

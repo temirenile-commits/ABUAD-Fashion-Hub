@@ -110,7 +110,7 @@ export default function TermsPage() {
           <span style={{ background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '999px', padding: '0.3rem 1rem', fontSize: '0.8rem', color: 'var(--text-400)' }}>
             Last Updated: {activePolicy.last_updated}
           </span>
-          <span style={{ background: 'var(--bg-300)', border: '1px solid var(--accent-gold)', borderRadius: '999px', padding: '0.3rem 1rem', fontSize: '0.8rem', color: 'var(--accent-gold)' }}>
+          <span style={{ background: 'var(--bg-300)', border: '1px solid var(--primary)', borderRadius: '999px', padding: '0.3rem 1rem', fontSize: '0.8rem', color: 'var(--primary)' }}>
             Official MasterCart Policy
           </span>
         </div>
@@ -137,11 +137,11 @@ export default function TermsPage() {
           padding: '2rem',
           borderRadius: '16px',
           background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
-          border: '1px solid #A1A1AA',
+          border: '1px solid #A0A0A0',
           textAlign: 'center',
         }}>
           <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-400)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Sponsored & Proudly Under</p>
-          <h3 style={{ margin: '0.5rem 0 0', color: 'var(--accent-gold)', fontWeight: 900, fontSize: '1.1rem', letterSpacing: '0.05em' }}>
+          <h3 style={{ margin: '0.5rem 0 0', color: 'var(--primary)', fontWeight: 900, fontSize: '1.1rem', letterSpacing: '0.05em' }}>
             MIGHTY SEEDS EXCEL INVESTMENT LTD.
           </h3>
           <p style={{ margin: '0.5rem 0 0', fontSize: '0.78rem', color: 'var(--text-400)' }}>Empowering campus commerce since inception.</p>

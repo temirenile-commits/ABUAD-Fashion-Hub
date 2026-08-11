@@ -200,7 +200,7 @@ export default function OnboardingPage() {
               href={`https://wa.me/${ADMIN_WHATSAPP}?text=Hi Admin, I just submitted my vendor application for "${form.brandName}". My Matric No is ${form.matricNo}. I'm ready to finalize my registration.`} 
               target="_blank" 
               className="btn btn-primary"
-              style={{ width: '100%', justifyContent: 'center', background: '#121214', borderColor: '#27272A' }}
+              style={{ width: '100%', justifyContent: 'center', background: 'var(--primary)', borderColor: 'var(--primary)', color: '#000000' }}
             >
               <MessageCircle size={20} /> MESSAGE ADMIN TO FINALIZE
             </a>
