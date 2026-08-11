@@ -7,16 +7,16 @@
   /* Canvas and structural surfaces */
   --bg-000: #000000;
   --bg-050: #000000;
-  --bg-100: #121214;
-  --bg-200: #16171A;
-  --bg-300: #27272A;
+  --bg-100: #111111;
+  --bg-200: #171717;
+  --bg-300: #292929;
   --bg-400: #064E3B;
   /* Text hierarchy */
   --text-100: #FFFFFF;
   --text-200: #FFFFFF;
-  --text-300: #A0A0A0;
-  --text-400: #A0A0A0;
-  --text-500: #A0A0A0;
+  --text-300: #A1A1AA;
+  --text-400: #A1A1AA;
+  --text-500: #71717A;
   --text-muted: #A0A0A0;
   /* Green action and focus system */
   --primary: #10B981;
@@ -35,19 +35,19 @@
   --accent: #10B981;
   --accent-rgb: 16, 185, 129;
   --accent-soft: rgba(16,185,129,0.12);
-  /* Functional states intentionally share the single Green accent */
+  /* Semantic state colors are intentionally distinct from the brand green */
   --success: #10B981;
-  --error: #10B981;
-  --warning: #10B981;
-  --info: #10B981;
+  --error: #EF4444;
+  --warning: #F59E0B;
+  --info: #3B82F6;
   /* Structural boundaries */
-  --border: #27272A;
+  --border: #292929;
   --border-hover: #064E3B;
   --border-active: #10B981;
   /* Green, white, and black gradients */
   --grad-brand: linear-gradient(135deg, #10B981 0%, #059669 55%, #00E676 100%);
   --grad-brand-soft: linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(6,78,59,0.4) 100%);
-  --grad-dark: linear-gradient(180deg, #000000 0%, #121214 100%);
+  --grad-dark: linear-gradient(180deg, #050505 0%, #111111 100%);
   --grad-card: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.92) 100%);
   --grad-green-shimmer: linear-gradient(90deg, #059669 0%, #00E676 40%, #10B981 60%, #059669 100%);
   /* Shadows */
@@ -246,7 +246,10 @@ input, textarea, select, button { font-family: inherit; }
   text-transform: uppercase;
 }
 .badge-brand { background: rgba(16,185,129,0.12); color: #10B981; border: 1px solid rgba(16,185,129,0.35); }
-.badge-success, .badge-error { background: rgba(16,185,129,0.15); color: #10B981; border: 1px solid rgba(16,185,129,0.4); }
+.badge-success { background: rgba(16,185,129,0.15); color: #34D399; border: 1px solid rgba(16,185,129,0.4); }
+.badge-error { background: rgba(239,68,68,0.15); color: #F87171; border: 1px solid rgba(239,68,68,0.4); }
+.badge-warning { background: rgba(245,158,11,0.15); color: #FBBF24; border: 1px solid rgba(245,158,11,0.4); }
+.badge-info { background: rgba(59,130,246,0.15); color: #60A5FA; border: 1px solid rgba(59,130,246,0.4); }
 .badge-neutral { background: var(--bg-300); color: var(--text-300); border: 1px solid var(--border); }
 .badge-flash { background: #10B981; color: #FFFFFF; } /* Accent - urgency sale badges ONLY */
 

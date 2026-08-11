@@ -124,6 +124,10 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className={styles.logo} id="tour-navbar-logo">
           <img src="/logo.png" alt="Logo" className={styles.logoImg} />
+          <span className={styles.logoLockup}>
+            <strong>MasterCart</strong>
+            <small>Campus marketplace</small>
+          </span>
         </Link>
 
         {/* Search Bar (Jumia Style - Center) */}

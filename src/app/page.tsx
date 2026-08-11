@@ -1,340 +1,243 @@
 'use client';
+
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
-  TrendingUp,
-  CheckCircle,
-  Zap,
-  ShoppingBag,
   ArrowRight,
-  ShieldCheck,
-  Truck,
-  RotateCcw,
-  Video,
+  CheckCircle2,
+  ChevronRight,
+  Clock3,
+  Heart,
+  MapPin,
   Play,
-  MoreVertical
+  ShieldCheck,
+  Star,
+  Truck,
+  Zap,
 } from 'lucide-react';
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
 import VendorCard, { LiveVendor } from '@/components/VendorCard';
 import { useMarketplaceStore } from '@/store/marketplaceStore';
 import { supabase } from '@/lib/supabase';
 import styles from './page.module.css';
-import VividVideo from '@/components/VividVideo';
-
-// New Jumia-style Components
-import CategorySidebar from '@/components/CategorySidebar';
-import MainSlider from '@/components/MainSlider';
-import HeroExtras from '@/components/HeroExtras';
-import TopCategories from '@/components/TopCategories';
-import FlashSales from '@/components/FlashSales';
-import WelcomeModal from '@/components/WelcomeModal';
 import DynamicMerchandising from '@/components/DynamicMerchandising';
 import DelicaciesPreview from '@/components/DelicaciesPreview';
 
-export default function Home() {
-  const allProducts = useMarketplaceStore(s => s.products);
-  const allBrands = useMarketplaceStore(s => s.vendors);
-  const allReels = useMarketplaceStore(s => s.reels);
-  const isInitialized = useMarketplaceStore(s => s.isInitialized);
+const formatNaira = (value: number) => `₦${new Intl.NumberFormat('en-NG').format(value)}`;
 
+const fallbackProducts = [
+  { title: 'New Balance 530', brand: 'Apex Kicks', price: 69000, oldPrice: 82000, image: '/curated/white-sneaker.webp', tag: '-16%' },
+  { title: 'Campus Essential Tote', brand: 'The Carry Co.', price: 18500, oldPrice: 24000, image: '/curated/campus-fashion.jpeg', tag: '-23%' },
+  { title: 'After Hours Co-ord', brand: 'Mia Studio', price: 42000, oldPrice: 50000, image: '/curated/campus-style.jpg', tag: '-16%' },
+  { title: 'Everyday Edit', brand: 'NOVA ABUAD', price: 28000, oldPrice: 35000, image: '/curated/campus-market.jpg', tag: '-20%' },
+  { title: 'Clean Canvas Sneakers', brand: 'Apex Kicks', price: 54000, oldPrice: 68000, image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=900&auto=format&fit=crop&q=85', tag: '-21%' },
+];
+
+const categoryLinks = [
+  ['Fashion', '01'],
+  ['Electronics', '02'],
+  ['Gadgets', '03'],
+  ['Beauty', '04'],
+  ['Home & Living', '05'],
+  ['Services', '06'],
+];
+
+const campusStories = [
+  { title: "Freshers' edit", note: 'Looks for your first week', image: '/curated/campus-fashion.jpeg', tone: 'light' },
+  { title: 'Sneaker rotation', note: 'The pair everyone wants', image: '/curated/white-sneaker.webp', tone: 'dark' },
+  { title: 'Made on campus', note: 'Meet the next-gen brands', image: '/curated/campus-style.jpg', tone: 'warm' },
+  { title: 'The everyday edit', note: 'Small upgrades, big impact', image: '/curated/campus-market.jpg', tone: 'green' },
+];
+
+const mockVendors = [
+  { name: 'Apex Kicks', category: 'Footwear', rating: '4.9', orders: '184 orders', initials: 'AK' },
+  { name: 'NOVA ABUAD', category: 'Lifestyle', rating: '4.8', orders: '161 orders', initials: 'NA' },
+  { name: 'Mia Studio', category: 'Fashion', rating: '4.8', orders: '142 orders', initials: 'MS' },
+  { name: 'The Carry Co.', category: 'Accessories', rating: '4.7', orders: '118 orders', initials: 'TC' },
+];
+
+export default function Home() {
+  const allProducts = useMarketplaceStore((s) => s.products);
+  const allBrands = useMarketplaceStore((s) => s.vendors);
+  const allReels = useMarketplaceStore((s) => s.reels);
+  const isInitialized = useMarketplaceStore((s) => s.isInitialized);
   const [preferredCategories, setPreferredCategories] = useState<string[]>([]);
   const [targetedProducts, setTargetedProducts] = useState<LiveProduct[]>([]);
-  const [flashSalesEvents, setFlashSalesEvents] = useState<{ id?: string; title: string; product_ids?: string[] }[]>([]);
   const [userUniversityId, setUserUniversityId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    const fetchFlashSales = async () => {
-      const { data } = await supabase.from('platform_settings').select('value').eq('key', 'flash_sales_events').single();
-      if (data && data.value) setFlashSalesEvents(data.value as { id?: string; title: string; product_ids?: string[] }[]);
-    };
-    fetchFlashSales();
-  }, []);
-
-  useEffect(() => {
-    const fetchDiscovery = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        try {
-          const res = await fetch(`/api/discovery?userId=${session.user.id}`);
-          const data = await res.json();
-          if (data.products) setTargetedProducts(data.products);
-        } catch (e) {
-          console.error('Discovery error:', e);
-        }
-      }
-    };
-    fetchDiscovery();
-
-    const initPrefs = async () => {
+    const initPreferences = async () => {
       try {
         const prefs = JSON.parse(localStorage.getItem('user_prefs') || '[]');
         if (Array.isArray(prefs)) setPreferredCategories(prefs);
-      } catch {}
+      } catch {
+        setPreferredCategories([]);
+      }
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          const { data: profile } = await supabase.from('users').select('university_id').eq('id', session.user.id).single();
-          setUserUniversityId(profile?.university_id || undefined);
-        }
-      } catch {}
+        if (!session) return;
+        const { data: profile } = await supabase.from('users').select('university_id').eq('id', session.user.id).single();
+        setUserUniversityId(profile?.university_id || undefined);
+        const response = await fetch(`/api/discovery?userId=${session.user.id}`);
+        const discovery = await response.json();
+        if (discovery.products) setTargetedProducts(discovery.products as LiveProduct[]);
+      } catch {
+        // The homepage remains fully usable when personalization is unavailable.
+      }
     };
-    initPrefs();
+    initPreferences();
   }, []);
 
+  const fashionProducts = useMemo(() => {
+    const products = allProducts.filter((product) => !product.is_draft && (!product.product_section || product.product_section === 'fashion'));
+    const preferred = products.filter((product) => product.category && preferredCategories.includes(product.category));
+    const others = products.filter((product) => !product.category || !preferredCategories.includes(product.category));
+    return [...preferred, ...others].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()) as unknown as LiveProduct[];
+  }, [allProducts, preferredCategories]);
+
   const featuredVendors = useMemo(() => {
-     return [...allBrands]
-       .filter(v => !v.marketplace_type || v.marketplace_type === 'fashion')
-       .slice(0, 4) as unknown as LiveVendor[];
+    return allBrands.filter((vendor) => !vendor.marketplace_type || vendor.marketplace_type === 'fashion').slice(0, 4) as unknown as LiveVendor[];
   }, [allBrands]);
 
-  const genuineFlashSales = useMemo(() => {
-     return allProducts.filter(p => 
-       !p.is_draft && 
-       (!p.product_section || p.product_section === 'fashion') &&
-       ((p as unknown as { is_flash_sale?: boolean }).is_flash_sale || (p.original_price || 0) > (p.price || 0))
-     ).slice(0, 10);
+  const flashItems = useMemo(() => {
+    const saleProducts = allProducts.filter((product) => !product.is_draft && (!product.product_section || product.product_section === 'fashion') && ((product.original_price || 0) > (product.price || 0) || (product as unknown as { is_flash_sale?: boolean }).is_flash_sale)).slice(0, 5);
+    if (saleProducts.length) {
+      return saleProducts.map((product) => ({
+        title: product.title,
+        brand: product.brands?.name || 'Verified campus store',
+        price: Number(product.price || 0),
+        oldPrice: Number(product.original_price || product.price || 0),
+        image: product.media_urls?.[0] || '/curated/white-sneaker.webp',
+        tag: product.original_price ? `-${Math.round(((product.original_price - product.price) / product.original_price) * 100)}%` : 'Deal',
+      }));
+    }
+    return fallbackProducts;
   }, [allProducts]);
 
-  const fallbackFlashSaleItems = genuineFlashSales.map(p => {
-    const originalPrice = p.original_price || 0;
-    const price = p.price || 0;
-    const discount = originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
-    return {
-      id: p.id,
-      title: p.title,
-      price: price,
-      oldPrice: originalPrice,
-      image: p.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500',
-      discount: discount
-    };
-  });
-
-  // Personalization Algorithm
-  const trendingProducts = useMemo(() => {
-     if (!allProducts.length) return [];
-     
-     // Only show Fashion products in the main marketplace feed
-     const fashionProducts = allProducts.filter(p => !p.is_draft && (!p.product_section || p.product_section === 'fashion'));
-
-     // Separate into preferred and others
-     const preferred = fashionProducts.filter(p => p.category && preferredCategories.includes(p.category));
-     const others = fashionProducts.filter(p => !p.category || !preferredCategories.includes(p.category));
-
-     // Sort by newest
-     preferred.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-     others.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-     // Combine: Prefered items first, then latest items
-     const combined = [...preferred, ...others].slice(0, 8);
-     return combined as unknown as LiveProduct[];
-  }, [allProducts, preferredCategories]);
+  const selectedProducts = targetedProducts.length ? targetedProducts : fashionProducts;
+  const renderableProducts = selectedProducts.slice(0, 5);
 
   return (
     <main className={styles.main}>
-      <WelcomeModal />
-      {/* ───── JUMIA HERO TRIFECTA ───── */}
       <section className={styles.heroSection}>
         <div className="container-wide">
           <div className={styles.heroGrid}>
-            <div className={styles.heroCategoryCol}>
-              <CategorySidebar />
+            <aside className={styles.categoryPanel} aria-label="Shop by category">
+              <div className={styles.panelKicker}>Browse the marketplace</div>
+              <h2>Shop by category</h2>
+              <nav className={styles.categoryList}>
+                {categoryLinks.map(([label, number], index) => (
+                  <Link href={`/explore?category=${label}`} className={`${styles.categoryLink} ${index === 0 ? styles.categoryLinkActive : ''}`} key={label}>
+                    <span>{label}</span>
+                    <span className={styles.categoryNumber}>{number}</span>
+                    <ChevronRight size={15} />
+                  </Link>
+                ))}
+              </nav>
+              <Link href="/explore" className={styles.browseAll}>View all categories <ArrowRight size={14} /></Link>
+            </aside>
+
+            <div className={styles.heroCard}>
+              <img className={styles.heroImage} src="/curated/campus-style.jpg" alt="Students expressing personal style on campus" />
+              <div className={styles.heroOverlay} />
+              <div className={styles.heroCopy}>
+                <div className={styles.eyebrow}><span className={styles.liveDot} /> ABUAD / CAMPUS MARKETPLACE</div>
+                <h1>Everything you need.<br /><em>One campus.</em></h1>
+                <p>Discover verified student brands, everyday essentials, and the next big thing before it sells out.</p>
+                <div className={styles.heroActions}>
+                  <Link href="/explore" className={styles.primaryButton}>Explore marketplace <ArrowRight size={16} /></Link>
+                  <Link href="/vendors" className={styles.secondaryButton}>Discover stores</Link>
+                </div>
+              </div>
+              <div className={styles.heroLocation}><MapPin size={14} /> Available around ABUAD</div>
+              <div className={styles.heroStats}>
+                <div><strong>2.4k+</strong><span>campus finds</span></div>
+                <div><strong>86</strong><span>verified stores</span></div>
+              </div>
             </div>
-            <div className={styles.heroMainCol}>
-              <MainSlider />
-            </div>
-            <div className={styles.heroExtraCol}>
-              <HeroExtras />
-            </div>
+
+            <aside className={styles.dealPanel}>
+              <div className={styles.dealHeader}><span className={styles.panelKicker}>Limited drops</span><Zap size={19} /></div>
+              <h2>Quick deals</h2>
+              <p className={styles.dealSubtext}>Good finds move quickly around campus.</p>
+              <div className={styles.dealProduct}>
+                <img src={flashItems[0].image} alt={flashItems[0].title} />
+                <div><span className={styles.dealTag}>{flashItems[0].tag}</span><strong>{flashItems[0].title}</strong><span>{formatNaira(flashItems[0].price)}</span></div>
+              </div>
+              <div className={styles.dealTimer}><Clock3 size={14} /><span>Ends in</span><strong>04h 28m</strong></div>
+              <Link href="/explore?sort=deals" className={styles.dealLink}>See all flash sales <ArrowRight size={14} /></Link>
+            </aside>
           </div>
         </div>
       </section>
 
       <div className="container-wide">
-        {/* ───── SERVICE BAR ───── */}
-        <div className={styles.serviceBar}>
-          <div className={styles.serviceItem}>
-            <ShieldCheck size={20} className={styles.goldIcon} />
-            <span>Escrow Protected Payments</span>
-          </div>
-          <div className={styles.serviceItem}>
-            <Truck size={20} className={styles.goldIcon} />
-            <span>Fast Campus Delivery</span>
-          </div>
-          <div className={styles.serviceItem}>
-            <RotateCcw size={20} className={styles.goldIcon} />
-            <span>Easy 24h Returns</span>
-          </div>
-          <div className={styles.serviceItem}>
-            <Zap size={20} className={styles.goldIcon} />
-            <span>Verified Student Brands</span>
-          </div>
-        </div>
+        <section className={styles.trustBar} aria-label="MasterCart benefits">
+          <div><ShieldCheck size={19} /><span><strong>Escrow protected</strong> Payments stay safe</span></div>
+          <div><Truck size={19} /><span><strong>Campus delivery</strong> Fast, familiar, nearby</span></div>
+          <div><CheckCircle2 size={19} /><span><strong>Verified stores</strong> Shop with confidence</span></div>
+          <div><Heart size={19} /><span><strong>Easy returns</strong> 24h return window</span></div>
+        </section>
 
-        {/* ───── CIRCLE CATEGORIES (Mobile Discovery) ───── */}
-        <div className={styles.mobileCategorySection}>
-          <TopCategories />
-        </div>
-
-        {/* ───── FLASH SALES ───── */}
-        {flashSalesEvents.length > 0 ? flashSalesEvents.map((event, idx) => {
-          // Map the event's product IDs to actual product data
-          const eventItems = allProducts
-            .filter(p => event.product_ids?.includes(p.id) && !p.is_draft && (!p.product_section || p.product_section === 'fashion'))
-            .map(p => {
-              const originalPrice = p.original_price || p.price;
-              const price = p.price || 0;
-              const discount = originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
-              return {
-                id: p.id,
-                title: p.title,
-                price: price,
-                oldPrice: originalPrice,
-                image: p.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500',
-                discount: discount
-              };
-            });
-            
-          if (eventItems.length === 0) return null;
-          
-          return (
-            <div key={event.id || idx}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '2rem', marginBottom: '-1rem', color: 'var(--primary)' }}>
-                ⚡ {event.title}
-              </h2>
-              <FlashSales items={eventItems} />
-            </div>
-          );
-        }) : (
-          fallbackFlashSaleItems.length > 0 && <FlashSales items={fallbackFlashSaleItems} />
-        )}
-
-        {/* ───── FASHION REELS (Vivid Videos) ───── */}
-        {allReels.length > 0 && (
-          <section className={styles.section} style={{ paddingBottom: 0 }}>
-            <div className={styles.sectionHead}>
-              <div className={styles.sectionTitleGroup}>
-                <Video size={20} className={styles.goldIcon} />
-                <h2>Trending Collection Reels</h2>
-              </div>
-              <Link href="/reels" className={styles.seeAll}>
-                Watch Full Feed <ArrowRight size={14} />
+        <section className={styles.section}>
+          <div className={styles.sectionHead}><div><span className={styles.sectionEyebrow}>MOVE FAST</span><h2>Flash sale</h2></div><Link href="/explore?sort=deals" className={styles.textLink}>See all deals <ArrowRight size={15} /></Link></div>
+          <div className={styles.productRail}>
+            {flashItems.map((item) => (
+              <Link href="/explore" className={styles.saleCard} key={item.title}>
+                <div className={styles.saleImageWrap}><img src={item.image} alt={item.title} /><span>{item.tag}</span><button type="button" aria-label={`Save ${item.title}`}><Heart size={15} /></button></div>
+                <div className={styles.saleInfo}><span>{item.brand}</span><h3>{item.title}</h3><div><strong>{formatNaira(item.price)}</strong><del>{formatNaira(item.oldPrice)}</del></div></div>
               </Link>
-            </div>
-            <div className={styles.reelsRow}>
-              {allReels.filter(r => !r.product_section || r.product_section === 'fashion').map((reel) => (
-                <div key={reel.id} className={styles.reelCard}>
-                  <div className={styles.reelVideoWrap}>
-                    <VividVideo 
-                      src={reel.video_url} 
-                      className={styles.reelVideo}
-                    />
-                    <div className={styles.playOverlay}>
-                      <Play size={24} fill="currentColor" />
-                    </div>
-                  </div>
-                  
-                  <div className={styles.reelInfo}>
-                    {reel.brands?.logo_url ? (
-                      <img src={reel.brands.logo_url} alt="" className={styles.reelBrandLogo} />
-                    ) : (
-                      <div className={styles.reelBrandLogo} style={{ background: 'var(--primary)', color: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800 }}>
-                        {reel.brands?.name?.substring(0, 1)}
-                      </div>
-                    )}
-                    <div className={styles.reelMeta}>
-                      <div className={styles.reelTitle}>{reel.title || 'Collection Reel'}</div>
-                      <div className={styles.reelBrandName}>{reel.brands?.name}</div>
-                    </div>
-                    <button className="btn btn-ghost btn-icon" style={{ padding: 0, opacity: 0.6 }}>
-                      <MoreVertical size={18} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+            ))}
+          </div>
+        </section>
 
-        {/* ───── DYNAMIC MERCHANDISING SECTIONS (Admin Controlled) ───── */}
+        <section className={styles.sectionCompact}>
+          <div className={styles.sectionHead}><div><span className={styles.sectionEyebrow}>ON YOUR RADAR</span><h2>Trending on campus</h2></div><Link href="/explore?sort=trending" className={styles.textLink}>Explore trending <ArrowRight size={15} /></Link></div>
+          <div className={styles.storyRail}>
+            {campusStories.map((story) => (
+              <Link href="/explore" className={`${styles.storyCard} ${styles[`story${story.tone}`]}`} key={story.title}>
+                <img src={story.image} alt={story.title} /><div className={styles.storyShade} /><div className={styles.storyContent}><span>{story.note}</span><h3>{story.title}</h3><span className={styles.storyArrow}><ArrowRight size={15} /></span></div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.sectionCompact}>
+          <div className={styles.sectionHead}><div><span className={styles.sectionEyebrow}>WATCH WHAT&apos;S NEXT</span><h2>MasterCart reels</h2></div><Link href="/reels" className={styles.textLink}>Watch full feed <ArrowRight size={15} /></Link></div>
+          <div className={styles.reelRail}>
+            {(allReels.length ? allReels.slice(0, 4) : campusStories).map((reel, index) => {
+              const item = 'video_url' in reel ? reel as typeof allReels[number] : null;
+              const image = item?.thumbnail_url || campusStories[index % campusStories.length].image;
+              const title = item?.title || campusStories[index % campusStories.length].title;
+              const brand = item?.brands?.name || ['NOVA ABUAD', 'Apex Kicks', 'Mia Studio', 'The Carry Co.'][index];
+              return <Link href="/reels" className={styles.reelCard} key={item?.id || title}><div className={styles.reelMedia}><img src={image} alt={title} /><span className={styles.reelPlay}><Play size={16} fill="currentColor" /></span><span className={styles.reelDuration}>0{index + 1}:2{index}</span></div><div className={styles.reelMeta}><span className={styles.brandAvatar}>{brand.slice(0, 1)}</span><div><strong>{title}</strong><span>{brand}</span></div></div></Link>;
+            })}
+          </div>
+        </section>
+
         <DynamicMerchandising />
-
-        {/* ───── MASTERCART DELICACIES ───── */}
         <DelicaciesPreview universityId={userUniversityId} />
 
-        {/* ───── TRENDING PRODUCTS (Personalized) ───── */}
         <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <div className={styles.sectionTitleGroup}>
-              <TrendingUp size={20} className={styles.sectionIcon} />
-              <h2>Recommended For You</h2>
-            </div>
-            <Link href="/explore" className={styles.seeAll}>
-              View all <ArrowRight size={14} />
-            </Link>
+          <div className={styles.sectionHead}><div><span className={styles.sectionEyebrow}>CURATED FOR YOU</span><h2>Popular right now</h2></div><Link href="/explore" className={styles.textLink}>View marketplace <ArrowRight size={15} /></Link></div>
+          <div className={styles.productGrid}>
+            {renderableProducts.length ? renderableProducts.map((product) => <ProductCard key={product.id} product={product} />) : fallbackProducts.slice(0, 4).map((item) => <Link href="/explore" className={styles.fallbackProduct} key={item.title}><div><img src={item.image} alt={item.title} /><span className={styles.fallbackHeart}><Heart size={15} /></span></div><span>{item.brand}</span><h3>{item.title}</h3><strong>{formatNaira(item.price)}</strong></Link>)}
           </div>
+          {!isInitialized && <p className={styles.loadingNote}>Curating the freshest campus finds for you...</p>}
+        </section>
 
-          <div className={`${styles.productGrid} stagger`}>
-            {(targetedProducts.length > 0 ? targetedProducts : trendingProducts).length > 0 ? (
-              (targetedProducts.length > 0 ? targetedProducts : trendingProducts).map((product) => (
-                <div key={product.id} className="anim-fade-up">
-                  <ProductCard product={product} />
-                </div>
-              ))
-            ) : isInitialized ? (
-              <p style={{ color: 'var(--text-400)', gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>
-                No active products currently on the marketplace.
-              </p>
-            ) : (
-               <p style={{ color: 'var(--text-400)', gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>
-                Loading live personalized feed...
-              </p>
-            )}
+        <section className={styles.section}>
+          <div className={styles.sectionHead}><div><span className={styles.sectionEyebrow}>TRUSTED LOCALLY</span><h2>Popular campus stores</h2></div><Link href="/vendors" className={styles.textLink}>See all stores <ArrowRight size={15} /></Link></div>
+          <div className={styles.vendorGrid}>
+            {featuredVendors.length ? featuredVendors.map((vendor) => <VendorCard key={vendor.id} vendor={vendor} />) : mockVendors.map((vendor) => <Link href="/vendors" className={styles.mockVendor} key={vendor.name}><span className={styles.vendorLogo}>{vendor.initials}</span><div><h3>{vendor.name}<CheckCircle2 size={14} /></h3><span>{vendor.category}</span><div><Star size={12} fill="currentColor" /> {vendor.rating} <b>·</b> {vendor.orders}</div></div><ArrowRight size={17} /></Link>)}
           </div>
         </section>
 
-        {/* ───── FEATURED VENDORS ───── */}
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <div className={styles.sectionTitleGroup}>
-              <CheckCircle size={20} className={styles.goldIcon} />
-              <h2>Official Campus Stores</h2>
-            </div>
-            <Link href="/vendors" className={styles.seeAll}>
-              Full Retailer List <ArrowRight size={14} />
-            </Link>
-          </div>
-          <div className={`${styles.vendorGrid} stagger`}>
-            {featuredVendors.length > 0 ? (
-              featuredVendors.map((vendor) => (
-                <div key={vendor.id} className="anim-fade-up">
-                  <VendorCard vendor={vendor} />
-                </div>
-              ))
-            ) : (
-              <p style={{ color: 'var(--text-400)', gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>
-                {isInitialized ? 'No verified vendors found.' : 'Loading campus partners...'}
-              </p>
-            )}
-          </div>
-        </section>
-
-        {/* ───── CTA BANNER ───── */}
         <section className={styles.ctaBanner}>
-          <div className={styles.ctaContent}>
-            <div className={styles.ctaIcon}>
-              <ShoppingBag size={48} />
-            </div>
-            <h2>Got a Fashion Brand on Campus?</h2>
-            <p>
-              Join the elite ecosystem of student brands. Sell securely, ship faster.
-            </p>
-            <div className={styles.ctaActions}>
-              <Link href="/onboarding" className="btn btn-primary btn-lg">
-                Activate Your Store <ArrowRight size={18} />
-              </Link>
-            </div>
-          </div>
+          <div><span className={styles.sectionEyebrow}>FOR THE NEXT GENERATION</span><h2>Your campus has a story.<br /><em>Put your brand in it.</em></h2><p>Join verified student entrepreneurs selling to a campus that already gets it.</p></div>
+          <Link href="/onboarding" className={styles.primaryButton}>Open your store <ArrowRight size={16} /></Link>
+          <div className={styles.ctaGlow} />
         </section>
       </div>
     </main>
