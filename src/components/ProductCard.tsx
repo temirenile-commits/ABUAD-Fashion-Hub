@@ -66,7 +66,6 @@ export default function ProductCard({ product }: Props) {
     ? getDiscount(product.price, product.original_price)
     : null;
 
-  const imageUrl = product.image_url || product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60';
   const brandName = product.brands?.name || 'Unknown Brand';
   const whatsapp = product.brands?.whatsapp_number || '';
 
@@ -79,8 +78,8 @@ export default function ProductCard({ product }: Props) {
   
   const isVideo = !!detectedVideo;
   
-  // If we have a video, it becomes the main "imageUrl" for the card logic if needed
-  const displayUrl = detectedVideo || product.image_url || product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60';
+  const displayUrl = detectedVideo || product.image_url || product.media_urls?.[0];
+  const hasMedia = Boolean(displayUrl);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -111,17 +110,17 @@ export default function ProductCard({ product }: Props) {
   return (
     <Link href={`/product/${product.id}`} className={`${styles.card} ${isVideo ? styles.videoCard : ''}`}>
       <div className={styles.imageWrap}>
-        <a 
-          href={isVideo ? detectedVideo! : displayUrl} 
-          download 
-          target="_blank" 
+        {hasMedia && <a
+          href={displayUrl}
+          download
+          target="_blank"
           rel="noopener noreferrer"
           className={styles.downloadBtn}
           onClick={(e) => e.stopPropagation()}
           title={isVideo ? "Download Video" : "Download Image"}
         >
           <Download size={14} />
-        </a>
+        </a>}
         
         {isVideo ? (
           <>
@@ -133,7 +132,7 @@ export default function ProductCard({ product }: Props) {
               <Play size={24} fill="currentColor" />
             </div>
           </>
-        ) : (
+        ) : hasMedia ? (
           <OptimizedImage
             src={displayUrl}
             alt={product.title}
@@ -141,6 +140,8 @@ export default function ProductCard({ product }: Props) {
             className={styles.image}
             useThumbnail={true}
           />
+        ) : (
+          <div className={styles.imagePlaceholder} aria-label="Product image unavailable">Image unavailable</div>
         )}
 
         {product.stock_count === 0 && (

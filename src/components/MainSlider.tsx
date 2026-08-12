@@ -5,6 +5,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import styles from './MainSlider.module.css';
 
+const DEFAULT_UNIVERSITY_ID = '00000000-0000-0000-0000-000000000001';
+
 export default function MainSlider() {
   const [slides, setSlides] = useState<any[]>([]);
   const [current, setCurrent] = useState(0);
@@ -12,7 +14,7 @@ export default function MainSlider() {
   useEffect(() => {
     const fetchBillboard = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      let userUniId = null;
+      let userUniId: string | null = null;
       if (session) {
         const { data: userProfile } = await supabase.from('users').select('university_id').eq('id', session.user.id).single();
         userUniId = userProfile?.university_id;
@@ -21,15 +23,14 @@ export default function MainSlider() {
       // 1. Fetch Organic Brand Boosts
       let query = supabase
         .from('brands')
-        .select('id, name, description, cover_url, billboard_boost_expires_at, sales_count, social_links')
+        .select('id, name, description, cover_url, billboard_boost_expires_at, sales_count, social_links, university_id')
         .or(`billboard_boost_expires_at.gt.${new Date().toISOString()},sales_count.gt.10`)
         .order('sales_count', { ascending: false })
         .limit(5);
 
-      if (userUniId) {
-        // Only show global brands or brands in their university
-        query = query.or(`university_id.is.null,university_id.eq.${userUniId}`);
-      }
+      query = userUniId
+        ? query.or(`university_id.is.null,university_id.eq.${userUniId}`)
+        : query.or(`university_id.is.null,university_id.eq.${DEFAULT_UNIVERSITY_ID}`);
 
       const { data: brandData } = await query;
 
@@ -41,15 +42,18 @@ export default function MainSlider() {
         .single();
         
       const rawManualBillboards = (settingsData?.value as any[]) || [];
-      const manualBillboards = rawManualBillboards.filter(mb => !mb.university_id || mb.university_id === userUniId);
+      const targetUniversityId = userUniId || DEFAULT_UNIVERSITY_ID;
+      const manualBillboards = rawManualBillboards.filter(mb =>
+        (!mb.university_id || mb.university_id === targetUniversityId) && Boolean(mb.cover_url)
+      );
       
       // 3. Merge & Format
       let mergedSlides = [];
       
       if (manualBillboards.length > 0) {
         mergedSlides.push(...manualBillboards.map(mb => ({
-          id: mb.id || `mb_${Math.random()}`,
-          image: mb.cover_url || '/gold_fashion_banner_1_1776541486791.png',
+          id: mb.id || `${mb.title || 'billboard'}-${mb.cover_url}`,
+          image: mb.cover_url,
           title: mb.title,
           sub: mb.description,
           link: mb.link
@@ -61,22 +65,15 @@ export default function MainSlider() {
           const social = b.social_links || {};
           return {
             id: b.id,
-            image: social.billboard_image || b.cover_url || '/gold_fashion_banner_1_1776541486791.png',
+            image: social.billboard_image || b.cover_url,
             title: b.name,
-            sub: b.description || 'Verified Campus Brand',
+            sub: b.description || '',
             link: social.billboard_link || `/vendor/${b.id}`
           };
         }));
       }
 
-      if (mergedSlides.length > 0) {
-        setSlides(mergedSlides.slice(0, 8)); // Limit total slides
-      } else {
-        setSlides([
-          { id: 1, image: '/gold_fashion_banner_1_1776541486791.png', title: 'The Green Collection', sub: 'Discover premium campus fashion redefined.', link: null },
-          { id: 2, image: '/gold_fashion_banner_2_1776541653764.png', title: 'Luxury Accessories', sub: 'Elevate your style with metallic accents.', link: null }
-        ]);
-      }
+      setSlides(mergedSlides.filter((slide) => Boolean(slide.image)).slice(0, 8)); // Limit total slides
     };
     fetchBillboard();
   }, []);

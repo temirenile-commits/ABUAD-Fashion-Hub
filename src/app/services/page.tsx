@@ -78,13 +78,17 @@ export default function ServicesPage() {
                 <div key={svc.id} className={styles.serviceCard}>
                   {/* Image */}
                   <div className={styles.imgWrap}>
-                    <Image
-                      src={svc.portfolio_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60'}
-                      alt={svc.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 340px"
-                      className={styles.img}
-                    />
+                    {svc.portfolio_urls?.[0] ? (
+                      <Image
+                        src={svc.portfolio_urls[0]}
+                        alt={svc.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 340px"
+                        className={styles.img}
+                      />
+                    ) : (
+                      <div className={styles.imageUnavailable}>Portfolio image unavailable</div>
+                    )}
                     <div className={styles.imgGradient} />
                     <span className={`badge badge-brand ${styles.typeBadge}`}>
                       {svc.service_type}

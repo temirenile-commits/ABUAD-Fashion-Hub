@@ -25,7 +25,7 @@ export async function generateMetadata({ params, searchParams }: Props) {
 
   if (!vendor) return { title: 'Vendor Not Found' };
   
-  const ogImage = vendor.logo_url || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070';
+  const ogImage = vendor.logo_url;
 
   return { 
     title: `${vendor.name} – Campus Brand`, 
@@ -39,20 +39,13 @@ export async function generateMetadata({ params, searchParams }: Props) {
       url: `/vendor/${slug}?id=${id}`,
       siteName: 'MasterCart',
       type: 'profile',
-      images: [
-        {
-          url: ogImage,
-          width: 800,
-          height: 800,
-          alt: vendor.name,
-        },
-      ],
+      ...(ogImage ? { images: [{ url: ogImage, width: 800, height: 800, alt: vendor.name }] } : {}),
     },
     twitter: {
       card: 'summary',
       title: vendor.name,
       description: vendor.description,
-      images: [ogImage],
+      ...(ogImage ? { images: [ogImage] } : {}),
     },
   };
 }
@@ -98,21 +91,23 @@ export default async function VendorPage({ params, searchParams }: Props) {
   const vendorProducts = (productsData || []) as any[] as LiveProduct[];
   const vendor = vendorData;
   
-  const fallbackCover = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070';
-
   return (
     <main>
       <ProfileViewTracker brandId={vendor.id} />
       {/* Cover */}
       <div className={styles.cover}>
-        <Image
-          src={vendor.cover_url || fallbackCover}
-          alt={vendor.name}
-          fill
-          priority
-          sizes="100vw"
-          className={styles.coverImg}
-        />
+        {vendor.cover_url ? (
+          <Image
+            src={vendor.cover_url}
+            alt={vendor.name}
+            fill
+            priority
+            sizes="100vw"
+            className={styles.coverImg}
+          />
+        ) : (
+          <div className={styles.coverUnavailable}>Cover image unavailable</div>
+        )}
         <div className={styles.coverOverlay} />
       </div>
 

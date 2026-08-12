@@ -30,6 +30,17 @@
   transition: transform 0.7s var(--ease-out);
 }
 
+.coverPlaceholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-500);
+  background: var(--bg-300);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
 .card:hover .cover {
   transform: scale(1.1);
 }

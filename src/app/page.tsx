@@ -7,12 +7,10 @@ import {
   ArrowRight,
   CheckCircle2,
   ChevronRight,
-  Clock3,
   Heart,
   MapPin,
   Play,
   ShieldCheck,
-  Star,
   Truck,
   Zap,
 } from 'lucide-react';
@@ -28,22 +26,6 @@ import MainSlider from '@/components/MainSlider';
 const formatNaira = (value: number) => `₦${new Intl.NumberFormat('en-NG').format(value)}`;
 
 // No fallback mock products; real database records are queried exclusively.
-
-const categoryLinks = [
-  ['Fashion', '01'],
-  ['Electronics', '02'],
-  ['Gadgets', '03'],
-  ['Beauty', '04'],
-  ['Home & Living', '05'],
-  ['Services', '06'],
-];
-
-const campusStories = [
-  { title: "Freshers' edit", note: 'Looks for your first week', image: '/curated/campus-fashion.jpeg', tone: 'light' },
-  { title: 'Sneaker rotation', note: 'The pair everyone wants', image: '/curated/white-sneaker.webp', tone: 'dark' },
-  { title: 'Made on campus', note: 'Meet the next-gen brands', image: '/curated/campus-style.jpg', tone: 'warm' },
-  { title: 'The everyday edit', note: 'Small upgrades, big impact', image: '/curated/campus-market.jpg', tone: 'green' },
-];
 
 // No fallback mock vendors; real database records are queried exclusively.
 
@@ -86,20 +68,47 @@ export default function Home() {
     return [...preferred, ...others].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()) as unknown as LiveProduct[];
   }, [allProducts, preferredCategories]);
 
+  const categoryLinks = useMemo(() => {
+    const counts = new Map<string, number>();
+    allProducts.forEach((product) => {
+      if (product.is_draft || !product.category) return;
+      counts.set(product.category, (counts.get(product.category) || 0) + 1);
+    });
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([label], index) => [label, String(index + 1).padStart(2, '0')] as [string, string]);
+  }, [allProducts]);
+
   const featuredVendors = useMemo(() => {
     return allBrands.filter((vendor) => !vendor.marketplace_type || vendor.marketplace_type === 'fashion').slice(0, 4) as unknown as LiveVendor[];
   }, [allBrands]);
 
+  const trendingProducts = useMemo(() => {
+    return allProducts
+      .filter((product) => !product.is_draft && (!product.product_section || product.product_section === 'fashion'))
+      .sort((a, b) => ((b.sales_count || 0) * 3 + (b.views_count || 0)) - ((a.sales_count || 0) * 3 + (a.views_count || 0)))
+      .slice(0, 4);
+  }, [allProducts]);
+
   const flashItems = useMemo(() => {
-    const saleProducts = allProducts.filter((product) => !product.is_draft && (!product.product_section || product.product_section === 'fashion') && ((product.original_price || 0) > (product.price || 0) || (product as unknown as { is_flash_sale?: boolean }).is_flash_sale)).slice(0, 5);
-    return saleProducts.map((product) => ({
-      title: product.title,
-      brand: product.brands?.name || 'Verified campus store',
-      price: Number(product.price || 0),
-      oldPrice: Number(product.original_price || product.price || 0),
-      image: product.media_urls?.[0] || '/logo.png',
-      tag: product.original_price ? `-${Math.round(((product.original_price - product.price) / product.original_price) * 100)}%` : 'Deal',
-    }));
+    const saleProducts = allProducts.filter((product) => {
+      const sale = product as unknown as { is_flash_sale?: boolean; flash_sale_price?: number };
+      return !product.is_draft && (!product.product_section || product.product_section === 'fashion') && sale.is_flash_sale === true;
+    }).slice(0, 5);
+    return saleProducts.map((product) => {
+      const sale = product as unknown as { flash_sale_price?: number };
+      const regularPrice = Number(product.price || 0);
+      const salePrice = Number(sale.flash_sale_price || regularPrice);
+      return {
+        title: product.title,
+        brand: product.brands?.name || 'Verified campus store',
+        price: salePrice,
+        oldPrice: regularPrice,
+        image: product.media_urls?.[0] || product.image_url,
+        tag: regularPrice > salePrice ? `-${Math.round(((regularPrice - salePrice) / regularPrice) * 100)}%` : 'Live',
+      };
+    });
   }, [allProducts]);
 
   const selectedProducts = targetedProducts.length ? targetedProducts : fashionProducts;
@@ -114,13 +123,13 @@ export default function Home() {
               <div className={styles.panelKicker}>Browse the marketplace</div>
               <h2>Shop by category</h2>
               <nav className={styles.categoryList}>
-                {categoryLinks.map(([label, number], index) => (
-                  <Link href={`/explore?category=${label}`} className={`${styles.categoryLink} ${index === 0 ? styles.categoryLinkActive : ''}`} key={label}>
+                {categoryLinks.length ? categoryLinks.map(([label, number], index) => (
+                  <Link href={`/explore?category=${encodeURIComponent(label)}`} className={`${styles.categoryLink} ${index === 0 ? styles.categoryLinkActive : ''}`} key={label}>
                     <span>{label}</span>
                     <span className={styles.categoryNumber}>{number}</span>
                     <ChevronRight size={15} />
                   </Link>
-                ))}
+                )) : <p className={styles.emptyNotice}>No categories available yet.</p>}
               </nav>
               <Link href="/explore" className={styles.browseAll}>View all categories <ArrowRight size={14} /></Link>
             </aside>
@@ -141,8 +150,8 @@ export default function Home() {
               </div>
               <div className={styles.heroLocation} style={{ zIndex: 2, position: 'relative' }}><MapPin size={14} /> Available around ABUAD</div>
               <div className={styles.heroStats} style={{ zIndex: 2, position: 'relative' }}>
-                <div><strong>{allProducts.length}</strong><span>campus finds</span></div>
-                <div><strong>{allBrands.length}</strong><span>verified stores</span></div>
+                <div><strong>{allProducts.filter((product) => !product.is_draft).length}</strong><span>campus finds</span></div>
+                <div><strong>{allBrands.filter((vendor) => vendor.verification_status === 'approved' || (vendor as unknown as { verified?: boolean }).verified === true).length}</strong><span>verified stores</span></div>
               </div>
             </div>
 
@@ -158,7 +167,7 @@ export default function Home() {
               ) : (
                 <p className={styles.emptyNotice}>No flash deals available yet.</p>
               )}
-              <div className={styles.dealTimer}><Clock3 size={14} /><span>Ends in</span><strong>04h 28m</strong></div>
+              {flashItems.length > 0 && <div className={styles.dealTimer}><Zap size={14} /><span>Live flash sale</span></div>}
               <Link href="/explore?sort=deals" className={styles.dealLink}>See all flash sales <ArrowRight size={14} /></Link>
             </aside>
           </div>
@@ -188,11 +197,14 @@ export default function Home() {
         <section className={styles.sectionCompact}>
           <div className={styles.sectionHead}><div><span className={styles.sectionEyebrow}>ON YOUR RADAR</span><h2>Trending on campus</h2></div><Link href="/explore?sort=trending" className={styles.textLink}>Explore trending <ArrowRight size={15} /></Link></div>
           <div className={styles.storyRail}>
-            {campusStories.map((story) => (
-              <Link href="/explore" className={`${styles.storyCard} ${styles[`story${story.tone}`]}`} key={story.title}>
-                <img src={story.image} alt={story.title} /><div className={styles.storyShade} /><div className={styles.storyContent}><span>{story.note}</span><h3>{story.title}</h3><span className={styles.storyArrow}><ArrowRight size={15} /></span></div>
-              </Link>
-            ))}
+            {trendingProducts.length ? trendingProducts.map((product, index) => {
+              const image = product.media_urls?.[0] || product.image_url;
+              const brand = product.brands?.name || 'Verified campus store';
+              return <Link href={`/product/${product.id}`} className={`${styles.storyCard} ${styles[`story${['light', 'dark', 'warm', 'green'][index % 4]}`]}`} key={product.id}>
+                {image ? <img src={image} alt={product.title} /> : <div className={styles.imageUnavailable}>Image unavailable</div>}
+                <div className={styles.storyShade} /><div className={styles.storyContent}><span>{brand}</span><h3>{product.title}</h3><span className={styles.storyArrow}><ArrowRight size={15} /></span></div>
+              </Link>;
+            }) : <p className={styles.emptyNotice}>No trending products available yet.</p>}
           </div>
         </section>
 
@@ -200,10 +212,10 @@ export default function Home() {
           <div className={styles.sectionHead}><div><span className={styles.sectionEyebrow}>WATCH WHAT&apos;S NEXT</span><h2>MasterCart reels</h2></div><Link href="/reels" className={styles.textLink}>Watch full feed <ArrowRight size={15} /></Link></div>
           <div className={styles.reelRail}>
             {allReels.length ? allReels.slice(0, 4).map((reel, index) => {
-              const image = reel.thumbnail_url || '/logo.png';
+              const image = reel.thumbnail_url;
               const title = reel.title || 'Campus Reel';
               const brand = reel.brands?.name || 'Verified Store';
-              return <Link href="/reels" className={styles.reelCard} key={reel.id}><div className={styles.reelMedia}><img src={image} alt={title} /><span className={styles.reelPlay}><Play size={16} fill="currentColor" /></span><span className={styles.reelDuration}>0{index + 1}:20</span></div><div className={styles.reelMeta}><span className={styles.brandAvatar}>{brand.slice(0, 1)}</span><div><strong>{title}</strong><span>{brand}</span></div></div></Link>;
+              return <Link href="/reels" className={styles.reelCard} key={reel.id}><div className={styles.reelMedia}>{image ? <img src={image} alt={title} /> : <div className={styles.reelUnavailable}>Thumbnail unavailable</div>}<span className={styles.reelPlay}><Play size={16} fill="currentColor" /></span></div><div className={styles.reelMeta}><span className={styles.brandAvatar}>{brand.slice(0, 1)}</span><div><strong>{title}</strong><span>{brand}</span></div></div></Link>;
             }) : <p className={styles.emptyNotice}>No reels available yet.</p>}
           </div>
         </section>

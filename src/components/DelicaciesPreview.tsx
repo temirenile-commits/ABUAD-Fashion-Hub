@@ -18,22 +18,27 @@ interface DelicacyItem {
 export default function DelicaciesPreview({ universityId }: { universityId?: string }) {
   const [items, setItems] = useState<DelicacyItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!universityId) { setLoading(false); return; }
     const fetch_ = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const res = await fetch(`/api/delicacies?universityId=${universityId}&limit=8`);
+        const query = universityId ? `?universityId=${encodeURIComponent(universityId)}&limit=8` : '?limit=8';
+        const res = await fetch(`/api/delicacies${query}`);
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Unable to load Delicacies');
         setItems(data.products || []);
-      } catch { /* silent */ }
-      finally { setLoading(false); }
+      } catch (err) {
+        setItems([]);
+        setError(err instanceof Error ? err.message : 'Unable to load Delicacies');
+      } finally {
+        setLoading(false);
+      }
     };
     fetch_();
   }, [universityId]);
-
-  if (!loading && items.length === 0) return null;
 
   const CATEGORY_EMOJIS: Record<string, string> = {
     snacks: '🍟', drinks: '🥤', pastries: '🥐',
@@ -76,6 +81,10 @@ export default function DelicaciesPreview({ universityId }: { universityId?: str
             }} />
           ))}
         </div>
+      ) : error ? (
+        <p style={{ color: '#F87171', fontSize: '0.8rem' }}>Unable to load Delicacies right now.</p>
+      ) : items.length === 0 ? (
+        <p style={{ color: 'var(--text-400)', fontSize: '0.8rem' }}>No delicacies available at your university yet.</p>
       ) : (
         <div style={{
           display: 'flex', gap: '1rem', overflowX: 'auto',

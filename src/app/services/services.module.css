@@ -91,6 +91,18 @@
   overflow: hidden;
 }
 
+.imageUnavailable {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-500);
+  background: var(--bg-300);
+  font-size: 0.75rem;
+  text-align: center;
+  padding: 1rem;
+}
+
 .img {
   object-fit: cover;
   transition: transform 0.5s var(--ease-out);

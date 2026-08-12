@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: Props) {
 
   if (!product) return { title: 'Product Not Found' };
   
-  const ogImage = product.image_url || product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500';
+  const ogImage = product.image_url || product.media_urls?.[0];
   const priceString = product.price ? `Get it for ${formatPrice(product.price)}` : '';
   const metaDescription = `${priceString ? priceString + ' | ' : ''}${product.description}`;
 
@@ -65,20 +65,13 @@ export async function generateMetadata({ params }: Props) {
       url: `/product/${id}`,
       siteName: 'MasterCart',
       type: 'website',
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: product.title,
-        },
-      ],
+      ...(ogImage ? { images: [{ url: ogImage, width: 1200, height: 630, alt: product.title }] } : {}),
     },
     twitter: {
       card: 'summary_large_image',
       title: product.title,
       description: metaDescription,
-      images: [ogImage],
+      ...(ogImage ? { images: [ogImage] } : {}),
     },
   };
 }
@@ -144,7 +137,7 @@ export default async function ProductPage({ params }: Props) {
   };
   const whatsappNumber = normalizeNgPhone(vendor?.whatsapp_number || '');
 
-  const mainImage = product.image_url || product.media_urls?.[0] || 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?w=500&auto=format&fit=crop&q=60';
+  const mainImage = product.image_url || product.media_urls?.[0];
   const allImages = [...(product.image_url ? [product.image_url] : []), ...(product.media_urls || [])].filter((val, i, arr) => arr.indexOf(val) === i);
 
   return (
@@ -179,7 +172,7 @@ export default async function ProductPage({ params }: Props) {
                     <source src={product.video_url} type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
-                ) : (
+                ) : mainImage ? (
                   <div className={styles.imageWrapper}>
                     <OptimizedImage
                       src={mainImage}
@@ -190,6 +183,8 @@ export default async function ProductPage({ params }: Props) {
                       useThumbnail={false}
                     />
                   </div>
+                ) : (
+                  <div className={styles.mediaUnavailable}>Product image unavailable</div>
                 )}
                 
                 <ShareProductButton

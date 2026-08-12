@@ -30,8 +30,6 @@ interface Props {
 }
 
 export default function VendorCard({ vendor, layout = 'grid' }: Props) {
-  const fallbackCover = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&auto=format&fit=crop';
-  
   // Create a slug from the name
   const vendorName = vendor.name || 'Anonymous Brand';
   const slug = vendorName.toLowerCase().replace(/\s+/g, '-');
@@ -43,13 +41,17 @@ export default function VendorCard({ vendor, layout = 'grid' }: Props) {
     <Link href={`/vendor/${slug}?id=${vendor.id}`} className={`${styles.card} ${layout === 'list' ? styles.list : ''}`}>
       {/* Cover */}
       <div className={styles.coverWrap}>
-        <OptimizedImage
-          src={vendor.cover_url || fallbackCover}
-          alt={vendorName}
-          fill
-          className={styles.cover}
-          useThumbnail={true}
-        />
+        {vendor.cover_url ? (
+          <OptimizedImage
+            src={vendor.cover_url}
+            alt={vendorName}
+            fill
+            className={styles.cover}
+            useThumbnail={true}
+          />
+        ) : (
+          <div className={styles.coverPlaceholder}>Cover image unavailable</div>
+        )}
         <div className={styles.coverGradient} />
 
         {/* Logo */}
