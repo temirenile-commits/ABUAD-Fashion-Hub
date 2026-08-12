@@ -26,13 +26,7 @@ import DelicaciesPreview from '@/components/DelicaciesPreview';
 
 const formatNaira = (value: number) => `₦${new Intl.NumberFormat('en-NG').format(value)}`;
 
-const fallbackProducts = [
-  { title: 'New Balance 530', brand: 'Apex Kicks', price: 69000, oldPrice: 82000, image: '/curated/white-sneaker.webp', tag: '-16%' },
-  { title: 'Campus Essential Tote', brand: 'The Carry Co.', price: 18500, oldPrice: 24000, image: '/curated/campus-fashion.jpeg', tag: '-23%' },
-  { title: 'After Hours Co-ord', brand: 'Mia Studio', price: 42000, oldPrice: 50000, image: '/curated/campus-style.jpg', tag: '-16%' },
-  { title: 'Everyday Edit', brand: 'NOVA ABUAD', price: 28000, oldPrice: 35000, image: '/curated/campus-market.jpg', tag: '-20%' },
-  { title: 'Clean Canvas Sneakers', brand: 'Apex Kicks', price: 54000, oldPrice: 68000, image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=900&auto=format&fit=crop&q=85', tag: '-21%' },
-];
+// No fallback mock products; real database records are queried exclusively.
 
 const categoryLinks = [
   ['Fashion', '01'],
@@ -50,12 +44,7 @@ const campusStories = [
   { title: 'The everyday edit', note: 'Small upgrades, big impact', image: '/curated/campus-market.jpg', tone: 'green' },
 ];
 
-const mockVendors = [
-  { name: 'Apex Kicks', category: 'Footwear', rating: '4.9', orders: '184 orders', initials: 'AK' },
-  { name: 'NOVA ABUAD', category: 'Lifestyle', rating: '4.8', orders: '161 orders', initials: 'NA' },
-  { name: 'Mia Studio', category: 'Fashion', rating: '4.8', orders: '142 orders', initials: 'MS' },
-  { name: 'The Carry Co.', category: 'Accessories', rating: '4.7', orders: '118 orders', initials: 'TC' },
-];
+// No fallback mock vendors; real database records are queried exclusively.
 
 export default function Home() {
   const allProducts = useMarketplaceStore((s) => s.products);
@@ -102,17 +91,14 @@ export default function Home() {
 
   const flashItems = useMemo(() => {
     const saleProducts = allProducts.filter((product) => !product.is_draft && (!product.product_section || product.product_section === 'fashion') && ((product.original_price || 0) > (product.price || 0) || (product as unknown as { is_flash_sale?: boolean }).is_flash_sale)).slice(0, 5);
-    if (saleProducts.length) {
-      return saleProducts.map((product) => ({
-        title: product.title,
-        brand: product.brands?.name || 'Verified campus store',
-        price: Number(product.price || 0),
-        oldPrice: Number(product.original_price || product.price || 0),
-        image: product.media_urls?.[0] || '/curated/white-sneaker.webp',
-        tag: product.original_price ? `-${Math.round(((product.original_price - product.price) / product.original_price) * 100)}%` : 'Deal',
-      }));
-    }
-    return fallbackProducts;
+    return saleProducts.map((product) => ({
+      title: product.title,
+      brand: product.brands?.name || 'Verified campus store',
+      price: Number(product.price || 0),
+      oldPrice: Number(product.original_price || product.price || 0),
+      image: product.media_urls?.[0] || '/logo.png',
+      tag: product.original_price ? `-${Math.round(((product.original_price - product.price) / product.original_price) * 100)}%` : 'Deal',
+    }));
   }, [allProducts]);
 
   const selectedProducts = targetedProducts.length ? targetedProducts : fashionProducts;
@@ -161,10 +147,14 @@ export default function Home() {
               <div className={styles.dealHeader}><span className={styles.panelKicker}>Limited drops</span><Zap size={19} /></div>
               <h2>Quick deals</h2>
               <p className={styles.dealSubtext}>Good finds move quickly around campus.</p>
-              <div className={styles.dealProduct}>
-                <img src={flashItems[0].image} alt={flashItems[0].title} />
-                <div><span className={styles.dealTag}>{flashItems[0].tag}</span><strong>{flashItems[0].title}</strong><span>{formatNaira(flashItems[0].price)}</span></div>
-              </div>
+              {flashItems.length ? (
+                <div className={styles.dealProduct}>
+                  <img src={flashItems[0].image} alt={flashItems[0].title} />
+                  <div><span className={styles.dealTag}>{flashItems[0].tag}</span><strong>{flashItems[0].title}</strong><span>{formatNaira(flashItems[0].price)}</span></div>
+                </div>
+              ) : (
+                <p className={styles.emptyNotice}>No flash deals available yet.</p>
+              )}
               <div className={styles.dealTimer}><Clock3 size={14} /><span>Ends in</span><strong>04h 28m</strong></div>
               <Link href="/explore?sort=deals" className={styles.dealLink}>See all flash sales <ArrowRight size={14} /></Link>
             </aside>
@@ -183,12 +173,12 @@ export default function Home() {
         <section className={styles.section}>
           <div className={styles.sectionHead}><div><span className={styles.sectionEyebrow}>MOVE FAST</span><h2>Flash sale</h2></div><Link href="/explore?sort=deals" className={styles.textLink}>See all deals <ArrowRight size={15} /></Link></div>
           <div className={styles.productRail}>
-            {flashItems.map((item) => (
+            {flashItems.length ? flashItems.map((item) => (
               <Link href="/explore" className={styles.saleCard} key={item.title}>
                 <div className={styles.saleImageWrap}><img src={item.image} alt={item.title} /><span>{item.tag}</span><button type="button" aria-label={`Save ${item.title}`}><Heart size={15} /></button></div>
                 <div className={styles.saleInfo}><span>{item.brand}</span><h3>{item.title}</h3><div><strong>{formatNaira(item.price)}</strong><del>{formatNaira(item.oldPrice)}</del></div></div>
               </Link>
-            ))}
+            )) : <p className={styles.emptyNotice}>No products available yet.</p>}
           </div>
         </section>
 
@@ -206,13 +196,12 @@ export default function Home() {
         <section className={styles.sectionCompact}>
           <div className={styles.sectionHead}><div><span className={styles.sectionEyebrow}>WATCH WHAT&apos;S NEXT</span><h2>MasterCart reels</h2></div><Link href="/reels" className={styles.textLink}>Watch full feed <ArrowRight size={15} /></Link></div>
           <div className={styles.reelRail}>
-            {(allReels.length ? allReels.slice(0, 4) : campusStories).map((reel, index) => {
-              const item = 'video_url' in reel ? reel as typeof allReels[number] : null;
-              const image = item?.thumbnail_url || campusStories[index % campusStories.length].image;
-              const title = item?.title || campusStories[index % campusStories.length].title;
-              const brand = item?.brands?.name || ['NOVA ABUAD', 'Apex Kicks', 'Mia Studio', 'The Carry Co.'][index];
-              return <Link href="/reels" className={styles.reelCard} key={item?.id || title}><div className={styles.reelMedia}><img src={image} alt={title} /><span className={styles.reelPlay}><Play size={16} fill="currentColor" /></span><span className={styles.reelDuration}>0{index + 1}:2{index}</span></div><div className={styles.reelMeta}><span className={styles.brandAvatar}>{brand.slice(0, 1)}</span><div><strong>{title}</strong><span>{brand}</span></div></div></Link>;
-            })}
+            {allReels.length ? allReels.slice(0, 4).map((reel, index) => {
+              const image = reel.thumbnail_url || '/logo.png';
+              const title = reel.title || 'Campus Reel';
+              const brand = reel.brands?.name || 'Verified Store';
+              return <Link href="/reels" className={styles.reelCard} key={reel.id}><div className={styles.reelMedia}><img src={image} alt={title} /><span className={styles.reelPlay}><Play size={16} fill="currentColor" /></span><span className={styles.reelDuration}>0{index + 1}:20</span></div><div className={styles.reelMeta}><span className={styles.brandAvatar}>{brand.slice(0, 1)}</span><div><strong>{title}</strong><span>{brand}</span></div></div></Link>;
+            }) : <p className={styles.emptyNotice}>No reels available yet.</p>}
           </div>
         </section>
 
@@ -222,7 +211,7 @@ export default function Home() {
         <section className={styles.section}>
           <div className={styles.sectionHead}><div><span className={styles.sectionEyebrow}>CURATED FOR YOU</span><h2>Popular right now</h2></div><Link href="/explore" className={styles.textLink}>View marketplace <ArrowRight size={15} /></Link></div>
           <div className={styles.productGrid}>
-            {renderableProducts.length ? renderableProducts.map((product) => <ProductCard key={product.id} product={product} />) : fallbackProducts.slice(0, 4).map((item) => <Link href="/explore" className={styles.fallbackProduct} key={item.title}><div><img src={item.image} alt={item.title} /><span className={styles.fallbackHeart}><Heart size={15} /></span></div><span>{item.brand}</span><h3>{item.title}</h3><strong>{formatNaira(item.price)}</strong></Link>)}
+            {renderableProducts.length ? renderableProducts.map((product) => <ProductCard key={product.id} product={product} />) : <p className={styles.emptyNotice}>No products available yet.</p>}
           </div>
           {!isInitialized && <p className={styles.loadingNote}>Curating the freshest campus finds for you...</p>}
         </section>
@@ -230,7 +219,7 @@ export default function Home() {
         <section className={styles.section}>
           <div className={styles.sectionHead}><div><span className={styles.sectionEyebrow}>TRUSTED LOCALLY</span><h2>Popular campus stores</h2></div><Link href="/vendors" className={styles.textLink}>See all stores <ArrowRight size={15} /></Link></div>
           <div className={styles.vendorGrid}>
-            {featuredVendors.length ? featuredVendors.map((vendor) => <VendorCard key={vendor.id} vendor={vendor} />) : mockVendors.map((vendor) => <Link href="/vendors" className={styles.mockVendor} key={vendor.name}><span className={styles.vendorLogo}>{vendor.initials}</span><div><h3>{vendor.name}<CheckCircle2 size={14} /></h3><span>{vendor.category}</span><div><Star size={12} fill="currentColor" /> {vendor.rating} <b>·</b> {vendor.orders}</div></div><ArrowRight size={17} /></Link>)}
+            {featuredVendors.length ? featuredVendors.map((vendor) => <VendorCard key={vendor.id} vendor={vendor} />) : <p className={styles.emptyNotice}>No vendors available yet.</p>}
           </div>
         </section>
 
