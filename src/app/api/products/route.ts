@@ -152,7 +152,12 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error('Product listing error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: error.message || 'Internal Server Error',
+      code: error.code || 'UNKNOWN',
+      details: error.details || null,
+      hint: error.hint || null
+    }, { status: 500 });
   }
 }
 
