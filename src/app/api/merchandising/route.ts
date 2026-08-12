@@ -5,7 +5,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const universityId = searchParams.get('university_id');
+  const rawUniversityId = searchParams.get('university_id');
+  const universityId = rawUniversityId && rawUniversityId !== 'null' && rawUniversityId !== 'undefined' ? rawUniversityId : null;
 
   try {
     // 1. Fetch active sections
@@ -80,7 +81,13 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ sections: enrichedSections });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error('[MERCHANDISING GET]', {
+      code: err?.code,
+      message: err?.message,
+      details: err?.details,
+      hint: err?.hint,
+    });
+    return NextResponse.json({ error: err?.message || 'Merchandising request failed', code: err?.code, details: err?.details, hint: err?.hint }, { status: 500 });
   }
 }
 
@@ -121,6 +128,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error('[MERCHANDISING POST]', {
+      code: err?.code,
+      message: err?.message,
+      details: err?.details,
+      hint: err?.hint,
+    });
+    return NextResponse.json({ error: err?.message || 'Merchandising tracking failed', code: err?.code, details: err?.details, hint: err?.hint }, { status: 500 });
   }
 }
