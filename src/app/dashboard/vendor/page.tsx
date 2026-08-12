@@ -782,18 +782,20 @@ export default function VendorDashboard() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('request_payout', {
-        p_user_id: brand.owner_id,
-        p_role: 'vendor',
-        p_amount: Number(amount),
-        p_bank_details: {
-          bankName: brand.bank_name,
-          accountNumber: brand.bank_account_number,
-          accountName: brand.bank_account_name || brand.account_name
-        }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Your session has expired. Please sign in again.');
+
+      const response = await fetch('/api/payouts/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ role: 'vendor', amount: Number(amount) }),
       });
-      if (!error) {
-        alert(`Withdrawal request submitted successfully! Ref ID: ${data}`);
+      const result = await response.json();
+      if (response.ok) {
+        alert(`Withdrawal request submitted successfully! Ref ID: ${result.data}`);
         setIsWithdrawing(false);
         // Refresh wallet
         const { data: newWallet } = await supabase.from('wallets').select('*').eq('brand_id', brand.id).single();
@@ -802,7 +804,7 @@ export default function VendorDashboard() {
         const { data: withdrawData } = await supabase.from('payout_requests').select('*').eq('user_id', brand.owner_id).order('created_at', { ascending: false });
         setWithdrawalRequests(withdrawData || []);
       } else {
-        alert(error.message || 'Withdrawal failed');
+        alert(result.error || 'Withdrawal failed');
       }
     } catch (err) {
       alert('Error submitting withdrawal');

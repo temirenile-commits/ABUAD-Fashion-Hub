@@ -758,22 +758,24 @@ export default function DeliveryDashboard() {
       return;
     }
     try {
-      const { error } = await supabase.rpc('request_payout', {
-        p_user_id: agent.id,
-        p_role: 'delivery',
-        p_amount: amount,
-        p_bank_details: {
-          bankName: agent.bank_name,
-          accountNumber: agent.bank_account_number,
-          accountName: agent.account_name ?? agent.name,
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Your session has expired. Please sign in again.');
+
+      const response = await fetch('/api/payouts/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
         },
+        body: JSON.stringify({ role: 'delivery', amount }),
       });
-      if (!error) {
+      const result = await response.json();
+      if (response.ok) {
         alert('Withdrawal request submitted!');
         setIsWithdrawing(false);
         fetchData(true);
       } else {
-        alert(error.message);
+        alert(result.error || 'Withdrawal failed');
       }
     } catch {
       alert('Error requesting payout');
