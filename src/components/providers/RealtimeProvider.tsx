@@ -47,9 +47,17 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
           query = query.or(`visibility_type.eq.global,visibility_type.is.null,university_id.eq.${ABUAD_ID},university_id.is.null`);
         }
 
-        const { data: prodData, error: prodError } = await query;
-
+        let { data: prodData, error: prodError } = await query;
         if (prodError) throw prodError;
+
+        // Fallback: If university-restricted query returns zero products, fetch all products
+        if (!prodData || prodData.length === 0) {
+          const fallbackQuery = await supabase
+            .from('products')
+            .select(`*, brands(*, universities(*))`)
+            .order('created_at', { ascending: false });
+          prodData = fallbackQuery.data;
+        }
 
         if (active && prodData) {
           const enriched = prodData.map((p: any) => ({
@@ -68,8 +76,14 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
         } else {
           brandQuery = brandQuery.or(`university_id.eq.${ABUAD_ID},university_id.is.null`);
         }
-        const { data: brandData, error: bErr } = await brandQuery;
+        let { data: brandData, error: bErr } = await brandQuery;
         if (bErr) throw bErr;
+
+        if (!brandData || brandData.length === 0) {
+          const allBrandsRes = await supabase.from('brands').select('*');
+          brandData = allBrandsRes.data;
+        }
+
         if (active && brandData) setVendors(brandData as any);
 
         // Brand Reels - include matching uni, null/legacy, or global
