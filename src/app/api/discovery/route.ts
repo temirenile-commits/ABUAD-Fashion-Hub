@@ -43,9 +43,9 @@ export async function GET(req: NextRequest) {
 
     if (userId) {
       const [{ data: wishlist }, { data: orders }, { data: profile }] = await Promise.all([
-        supabaseAdmin.from('wishlist').select('products(category)').eq('user_id', userId),
-        supabaseAdmin.from('orders').select('products(category)').eq('customer_id', userId),
-        supabaseAdmin.from('users').select('university_id').eq('id', userId).single(),
+        supabaseAdmin.from('wishlists').select('products:products!wishlists_product_id_fkey(category)').eq('user_id', userId),
+        supabaseAdmin.from('orders').select('products:products!orders_product_id_fkey(category)').eq('customer_id', userId),
+        supabaseAdmin.from('users').select('university_id').eq('id', userId).maybeSingle(),
       ]);
 
       wishlist?.forEach((item: any) => item.products?.category && categories.add(item.products.category));
@@ -54,7 +54,9 @@ export async function GET(req: NextRequest) {
     }
 
     const scopeId = userUniId || DEFAULT_UNIVERSITY_ID;
-    const applyScope = (query: any) => query.or(`visibility_type.eq.global,university_id.eq.${scopeId}`);
+    const applyScope = (query: any) => userUniId
+      ? query.or(`visibility_type.eq.global,university_id.eq.${userUniId}`)
+      : query.or('visibility_type.eq.global,university_id.is.null');
 
     let targetedQuery = supabaseAdmin
       .from('products')

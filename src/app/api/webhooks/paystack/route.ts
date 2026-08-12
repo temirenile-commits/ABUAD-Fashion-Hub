@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { verifyTransaction } from '@/lib/paystack';
+import { paymentErrorResponse, reconcileVerifiedVendorPayment, VENDOR_PAYMENT_TYPES } from '@/lib/vendor-payment';
 
 const secret = process.env.PAYSTACK_SECRET_KEY || '';
 
@@ -10,21 +11,30 @@ export async function POST(req: Request) {
     const rawBody = await req.text();
     const signature = req.headers.get('x-paystack-signature');
 
+    if (!secret) {
+      console.error('[WEBHOOK] PAYSTACK_SECRET_KEY is not configured');
+      return NextResponse.json({ error: 'Webhook configuration error' }, { status: 500 });
+    }
     if (!signature) {
       return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
     }
 
-    // 1. Verify Signature (First Layer)
+    // 1. Verify Signature (First Layer) with constant-time comparison.
     const hash = crypto.createHmac('sha512', secret).update(rawBody).digest('hex');
-    if (hash !== signature) {
-      console.error('Invalid signatures matching');
+    const expectedSignature = Buffer.from(hash, 'utf8');
+    const actualSignature = Buffer.from(signature, 'utf8');
+    if (expectedSignature.length !== actualSignature.length || !crypto.timingSafeEqual(expectedSignature, actualSignature)) {
+      console.error('[WEBHOOK] Invalid Paystack signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
     const event = JSON.parse(rawBody);
 
     if (event.event === 'charge.success') {
-      const reference = event.data.reference;
+      const reference = event.data?.reference;
+      if (typeof reference !== 'string' || !reference.trim()) {
+        return NextResponse.json({ error: 'Missing payment reference' }, { status: 400 });
+      }
 
       // 2. Double Verification (Second Layer - Cross check with Paystack API)
       const verification = await verifyTransaction(reference);
@@ -33,124 +43,27 @@ export async function POST(req: Request) {
         console.error('Paystack verification failed for ref:', reference);
         return NextResponse.json({ error: 'Transaction verification failed' }, { status: 400 });
       }
+      if (verification.data.reference !== reference) {
+        return NextResponse.json({ error: 'Payment reference mismatch' }, { status: 400 });
+      }
 
       const metadata = verification.data.metadata || {};
       console.log(`[PAYSTACK WEBHOOK] Verified ${reference} successfully via API. Payment Type: ${metadata.payment_type}`);
 
-      // Case A: Vendor Activation Fee
-      if (metadata.payment_type === 'vendor_activation_fee') {
-        const { brand_id } = metadata;
-        const { error: brandUpdateError } = await supabaseAdmin
-          .from('brands')
-          .update({ 
-            fee_paid: true, 
-            verification_status: 'verified',
-            verified: true 
-          })
-          .eq('id', brand_id);
-        
-        if (brandUpdateError) {
-          console.error('Error activating brand:', brandUpdateError);
-          return NextResponse.json({ error: 'Brand activation failed' }, { status: 500 });
-        }
-        
-        console.log(`[WEBHOOK] Brand ${brand_id} activated successfully!`);
-        return NextResponse.json({ status: 'success' }, { status: 200 });
+      // All vendor-side payments are reconciled through one exactly-once, ownership-checked path.
+      if (VENDOR_PAYMENT_TYPES.includes(metadata.payment_type)) {
+        const result = await reconcileVerifiedVendorPayment(verification.data, 'webhook');
+        console.log('[WEBHOOK] Vendor payment reconciled:', {
+          reference,
+          payment_type: result.paymentType,
+          processed: result.processed,
+          duplicate: result.duplicate,
+          credits_added: result.creditsAdded,
+        });
+        return NextResponse.json({ ...result, status: 'success' }, { status: 200 });
       }
 
-      // Case C: Vendor Tiered Subscription & Boosts
-      if (metadata.payment_type === 'vendor_subscription') {
-        const { brand_id, tier } = metadata;
-        
-        // 1. Handle Visibility Boosts
-        const { data: boostSettings } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'boost_rates').single();
-        const boostRates = (boostSettings?.value as any[]) || [];
-        const boostConfig = boostRates.find(b => b.id === tier);
-
-        if (boostConfig) {
-          const expiresAt = new Date();
-          expiresAt.setDate(expiresAt.getDate() + (boostConfig.duration_days || 7));
-
-          const { error: boostError } = await supabaseAdmin
-            .from('brands')
-            .update({ 
-               boost_level: tier,
-               boost_expires_at: expiresAt.toISOString(),
-               visibility_score: 100 + (boostConfig.visibility_score || 50) 
-            })
-            .eq('id', brand_id);
-          
-          if (boostError) return NextResponse.json({ error: 'Boost update failed' }, { status: 500 });
-          return NextResponse.json({ status: 'success' }, { status: 200 });
-        }
-
-        // 1.1 Handle Billboard Boost (₦500/week)
-        if (tier === 'billboard_boost') {
-          const expiresAt = new Date();
-          expiresAt.setDate(expiresAt.getDate() + 7);
-
-          const { error } = await supabaseAdmin
-            .from('brands')
-            .update({ billboard_boost_expires_at: expiresAt.toISOString() })
-            .eq('id', brand_id);
-          
-          if (error) return NextResponse.json({ error: 'Billboard boost failed' }, { status: 500 });
-          return NextResponse.json({ status: 'success' }, { status: 200 });
-        }
-
-        // 2. Handle System Plans
-        const { data: subSettings } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'subscription_rates').single();
-        const subRates = (subSettings?.value as any[]) || [];
-        const planConfig = subRates.find(r => r.id === tier) || { max_products: 10, max_reels: 1 };
-
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 30);
-
-        const { error: subError } = await supabaseAdmin
-          .from('brands')
-          .update({ 
-            subscription_tier: tier, 
-            subscription_expires_at: expiresAt.toISOString(),
-            max_products: planConfig.max_products || 10,
-            max_reels: planConfig.max_reels || 1
-          })
-          .eq('id', brand_id);
-
-        if (subError) {
-          console.error('Error updating subscription:', subError);
-          return NextResponse.json({ error: 'Subscription update failed' }, { status: 500 });
-        }
-
-        // 3. Add Listing Credits
-        const creditsToAdd = planConfig.max_products || 10;
-        await supabaseAdmin.rpc('add_listing_credits', { p_brand_id: brand_id, p_count: creditsToAdd });
-
-        console.log(`[WEBHOOK] Subscription for ${brand_id} updated to ${tier} with ${creditsToAdd} credits!`);
-        return NextResponse.json({ status: 'success' }, { status: 200 });
-      }
-
-      // Case D: Delicacies Credit Top-up
-      if (metadata.payment_type === 'delicacies_credit_purchase') {
-        const { brand_id, credits } = metadata;
-        const creditsToAdd = Number(credits) || 0;
-        
-        if (creditsToAdd > 0) {
-          const { error: creditError } = await supabaseAdmin.rpc('add_listing_credits', { 
-            p_brand_id: brand_id, 
-            p_count: creditsToAdd 
-          });
-
-          if (creditError) {
-            console.error('Error adding delicacies credits:', creditError);
-            return NextResponse.json({ error: 'Credit update failed' }, { status: 500 });
-          }
-        }
-
-        console.log(`[WEBHOOK] ${creditsToAdd} credits added to delicacies vendor ${brand_id}`);
-        return NextResponse.json({ status: 'success' }, { status: 200 });
-      }
-
-      // Case B: Customer Orders (Default)
+      // Customer Orders (Default)
       // 1. Fetch all orders with this Paystack reference
       const { data: orders, error: fetchError } = await supabaseAdmin
         .from('orders')
@@ -378,8 +291,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ status: 'success' }, { status: 200 });
 
   } catch (error) {
-    console.error('Webhook error:', error);
-    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
+    const result = paymentErrorResponse(error);
+    console.error('[WEBHOOK] Payment processing failed:', result.body);
+    return NextResponse.json(result.body, { status: result.status });
   }
 }
 

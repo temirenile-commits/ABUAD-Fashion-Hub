@@ -54,9 +54,13 @@ export default function PayFeePage() {
   const handlePayment = async () => {
     setPaying(true);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
       const res = await fetch('/api/vendor/activation-fee', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(sessionData.session?.access_token ? { Authorization: `Bearer ${sessionData.session.access_token}` } : {}),
+        },
         body: JSON.stringify({ userId: user.id }),
       });
 

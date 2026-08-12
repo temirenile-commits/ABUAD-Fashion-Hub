@@ -4,11 +4,10 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const universityId = searchParams.get('universityId');
+    const rawUniversityId = searchParams.get('universityId');
+    const universityId = rawUniversityId && rawUniversityId !== 'null' && rawUniversityId !== 'undefined' ? rawUniversityId : null;
     const category = searchParams.get('category');
     const limit = parseInt(searchParams.get('limit') || '40');
-
-    const targetUniId = universityId || '00000000-0000-0000-0000-000000000001';
 
     // Fetch only delicacies products for this university or global ones
     let query = supabaseAdmin
@@ -19,8 +18,8 @@ export async function GET(req: Request) {
         stock_count, views_count, sales_count, rating,
         available_from, is_draft, product_section,
         brand_id, location_availability, cafeteria_ids,
-        brands (
-          id, name, logo_url, verified, verification_status,
+          brands:brands!products_brand_id_fkey (
+            id, name, logo_url, verified, verification_status,
           avg_rating, marketplace_type, delicacies_approval_status,
           availability_start, availability_end, is_available_now,
           university_id, delivery_scope, assigned_delivery_system
@@ -32,8 +31,10 @@ export async function GET(req: Request) {
       .order('sales_count', { ascending: false })
       .limit(limit);
 
-    // Scope to university or global/legacy
-    query = query.or(`university_id.eq.${targetUniId},visibility_type.eq.global,visibility_type.is.null,university_id.is.null`);
+    // Scope to a valid university or to global/legacy records when none is provided.
+    query = universityId
+      ? query.or(`university_id.eq.${universityId},visibility_type.eq.global,visibility_type.is.null,university_id.is.null`)
+      : query.or('visibility_type.eq.global,visibility_type.is.null,university_id.is.null');
 
     if (category) {
       query = query.eq('delicacy_category', category);

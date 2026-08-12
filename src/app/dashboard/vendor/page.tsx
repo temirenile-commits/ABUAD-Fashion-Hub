@@ -34,6 +34,7 @@ export default function VendorDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [subscriptionRates, setSubscriptionRates] = useState<any[]>([]);
   const [boostRates, setBoostRates] = useState<any[]>([]);
+  const [postingCreditPrice, setPostingCreditPrice] = useState(0);
   const [activationFee, setActivationFee] = useState(2000);
   const [loading, setLoading] = useState(true);
   const [brand, setBrand] = useState<any>(null);
@@ -147,6 +148,7 @@ export default function VendorDashboard() {
   const [billboardForm, setBillboardForm] = useState({ image: '', link: '' });
   const [uploadingBillboard, setUploadingBillboard] = useState(false);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<{ state: 'idle' | 'processing' | 'success' | 'pending' | 'failed'; message?: string; credits?: number }>({ state: 'idle' });
 
   useEffect(() => {
     if (redirectUrl) {
@@ -220,18 +222,47 @@ export default function VendorDashboard() {
       const searchParams = new URLSearchParams(window.location.search);
       const payRef = searchParams.get('ref') || searchParams.get('reference');
       if (payRef) {
-        // Clear the URL to avoid repeated alerts
+        // Clear the URL to avoid duplicate reconciliation attempts on refresh.
         window.history.replaceState({}, '', window.location.pathname);
-        
-        // Wait for webhook (3s), then re-fetch brand to check status
-        setTimeout(async () => {
-          const { data: brandUpdate } = await supabase.from('brands').select('subscription_tier, fee_paid').eq('id', brandData.id).single();
-          if (brandUpdate?.fee_paid || (brandUpdate?.subscription_tier && brandUpdate.subscription_tier !== 'free')) {
-            alert('?? Payment Successfully Verified! Your account has been updated.');
-          } else {
-            alert('?? Payment Incomplete: We couldn\'t verify your payment. If you were debited, please contact support.');
+        setPaymentStatus({ state: 'processing', message: 'Payment processing…' });
+
+        const reconcile = async () => {
+          let lastMessage = 'Payment received — waiting for final reconciliation…';
+          for (let attempt = 0; attempt < 6; attempt += 1) {
+            try {
+              const { data: sessionData } = await supabase.auth.getSession();
+              const token = sessionData.session?.access_token;
+              if (!token) throw new Error('Your session has expired. Please sign in again.');
+
+              const response = await fetch('/api/vendor/payment/reconcile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ reference: payRef }),
+              });
+              const result = await response.json();
+
+              if (response.ok && result.status === 'success') {
+                const { data: refreshedBrand } = await supabase.from('brands').select('*').eq('id', brandData.id).maybeSingle();
+                if (refreshedBrand) setBrand(refreshedBrand);
+                setPaymentStatus({ state: 'success', message: result.creditsAdded > 0 ? `Payment successful — ${result.creditsAdded} posting credits added.` : 'Payment successful — your vendor benefits are now active.', credits: result.creditsAdded || 0 });
+                return;
+              }
+
+              if (response.status >= 400 && result.error) {
+                throw new Error(result.error);
+              }
+              lastMessage = result.message || lastMessage;
+            } catch (error: any) {
+              setPaymentStatus({ state: 'failed', message: error?.message || 'Payment verification failed.' });
+              return;
+            }
+
+            if (attempt < 5) await new Promise(resolve => setTimeout(resolve, 2000));
           }
-        }, 3000);
+          setPaymentStatus({ state: 'pending', message: lastMessage });
+        };
+
+        void reconcile();
       }
       // Fetch Orders initially, then pass to store
       const { data: ordersData } = await supabase
@@ -321,6 +352,9 @@ export default function VendorDashboard() {
             { id: 'visibility_month', name: '30-Day Market Domination', price: 5000, duration: '30 Days', popular: true }
         ];
         let finalActivationFee = settingsData.find(s => s.key === 'activation_fee')?.value?.amount || 2000;
+        const configuredCreditPrice = settingsData.find(s => s.key === 'credit_price')?.value;
+        const parsedCreditPrice = typeof configuredCreditPrice === 'object' ? configuredCreditPrice?.price : configuredCreditPrice;
+        setPostingCreditPrice(Number(parsedCreditPrice) || 0);
 
         if (brandData.university_id) {
             // University Vendor Settings Overlay
@@ -861,12 +895,15 @@ export default function VendorDashboard() {
 
       const res = await fetch('/api/vendor/subscription', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
-          userId: session.user.id,
           brandId: brand.id,
           tierId: tier.id,
-          amount: tier.price
+          paymentType: tier.paymentType || 'vendor_subscription',
+          credits: tier.credits,
         }),
       });
 
@@ -1256,6 +1293,16 @@ export default function VendorDashboard() {
             <p>Please wait while we secure your transaction with Paystack.</p>
             <div className={styles.redirectText}>Preparing secure redirect...</div>
           </div>
+        </div>
+      )}
+
+      {paymentStatus.state !== 'idle' && (
+        <div role="status" style={{ margin: '1rem 0', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border)', background: paymentStatus.state === 'failed' ? 'rgba(180, 40, 40, 0.12)' : 'var(--bg-300)', color: 'var(--text-100)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {paymentStatus.state === 'processing' && <Loader2 size={18} className="anim-spin" />}
+          {paymentStatus.state === 'success' && <CheckCircle size={18} color="var(--primary)" />}
+          {paymentStatus.state === 'pending' && <Clock size={18} />}
+          {paymentStatus.state === 'failed' && <AlertTriangle size={18} color="#d33" />}
+          <span>{paymentStatus.message}</span>
         </div>
       )}
 
@@ -3155,6 +3202,34 @@ export default function VendorDashboard() {
                   <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--primary)' }}>{brand?.free_listings_count || 0}</div>
                   <div style={{ fontSize: '0.65rem', color: 'var(--primary)' }}>Credits Remaining</div>
                 </div>
+              </div>
+
+              {/* -- Standalone Posting Credits -- */}
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginTop: '2.5rem', marginBottom: '0.5rem', color: 'var(--text-100)' }}>
+                Buy Posting Credits
+              </h2>
+              <p style={{ color: 'var(--text-400)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+                Purchase additional live-listing credits without changing your current subscription. The final amount is validated on the server.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '3rem' }}>
+                {[5, 10, 20, 50].map((count) => {
+                  const packageId = `credits_${count}`;
+                  const packagePrice = count * postingCreditPrice;
+                  return (
+                    <div key={count} style={{ background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.25rem', textAlign: 'center' }}>
+                      <div style={{ fontWeight: 800, color: 'var(--primary)' }}>{count} Credits</div>
+                      <div style={{ fontSize: '0.9rem', color: 'var(--text-400)', margin: '0.5rem 0 1rem' }}>₦{packagePrice.toLocaleString()}</div>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        disabled={postingCreditPrice <= 0 || paying === packageId}
+                        onClick={() => handleSubscribe({ id: packageId, credits: count, paymentType: 'posting_credits_purchase' })}
+                        style={{ width: '100%' }}
+                      >
+                        {paying === packageId ? <><Loader2 size={14} className="spin" /> Paying...</> : 'Buy Credits'}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* -- Credit Rate Plans -- */}

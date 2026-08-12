@@ -1,69 +1,113 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { initializeTransaction } from '@/lib/paystack';
+import { getAuthenticatedUser } from '@/lib/server-auth';
 
 export async function POST(req: Request) {
   try {
-    const { userId } = await req.json();
+    const user = await getAuthenticatedUser(req);
+    if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
-    }
-
-    // 1. Fetch User and Brand details
-    const { data: userProfile } = await supabaseAdmin
+    const { data: userProfile, error: userError } = await supabaseAdmin
       .from('users')
       .select('email')
-      .eq('id', userId)
-      .single();
+      .eq('id', user.id)
+      .maybeSingle();
 
-    const { data: brand } = await supabaseAdmin
+    const { data: brand, error: brandError } = await supabaseAdmin
       .from('brands')
-      .select('id, name, university_id')
-      .eq('owner_id', userId)
-      .single();
+      .select('id, owner_id, name, university_id')
+      .eq('owner_id', user.id)
+      .maybeSingle();
 
-    if (!brand) {
-      return NextResponse.json({ error: 'Brand profile not found' }, { status: 404 });
+    if (userError || brandError) {
+      const error = userError || brandError;
+      console.error('[Activation Fee] Lookup failed:', {
+        code: error?.code,
+        message: error?.message,
+        details: error?.details,
+        hint: error?.hint,
+      });
+      return NextResponse.json({ error: 'Brand payment lookup failed' }, { status: 500 });
     }
 
-    let amount = 2000; // default university vendor fee
-    const { data: settingsData } = await supabaseAdmin.from('platform_settings').select('key, value').in('key', ['activation_fee']);
-    const globalFeeSetting = settingsData?.find(s => s.key === 'activation_fee')?.value;
-    if (globalFeeSetting?.amount) {
-        amount = globalFeeSetting.amount;
+    if (!brand) return NextResponse.json({ error: 'Brand profile not found' }, { status: 404 });
+    if (brand.owner_id !== user.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+
+    let amount = 2000;
+    const { data: settingsData, error: settingsError } = await supabaseAdmin
+      .from('platform_settings')
+      .select('key, value')
+      .eq('key', 'activation_fee');
+    if (settingsError) {
+      console.error('[Activation Fee] Settings lookup failed:', {
+        code: settingsError.code,
+        message: settingsError.message,
+        details: settingsError.details,
+        hint: settingsError.hint,
+      });
+      return NextResponse.json({ error: 'Activation fee configuration lookup failed' }, { status: 500 });
     }
 
-    if (!brand.university_id) {
-        // General Vendor
-        amount = 15000;
-    }
+    const configuredAmount = settingsData?.find(s => s.key === 'activation_fee')?.value?.amount;
+    if (Number(configuredAmount) > 0) amount = Number(configuredAmount);
+    if (!brand.university_id) amount = 15000;
 
-    const reference = `VNDR-FEE-${brand.id}-${Date.now()}`;
+    const reference = `VNDR-FEE-${brand.id}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
     const origin = req.headers.get('origin') || 'https://mastercart.vercel.app';
-
-    // 2. Initialize Paystack
-    const paystackParams = {
-      email: userProfile?.email || 'vendor@mastercart.com',
-      amount: amount,
-      reference: reference,
-      callback_url: `${origin}/dashboard/vendor`,
-      metadata: {
-        payment_type: 'vendor_activation_fee',
-        brand_id: brand.id,
-        user_id: userId
-      },
+    const metadata = {
+      payment_type: 'vendor_activation_fee',
+      brand_id: brand.id,
+      user_id: user.id,
+      credits: 0,
+      expected_amount: amount,
+      reference,
     };
 
-    const paystackResponse = await initializeTransaction(paystackParams);
-
-    return NextResponse.json({
-      success: true,
-      authorization_url: paystackResponse.authorization_url,
+    const { error: pendingError } = await supabaseAdmin.from('transactions').insert({
+      brand_id: brand.id,
+      user_id: user.id,
+      type: 'payment_in',
+      amount,
+      expected_amount: amount,
+      status: 'pending',
+      description: `Pending vendor activation fee ${reference}`,
+      payment_reference: reference,
+      payment_type: 'vendor_activation_fee',
+      credits: 0,
+      metadata,
     });
+    if (pendingError) {
+      console.error('[Activation Fee] Pending transaction insert failed:', {
+        code: pendingError.code,
+        message: pendingError.message,
+        details: pendingError.details,
+        hint: pendingError.hint,
+      });
+      return NextResponse.json({ error: 'Could not create payment record' }, { status: 500 });
+    }
 
+    try {
+      const paystackResponse = await initializeTransaction({
+        email: user.email || userProfile?.email || 'vendor@mastercart.com',
+        amount,
+        reference,
+        callback_url: `${origin}/dashboard/vendor?ref=${encodeURIComponent(reference)}`,
+        metadata,
+      });
+
+      return NextResponse.json({ success: true, authorization_url: paystackResponse.authorization_url, reference });
+    } catch (error) {
+      await supabaseAdmin.from('transactions').update({ status: 'failed' }).eq('payment_reference', reference).eq('status', 'pending');
+      throw error;
+    }
   } catch (error: any) {
-    console.error('Activation fee error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    console.error('[Activation Fee] Error:', {
+      code: error?.code,
+      message: error?.message,
+      details: error?.details,
+      hint: error?.hint,
+    });
+    return NextResponse.json({ error: error?.message || 'Internal Server Error' }, { status: 500 });
   }
 }

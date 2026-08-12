@@ -92,6 +92,7 @@ export default function VendorDashboard() {
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [paying, setPaying] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState<{ state: 'idle' | 'processing' | 'success' | 'pending' | 'failed'; message?: string }>({ state: 'idle' });
   const [withdrawalRequests, setWithdrawalRequests] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [enquiries, setEnquiries] = useState<any[]>([]);
@@ -229,18 +230,39 @@ export default function VendorDashboard() {
       const searchParams = new URLSearchParams(window.location.search);
       const payRef = searchParams.get('ref') || searchParams.get('reference');
       if (payRef) {
-        // Clear the URL to avoid repeated alerts
         window.history.replaceState({}, '', window.location.pathname);
-        
-        // Wait for webhook (3s), then re-fetch brand to check status
-        setTimeout(async () => {
-          const { data: brandUpdate } = await supabase.from('brands').select('subscription_tier, fee_paid').eq('id', brandData.id).single();
-          if (brandUpdate?.fee_paid || (brandUpdate?.subscription_tier && brandUpdate.subscription_tier !== 'free')) {
-            alert('?? Payment Successfully Verified! Your account has been updated.');
-          } else {
-            alert('?? Payment Incomplete: We couldn\'t verify your payment. If you were debited, please contact support.');
+        setPaymentStatus({ state: 'processing', message: 'Payment processing…' });
+
+        const reconcile = async () => {
+          let lastMessage = 'Payment received — waiting for final reconciliation…';
+          for (let attempt = 0; attempt < 6; attempt += 1) {
+            try {
+              const { data: sessionData } = await supabase.auth.getSession();
+              const token = sessionData.session?.access_token;
+              if (!token) throw new Error('Your session has expired. Please sign in again.');
+              const response = await fetch('/api/vendor/payment/reconcile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ reference: payRef }),
+              });
+              const result = await response.json();
+              if (response.ok && result.status === 'success') {
+                const { data: refreshedBrand } = await supabase.from('brands').select('*').eq('id', brandData.id).maybeSingle();
+                if (refreshedBrand) setBrand(refreshedBrand);
+                setPaymentStatus({ state: 'success', message: result.creditsAdded > 0 ? `Payment successful — ${result.creditsAdded} credits added.` : 'Payment successful — your vendor benefits are now active.' });
+                return;
+              }
+              if (response.status >= 400 && result.error) throw new Error(result.error);
+              lastMessage = result.message || lastMessage;
+            } catch (error: any) {
+              setPaymentStatus({ state: 'failed', message: error?.message || 'Payment verification failed.' });
+              return;
+            }
+            if (attempt < 5) await new Promise(resolve => setTimeout(resolve, 2000));
           }
-        }, 3000);
+          setPaymentStatus({ state: 'pending', message: lastMessage });
+        };
+        void reconcile();
       }
       // Fetch Orders initially, then pass to store
       const { data: ordersData } = await supabase
@@ -921,12 +943,15 @@ export default function VendorDashboard() {
 
       const res = await fetch('/api/vendor/subscription', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
-          userId: session.user.id,
           brandId: brand.id,
           tierId: tier.id,
-          amount: tier.price
+          paymentType: tier.paymentType || 'vendor_subscription',
+          credits: tier.credits,
         }),
       });
 
@@ -1357,6 +1382,16 @@ export default function VendorDashboard() {
             <p>Please wait while we secure your transaction with Paystack.</p>
             <div className={styles.redirectText}>Preparing secure redirect...</div>
           </div>
+        </div>
+      )}
+
+      {paymentStatus.state !== 'idle' && (
+        <div role="status" style={{ margin: '1rem 0', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border)', background: paymentStatus.state === 'failed' ? 'rgba(180, 40, 40, 0.12)' : 'var(--bg-300)', color: 'var(--text-100)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {paymentStatus.state === 'processing' && <Loader2 size={18} className="anim-spin" />}
+          {paymentStatus.state === 'success' && <CheckCircle size={18} color="var(--primary)" />}
+          {paymentStatus.state === 'pending' && <Clock size={18} />}
+          {paymentStatus.state === 'failed' && <AlertTriangle size={18} color="#d33" />}
+          <span>{paymentStatus.message}</span>
         </div>
       )}
 
@@ -3339,14 +3374,11 @@ export default function VendorDashboard() {
                         className="btn btn-primary btn-sm"
                         style={{ width: '100%' }}
                         disabled={paying === bundleId}
-                        onClick={() => handleSubscribe({ 
-                          id: bundleId, 
+                        onClick={() => handleSubscribe({
+                          id: bundleId,
                           price: totalPrice,
-                          metadata: { 
-                            payment_type: 'delicacies_credit_purchase', 
-                            credits: count,
-                            brand_id: brand?.id 
-                          } 
+                          credits: count,
+                          paymentType: 'delicacies_credit_purchase',
                         })}
                       >
                         {paying === bundleId ? '...' : 'Buy Bundle'}
