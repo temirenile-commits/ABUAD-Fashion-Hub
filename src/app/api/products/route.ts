@@ -120,12 +120,10 @@ export async function POST(req: Request) {
       .select()
       .single();
 
-    // Fallback: If DB constraint product_delicacy_category_check is violated (e.g. outdated DB schema)
-    if (productError && productError.message.includes('product_delicacy_category_check')) {
-      console.warn('[API PRODUCTS] Check constraint violated, retrying with fallback category...');
-      let fallbackCat = 'other';
-      if (category === 'drinks_beverages') fallbackCat = 'drinks';
-      else if (category === 'pastries_baked') fallbackCat = 'snacks';
+    // Fallback: If DB constraint product_delicacy_category_check or products_delicacy_category_check is violated
+    if (productError && (productError.message.includes('product_delicacy_category_check') || productError.message.includes('products_delicacy_category_check'))) {
+      console.warn('[API PRODUCTS] Check constraint violated, retrying with canonical fallback category...');
+      const fallbackCat = VALID_DELICACY_CATEGORIES.includes(category) ? category : 'other';
       
       insertPayload.delicacy_category = fallbackCat;
       const retry = await supabaseAdmin.from('products').insert(insertPayload).select().single();
