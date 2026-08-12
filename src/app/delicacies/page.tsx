@@ -70,18 +70,26 @@ export default function DelicaciesPage() {
   const [priceMin, setPriceMin] = useState<string>('');
   const [priceMax, setPriceMax] = useState<string>('');
 
+  const DEFAULT_UNIVERSITY_ID = '00000000-0000-0000-0000-000000000001';
+
   // Fetch user university
   useEffect(() => {
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: profile } = await supabase
-          .from('users')
-          .select('university_id, hostel')
-          .eq('id', session.user.id)
-          .single();
-        setUniversityId(profile?.university_id || null);
-        setUserHostel(profile?.hostel || null);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { data: profile } = await supabase
+            .from('users')
+            .select('university_id, hostel')
+            .eq('id', session.user.id)
+            .single();
+          setUniversityId(profile?.university_id || DEFAULT_UNIVERSITY_ID);
+          setUserHostel(profile?.hostel || null);
+        } else {
+          setUniversityId(DEFAULT_UNIVERSITY_ID);
+        }
+      } catch {
+        setUniversityId(DEFAULT_UNIVERSITY_ID);
       }
     };
     init();
@@ -245,14 +253,17 @@ export default function DelicaciesPage() {
             {search.trim() && matchingVendors.length > 0 && (
               <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#121214', borderRadius: '8px', marginTop: '4px', padding: '8px', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                 <div style={{ fontSize: '0.75rem', color: '#000000', marginBottom: '4px', padding: '0 8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Chefs matching "{search}"</div>
-                {matchingVendors.map(v => (
-                  <Link key={v.id} href={`/vendor/${v.id}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', textDecoration: 'none', color: '#000000', borderRadius: '4px' }}>
+                {matchingVendors.map(v => {
+                  const slug = v.name?.toLowerCase().replace(/\s+/g, '-') || 'brand';
+                  return (
+                  <Link key={v.id} href={`/vendor/${slug}?id=${v.id}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', textDecoration: 'none', color: '#000000', borderRadius: '4px' }}>
                     <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#121214', overflow: 'hidden' }}>
                       {v.logo_url ? <img src={v.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '10px' }}>{v.name[0]}</span>}
                     </div>
                     <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{v.name}</span>
                   </Link>
-                ))}
+                );
+                })}
               </div>
             )}
           </div>
@@ -381,7 +392,7 @@ export default function DelicaciesPage() {
         {/* ── BILLBOARD SLIDER ── */}
         {billboards.length > 0 && (
           <div className={styles.billboard}>
-            <Link href={billboards[billboardIdx].brand_id ? `/vendor/${billboards[billboardIdx].brand_id}` : '#'}>
+            <Link href={billboards[billboardIdx].brand_id ? `/vendor/brand?id=${billboards[billboardIdx].brand_id}` : '#'}>
               <img src={billboards[billboardIdx].image_url} alt="Promotion" className={styles.billboardImg} />
             </Link>
             {billboards.length > 1 && (
@@ -406,8 +417,9 @@ export default function DelicaciesPage() {
             <div className={styles.hofScroll}>
               {rankings.map((r, i) => {
                 const brand = Array.isArray(r.brands) ? r.brands[0] : r.brands;
+                const brandSlug = brand?.name?.toLowerCase().replace(/\s+/g, '-') || 'brand';
                 return (
-                  <Link key={i} href={`/vendor/${brand?.id}`} className={styles.vendorCircle}>
+                  <Link key={i} href={`/vendor/${brandSlug}?id=${brand?.id}`} className={styles.vendorCircle}>
                     <div className={styles.circleFrame}>
                       {brand?.logo_url ? <img src={brand.logo_url} alt="" /> : <span>{brand?.name?.[0]}</span>}
                     </div>

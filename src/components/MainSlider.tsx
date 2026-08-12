@@ -63,12 +63,13 @@ export default function MainSlider() {
       if (brandData && brandData.length > 0) {
         mergedSlides.push(...brandData.map(b => {
           const social = b.social_links || {};
+          const brandSlug = b.name?.toLowerCase().replace(/\s+/g, '-') || 'brand';
           return {
             id: b.id,
             image: social.billboard_image || b.cover_url,
             title: b.name,
             sub: b.description || '',
-            link: social.billboard_link || `/vendor/${b.id}`
+            link: social.billboard_link || `/vendor/${brandSlug}?id=${b.id}`
           };
         }));
       }

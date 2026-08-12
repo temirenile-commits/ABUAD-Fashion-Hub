@@ -168,8 +168,10 @@ export default function ExplorePage() {
           <div style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ marginBottom: '0.75rem', color: 'var(--text-300)', fontSize: '0.9rem', fontWeight: 600 }}>ðŸª Matching Vendors</h3>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              {vendorResults.map(v => (
-                <Link key={v.id} href={`/vendor/${v.id}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: 12, textDecoration: 'none', color: 'var(--text-100)' }}>
+              {vendorResults.map(v => {
+                const slug = v.name?.toLowerCase().replace(/\s+/g, '-') || 'brand';
+                return (
+                <Link key={v.id} href={`/vendor/${slug}?id=${v.id}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'var(--bg-200)', border: '1px solid var(--border)', borderRadius: 12, textDecoration: 'none', color: 'var(--text-100)' }}>
                   {v.logo_url
                     ? <img src={v.logo_url} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover' }} />
                     : <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--bg-300)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Store size={18} /></div>
@@ -179,7 +181,8 @@ export default function ExplorePage() {
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-400)' }}>View store â†’</div>
                   </div>
                 </Link>
-              ))}
+              );
+              })}
             </div>
           </div>
         )}
