@@ -47,7 +47,7 @@ export default function VendorCard({ vendor, layout = 'grid' }: Props) {
             alt={vendorName}
             fill
             className={styles.cover}
-            useThumbnail={true}
+            useThumbnail={false}
           />
         ) : (
           <div className={styles.coverPlaceholder}>Cover image unavailable</div>
@@ -58,7 +58,7 @@ export default function VendorCard({ vendor, layout = 'grid' }: Props) {
         <div className={styles.logoWrap}>
           <span className={styles.logoText}>
             {vendor.logo_url && vendor.logo_url.startsWith('http') ? (
-              <OptimizedImage src={vendor.logo_url} alt={vendorName} fill style={{objectFit: 'cover', borderRadius: '8px'}} useThumbnail={true} />
+              <OptimizedImage src={vendor.logo_url} alt={vendorName} fill style={{objectFit: 'cover', borderRadius: '8px'}} useThumbnail={false} />
             ) : (
               vendorName.substring(0, 2).toUpperCase()
             )}

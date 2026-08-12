@@ -222,7 +222,7 @@ export async function GET(req: NextRequest) {
       brandQuery,
       productQuery,
       orderQuery,
-      supabaseAdmin.from('homepage_sections').select('*, universities(name, abbreviation)').order('priority', { ascending: true })
+      supabaseAdmin.from('homepage_sections').select('*, universities:universities!homepage_sections_university_id_fkey(name, abbreviation)').order('priority', { ascending: true })
     ]);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -278,7 +278,7 @@ export async function GET(req: NextRequest) {
   if (action === 'transactions') {
     let query = supabaseAdmin
       .from('transactions')
-      .select('*, brands(name, university_id), users:user_id(name, email)')
+      .select('*, brands:brands!transactions_brand_id_fkey(name, university_id), users:users!transactions_user_id_fkey(name, email)')
       .order('created_at', { ascending: false });
       
     if (admin && !admin.isFullAdmin && admin.university_id) {
@@ -294,7 +294,7 @@ export async function GET(req: NextRequest) {
   if (action === 'orders') {
     let query = supabaseAdmin
       .from('orders')
-      .select('*, products(title), brands(name, university_id), users:customer_id(name, email), universities(name, abbreviation)')
+      .select('*, products:products!orders_product_id_fkey(title), brands:brands!orders_brand_id_fkey(name, university_id), users:users!orders_customer_id_fkey(name, email), universities:universities!orders_university_id_fkey(name, abbreviation)')
       .order('created_at', { ascending: false });
       
     if (admin && !admin.isFullAdmin && admin.university_id) {
@@ -326,7 +326,7 @@ export async function GET(req: NextRequest) {
   if (action === 'reviews') {
     const { data, error } = await supabaseAdmin
       .from('reviews')
-      .select('*, users:user_id(name, email), products:product_id(title, university_id)')
+      .select('*, users:users!reviews_user_id_fkey(name, email), products:products!reviews_product_id_fkey(title, university_id)')
       .order('created_at', { ascending: false });
 
     if (error) { console.error('[Reviews]', error.message); return NextResponse.json({ reviews: [] }); }
@@ -343,12 +343,12 @@ export async function GET(req: NextRequest) {
         .from('payout_records')
         .select(`
           *,
-          brands(
+          brands:brands!payout_records_brand_id_fkey(
             id, name, logo_url, bank_name, bank_account_number,
             bank_account_name, account_name, recipient_code,
-            universities(name, abbreviation)
+            universities:universities!brands_university_id_fkey(name, abbreviation)
           ),
-          orders(id, total_amount, vendor_earning, product_id, products(title))
+          orders:orders!payout_records_order_id_fkey(id, total_amount, vendor_earning, product_id, products:products!orders_product_id_fkey(title))
         `)
         .order('created_at', { ascending: false })
         .limit(200)
@@ -473,7 +473,7 @@ export async function GET(req: NextRequest) {
 
     const { data, error } = await supabaseAdmin
       .from('universities')
-      .select('*, users!university_id(id, role)')
+      .select('*, users:users!users_university_id_fkey(id, role)')
       .order('name', { ascending: true });
     
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -518,7 +518,7 @@ export async function GET(req: NextRequest) {
   if (action === 'university_admins') {
     const { data, error } = await supabaseAdmin
       .from('users')
-      .select('id, name, email, university_id, universities(name)')
+      .select('id, name, email, university_id, universities:universities!users_university_id_fkey(name)')
       .eq('role', 'university_admin');
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ admins: data });

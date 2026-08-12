@@ -84,7 +84,7 @@ export default async function ProductPage({ params }: Props) {
     .from('products')
     .select(`
       *,
-      brands (
+      brands:brands!products_brand_id_fkey (
         id,
         owner_id,
         name,
@@ -118,7 +118,7 @@ export default async function ProductPage({ params }: Props) {
     .from('products')
     .select(`
       *,
-      brands (id, owner_id, name, whatsapp_number)
+      brands:brands!products_brand_id_fkey (id, owner_id, name, whatsapp_number)
     `)
     .eq('product_section', productData.product_section)
     .eq('category', product.category)
@@ -206,7 +206,7 @@ export default async function ProductPage({ params }: Props) {
               <div className={styles.thumbs}>
                 {allImages.map((img, i) => (
                   <div key={i} className={`${styles.thumb} ${img === mainImage ? styles.thumbActive : ''}`}>
-                    <OptimizedImage src={img} alt={`${product.title} ${i + 1}`} fill className={styles.thumbImg} useThumbnail={true} />
+                    <OptimizedImage src={img} alt={`${product.title} ${i + 1}`} fill className={styles.thumbImg} useThumbnail={false} />
                   </div>
                 ))}
               </div>
@@ -358,7 +358,7 @@ export default async function ProductPage({ params }: Props) {
               <Link href={`/vendor/${vendor.name.toLowerCase().replace(/\s+/g, '-')}?id=${vendor.id}`} className={styles.vendorMini}>
                 <div className={styles.vendorMiniLogo}>
                   {vendor.logo_url ? (
-                    <OptimizedImage src={vendor.logo_url} alt={vendor.name} fill style={{objectFit: 'cover'}} useThumbnail={true} />
+                    <OptimizedImage src={vendor.logo_url} alt={vendor.name} fill style={{objectFit: 'cover'}} useThumbnail={false} />
                   ) : (
                     vendor.name.substring(0, 2).toUpperCase()
                   )}

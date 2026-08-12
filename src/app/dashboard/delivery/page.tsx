@@ -221,9 +221,9 @@ export default function DeliveryDashboard() {
           is_preorder,
           product_id,
           variants_selected,
-          users:customer_id (name, phone),
-          brands (name, latitude, longitude, location_name, whatsapp_number),
-          products:product_id (title, product_section, location_availability)
+          users:users!orders_customer_id_fkey (name, phone),
+          brands:brands!orders_brand_id_fkey (name, latitude, longitude, location_name, whatsapp_number),
+          products:products!orders_product_id_fkey (title, product_section, location_availability)
         )
       `)
       .eq('agent_id', agentUserId)
@@ -326,7 +326,7 @@ export default function DeliveryDashboard() {
     // ── 5. History (delivered) ───────────────────────────────────────────
     const { data: histData } = await supabase
       .from('deliveries')
-      .select('*, orders(id, total_amount, shipping_address, brands(name))')
+      .select('*, orders(id, total_amount, shipping_address, brands:brands!orders_brand_id_fkey(name))')
       .eq('agent_id', agentUserId)
       .eq('status', 'delivered')
       .order('created_at', { ascending: false })
@@ -352,9 +352,9 @@ export default function DeliveryDashboard() {
         .from('orders')
         .select(`
           *,
-          brands (name, location_name),
-          products:product_id (title),
-          users:customer_id (name, phone)
+          brands:brands!orders_brand_id_fkey (name, location_name),
+          products:products!orders_product_id_fkey (title),
+          users:users!orders_customer_id_fkey (name, phone)
         `)
         .in('brand_id', brandIds)
         .in('status', ['paid', 'accepted', 'processing', 'ready', 'ready_for_pickup'])

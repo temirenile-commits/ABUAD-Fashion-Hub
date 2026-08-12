@@ -13,13 +13,14 @@ export async function GET(req: NextRequest) {
       .from('homepage_sections')
       .select('*')
       .eq('is_active', true)
-      .or(`university_id.is.null,university_id.eq.${universityId}`)
+      .or(universityId
+        ? `university_id.is.null,university_id.eq.${universityId}`
+        : 'university_id.is.null')
       .order('priority', { ascending: true });
 
-    // Handle scheduling
-    const now = new Date().toISOString();
-    query = query.or(`start_date.is.null,start_date.lte.${now}`);
-    query = query.or(`end_date.is.null,end_date.gte.${now}`);
+    // The live homepage_sections schema has no start_date/end_date fields.
+    // Do not send nonexistent filters; active, university, and priority are
+    // the canonical scheduling controls currently available in production.
 
     const { data: sections, error: secError } = await query;
     if (secError) throw secError;
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
         // Fetch manually assigned products
         const { data: spData } = await supabaseAdmin
           .from('section_products')
-          .select('product_id, position, products(*, brands(*))')
+          .select('product_id, position, products:products!section_products_product_id_fkey(*, brands:brands!products_brand_id_fkey(*))')
           .eq('section_id', section.id)
           .order('position', { ascending: true });
         
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
       } else if (section.type === 'automated') {
         // Execute auto-rules
         const rule = section.auto_rule || {};
-        let prodQuery = supabaseAdmin.from('products').select('*, brands(*)').eq('is_draft', false).eq('product_section', 'fashion');
+        let prodQuery = supabaseAdmin.from('products').select('*, brands:brands!products_brand_id_fkey(*)').eq('is_draft', false).eq('product_section', 'fashion');
 
         // Scope to university if section is campus-specific
         if (section.university_id) {

@@ -165,10 +165,15 @@ export async function uploadFile(
   try {
     if (onProgress) onProgress(2);
 
-    // ── Client-side size guard ────────────────────────────────────────────
-    if (file.size > MAX_FILE_SIZE && !isOptimizableImage(file)) {
-      // Non-image files over 5 MB (e.g. large videos) pass through
-      // Images over 5 MB will be resized, so we allow them.
+    // The live `brand-assets` bucket has a 5 MB limit. Validate only that
+    // bucket here so video/document workflows in other buckets retain their
+    // existing behaviour.
+    if (bucket === 'brand-assets' && file.size > MAX_FILE_SIZE) {
+      throw new Error('Brand assets must be 5 MB or smaller.');
+    }
+
+    if (bucket === 'brand-assets' && !file.type.startsWith('image/')) {
+      throw new Error('Brand assets must be image files.');
     }
 
     // ── Optimize ──────────────────────────────────────────────────────────
@@ -197,38 +202,55 @@ export async function uploadFile(
 
     if (onProgress) onProgress(60);
 
-    // ── Upload thumbnail (fire-and-forget, non-blocking) ──────────────────
+    // Upload the thumbnail before returning its URL. The previous
+    // fire-and-forget upload caused transient 400s when the image optimizer
+    // requested `_thumb.webp` before Storage had created the object.
+    let thumbPublicUrl: string | null = null;
     if (optimizedThumb) {
-      supabase.storage
+      const { error: thumbError } = await supabase.storage
         .from(bucket)
         .upload(thumbPath, optimizedThumb, {
           cacheControl: '31536000',
           upsert: false,
           contentType: 'image/webp',
-        } as any)
-        .then(({ error }) => {
-          if (error) console.warn('[MasterCart] Thumbnail upload failed (non-critical):', error.message);
+        } as any);
+
+      if (thumbError) {
+        console.error('[MasterCart] Thumbnail upload failed:', {
+          code: (thumbError as any).code,
+          message: thumbError.message,
+          details: (thumbError as any).details,
+          hint: (thumbError as any).hint,
+          bucket,
+          path: thumbPath,
         });
+      } else {
+        thumbPublicUrl = supabase.storage.from(bucket).getPublicUrl(thumbPath).data.publicUrl;
+      }
     }
 
     if (onProgress) onProgress(90);
 
-    // ── Get public URLs ───────────────────────────────────────────────────
+    // ── Get public URL ────────────────────────────────────────────────────
     const { data: { publicUrl } } = supabase.storage
       .from(bucket)
       .getPublicUrl(fullPath);
-
-    const thumbPublicUrl = optimizedThumb
-      ? supabase.storage.from(bucket).getPublicUrl(thumbPath).data.publicUrl
-      : null;
 
     if (onProgress) onProgress(100);
 
     return { url: publicUrl, thumbUrl: thumbPublicUrl, error: null };
 
   } catch (error: any) {
-    console.error('[MasterCart] Upload error:', error);
-    return { url: null, thumbUrl: null, error: error.message ?? 'Upload failed' };
+    console.error('[MasterCart] Upload error:', {
+      code: error?.code,
+      message: error?.message,
+      details: error?.details,
+      hint: error?.hint,
+      bucket,
+      pathPrefix,
+    });
+    const details = [error?.message, error?.details, error?.hint].filter(Boolean).join(' — ');
+    return { url: null, thumbUrl: null, error: details || 'Upload failed' };
   }
 }
 

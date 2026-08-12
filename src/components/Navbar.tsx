@@ -30,11 +30,12 @@ export default function Navbar() {
       if (session) {
         setUser(session.user);
         // Fetch role and avatar
-        const { data: userData } = await supabase
+        const { data: userData, error: userError } = await supabase
           .from('users')
-          .select('role, avatar_url, university_id, universities(abbreviation)')
+          .select('role, avatar_url, university_id, universities!users_university_id_fkey(abbreviation)')
           .eq('id', session.user.id)
           .single();
+        if (userError) console.error('[MasterCart] Navbar profile query failed:', { code: userError.code, message: userError.message, details: userError.details, hint: userError.hint });
         if (userData) {
           setRole(userData.role);
           setUser((prev: any) => ({ 
@@ -45,7 +46,8 @@ export default function Navbar() {
           }));
         }
         // Fallback: Check if they own a brand even if role isn't 'vendor'
-        const { data: brand } = await supabase.from('brands').select('id, marketplace_type').eq('owner_id', session.user.id).single();
+        const { data: brand, error: brandError } = await supabase.from('brands').select('id, marketplace_type').eq('owner_id', session.user.id).maybeSingle();
+        if (brandError) console.error('[MasterCart] Navbar brand lookup failed:', { code: brandError.code, message: brandError.message, details: brandError.details, hint: brandError.hint });
         if (brand) {
           setIsVendorOwner(true);
           setUser((prev: any) => ({ ...prev, brand }));
@@ -58,11 +60,12 @@ export default function Navbar() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
         setUser(session.user);
-        const { data: userData } = await supabase
+        const { data: userData, error: userError } = await supabase
           .from('users')
-          .select('role, avatar_url, university_id, universities(abbreviation)')
+          .select('role, avatar_url, university_id, universities!users_university_id_fkey(abbreviation)')
           .eq('id', session.user.id)
           .single();
+        if (userError) console.error('[MasterCart] Navbar profile query failed:', { code: userError.code, message: userError.message, details: userError.details, hint: userError.hint });
         if (userData) {
           setRole(userData.role);
           setUser((prev: any) => ({ 
@@ -72,7 +75,8 @@ export default function Navbar() {
             university: userData.universities
           }));
         }
-        const { data: brand } = await supabase.from('brands').select('id, marketplace_type').eq('owner_id', session.user.id).single();
+        const { data: brand, error: brandError } = await supabase.from('brands').select('id, marketplace_type').eq('owner_id', session.user.id).maybeSingle();
+        if (brandError) console.error('[MasterCart] Navbar brand lookup failed:', { code: brandError.code, message: brandError.message, details: brandError.details, hint: brandError.hint });
         setIsVendorOwner(!!brand);
         if (brand) setUser((prev: any) => ({ ...prev, brand }));
       } else {

@@ -78,7 +78,7 @@ export default function TrackingPage() {
 
     const { data, error: err } = await supabase
       .from('orders')
-      .select('*, products(title, media_urls), brands(name, logo_url, whatsapp_number)')
+      .select('*, products:products!orders_product_id_fkey(title, media_urls), brands:brands!orders_brand_id_fkey(name, logo_url, whatsapp_number)')
       .eq('id', id)
       .single();
 
@@ -88,7 +88,7 @@ export default function TrackingPage() {
 
     const { data: delivData } = await supabase
       .from('deliveries')
-      .select('*, users:agent_id(name, phone)')
+      .select('*, users:users!deliveries_agent_id_fkey(name, phone)')
       .eq('order_id', id)
       .single();
     if (delivData) setDelivery(delivData);

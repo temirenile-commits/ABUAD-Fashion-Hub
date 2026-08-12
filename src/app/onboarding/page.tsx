@@ -68,7 +68,7 @@ export default function OnboardingPage() {
       } else {
         setUser(session.user);
         // Check if they already have a brand
-        const { data: existingBrand } = await supabase.from('brands').select('*').eq('owner_id', session.user.id).single();
+        const { data: existingBrand } = await supabase.from('brands').select('*').eq('owner_id', session.user.id).maybeSingle();
         if (existingBrand) {
           router.push('/dashboard/vendor');
         }

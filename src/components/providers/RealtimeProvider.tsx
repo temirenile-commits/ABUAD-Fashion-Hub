@@ -33,7 +33,7 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
         // Products joined with brands and universities
         let query = supabase
           .from('products')
-          .select(`*, brands(*, universities(*))`)
+          .select(`*, brands:brands!products_brand_id_fkey(*, universities:universities!brands_university_id_fkey(*))`)
           .order('created_at', { ascending: false });
 
         if (session?.user) {
@@ -54,7 +54,7 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
         if (!prodData || prodData.length === 0) {
           const fallbackQuery = await supabase
             .from('products')
-            .select(`*, brands(*, universities(*))`)
+            .select(`*, brands:brands!products_brand_id_fkey(*, universities:universities!brands_university_id_fkey(*))`)
             .order('created_at', { ascending: false });
           prodData = fallbackQuery.data;
         }

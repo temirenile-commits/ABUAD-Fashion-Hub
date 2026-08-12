@@ -24,9 +24,9 @@ export default function WishlistPage() {
         .from('wishlists')
         .select(`
           product_id,
-          products (
+          products:products!wishlists_product_id_fkey (
             *,
-            brands (id, name, verified, whatsapp_number, logo_url)
+            brands:brands!products_brand_id_fkey (id, name, verified, whatsapp_number, logo_url)
           )
         `)
         .eq('user_id', session.user.id);

@@ -61,7 +61,7 @@ export default function FlashSales({ items }: { items: FlashSaleItem[] }) {
           {items.map((item) => (
             <Link key={item.id} href={`/product/${item.id}`} className={styles.card}>
               <div className={styles.imgWrap}>
-                <OptimizedImage src={item.image} alt={item.title} fill className={styles.img} useThumbnail={true} />
+                <OptimizedImage src={item.image} alt={item.title} fill className={styles.img} useThumbnail={false} />
                 <span className={styles.discountBadge}>-{item.discount}%</span>
               </div>
               <div className={styles.body}>

@@ -21,10 +21,12 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
  */
 export async function autoAssignDelivery(orderId: string, vendorLat: number, vendorLong: number) {
   try {
-    // 1. Fetch all active agents with their names/phones from users
+    // 1. Fetch active agents and their user profile. There is no direct
+    // delivery_agents -> deliveries foreign key in the live schema, so the
+    // delivery count is queried separately through deliveries.agent_id.
     const { data: agents, error } = await supabaseAdmin
       .from('delivery_agents')
-      .select('*, users:id(name, phone), deliveries!left(id)')
+      .select('*, users:users!delivery_agents_id_fkey(name, phone)')
       .eq('is_active', true);
 
     if (error || !agents || agents.length === 0) {
@@ -32,9 +34,23 @@ export async function autoAssignDelivery(orderId: string, vendorLat: number, ven
       return null;
     }
 
-    // 2. Filter agents who are within their batch capacity
+    // 2. Count active deliveries separately because the live schema relates
+    // deliveries.agent_id to users.id, not to delivery_agents directly.
+    const agentIds = agents.map((agent: any) => agent.id);
+    const { data: activeDeliveries, error: deliveryCountError } = await supabaseAdmin
+      .from('deliveries')
+      .select('agent_id')
+      .in('agent_id', agentIds)
+      .neq('status', 'delivered');
+    if (deliveryCountError) throw deliveryCountError;
+
+    const deliveryCounts = new Map<string, number>();
+    (activeDeliveries || []).forEach((delivery: any) => {
+      deliveryCounts.set(delivery.agent_id, (deliveryCounts.get(delivery.agent_id) || 0) + 1);
+    });
+
     const availableAgents = agents.filter(agent => {
-      const activeDeliveriesCount = (agent.deliveries || []).length;
+      const activeDeliveriesCount = deliveryCounts.get(agent.id) || 0;
       return activeDeliveriesCount < (agent.batch_capacity || 10);
     });
 

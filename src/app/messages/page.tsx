@@ -49,7 +49,7 @@ function MessagesContent() {
     try {
       let brandId = existingBrandId;
       if (!brandId) {
-        const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', userId).single();
+        const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', userId).maybeSingle();
         if (!brand) return;
         brandId = brand.id;
       }
@@ -57,7 +57,7 @@ function MessagesContent() {
       // Get unique customer_ids from orders
       const { data: ordersData } = await supabase
         .from('orders')
-        .select('customer_id, users:customer_id(id, name, role, avatar_url)')
+        .select('customer_id, users:users!orders_customer_id_fkey(id, name, role, avatar_url)')
         .eq('brand_id', brandId);
 
       if (ordersData) {
@@ -88,7 +88,7 @@ function MessagesContent() {
       
       // Check user role, phone and brand ownership
       const { data: profile } = await supabase.from('users').select('role, phone').eq('id', session.user.id).single();
-      const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', session.user.id).single();
+      const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', session.user.id).maybeSingle();
       
       if (profile?.phone) {
         setMyPhone(profile.phone);
@@ -121,7 +121,7 @@ function MessagesContent() {
       if (userData?.phone) {
         setPartnerPhone(userData.phone);
       } else if (userData?.role === 'vendor') {
-        const { data: brandData } = await supabase.from('brands').select('whatsapp_number').eq('owner_id', partnerId).single();
+        const { data: brandData } = await supabase.from('brands').select('whatsapp_number').eq('owner_id', partnerId).maybeSingle();
         if (brandData?.whatsapp_number) {
           setPartnerPhone(brandData.whatsapp_number);
         }
@@ -156,7 +156,7 @@ function MessagesContent() {
   async function fetchConversations(userId: string) {
     const { data: msgs } = await supabase
       .from('messages')
-      .select('*, sender:sender_id(id, name, role, avatar_url), receiver:receiver_id(id, name, role, avatar_url)')
+      .select('*, sender:users!messages_sender_id_fkey(id, name, role, avatar_url), receiver:users!messages_receiver_id_fkey(id, name, role, avatar_url)')
       .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
       .order('created_at', { ascending: false });
 
@@ -314,7 +314,7 @@ function MessagesContent() {
                   if (user) {
                     const { error } = await supabase.from('users').update({ phone: myPhone }).eq('id', user.id);
                     if (!error) {
-                      const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', user.id).single();
+                      const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', user.id).maybeSingle();
                       if (brand) {
                         await supabase.from('brands').update({ whatsapp_number: myPhone }).eq('id', brand.id);
                       }

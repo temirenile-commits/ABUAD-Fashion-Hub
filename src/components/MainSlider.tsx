@@ -16,7 +16,8 @@ export default function MainSlider() {
       const { data: { session } } = await supabase.auth.getSession();
       let userUniId: string | null = null;
       if (session) {
-        const { data: userProfile } = await supabase.from('users').select('university_id').eq('id', session.user.id).single();
+        const { data: userProfile, error: profileError } = await supabase.from('users').select('university_id').eq('id', session.user.id).single();
+        if (profileError) console.error('[MasterCart] Billboard profile lookup failed:', { code: profileError.code, message: profileError.message, details: profileError.details, hint: profileError.hint });
         userUniId = userProfile?.university_id;
       }
 
@@ -35,11 +36,12 @@ export default function MainSlider() {
       const { data: brandData } = await query;
 
       // 2. Fetch Manual Billboards
-      const { data: settingsData } = await supabase
+      const { data: settingsData, error: settingsError } = await supabase
         .from('platform_settings')
         .select('value')
         .eq('key', 'manual_billboards')
-        .single();
+        .maybeSingle();
+      if (settingsError) console.error('[MasterCart] Manual billboard settings query failed:', { code: settingsError.code, message: settingsError.message, details: settingsError.details, hint: settingsError.hint });
         
       const rawManualBillboards = (settingsData?.value as any[]) || [];
       const targetUniversityId = userUniId || DEFAULT_UNIVERSITY_ID;

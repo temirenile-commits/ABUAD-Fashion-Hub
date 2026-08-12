@@ -14,8 +14,8 @@ export async function GET(req: Request) {
       const { data, error } = await supabaseAdmin
         .from('products')
         .select(`
-          id, title, price, sold, weekly_sold, avg_rating, media_urls, award_history,
-          brands ( id, name, logo_url, university_id )
+          id, title, price, sold, weekly_sold, avg_rating:rating, media_urls, award_history,
+          brands:brands!products_brand_id_fkey ( id, name, logo_url, university_id )
         `)
         .eq('product_section', 'delicacies')
         .eq('university_id', universityId)
@@ -48,7 +48,7 @@ export async function GET(req: Request) {
         id, rank, score, badge, orders_completed,
         avg_rating, complaints, reward_amount, week_start,
         brand_id,
-        brands (
+        brands:brands!delicacy_vendor_rankings_brand_id_fkey (
           id, name, logo_url, avg_rating, university_id
         )
       `)

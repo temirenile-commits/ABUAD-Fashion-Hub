@@ -430,12 +430,28 @@ export default function CustomerDashboard() {
                        const { uploadFile } = await import('@/lib/storage');
                        setLoading(true);
                        const { url, error } = await uploadFile(file, 'brand-assets', `avatar-${user?.id}`);
-                       if (url) {
-                         await supabase.from('users').update({ avatar_url: url }).eq('id', user?.id);
+                       if (!url) {
+                         alert(error || 'Upload failed');
+                         setLoading(false);
+                         return;
+                       }
+
+                       const { error: profileError } = await supabase
+                         .from('users')
+                         .update({ avatar_url: url })
+                         .eq('id', user?.id);
+
+                       if (profileError) {
+                         console.error('[MasterCart] Avatar profile update failed:', {
+                           code: profileError.code,
+                           message: profileError.message,
+                           details: profileError.details,
+                           hint: profileError.hint,
+                         });
+                         alert(`Profile photo uploaded but profile update failed: ${profileError.message}`);
+                       } else {
                          setUser((prev: AppUser | null) => prev ? { ...prev, avatar_url: url } : null);
                          alert('Profile photo updated!');
-                       } else {
-                         alert(error || 'Upload failed');
                        }
                        setLoading(false);
                      }} 

@@ -178,7 +178,9 @@ export default function VendorDashboard() {
         .from('brands')
         .select('*')
         .eq('owner_id', session.user.id)
-        .single();
+        .maybeSingle();
+
+      if (brandError) console.error('[MasterCart] Vendor brand lookup failed:', { code: brandError.code, message: brandError.message, details: brandError.details, hint: brandError.hint });
 
       if (brandError || !brandData) {
         setLoading(false);
@@ -236,14 +238,14 @@ export default function VendorDashboard() {
         .from('orders')
         .select(`
           *,
-          products (title),
-          users:customer_id (id, name, email),
+          products:products!orders_product_id_fkey (title),
+          users:users!orders_customer_id_fkey (id, name, email),
           deliveries (
             id,
             status,
             agent_id,
             delivery_code,
-            users:agent_id (id, name, phone, avatar_url)
+            users:users!deliveries_agent_id_fkey (id, name, phone, avatar_url)
           )
         `)
         .eq('brand_id', brandData.id)
@@ -262,7 +264,7 @@ export default function VendorDashboard() {
       // Fetch Enquiries
       const { data: enqData } = await supabase
         .from('messages')
-        .select('*, sender:sender_id(name)')
+        .select('*, sender:users!messages_sender_id_fkey(name)')
         .eq('receiver_id', session.user.id)
         .order('created_at', { ascending: false });
 
@@ -306,7 +308,7 @@ export default function VendorDashboard() {
       // Fetch Reviews
       const { data: reviewData } = await supabase
         .from('reviews')
-        .select('*, user:user_id(name:full_name), product:product_id(title)')
+        .select('*, user:users!reviews_user_id_fkey(name), product:products!reviews_product_id_fkey(title)')
         .in('product_id', productData ? productData.map(p => p.id) : []); 
       setReviews(reviewData || []);
 

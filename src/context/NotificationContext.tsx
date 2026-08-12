@@ -235,7 +235,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           table: 'orders',
         }, async (payload) => {
           // Check if this order belongs to the user's brand
-          const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', userId).single();
+          const { data: brand, error: brandError } = await supabase.from('brands').select('id').eq('owner_id', userId).maybeSingle();
+          if (brandError) console.error('[MasterCart] Notification brand lookup failed:', { code: brandError.code, message: brandError.message, details: brandError.details, hint: brandError.hint });
           if (brand && payload.new.brand_id === brand.id) {
             handleIncoming('🛒 New Order Received!', `You have a new order for ₦${Number(payload.new.total_amount).toLocaleString()}`, '/dashboard/vendor');
           }

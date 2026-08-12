@@ -12,6 +12,7 @@ import {
   ShieldCheck, CreditCard, FolderOpen, Clock, Edit2
 } from "lucide-react";
 import PremiumChart from "@/components/PremiumChart"; 
+import { uploadFile } from "@/lib/storage";
 
 type Tab = "overview" | "vendors" | "customers" | "orders" | "reviews" | "notices" | "analytics" | "insights" | "fleet" | "team" | "catalog" | "merchandising" | "settings" | "promos" | "cafeterias" | "manual_transfers" | "categories";
 
@@ -86,12 +87,12 @@ export default function UniversityAdminPage() {
     if (!billboardUpload.file || !billboardUpload.title) return alert('Image and Title required');
     setUploadingBillboard(true);
     try {
-      const ext = billboardUpload.file.name.split('.').pop();
-      const path = `manual_billboards/${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('brand-assets').upload(path, billboardUpload.file);
-      if (uploadError) throw uploadError;
-      
-      const { data } = supabase.storage.from('brand-assets').getPublicUrl(path);
+      const { url, error: uploadError } = await uploadFile(
+        billboardUpload.file,
+        'brand-assets',
+        'manual_billboards/billboard'
+      );
+      if (!url) throw new Error(uploadError || 'Billboard upload failed');
       
       const res = await uaFetch("/api/university-admin", { 
         method: "POST", 
@@ -100,7 +101,7 @@ export default function UniversityAdminPage() {
           title: billboardUpload.title,
           description: billboardUpload.sub,
           link: billboardUpload.link,
-          cover_url: data.publicUrl
+          cover_url: url
         }) 
       });
       const d = await res.json();
@@ -116,7 +117,7 @@ export default function UniversityAdminPage() {
     const init = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.replace("/auth/login"); return; }
-      const { data: profile } = await supabase.from("users").select("*, universities(*)").eq("id", session.user.id).single();
+      const { data: profile } = await supabase.from("users").select("*, universities:universities!users_university_id_fkey(*)").eq("id", session.user.id).single();
       if (profile) {
         // Redirect support agents to their dedicated dashboard
         if (profile.role === 'customer_support_agent') {

@@ -138,7 +138,7 @@ export default function ProductCard({ product }: Props) {
             alt={product.title}
             fill
             className={styles.image}
-            useThumbnail={true}
+            useThumbnail={false}
           />
         ) : (
           <div className={styles.imagePlaceholder} aria-label="Product image unavailable">Image unavailable</div>
@@ -205,7 +205,7 @@ export default function ProductCard({ product }: Props) {
         <div className={styles.info}>
           <div className={styles.videoAvatar}>
             {product.brands?.logo_url ? (
-              <OptimizedImage src={product.brands.logo_url} alt="" width={40} height={40} style={{ objectFit: 'cover' }} useThumbnail={true} />
+              <OptimizedImage src={product.brands.logo_url} alt="" width={40} height={40} style={{ objectFit: 'cover' }} useThumbnail={false} />
             ) : (
               <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary)', color: '#000000', fontWeight: 800 }}>
                 {brandName.substring(0, 1)}
