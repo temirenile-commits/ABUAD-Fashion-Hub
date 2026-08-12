@@ -23,6 +23,7 @@ import { supabase } from '@/lib/supabase';
 import styles from './page.module.css';
 import DynamicMerchandising from '@/components/DynamicMerchandising';
 import DelicaciesPreview from '@/components/DelicaciesPreview';
+import MainSlider from '@/components/MainSlider';
 
 const formatNaira = (value: number) => `₦${new Intl.NumberFormat('en-NG').format(value)}`;
 
@@ -125,9 +126,11 @@ export default function Home() {
             </aside>
 
             <div className={styles.heroCard}>
-              <img className={styles.heroImage} src="/curated/campus-style.jpg" alt="Students expressing personal style on campus" />
-              <div className={styles.heroOverlay} />
-              <div className={styles.heroCopy}>
+              <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+                <MainSlider />
+              </div>
+              <div className={styles.heroOverlay} style={{ zIndex: 1, pointerEvents: 'none' }} />
+              <div className={styles.heroCopy} style={{ zIndex: 2, position: 'relative' }}>
                 <div className={styles.eyebrow}><span className={styles.liveDot} /> ABUAD / CAMPUS MARKETPLACE</div>
                 <h1>Everything you need.<br /><em>One campus.</em></h1>
                 <p>Discover verified student brands, everyday essentials, and the next big thing before it sells out.</p>
@@ -136,10 +139,10 @@ export default function Home() {
                   <Link href="/vendors" className={styles.secondaryButton}>Discover stores</Link>
                 </div>
               </div>
-              <div className={styles.heroLocation}><MapPin size={14} /> Available around ABUAD</div>
-              <div className={styles.heroStats}>
-                <div><strong>2.4k+</strong><span>campus finds</span></div>
-                <div><strong>86</strong><span>verified stores</span></div>
+              <div className={styles.heroLocation} style={{ zIndex: 2, position: 'relative' }}><MapPin size={14} /> Available around ABUAD</div>
+              <div className={styles.heroStats} style={{ zIndex: 2, position: 'relative' }}>
+                <div><strong>{allProducts.length}</strong><span>campus finds</span></div>
+                <div><strong>{allBrands.length}</strong><span>verified stores</span></div>
               </div>
             </div>
 

@@ -8,9 +8,7 @@ export async function GET(req: Request) {
     const category = searchParams.get('category');
     const limit = parseInt(searchParams.get('limit') || '40');
 
-    if (!universityId) {
-      return NextResponse.json({ error: 'universityId is required' }, { status: 400 });
-    }
+    const targetUniId = universityId || '00000000-0000-0000-0000-000000000001';
 
     // Fetch only delicacies products for this university or global ones
     let query = supabaseAdmin
@@ -34,8 +32,8 @@ export async function GET(req: Request) {
       .order('sales_count', { ascending: false })
       .limit(limit);
 
-    // Scope to university
-    query = query.or(`university_id.eq.${universityId},visibility_type.eq.global`);
+    // Scope to university or global/legacy
+    query = query.or(`university_id.eq.${targetUniId},visibility_type.eq.global,visibility_type.is.null,university_id.is.null`);
 
     if (category) {
       query = query.eq('delicacy_category', category);

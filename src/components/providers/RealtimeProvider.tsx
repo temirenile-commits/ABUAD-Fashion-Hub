@@ -37,18 +37,14 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
           .order('created_at', { ascending: false });
 
         if (session?.user) {
-          // Rule: Show my own products (any section/any uni) 
-          // OR show discovery products (visibility match)
-          // We remove the hard delicacies exclusion here so vendors see their food products.
-          // Discovery pages like Explore/Home will still filter by product_section.
           if (userUniId) {
-            query = query.or(`owner_id.eq.${session.user.id},visibility_type.eq.global,university_id.eq.${userUniId}`);
+            query = query.or(`owner_id.eq.${session.user.id},visibility_type.eq.global,visibility_type.is.null,university_id.eq.${userUniId},university_id.is.null`);
           } else {
-            query = query.or(`owner_id.eq.${session.user.id},visibility_type.eq.global`);
+            query = query.or(`owner_id.eq.${session.user.id},visibility_type.eq.global,visibility_type.is.null,university_id.is.null`);
           }
         } else {
-          // Anonymous users: Show ABUAD by default + global
-          query = query.or(`visibility_type.eq.global,university_id.eq.${ABUAD_ID}`);
+          // Anonymous users: Show ABUAD by default + global + legacy
+          query = query.or(`visibility_type.eq.global,visibility_type.is.null,university_id.eq.${ABUAD_ID},university_id.is.null`);
         }
 
         const { data: prodData, error: prodError } = await query;
@@ -65,29 +61,27 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
           setProducts(enriched);
         }
 
-        // Brands (Vendors)
+        // Brands (Vendors) - include matching uni, null/legacy, or global
         let brandQuery = supabase.from('brands').select('*');
         if (userUniId) {
-          brandQuery = brandQuery.eq('university_id', userUniId);
+          brandQuery = brandQuery.or(`university_id.eq.${userUniId},university_id.is.null`);
         } else {
-          // Public users: Show ABUAD vendors by default
-          brandQuery = brandQuery.eq('university_id', ABUAD_ID);
+          brandQuery = brandQuery.or(`university_id.eq.${ABUAD_ID},university_id.is.null`);
         }
         const { data: brandData, error: bErr } = await brandQuery;
         if (bErr) throw bErr;
         if (active && brandData) setVendors(brandData as any);
 
-        // Brand Reels
+        // Brand Reels - include matching uni, null/legacy, or global
         let reelQuery = supabase
           .from('brand_reels')
           .select('*, brands(name, logo_url)')
           .order('created_at', { ascending: false });
 
         if (userUniId) {
-          reelQuery = reelQuery.eq('university_id', userUniId);
+          reelQuery = reelQuery.or(`university_id.eq.${userUniId},university_id.is.null`);
         } else {
-          // Public users: Show ABUAD reels by default
-          reelQuery = reelQuery.eq('university_id', ABUAD_ID);
+          reelQuery = reelQuery.or(`university_id.eq.${ABUAD_ID},university_id.is.null`);
         }
         
         const { data: reelData, error: rErr } = await reelQuery;
