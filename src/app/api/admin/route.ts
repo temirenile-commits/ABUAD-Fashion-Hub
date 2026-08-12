@@ -337,7 +337,7 @@ export async function GET(req: NextRequest) {
     const [legacyRes, engineRes] = await Promise.all([
       supabaseAdmin
         .from('payout_requests')
-        .select('*, users:user_id(name, email, university_id), universities(name, abbreviation)')
+        .select('*')
         .order('created_at', { ascending: false }),
       supabaseAdmin
         .from('payout_records')
@@ -354,6 +354,30 @@ export async function GET(req: NextRequest) {
         .limit(200)
     ]);
 
+    let transformedPayouts = legacyRes.data || [];
+    if (transformedPayouts.length > 0) {
+      const userIds = transformedPayouts.map((r: any) => r.user_id).filter(Boolean);
+      const uniIds = transformedPayouts.map((r: any) => r.university_id).filter(Boolean);
+
+      let usersMap = new Map();
+      let unisMap = new Map();
+
+      if (userIds.length > 0) {
+        const { data: uData } = await supabaseAdmin.from('users').select('id, name, email, university_id').in('id', userIds);
+        if (uData) uData.forEach(u => usersMap.set(u.id, u));
+      }
+      if (uniIds.length > 0) {
+        const { data: uniData } = await supabaseAdmin.from('universities').select('id, name, abbreviation').in('id', uniIds);
+        if (uniData) uniData.forEach(uni => unisMap.set(uni.id, uni));
+      }
+
+      transformedPayouts = transformedPayouts.map((r: any) => ({
+        ...r,
+        users: usersMap.get(r.user_id) || null,
+        universities: unisMap.get(r.university_id) || null
+      }));
+    }
+
     if (legacyRes.error) console.error('[Payouts/legacy]', legacyRes.error.message);
     if (engineRes.error) console.error('[Payouts/engine]', engineRes.error.message);
 
@@ -364,7 +388,7 @@ export async function GET(req: NextRequest) {
     const totalPaidAmount = engineData.filter(r => r.status === 'confirmed').reduce((s, r) => s + Number(r.net_payout), 0);
 
     return NextResponse.json({ 
-      payouts: legacyRes.data || [],
+      payouts: transformedPayouts,
       payoutRecords: engineData,
       payoutStats: {
         pendingCount: pendingPayouts.length,
@@ -400,20 +424,34 @@ export async function GET(req: NextRequest) {
   }
 
   if (action === 'delivery_agents') {
-    const { data, error } = await supabaseAdmin
+    const { data: agentsData, error } = await supabaseAdmin
       .from('delivery_agents')
-      .select('*, users:id(name, email)')
+      .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) { console.error('[DeliveryAgents]', error.message); return NextResponse.json({ agents: [] }); }
+    if (error) { console.error('[DeliveryAgents]', error.message); return NextResponse.json({ agents: [], error: error.message }, { status: 500 }); }
     
-    const transformed = (data || []).map(a => ({
-      ...a,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      name: (a as any).users?.name || 'Rider',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      email: (a as any).users?.email || 'N/A'
-    }));
+    const userIds = (agentsData || []).map(a => a.id || (a as any).user_id).filter(Boolean);
+    let usersMap = new Map();
+    if (userIds.length > 0) {
+      const { data: usersData } = await supabaseAdmin
+        .from('users')
+        .select('id, name, email')
+        .in('id', userIds);
+      if (usersData) {
+        usersData.forEach(u => usersMap.set(u.id, u));
+      }
+    }
+
+    const transformed = (agentsData || []).map(a => {
+      const uId = a.id || (a as any).user_id;
+      const u = usersMap.get(uId);
+      return {
+        ...a,
+        name: u?.name || (a as any).name || 'Rider',
+        email: u?.email || (a as any).email || 'N/A'
+      };
+    });
     return NextResponse.json({ agents: transformed });
   }
 
