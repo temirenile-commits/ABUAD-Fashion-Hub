@@ -123,7 +123,7 @@ export default function Navbar() {
       <nav className={`container-wide ${styles.nav}`}>
         {/* Logo */}
         <Link href="/" className={styles.logo} id="tour-navbar-logo">
-          <img src="/logo.png" alt="Logo" className={styles.logoImg} />
+          <img src="/branding/mastercart-mark.png" alt="MasterCart" className={styles.logoImg} />
           <span className={styles.logoLockup}>
             <strong>MasterCart</strong>
             <small>Campus marketplace</small>

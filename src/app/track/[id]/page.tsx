@@ -120,7 +120,7 @@ export default function TrackingPage() {
             if (step && 'Notification' in window && Notification.permission === 'granted') {
               new Notification(`Order Update: ${step.label}`, {
                 body: step.desc,
-                icon: '/favicon.ico',
+                icon: '/branding/mastercart-mark.png',
               });
             }
           }

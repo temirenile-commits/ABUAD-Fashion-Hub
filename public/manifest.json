@@ -1,21 +1,21 @@
 {
-  "name": "MasterCart",
+  "name": "MasterCart — Campus Marketplace",
   "short_name": "MasterCart",
-  "description": "The premier campus fashion marketplace at ABUAD",
+  "description": "Shop smart and live better with the official MasterCart campus marketplace.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#050505",
+  "theme_color": "#050505",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/branding/mastercart-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/logo.png",
+      "src": "/branding/mastercart-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

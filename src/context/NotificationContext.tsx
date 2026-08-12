@@ -92,8 +92,8 @@ function firePushNotification(title: string, body: string, url?: string) {
 
   const n = new Notification(title, {
     body,
-    icon: '/logo.png',
-    badge: '/logo.png',
+    icon: '/branding/mastercart-mark.png',
+    badge: '/branding/mastercart-mark.png',
     tag: title,
     requireInteraction: false,
     silent: false, // Use device's default notification sound

@@ -2510,7 +2510,7 @@ export default function AdminDashboard() {
                            <tr key={p.id}>
                              <td>
                                <div className={styles.brandCell}>
-                                 <Image src={p.image_url || p.media_urls?.[0] || '/logo.png'} alt="" width={32} height={32} className={styles.tableLogo} />
+                                 <Image src={p.image_url || p.media_urls?.[0] || '/branding/mastercart-mark.png'} alt="" width={32} height={32} className={styles.tableLogo} />
                                  <div>
                                    <div style={{ fontWeight: 600 }}>{p.title}</div>
                                    <div className={styles.subText} style={{ fontSize: '0.7rem' }}>By {p.brands?.name}</div>
@@ -2638,7 +2638,7 @@ export default function AdminDashboard() {
                            <tr key={p.id}>
                              <td>
                                <div className={styles.brandCell}>
-                                 <Image src={p.image_url || p.media_urls?.[0] || '/logo.png'} alt="" width={32} height={32} className={styles.tableLogo} />
+                                 <Image src={p.image_url || p.media_urls?.[0] || '/branding/mastercart-mark.png'} alt="" width={32} height={32} className={styles.tableLogo} />
                                  <div>
                                    <div style={{ fontWeight: 600 }}>{p.title}</div>
                                    <div className={styles.subText} style={{ fontSize: '0.7rem' }}>By {p.brands?.name}</div>

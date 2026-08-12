@@ -49,9 +49,9 @@ export default function UpdatePrompt() {
           <div className={styles.infoBox}>
             <AlertTriangle size={18} className={styles.warnIcon} />
             <p>
-              The ABUAD Fashion Hub app is now <strong>MasterCart</strong>. 
+              The MasterCart app now has its official refreshed identity. 
               To continue enjoying seamless shopping, live tracking, and secure payouts, 
-              please update your application.
+              please reload the application.
             </p>
           </div>
 

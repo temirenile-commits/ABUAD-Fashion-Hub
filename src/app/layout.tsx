@@ -20,10 +20,12 @@ export const metadata: Metadata = {
   keywords: ['MasterCart', 'fashion', 'campus', 'marketplace', 'clothing', 'style'],
   icons: {
     icon: [
-      { url: '/logo.png', type: 'image/png' },
+      { url: '/favicon.ico', type: 'image/x-icon' },
+      { url: '/branding/mastercart-icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/branding/mastercart-icon-512.png', type: 'image/png', sizes: '512x512' },
     ],
-    apple: '/logo.png',
-    shortcut: '/logo.png',
+    apple: '/branding/apple-touch-icon.png',
+    shortcut: '/favicon.ico',
   },
   manifest: '/manifest.json',
   openGraph: {
@@ -31,7 +33,7 @@ export const metadata: Metadata = {
     siteName: 'MasterCart',
     description: 'Discover. Connect. Slay. The #1 campus fashion marketplace.',
     type: 'website',
-    images: [{ url: '/logo.png' }],
+    images: [{ url: '/branding/mastercart-logo.png' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -39,7 +41,7 @@ export const metadata: Metadata = {
     description: 'Discover. Connect. Slay. The #1 campus fashion marketplace.',
     site: '@MasterCart',
     creator: '@MasterCart',
-    images: ['/logo.png'],
+    images: ['/branding/mastercart-logo.png'],
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '',
@@ -78,7 +80,7 @@ export default function RootLayout({
                                 '@id': 'https://master-cart-camp.vercel.app/#organization',
                                 name: 'MasterCart',
                                 url: 'https://master-cart-camp.vercel.app',
-                                logo: 'https://master-cart-camp.vercel.app/logo.png',
+                                logo: 'https://master-cart-camp.vercel.app/branding/mastercart-mark.png',
                                 sameAs: [
                                   'https://twitter.com/MasterCart',
                                   'https://instagram.com/MasterCart'
