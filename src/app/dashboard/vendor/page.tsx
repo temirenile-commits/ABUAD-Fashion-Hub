@@ -102,6 +102,15 @@ export default function VendorDashboard() {
   const [isSettingsLoading, setIsSettingsLoading] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [uploadingReel, setUploadingReel] = useState(false);
+  const [isAddingReel, setIsAddingReel] = useState(false);
+  const [newReel, setNewReel] = useState({
+    video_url: '',
+    title: '',
+    caption: '',
+    product_section: 'fashion',
+    visibility_type: 'university',
+    product_ids: [] as string[]
+  });
   const [promoCodes, setPromoCodes] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [wallet, setWallet] = useState<any>(null);
@@ -587,7 +596,7 @@ export default function VendorDashboard() {
     setUploadingMedia(false);
   };
 
-  const handleReelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReelVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0] || !brand) return;
 
     if (reels.length >= reelLimit) {
@@ -597,47 +606,73 @@ export default function VendorDashboard() {
     }
 
     setUploadingReel(true);
-
     const file = e.target.files[0];
     const { url, error } = await uploadFile(file, 'brand-reels', `reel-${brand.id}`);
 
     if (url) {
-      addToast("? Reel uploaded successfully!", "success");
-      const { error: dbError } = await supabase
-        .from('brand_reels')
-        .insert({
-          brand_id: brand.id,
-          visibility_type: newProduct.visibility_type,
-          video_url: url,
-          product_section: 'fashion'
-        });
-
-      // Also insert into our unified reels table for the immersive feed
-      await supabase
-        .from('reels')
-        .insert({
-          brand_id: brand.id,
-          video_url: url,
-          title: 'New Fashion Collection',
-          caption: 'Fresh campus arrivals just landed!',
-          product_section: 'fashion',
-          status: 'published'
-        });
-
-      if (!dbError) {
-        const { data: reelData } = await supabase
-          .from('brand_reels')
-          .select('*')
-          .eq('brand_id', brand.id)
-          .order('created_at', { ascending: false });
-        setReels(reelData || []);
-      } else {
-        alert('Database error: ' + dbError.message);
-      }
+      setNewReel(prev => ({ ...prev, video_url: url }));
+      addToast("Video uploaded! Now add details.", "success");
     } else {
       alert('Upload failed: ' + error);
     }
     setUploadingReel(false);
+  };
+
+  const handleReelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!brand || !newReel.video_url) return;
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/reels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newReel,
+          brand_id: brand.id,
+          university_id: brand.university_id
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setReels([data.reel, ...reels]);
+        setIsAddingReel(false);
+        setNewReel({
+          video_url: '',
+          title: '',
+          caption: '',
+          product_section: 'fashion',
+          visibility_type: 'university',
+          product_ids: []
+        });
+        addToast("Reel published successfully!", "success");
+      } else {
+        alert(data.error || 'Failed to publish reel');
+      }
+    } catch (err) {
+      alert('Network error publishing reel');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteReel = async (reelId: string) => {
+    if (!confirm('Are you sure you want to delete this reel? This will remove it from the storefront authoritatively.')) return;
+    
+    try {
+      const res = await fetch(`/api/reels?id=${reelId}`, { method: 'DELETE' });
+      const data = await res.json();
+      
+      if (data.success) {
+        setReels(prev => prev.filter(r => r.id !== reelId));
+        addToast("Reel deleted successfully", "success");
+      } else {
+        alert(data.error || 'Failed to delete reel');
+      }
+    } catch (err) {
+      alert('Network error deleting reel');
+    }
   };
 
   const updateStock = async (productId: string, delta: number) => {
@@ -2679,35 +2714,133 @@ export default function VendorDashboard() {
                 <h1 className={styles.title}>Collection Reels</h1>
                 <p className={styles.subtitle}>Upload short videos of your latest designs to engage customers vividly.</p>
               </div>
-              <label className="btn btn-primary" style={{ opacity: uploadingReel ? 0.7 : 1, pointerEvents: uploadingReel ? 'none' : 'auto' }}>
-                <input type="file" accept="video/*" hidden onChange={handleReelUpload} disabled={uploadingReel} />
-                {uploadingReel ? <><span className="spinner" style={{ width: 16, height: 16, display: 'inline-block', marginRight: '0.5rem' }} />Uploading...</> : <><Video size={18} /> Upload Reel</>}
-              </label>
-            </div>
-
-            <div className={styles.reelsGrid}>
-              {filteredReels.map(reel => (
-                <div key={reel.id} className={styles.reelCard}>
-                  <video src={reel.video_url} loop muted onMouseOver={e => e.currentTarget.play()} onMouseOut={e => e.currentTarget.pause()} />
-                  <div className={styles.reelOverlay}>
-                    <button className={styles.reelDelete} onClick={async () => {
-                      if (confirm('Delete this reel?')) {
-                        const { error } = await supabase.from('brand_reels').delete().eq('id', reel.id);
-                        if (!error) setReels(prev => prev.filter(r => r.id !== reel.id));
-                      }
-                    }}>
-                      <X size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {reels.length === 0 && (
-                <div className={styles.emptyNotice}>
-                  <Video size={48} style={{ opacity: 0.2 }} />
-                  <p>No collection reels yet. Videos boost engagement by 300%!</p>
-                </div>
+              {!isAddingReel && (
+                <button className="btn btn-primary" onClick={() => setIsAddingReel(true)}>
+                  <Video size={18} /> Create Reel
+                </button>
               )}
             </div>
+
+            {isAddingReel ? (
+              <div className={`card ${styles.formCard}`} style={{ maxWidth: '600px', margin: '0 auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                  <h3>Create New Reel</h3>
+                  <button className="btn btn-ghost" onClick={() => setIsAddingReel(false)}><X size={20} /></button>
+                </div>
+                
+                <form onSubmit={handleReelSubmit}>
+                  <div className="form-group">
+                    <label>Reel Video</label>
+                    <div className={styles.mediaUploadArea} style={{ height: '200px' }}>
+                      {newReel.video_url ? (
+                        <div style={{ position: 'relative', height: '100%' }}>
+                          <video src={newReel.video_url} style={{ height: '100%', width: '100%', objectFit: 'cover', borderRadius: '8px' }} controls />
+                          <button 
+                            type="button"
+                            className={styles.removeMediaBtn}
+                            onClick={() => setNewReel(prev => ({ ...prev, video_url: '' }))}
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className={styles.uploadPlaceholder}>
+                          <input type="file" accept="video/*" hidden onChange={handleReelVideoUpload} disabled={uploadingReel} />
+                          {uploadingReel ? <Loader2 className="anim-spin" /> : <Video size={32} />}
+                          <p>{uploadingReel ? 'Uploading video...' : 'Tap to upload video'}</p>
+                        </label>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Reel Title</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Summer Collection 2026" 
+                      value={newReel.title}
+                      onChange={e => setNewReel(prev => ({ ...prev, title: e.target.value }))}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Caption</label>
+                    <textarea 
+                      placeholder="Tell your customers about this collection..." 
+                      value={newReel.caption}
+                      onChange={e => setNewReel(prev => ({ ...prev, caption: e.target.value }))}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Attach Products</label>
+                    <div className={styles.productPicker}>
+                      {products.filter(p => !p.is_draft).map(product => (
+                        <label key={product.id} className={styles.pickerItem}>
+                          <input 
+                            type="checkbox" 
+                            checked={newReel.product_ids.includes(product.id)}
+                            onChange={e => {
+                              const ids = e.target.checked 
+                                ? [...newReel.product_ids, product.id]
+                                : newReel.product_ids.filter(id => id !== product.id);
+                              setNewReel(prev => ({ ...prev, product_ids: ids }));
+                            }}
+                          />
+                          <span>{product.title}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Audience</label>
+                    <select 
+                      value={newReel.visibility_type}
+                      onChange={e => setNewReel(prev => ({ ...prev, visibility_type: e.target.value }))}
+                    >
+                      <option value="university">My University Only</option>
+                      <option value="all">All Universities</option>
+                      <option value="public">General Marketplace</option>
+                    </select>
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary w-full" 
+                    disabled={!newReel.video_url || loading}
+                    style={{ marginTop: '1rem' }}
+                  >
+                    {loading ? 'Publishing...' : 'Publish Reel'}
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div className={styles.reelsGrid}>
+                {reels.map(reel => (
+                  <div key={reel.id} className={styles.reelCard}>
+                    <video src={reel.video_url} loop muted onMouseOver={e => e.currentTarget.play()} onMouseOut={e => e.currentTarget.pause()} />
+                    <div className={styles.reelOverlay}>
+                      <div className={styles.reelInfo}>
+                        <h5>{reel.title}</h5>
+                        <p>{reel.caption?.substring(0, 30)}...</p>
+                      </div>
+                      <button className={styles.reelDelete} onClick={() => handleDeleteReel(reel.id)}>
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {reels.length === 0 && (
+                  <div className={styles.emptyNotice}>
+                    <Video size={48} style={{ opacity: 0.2 }} />
+                    <p>No collection reels yet. Videos boost engagement by 300%!</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 

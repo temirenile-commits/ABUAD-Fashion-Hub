@@ -6,9 +6,10 @@ import { getAuthenticatedUser } from '@/lib/server-auth';
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const section = searchParams.get('section') || 'fashion';
+    const section = searchParams.get('section');
     const brandId = searchParams.get('brand_id');
     const search = searchParams.get('search');
+    const universityId = searchParams.get('universityId');
 
     let query = supabaseAdmin
       .from('reels')
@@ -59,6 +60,13 @@ export async function GET(req: NextRequest) {
       query = query.or(`title.ilike.%${search}%,caption.ilike.%${search}%`);
     }
 
+    // Respect university visibility logic
+    if (universityId) {
+      query = query.or(`visibility_type.eq.all,and(visibility_type.eq.university,university_id.eq.${universityId})`);
+    } else {
+      query = query.eq('visibility_type', 'all');
+    }
+
     const { data, error } = await query;
 
     if (error) {
@@ -82,22 +90,35 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { brand_id, video_url, thumbnail_url, title, caption, product_section, product_ids } = body;
+    const { video_url, thumbnail_url, title, caption, product_section, visibility_type, university_id, product_ids } = body;
 
-    if (!brand_id || !video_url) {
-      return NextResponse.json({ error: 'brand_id and video_url are required' }, { status: 400 });
+    if (!video_url) {
+      return NextResponse.json({ error: 'video_url is required' }, { status: 400 });
+    }
+
+    // Verify brand ownership
+    const { data: brand, error: brandError } = await supabaseAdmin
+      .from('brands')
+      .select('id')
+      .eq('owner_id', user.id)
+      .single();
+
+    if (brandError || !brand) {
+      return NextResponse.json({ error: 'Brand not found' }, { status: 404 });
     }
 
     // Insert reel
     const { data: reelData, error: reelError } = await supabaseAdmin
       .from('reels')
       .insert({
-        brand_id,
+        brand_id: brand.id,
         video_url,
         thumbnail_url: thumbnail_url || null,
         title: title || 'New Collection',
         caption: caption || '',
         product_section: product_section || 'fashion',
+        visibility_type: visibility_type || 'university',
+        university_id: university_id || null,
         status: 'published'
       })
       .select()

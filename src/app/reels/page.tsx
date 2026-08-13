@@ -3,10 +3,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Reel } from '@/types/reel';
 import styles from './reels.module.css';
-import { ArrowLeft, Heart, MessageCircle, Share2, Volume2, VolumeX, Play, ChevronUp, ChevronDown, X, Search } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, Share2, Volume2, VolumeX, Play, ChevronUp, ChevronDown, X, Search, Download, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function ReelsPage() {
+  const router = useRouter();
   const [reels, setReels] = useState<Reel[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -25,6 +27,10 @@ export default function ReelsPage() {
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');
   const [activeProduct, setActiveProduct] = useState<any>(null);
+
+  // Double tap animation state
+  const [showHeart, setShowHeart] = useState<{ id: string, x: number, y: number } | null>(null);
+  const lastTap = useRef<number>(0);
 
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
   const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
@@ -120,11 +126,34 @@ export default function ReelsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setReels(prev => prev.map(r => r.id === reelId ? { ...r, likes_count: data.liked ? (r.likes_count || 0) + 1 : Math.max(0, (r.likes_count || 1) - 1) } : r));
+        setReels(prev => prev.map(r => r.id === reelId ? { ...r, likes_count: data.liked ? (Number(r.likes_count) || 0) + 1 : Math.max(0, (Number(r.likes_count) || 1) - 1) } : r));
+        return data.liked;
       }
     } catch (err) {
       console.error('Like error:', err);
     }
+    return false;
+  };
+
+  const handleVideoTap = async (e: React.MouseEvent, reelId: string) => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+    
+    if (now - lastTap.current < DOUBLE_TAP_DELAY) {
+      // Double tap detected
+      const rect = (e.target as HTMLElement).getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      setShowHeart({ id: reelId, x, y });
+      setTimeout(() => setShowHeart(null), 1000);
+      
+      await toggleLike(reelId);
+    } else {
+      // Single tap - toggle play/pause
+      setIsPlaying(!isPlaying);
+    }
+    lastTap.current = now;
   };
 
   const submitComment = async (reelId: string) => {
@@ -139,10 +168,27 @@ export default function ReelsPage() {
       if (data.success) {
         setComments(prev => [...prev, data.comment]);
         setNewComment('');
-        setReels(prev => prev.map(r => r.id === reelId ? { ...r, comments_count: (r.comments_count || 0) + 1 } : r));
+        setReels(prev => prev.map(r => r.id === reelId ? { ...r, comments_count: (Number(r.comments_count) || 0) + 1 } : r));
       }
     } catch (err) {
       console.error('Comment error:', err);
+    }
+  };
+
+  const handleDownload = async (videoUrl: string, title: string) => {
+    try {
+      const response = await fetch(videoUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title.replace(/\s+/g, '_')}_reel.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      alert('Failed to download video. Please try again.');
     }
   };
 
@@ -151,7 +197,7 @@ export default function ReelsPage() {
   if (loading && !reels.length) {
     return (
       <div className={styles.loadingContainer}>
-        <div className={styles.spinner} />
+        <Loader2 className="anim-spin" size={32} />
         <p>Loading Immersive Reels...</p>
       </div>
     );
@@ -159,9 +205,15 @@ export default function ReelsPage() {
 
   return (
     <div className={styles.reelsContainer}>
-      {/* Top Header */}
+      {/* Top Header - Compact Search Pill */}
       <div className={styles.topHeader}>
-        <Link href="/" className={styles.backBtn}><ArrowLeft size={24} /></Link>
+        <button onClick={() => router.back()} className={styles.backBtn}><ArrowLeft size={24} /></button>
+        
+        <div className={styles.searchPill} onClick={() => setIsSearchOpen(true)}>
+          <Search size={16} />
+          <span>Search Reels...</span>
+        </div>
+
         <div className={styles.tabSwitcher}>
           <button 
             className={activeSection === 'all' ? styles.activeTab : styles.tab} 
@@ -175,16 +227,7 @@ export default function ReelsPage() {
           >
             Fashion
           </button>
-          <button 
-            className={activeSection === 'delicacies' ? styles.activeTab : styles.tab} 
-            onClick={() => setActiveSection('delicacies')}
-          >
-            Delicacies
-          </button>
         </div>
-        <button className={styles.searchToggleBtn} onClick={() => setIsSearchOpen(true)}>
-          <Search size={22} />
-        </button>
       </div>
 
       {/* Search Modal / Overlay */}
@@ -198,7 +241,7 @@ export default function ReelsPage() {
               <Search size={18} className={styles.searchIcon} />
               <input 
                 type="text" 
-                placeholder="Search sneakers, black hoodie, wrist watch, cakes..." 
+                placeholder="Search sneakers, black hoodie, wrist watch..." 
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 autoFocus
@@ -222,13 +265,17 @@ export default function ReelsPage() {
                     if (idx !== -1) {
                       setCurrentIndex(idx);
                       cardRefs.current[reel.id]?.scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                      // If not in current feed, we might need to fetch it or prepend it
+                      setReels([reel, ...reels]);
+                      setCurrentIndex(0);
                     }
                     setIsSearchOpen(false);
                   }}
                 >
                   <img src={reel.thumbnail_url || reel.video_url} alt="" />
                   <div className={styles.searchGridOverlay}>
-                    <h5>{reel.title || reel.caption}</h5>
+                    <h5>{reel.title}</h5>
                     <span>@{reel.brands?.name}</span>
                   </div>
                 </div>
@@ -252,7 +299,7 @@ export default function ReelsPage() {
         <div className={styles.feedWrapper}>
           {reels.map((reel, idx) => {
             const brandSlug = reel.brands?.name?.toLowerCase().replace(/\s+/g, '-') || 'brand';
-            const attachedProduct = reel.reel_products?.[0]?.products;
+            const attachedProducts = (reel.reel_products?.map(rp => rp.products).filter(Boolean) || []) as any[];
 
             return (
               <div 
@@ -261,15 +308,25 @@ export default function ReelsPage() {
                 ref={el => { cardRefs.current[reel.id] = el; }}
                 className={styles.reelCard}
               >
-                <video
-                  ref={el => { videoRefs.current[reel.id] = el; }}
-                  src={reel.video_url}
-                  className={styles.videoPlayer}
-                  loop
-                  muted={isMuted}
-                  playsInline
-                  onClick={() => setIsPlaying(!isPlaying)}
-                />
+                <div className={styles.videoWrapper} onClick={(e) => handleVideoTap(e, reel.id)}>
+                  <video
+                    ref={el => { videoRefs.current[reel.id] = el; }}
+                    src={reel.video_url}
+                    className={styles.videoPlayer}
+                    loop
+                    muted={isMuted}
+                    playsInline
+                  />
+                  
+                  {showHeart && showHeart.id === reel.id && (
+                    <div 
+                      className={styles.heartAnimation} 
+                      style={{ left: showHeart.x, top: showHeart.y }}
+                    >
+                      <Heart size={80} fill="#ff2d55" color="#ff2d55" />
+                    </div>
+                  )}
+                </div>
 
                 {!isPlaying && idx === currentIndex && (
                   <div className={styles.pauseIndicator} onClick={() => setIsPlaying(true)}>
@@ -292,18 +349,23 @@ export default function ReelsPage() {
                     setShowComments(true);
                   }}>
                     <MessageCircle size={28} />
-                    <span>{reel.comments_count || reel.reel_comments?.length || 0}</span>
+                    <span>{reel.comments_count || 0}</span>
                   </button>
                   <button className={styles.actionBtn} onClick={() => {
+                    const shareUrl = `${window.location.origin}/reels?id=${reel.id}`;
                     if (navigator.share) {
-                      navigator.share({ title: reel.title, url: window.location.href });
+                      navigator.share({ title: reel.title, url: shareUrl });
                     } else {
-                      navigator.clipboard.writeText(window.location.href);
+                      navigator.clipboard.writeText(shareUrl);
                       alert('Link copied to clipboard!');
                     }
                   }}>
                     <Share2 size={28} />
                     <span>Share</span>
+                  </button>
+                  <button className={styles.actionBtn} onClick={() => handleDownload(reel.video_url, reel.title || 'reel')}>
+                    <Download size={28} />
+                    <span>Save</span>
                   </button>
                 </div>
 
@@ -321,14 +383,18 @@ export default function ReelsPage() {
                     </div>
                   </Link>
 
-                  {attachedProduct && (
-                    <div className={styles.productCard} onClick={() => setActiveProduct(attachedProduct)}>
-                      <img src={attachedProduct.image_url || attachedProduct.media_urls?.[0]} alt="" />
-                      <div className={styles.productDetails}>
-                        <h5>{attachedProduct.title}</h5>
-                        <p>₦{attachedProduct.price?.toLocaleString()}</p>
-                      </div>
-                      <button className={styles.viewProductBtn}>View →</button>
+                  {attachedProducts.length > 0 && (
+                    <div className={styles.productCarousel}>
+                      {attachedProducts.map(product => (
+                        <div key={product.id} className={styles.productCard} onClick={() => setActiveProduct(product)}>
+                          <img src={product.image_url || product.media_urls?.[0]} alt="" />
+                          <div className={styles.productDetails}>
+                            <h5>{product.title}</h5>
+                            <p>₦{product.price?.toLocaleString()}</p>
+                          </div>
+                          <button className={styles.viewProductBtn}>View →</button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
