@@ -6,6 +6,7 @@ import styles from './reels.module.css';
 import { ArrowLeft, Heart, MessageCircle, Share2, Volume2, VolumeX, Play, ChevronUp, ChevronDown, X, Search, Download, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 export default function ReelsPage() {
   const router = useRouter();
@@ -119,9 +120,15 @@ export default function ReelsPage() {
 
   const toggleLike = async (reelId: string) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       const res = await fetch('/api/reels/interact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ action: 'like', reel_id: reelId })
       });
       const data = await res.json();
@@ -159,9 +166,15 @@ export default function ReelsPage() {
   const submitComment = async (reelId: string) => {
     if (!newComment.trim()) return;
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       const res = await fetch('/api/reels/interact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ action: 'comment', reel_id: reelId, content: newComment })
       });
       const data = await res.json();

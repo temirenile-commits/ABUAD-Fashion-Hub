@@ -310,11 +310,12 @@ export default function VendorDashboard() {
 
       setEnquiries(enqData || []);
 
-      // Fetch Reels
+      // Fetch Reels from authoritative reels table
       const { data: reelData } = await supabase
-        .from('brand_reels')
+        .from('reels')
         .select('*')
         .eq('brand_id', brandData.id)
+        .neq('status', 'deleted')
         .order('created_at', { ascending: false });
 
       // But we still fetch them to ensure we catch any missed products in edge cases
@@ -624,9 +625,15 @@ export default function VendorDashboard() {
     setLoading(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       const res = await fetch('/api/reels', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           ...newReel,
           brand_id: brand.id,
@@ -661,7 +668,15 @@ export default function VendorDashboard() {
     if (!confirm('Are you sure you want to delete this reel? This will remove it from the storefront authoritatively.')) return;
     
     try {
-      const res = await fetch(`/api/reels?id=${reelId}`, { method: 'DELETE' });
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
+      const res = await fetch(`/api/reels?id=${reelId}`, { 
+        method: 'DELETE',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
       const data = await res.json();
       
       if (data.success) {

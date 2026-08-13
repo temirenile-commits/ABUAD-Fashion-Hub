@@ -301,11 +301,12 @@ export default function VendorDashboard() {
 
       setEnquiries(enqData || []);
 
-      // Fetch Reels
+      // Fetch Reels from authoritative reels table
       const { data: reelData } = await supabase
-        .from('brand_reels')
+        .from('reels')
         .select('*')
         .eq('brand_id', brandData.id)
+        .neq('status', 'deleted')
         .order('created_at', { ascending: false });
 
       // But we still fetch them to ensure we catch any missed products in edge cases
