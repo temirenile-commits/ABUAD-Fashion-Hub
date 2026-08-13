@@ -52,4 +52,5 @@ export interface Reel {
   reel_products?: ReelProduct[];
   reel_comments?: ReelComment[];
   is_liked_by_user?: boolean;
+  is_liked?: boolean;
 }

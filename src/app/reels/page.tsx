@@ -3,7 +3,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Reel } from '@/types/reel';
 import styles from './reels.module.css';
-import { ArrowLeft, Heart, MessageCircle, Share2, Volume2, VolumeX, Play, ChevronUp, ChevronDown, X, Search, Download, Loader2 } from 'lucide-react';
+import { 
+  ArrowLeft, Heart, MessageCircle, Share2, Volume2, VolumeX, 
+  Play, ChevronUp, ChevronDown, X, Search, Download, 
+  Loader2, Send, ShoppingBag, VideoOff, Info
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -27,6 +31,7 @@ export default function ReelsPage() {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [activeProduct, setActiveProduct] = useState<any>(null);
 
   // Double tap animation state
@@ -41,7 +46,9 @@ export default function ReelsPage() {
   }, [activeSection]);
 
   const fetchReels = async (query = '') => {
-    setLoading(true);
+    if (query) setIsSearching(true);
+    else setLoading(true);
+    
     try {
       const url = query 
         ? `/api/reels?search=${encodeURIComponent(query)}`
@@ -53,6 +60,7 @@ export default function ReelsPage() {
           setSearchResults(data.reels || []);
         } else {
           setReels(data.reels || []);
+          setCurrentIndex(0);
         }
       }
     } catch (err) {
@@ -65,11 +73,7 @@ export default function ReelsPage() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) {
-      setIsSearching(false);
-      return;
-    }
-    setIsSearching(true);
+    if (!searchQuery.trim()) return;
     fetchReels(searchQuery);
   };
 
@@ -133,7 +137,11 @@ export default function ReelsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setReels(prev => prev.map(r => r.id === reelId ? { ...r, likes_count: data.liked ? (Number(r.likes_count) || 0) + 1 : Math.max(0, (Number(r.likes_count) || 1) - 1) } : r));
+        setReels(prev => prev.map(r => r.id === reelId ? { 
+          ...r, 
+          likes_count: data.liked ? (Number(r.likes_count) || 0) + 1 : Math.max(0, (Number(r.likes_count) || 1) - 1),
+          is_liked: data.liked
+        } : r));
         return data.liked;
       }
     } catch (err) {
@@ -164,7 +172,8 @@ export default function ReelsPage() {
   };
 
   const submitComment = async (reelId: string) => {
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || isSubmittingComment) return;
+    setIsSubmittingComment(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token || '';
@@ -179,12 +188,14 @@ export default function ReelsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setComments(prev => [...prev, data.comment]);
+        setComments(prev => [data.comment, ...prev]);
         setNewComment('');
         setReels(prev => prev.map(r => r.id === reelId ? { ...r, comments_count: (Number(r.comments_count) || 0) + 1 } : r));
       }
     } catch (err) {
       console.error('Comment error:', err);
+    } finally {
+      setIsSubmittingComment(false);
     }
   };
 
@@ -210,20 +221,38 @@ export default function ReelsPage() {
   if (loading && !reels.length) {
     return (
       <div className={styles.loadingContainer}>
-        <Loader2 className="anim-spin" size={32} />
-        <p>Loading Immersive Reels...</p>
+        <Loader2 className={styles.animSpin} size={40} color="#fff" />
+        <p style={{ fontSize: '1.1rem', fontWeight: 500, opacity: 0.8 }}>Entering Immersive Feed...</p>
+      </div>
+    );
+  }
+
+  // --- No Reels Empty State ---
+  if (!loading && reels.length === 0 && !isSearchOpen) {
+    return (
+      <div className={styles.emptyStateContainer}>
+        <div className={styles.emptyIconWrapper}>
+          <VideoOff size={40} />
+        </div>
+        <h2 className={styles.emptyTitle}>No Reels Available</h2>
+        <p className={styles.emptyDesc}>There are no reels available in this section right now. Check back later for fresh designs!</p>
+        <Link href="/" className={styles.emptyBtn}>
+          <ArrowLeft size={18} /> Back to Marketplace
+        </Link>
       </div>
     );
   }
 
   return (
     <div className={styles.reelsContainer}>
-      {/* Top Header - Compact Search Pill */}
+      {/* Top Header */}
       <div className={styles.topHeader}>
-        <button onClick={() => router.back()} className={styles.backBtn}><ArrowLeft size={24} /></button>
+        <button onClick={() => router.back()} className={styles.backBtn}>
+          <ArrowLeft size={22} />
+        </button>
         
         <div className={styles.searchPill} onClick={() => setIsSearchOpen(true)}>
-          <Search size={16} />
+          <Search size={18} />
           <span>Search Reels...</span>
         </div>
 
@@ -251,23 +280,26 @@ export default function ReelsPage() {
               <ArrowLeft size={22} />
             </button>
             <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
-              <Search size={18} className={styles.searchIcon} />
+              <Search size={20} className={styles.searchIcon} />
               <input 
                 type="text" 
-                placeholder="Search sneakers, black hoodie, wrist watch..." 
+                placeholder="Search sneakers, hoodies, watches..." 
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 autoFocus
               />
             </form>
             <button className={styles.closeSearch} onClick={() => setIsSearchOpen(false)}>
-              <X size={22} />
+              <X size={24} />
             </button>
           </div>
 
           <div className={styles.searchResultsGrid}>
             {isSearching ? (
-              <div className={styles.searchLoading}>Searching reels & products...</div>
+              // Skeleton Loading State
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className={`${styles.searchGridCard} ${styles.skeleton}`} />
+              ))
             ) : searchResults.length > 0 ? (
               searchResults.map(reel => (
                 <div 
@@ -279,7 +311,6 @@ export default function ReelsPage() {
                       setCurrentIndex(idx);
                       cardRefs.current[reel.id]?.scrollIntoView({ behavior: 'smooth' });
                     } else {
-                      // If not in current feed, we might need to fetch it or prepend it
                       setReels([reel, ...reels]);
                       setCurrentIndex(0);
                     }
@@ -294,128 +325,139 @@ export default function ReelsPage() {
                 </div>
               ))
             ) : searchQuery ? (
-              <div className={styles.emptySearch}>No reels found matching "{searchQuery}"</div>
+              // No Search Results State
+              <div style={{ gridColumn: '1 / -1', paddingTop: '4rem' }}>
+                <div className={styles.emptyStateContainer} style={{ height: 'auto', background: 'transparent' }}>
+                  <div className={styles.emptyIconWrapper}>
+                    <Search size={40} />
+                  </div>
+                  <h2 className={styles.emptyTitle}>No Reels Found</h2>
+                  <p className={styles.emptyDesc}>We couldn't find any reels matching "{searchQuery}". Try a different keyword.</p>
+                  <button className={styles.emptyBtn} onClick={() => setSearchQuery('')}>
+                    Clear Search
+                  </button>
+                </div>
+              </div>
             ) : (
-              <div className={styles.searchPrompt}>Type a keyword above to explore matching reels and products across campus brands.</div>
+              // Search Prompt
+              <div style={{ gridColumn: '1 / -1', padding: '3rem 2rem', textAlign: 'center', opacity: 0.5 }}>
+                <Info size={40} style={{ margin: '0 auto 1rem auto', display: 'block' }} />
+                <p>Type a keyword above to explore matching reels and products across campus brands.</p>
+              </div>
             )}
           </div>
         </div>
       )}
 
-      {reels.length === 0 ? (
-        <div className={styles.emptyFeed}>
-          <h3>No Reels Available</h3>
-          <p>Vendors haven't posted any reels in this section yet.</p>
-          <Link href="/" className="btn btn-primary" style={{ marginTop: '1rem' }}>Return to Marketplace</Link>
-        </div>
-      ) : (
-        <div className={styles.feedWrapper}>
-          {reels.map((reel, idx) => {
-            const brandSlug = reel.brands?.name?.toLowerCase().replace(/\s+/g, '-') || 'brand';
-            const attachedProducts = (reel.reel_products?.map(rp => rp.products).filter(Boolean) || []) as any[];
+      {/* Main Feed */}
+      <div className={styles.feedWrapper}>
+        {reels.map((reel, idx) => {
+          const brandSlug = reel.brands?.name?.toLowerCase().replace(/\s+/g, '-') || 'brand';
+          const attachedProducts = (reel.reel_products?.map(rp => rp.products).filter(Boolean) || []) as any[];
 
-            return (
-              <div 
-                key={reel.id} 
-                data-index={idx}
-                ref={el => { cardRefs.current[reel.id] = el; }}
-                className={styles.reelCard}
-              >
-                <div className={styles.videoWrapper} onClick={(e) => handleVideoTap(e, reel.id)}>
-                  <video
-                    ref={el => { videoRefs.current[reel.id] = el; }}
-                    src={reel.video_url}
-                    className={styles.videoPlayer}
-                    loop
-                    muted={isMuted}
-                    playsInline
-                  />
-                  
-                  {showHeart && showHeart.id === reel.id && (
-                    <div 
-                      className={styles.heartAnimation} 
-                      style={{ left: showHeart.x, top: showHeart.y }}
-                    >
-                      <Heart size={80} fill="#ff2d55" color="#ff2d55" />
-                    </div>
-                  )}
-                </div>
-
-                {!isPlaying && idx === currentIndex && (
-                  <div className={styles.pauseIndicator} onClick={() => setIsPlaying(true)}>
-                    <Play size={48} fill="white" />
+          return (
+            <div 
+              key={reel.id} 
+              data-index={idx}
+              ref={el => { cardRefs.current[reel.id] = el; }}
+              className={styles.reelCard}
+            >
+              <div className={styles.videoWrapper} onClick={(e) => handleVideoTap(e, reel.id)}>
+                <video
+                  ref={el => { videoRefs.current[reel.id] = el; }}
+                  src={reel.video_url}
+                  className={styles.videoPlayer}
+                  loop
+                  muted={isMuted}
+                  playsInline
+                />
+                
+                {showHeart && showHeart.id === reel.id && (
+                  <div 
+                    className={styles.heartAnimation} 
+                    style={{ left: showHeart.x, top: showHeart.y }}
+                  >
+                    <Heart size={100} fill="#ff2d55" color="#ff2d55" />
                   </div>
                 )}
-
-                <button className={styles.audioToggle} onClick={() => setIsMuted(!isMuted)}>
-                  {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-                </button>
-
-                {/* Right Action Stack */}
-                <div className={styles.actionStack}>
-                  <button className={styles.actionBtn} onClick={() => toggleLike(reel.id)}>
-                    <Heart size={28} className={styles.heartIcon} />
-                    <span>{reel.likes_count || 0}</span>
-                  </button>
-                  <button className={styles.actionBtn} onClick={() => {
-                    setComments(reel.reel_comments || []);
-                    setShowComments(true);
-                  }}>
-                    <MessageCircle size={28} />
-                    <span>{reel.comments_count || 0}</span>
-                  </button>
-                  <button className={styles.actionBtn} onClick={() => {
-                    const shareUrl = `${window.location.origin}/reels?id=${reel.id}`;
-                    if (navigator.share) {
-                      navigator.share({ title: reel.title, url: shareUrl });
-                    } else {
-                      navigator.clipboard.writeText(shareUrl);
-                      alert('Link copied to clipboard!');
-                    }
-                  }}>
-                    <Share2 size={28} />
-                    <span>Share</span>
-                  </button>
-                  <button className={styles.actionBtn} onClick={() => handleDownload(reel.video_url, reel.title || 'reel')}>
-                    <Download size={28} />
-                    <span>Save</span>
-                  </button>
-                </div>
-
-                {/* Bottom Overlay & Product Card */}
-                <div className={styles.bottomOverlay}>
-                  <Link href={`/vendor/${brandSlug}?id=${reel.brand_id}`} className={styles.vendorInfo}>
-                    {reel.brands?.logo_url ? (
-                      <img src={reel.brands.logo_url} alt="" className={styles.vendorLogo} />
-                    ) : (
-                      <div className={styles.vendorLogoFallback}>{reel.brands?.name?.substring(0, 1)}</div>
-                    )}
-                    <div>
-                      <h4 className={styles.vendorName}>{reel.brands?.name} {reel.brands?.verified && '✓'}</h4>
-                      <p className={styles.reelTitle}><strong>{reel.title}</strong> {reel.caption}</p>
-                    </div>
-                  </Link>
-
-                  {attachedProducts.length > 0 && (
-                    <div className={styles.productCarousel}>
-                      {attachedProducts.map(product => (
-                        <div key={product.id} className={styles.productCard} onClick={() => setActiveProduct(product)}>
-                          <img src={product.image_url || product.media_urls?.[0]} alt="" />
-                          <div className={styles.productDetails}>
-                            <h5>{product.title}</h5>
-                            <p>₦{product.price?.toLocaleString()}</p>
-                          </div>
-                          <button className={styles.viewProductBtn}>View →</button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              {!isPlaying && idx === currentIndex && (
+                <div className={styles.pauseIndicator} onClick={() => setIsPlaying(true)}>
+                  <Play size={40} fill="white" color="white" />
+                </div>
+              )}
+
+              <button className={styles.audioToggle} onClick={() => setIsMuted(!isMuted)}>
+                {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+              </button>
+
+              {/* Right Action Stack */}
+              <div className={styles.actionStack}>
+                <button className={styles.actionBtn} onClick={() => toggleLike(reel.id)}>
+                  <Heart size={26} className={reel.is_liked ? styles.heartIconActive : ''} />
+                  <span className={styles.actionCount}>{reel.likes_count || 0}</span>
+                </button>
+                <button className={styles.actionBtn} onClick={() => {
+                  setComments(reel.reel_comments || []);
+                  setShowComments(true);
+                }}>
+                  <MessageCircle size={26} />
+                  <span className={styles.actionCount}>{reel.comments_count || 0}</span>
+                </button>
+                <button className={styles.actionBtn} onClick={() => {
+                  const shareUrl = `${window.location.origin}/reels?id=${reel.id}`;
+                  if (navigator.share) {
+                    navigator.share({ title: reel.title, url: shareUrl });
+                  } else {
+                    navigator.clipboard.writeText(shareUrl);
+                    alert('Link copied to clipboard!');
+                  }
+                }}>
+                  <Share2 size={26} />
+                </button>
+                <button className={styles.actionBtn} onClick={() => handleDownload(reel.video_url, reel.title || 'reel')}>
+                  <Download size={26} />
+                </button>
+              </div>
+
+              {/* Bottom Overlay */}
+              <div className={styles.bottomOverlay}>
+                <Link href={`/vendor/${brandSlug}?id=${reel.brand_id}`} className={styles.vendorInfo}>
+                  {reel.brands?.logo_url ? (
+                    <img src={reel.brands.logo_url} alt="" className={styles.vendorLogo} />
+                  ) : (
+                    <div className={styles.vendorLogoFallback}>{reel.brands?.name?.substring(0, 1)}</div>
+                  )}
+                  <div className={styles.vendorDetails}>
+                    <h4 className={styles.vendorName}>
+                      {reel.brands?.name} {reel.brands?.verified && <Info size={14} className={styles.verifiedBadge} fill="currentColor" />}
+                    </h4>
+                  </div>
+                </Link>
+
+                <h5 className={styles.reelTitle}>{reel.title}</h5>
+                <p className={styles.reelCaption}>{reel.caption}</p>
+
+                {attachedProducts.length > 0 && (
+                  <div className={styles.productCarousel}>
+                    {attachedProducts.map(product => (
+                      <div key={product.id} className={styles.productCard} onClick={() => setActiveProduct(product)}>
+                        <img src={product.image_url || product.media_urls?.[0]} alt="" className={styles.productImage} />
+                        <div className={styles.productDetails}>
+                          <h6 className={styles.productTitle}>{product.title}</h6>
+                          <p className={styles.productPrice}>₦{product.price?.toLocaleString()}</p>
+                        </div>
+                        <button className={styles.viewBtn}>View</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
       {/* Navigation Chevrons for Desktop */}
       <div className={styles.navChevrons}>
@@ -428,7 +470,7 @@ export default function ReelsPage() {
             if (reelId) cardRefs.current[reelId]?.scrollIntoView({ behavior: 'smooth' });
           }}
         >
-          <ChevronUp size={24} />
+          <ChevronUp size={22} />
         </button>
         <button 
           disabled={currentIndex === reels.length - 1} 
@@ -439,40 +481,62 @@ export default function ReelsPage() {
             if (reelId) cardRefs.current[reelId]?.scrollIntoView({ behavior: 'smooth' });
           }}
         >
-          <ChevronDown size={24} />
+          <ChevronDown size={22} />
         </button>
       </div>
 
-      {/* Comments Drawer */}
+      {/* Comments Bottom Sheet */}
       {showComments && currentReel && (
         <div className={styles.drawerBackdrop} onClick={() => setShowComments(false)}>
           <div className={styles.commentsDrawer} onClick={e => e.stopPropagation()}>
+            <div className={styles.drawerDragHandle} />
             <div className={styles.drawerHeader}>
               <h3>Comments ({comments.length})</h3>
-              <button onClick={() => setShowComments(false)}><X size={20} /></button>
+              <button className={styles.closeDrawer} onClick={() => setShowComments(false)}>
+                <X size={20} />
+              </button>
             </div>
             <div className={styles.commentsList}>
               {comments.length === 0 ? (
-                <p className={styles.noComments}>No comments yet. Be the first to comment!</p>
+                <div className={styles.noComments}>
+                  <MessageCircle size={40} style={{ opacity: 0.2, margin: '0 auto 1rem auto', display: 'block' }} />
+                  <p>No comments yet. Be the first to engage!</p>
+                </div>
               ) : (
                 comments.map((c, i) => (
                   <div key={i} className={styles.commentItem}>
-                    <div className={styles.commentUser}>User</div>
-                    <p>{c.content}</p>
-                    <span className={styles.commentTime}>{new Date(c.created_at || Date.now()).toLocaleDateString()}</span>
+                    <div className={styles.commentAvatar}>
+                      {c.user_name?.substring(0, 1) || 'U'}
+                    </div>
+                    <div className={styles.commentContent}>
+                      <div className={styles.commentUser}>{c.user_name || 'Anonymous User'}</div>
+                      <p className={styles.commentText}>{c.content}</p>
+                      <div className={styles.commentMeta}>
+                        <span>{new Date(c.created_at || Date.now()).toLocaleDateString()}</span>
+                        <span style={{ cursor: 'pointer' }}>Reply</span>
+                      </div>
+                    </div>
                   </div>
                 ))
               )}
             </div>
             <div className={styles.commentInputBox}>
-              <input 
-                type="text" 
-                placeholder="Add a comment..." 
-                value={newComment}
-                onChange={e => setNewComment(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && submitComment(currentReel.id)}
-              />
-              <button onClick={() => submitComment(currentReel.id)}>Post</button>
+              <div className={styles.commentInputPill}>
+                <input 
+                  type="text" 
+                  placeholder="Add a comment..." 
+                  value={newComment}
+                  onChange={e => setNewComment(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && submitComment(currentReel.id)}
+                />
+                <button 
+                  className={styles.sendCommentBtn} 
+                  onClick={() => submitComment(currentReel.id)}
+                  disabled={!newComment.trim() || isSubmittingComment}
+                >
+                  {isSubmittingComment ? <Loader2 size={20} className={styles.animSpin} /> : <Send size={20} />}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -482,13 +546,22 @@ export default function ReelsPage() {
       {activeProduct && (
         <div className={styles.modalBackdrop} onClick={() => setActiveProduct(null)}>
           <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-            <button className={styles.closeModal} onClick={() => setActiveProduct(null)}><X size={24} /></button>
+            <button className={styles.closeModal} onClick={() => setActiveProduct(null)}>
+              <X size={22} />
+            </button>
             <img src={activeProduct.image_url || activeProduct.media_urls?.[0]} alt="" className={styles.modalImage} />
-            <h3>{activeProduct.title}</h3>
+            <h3 className={styles.modalTitle}>{activeProduct.title}</h3>
             <p className={styles.modalPrice}>₦{activeProduct.price?.toLocaleString()}</p>
-            <p className={styles.modalStock}>In Stock: {activeProduct.stock_count || 'Available'}</p>
-            <Link href={`/product/${activeProduct.id}`} className="btn btn-primary" style={{ width: '100%', textAlign: 'center', marginTop: '1rem', display: 'block' }}>
-              View Full Product Page & Cart
+            <p className={styles.modalStock}>
+              {activeProduct.stock_count > 0 ? `In Stock: ${activeProduct.stock_count}` : 'Out of Stock'}
+            </p>
+            <Link 
+              href={`/product/${activeProduct.id}`} 
+              className="btn btn-primary" 
+              style={{ width: '100%', padding: '12px', borderRadius: '30px', fontWeight: 700 }}
+            >
+              <ShoppingBag size={18} style={{ marginRight: '8px', display: 'inline-block', verticalAlign: 'middle' }} />
+              View Product Details
             </Link>
           </div>
         </div>
