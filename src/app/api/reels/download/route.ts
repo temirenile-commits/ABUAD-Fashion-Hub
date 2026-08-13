@@ -9,11 +9,32 @@ import ffmpegStatic from 'ffmpeg-static';
 
 const execAsync = util.promisify(exec);
 
-// Resolve ffmpeg binary path safely
-let ffmpegPath = 'ffmpeg';
-if (ffmpegStatic && fs.existsSync(ffmpegStatic)) {
-  ffmpegPath = ffmpegStatic;
+// Resolve ffmpeg binary path safely for Vercel/Serverless
+function getFFmpegPath() {
+  // 1. Try the path from ffmpeg-static package
+  if (ffmpegStatic && fs.existsSync(ffmpegStatic)) {
+    return ffmpegStatic;
+  }
+
+  // 2. Try common Vercel/Next.js deployment paths
+  const possiblePaths = [
+    path.join(process.cwd(), 'node_modules/ffmpeg-static/ffmpeg'),
+    path.join(process.cwd(), '.next/server/chunks/node_modules/ffmpeg-static/ffmpeg'),
+    '/var/task/node_modules/ffmpeg-static/ffmpeg',
+    '/var/task/common/node_modules/ffmpeg-static/ffmpeg'
+  ];
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      return p;
+    }
+  }
+
+  // 3. Fallback to system ffmpeg
+  return 'ffmpeg';
 }
+
+const ffmpegPath = getFFmpegPath();
 
 export async function GET(req: NextRequest) {
   const tmpDir = os.tmpdir();
@@ -36,6 +57,11 @@ export async function GET(req: NextRequest) {
   try {
     if (!reelId) {
       return NextResponse.json({ error: 'REEL_ID_MISSING' }, { status: 400 });
+    }
+
+    // Verify FFmpeg binary exists and is executable
+    if (ffmpegPath !== 'ffmpeg' && !fs.existsSync(ffmpegPath)) {
+      console.error('[DOWNLOAD] FFmpeg binary not found at:', ffmpegPath);
     }
 
     // Fetch reel from authoritative table
@@ -86,17 +112,16 @@ export async function GET(req: NextRequest) {
     // 3. Process and Concatenate using single FFmpeg filter_complex command
     logContext.steps.push('processing_and_concatenating');
     
-    // Get outro duration dynamically using ffprobe or assume 5.2 seconds
+    // Get outro duration dynamically
     let outroDuration = '5.208';
     try {
-      // Simple ffprobe to get exact duration of outro
       const { stdout } = await execAsync(`"${ffmpegPath}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${localOutroPath}"`);
       const parsed = parseFloat(stdout.trim());
       if (!isNaN(parsed) && parsed > 0) {
         outroDuration = parsed.toString();
       }
     } catch (e) {
-      // fallback to default 5.208
+      // fallback
     }
 
     const ffmpegCmd = `"${ffmpegPath}" -i "${localOriginalPath}" -i "${localOutroPath}" -f lavfi -i anullsrc=r=44100:cl=stereo -filter_complex "[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,fps=30,format=yuv420p[v0];[0:a]aformat=sample_rates=44100:channel_layouts=stereo[a0];[1:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,fps=30,format=yuv420p[v1];[2:a]atrim=duration=${outroDuration}[a1];[v0][a0][v1][a1]concat=n=2:v=1:a=1[v][a]" -map "[v]" -map "[a]" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -b:a 128k "${localOutputPath}" -y`;
@@ -113,7 +138,11 @@ export async function GET(req: NextRequest) {
         stderr: err.stderr,
         stdout: err.stdout
       });
-      return NextResponse.json({ error: 'VIDEO_PROCESSING_FAILED' }, { status: 500 });
+      // Detailed logging but clean user message
+      return NextResponse.json({ 
+        error: 'VIDEO_PROCESSING_FAILED',
+        message: 'Could not prepare this Reel for download. Please try again.'
+      }, { status: 500 });
     }
 
     if (!fs.existsSync(localOutputPath)) {
