@@ -2836,7 +2836,18 @@ export default function VendorDashboard() {
               <div className={styles.reelsGrid}>
                 {reels.map(reel => (
                   <div key={reel.id} className={styles.reelCard}>
-                    <video src={reel.video_url} loop muted onMouseOver={e => e.currentTarget.play()} onMouseOut={e => e.currentTarget.pause()} />
+                    {reel.cover_url || reel.thumbnail_url ? (
+                      <div style={{ position: 'relative', width: '100%', height: '100%', background: '#000' }}>
+                        <img src={reel.cover_url || reel.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <video src={reel.video_url} loop muted onMouseOver={e => e.currentTarget.play()} onMouseOut={e => e.currentTarget.pause()} />
+                    )}
                     <div className={styles.reelOverlay}>
                       <div className={styles.reelInfo}>
                         <h5>{reel.title}</h5>

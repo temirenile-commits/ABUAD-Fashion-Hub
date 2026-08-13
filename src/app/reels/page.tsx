@@ -317,7 +317,14 @@ export default function ReelsPage() {
                     setIsSearchOpen(false);
                   }}
                 >
-                  <img src={reel.thumbnail_url || reel.video_url} alt="" />
+                  <div style={{ position: 'relative', width: '100%', height: '100%', background: '#000' }}>
+                    <img src={reel.cover_url || reel.thumbnail_url || reel.video_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
+                        <Play size={16} fill="currentColor" />
+                      </div>
+                    </div>
+                  </div>
                   <div className={styles.searchGridOverlay}>
                     <h5>{reel.title}</h5>
                     <span>@{reel.brands?.name}</span>
@@ -366,6 +373,7 @@ export default function ReelsPage() {
                 <video
                   ref={el => { videoRefs.current[reel.id] = el; }}
                   src={reel.video_url}
+                  poster={reel.cover_url || reel.thumbnail_url}
                   className={styles.videoPlayer}
                   loop
                   muted={isMuted}

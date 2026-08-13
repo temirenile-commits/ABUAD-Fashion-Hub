@@ -212,10 +212,27 @@ export default function Home() {
           <div className={styles.sectionHead}><div><span className={styles.sectionEyebrow}>WATCH WHAT&apos;S NEXT</span><h2>MasterCart reels</h2></div><Link href="/reels" className={styles.textLink}>Watch full feed <ArrowRight size={15} /></Link></div>
           <div className={styles.reelRail}>
             {allReels.length ? allReels.slice(0, 4).map((reel, index) => {
-              const image = reel.thumbnail_url;
+              const image = reel.cover_url || reel.thumbnail_url;
               const title = reel.title || 'Campus Reel';
               const brand = reel.brands?.name || 'Verified Store';
-              return <Link href="/reels" className={styles.reelCard} key={reel.id}><div className={styles.reelMedia}>{image ? <img src={image} alt={title} /> : <div className={styles.reelUnavailable}>Thumbnail unavailable</div>}<span className={styles.reelPlay}><Play size={16} fill="currentColor" /></span></div><div className={styles.reelMeta}><span className={styles.brandAvatar}>{brand.slice(0, 1)}</span><div><strong>{title}</strong><span>{brand}</span></div></div></Link>;
+              return (
+                <Link href="/reels" className={styles.reelCard} key={reel.id}>
+                  <div className={styles.reelMedia}>
+                    {image ? (
+                      <img src={image} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div className={styles.reelUnavailable} style={{ background: 'linear-gradient(135deg, #18181b 0%, #09090b 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a1a1aa', fontSize: '0.8rem', fontWeight: 600 }}>
+                        {title.substring(0, 15)}
+                      </div>
+                    )}
+                    <span className={styles.reelPlay}><Play size={16} fill="currentColor" /></span>
+                  </div>
+                  <div className={styles.reelMeta}>
+                    <span className={styles.brandAvatar}>{brand.slice(0, 1)}</span>
+                    <div><strong>{title}</strong><span>{brand}</span></div>
+                  </div>
+                </Link>
+              );
             }) : <p className={styles.emptyNotice}>No reels available yet.</p>}
           </div>
         </section>

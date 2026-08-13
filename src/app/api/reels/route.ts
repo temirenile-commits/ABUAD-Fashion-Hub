@@ -1,6 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAuthenticatedUser } from '@/lib/server-auth';
+import { exec } from 'child_process';
+import util from 'util';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+
+const execAsync = util.promisify(exec);
+
+async function generateAndUploadReelCover(videoUrl: string, brandId: string, reelId: string): Promise<string | null> {
+  const tmpDir = os.tmpdir();
+  const tmpCoverPath = path.join(tmpDir, `cover_${reelId}.webp`);
+
+  try {
+    try {
+      await execAsync(`ffmpeg -ss 00:00:01 -i "${videoUrl}" -vframes 1 -q:v 2 "${tmpCoverPath}" -y`);
+    } catch {
+      await execAsync(`ffmpeg -ss 00:00:00 -i "${videoUrl}" -vframes 1 -q:v 2 "${tmpCoverPath}" -y`);
+    }
+
+    if (!fs.existsSync(tmpCoverPath)) {
+      return null;
+    }
+
+    const coverBuffer = fs.readFileSync(tmpCoverPath);
+    const storagePath = `covers/${brandId}/${reelId}.webp`;
+    
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('brand-reels')
+      .upload(storagePath, coverBuffer, {
+        contentType: 'image/webp',
+        upsert: true
+      });
+
+    try { fs.unlinkSync(tmpCoverPath); } catch {}
+
+    if (uploadError) {
+      console.error('Failed to upload cover:', uploadError);
+      return null;
+    }
+
+    const { data: publicUrlData } = supabaseAdmin.storage
+      .from('brand-reels')
+      .getPublicUrl(storagePath);
+
+    return publicUrlData.publicUrl;
+  } catch (err) {
+    console.error('Error generating reel cover:', err);
+    try { fs.unlinkSync(tmpCoverPath); } catch {}
+    return null;
+  }
+}
 
 // GET /api/reels - Fetch published reels with products, search, and author info (strictly excluding deleted)
 export async function GET(req: NextRequest) {
@@ -81,7 +132,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/reels - Vendor upload reel with title, caption, products
+// POST /api/reels - Vendor upload reel with title, caption, products, and automatic cover generation
 export async function POST(req: NextRequest) {
   try {
     const user = await getAuthenticatedUser(req);
@@ -107,7 +158,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Brand not found' }, { status: 404 });
     }
 
-    // Insert reel
+    // First insert reel without cover_url to get id
     const { data: reelData, error: reelError } = await supabaseAdmin
       .from('reels')
       .insert({
@@ -127,6 +178,16 @@ export async function POST(req: NextRequest) {
     if (reelError) {
       console.error('Error creating reel:', reelError);
       return NextResponse.json({ error: reelError.message }, { status: 500 });
+    }
+
+    // Automatically generate cover image from video
+    const coverUrl = await generateAndUploadReelCover(video_url, brand.id, reelData.id);
+    if (coverUrl) {
+      await supabaseAdmin
+        .from('reels')
+        .update({ cover_url: coverUrl })
+        .eq('id', reelData.id);
+      reelData.cover_url = coverUrl;
     }
 
     // Attach products if provided
@@ -162,45 +223,41 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Reel ID is required' }, { status: 400 });
     }
 
-    // Verify vendor ownership or admin status
-    const { data: reelData, error: fetchErr } = await supabaseAdmin
+    // Verify brand ownership of the reel
+    const { data: reel, error: reelFetchError } = await supabaseAdmin
       .from('reels')
       .select('brand_id, brands(owner_id)')
       .eq('id', reelId)
       .single();
 
-    if (fetchErr || !reelData) {
+    if (reelFetchError || !reel) {
       return NextResponse.json({ error: 'Reel not found' }, { status: 404 });
     }
 
-    const isOwner = (reelData.brands as any)?.owner_id === user.id;
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-    const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
-
-    if (!isOwner && !isAdmin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const brandInfo = reel.brands as any;
+    if (!brandInfo || brandInfo.owner_id !== user.id) {
+      return NextResponse.json({ error: 'Unauthorized to delete this reel' }, { status: 403 });
     }
 
-    // Mark as deleted in database (source of truth)
-    const { error: deleteErr } = await supabaseAdmin
+    // Authoritative soft delete or hard delete
+    const { error: updateError } = await supabaseAdmin
       .from('reels')
       .update({ status: 'deleted' })
       .eq('id', reelId);
 
-    if (deleteErr) {
-      return NextResponse.json({ error: deleteErr.message }, { status: 400 });
+    if (updateError) {
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
-    // Clean up junction relations
-    await supabaseAdmin.from('reel_products').delete().eq('reel_id', reelId);
+    // Clean up junction products
+    await supabaseAdmin
+      .from('reel_products')
+      .delete()
+      .eq('reel_id', reelId);
 
-    return NextResponse.json({ success: true, message: 'Reel deleted successfully' });
+    return NextResponse.json({ success: true, message: 'Reel deleted authoritatively' });
   } catch (err: any) {
-    console.error('Error deleting reel:', err);
+    console.error('Unexpected error deleting reel:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

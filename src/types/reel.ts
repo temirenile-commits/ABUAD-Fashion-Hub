@@ -31,6 +31,7 @@ export interface Reel {
   brand_id: string;
   video_url: string;
   thumbnail_url?: string;
+  cover_url?: string;
   title?: string;
   caption?: string;
   duration?: number;

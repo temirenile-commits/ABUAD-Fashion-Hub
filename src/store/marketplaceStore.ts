@@ -104,6 +104,7 @@ export interface Reel {
   brand_id: string;
   video_url: string;
   thumbnail_url?: string;
+  cover_url?: string;
   title?: string;
   created_at: string;
   brands?: {
