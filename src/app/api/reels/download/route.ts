@@ -5,23 +5,35 @@ import util from 'util';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import ffmpegStatic from 'ffmpeg-static';
 
 const execAsync = util.promisify(exec);
+
+// Resolve ffmpeg binary path safely
+let ffmpegPath = 'ffmpeg';
+if (ffmpegStatic && fs.existsSync(ffmpegStatic)) {
+  ffmpegPath = ffmpegStatic;
+}
 
 export async function GET(req: NextRequest) {
   const tmpDir = os.tmpdir();
   const requestId = Math.random().toString(36).substring(2, 9);
   const localOriginalPath = path.join(tmpDir, `orig_${requestId}.mp4`);
   const localOutroPath = path.join(tmpDir, `outro_${requestId}.mp4`);
-  const localNormOrigPath = path.join(tmpDir, `norm_orig_${requestId}.ts`);
-  const localNormOutroPath = path.join(tmpDir, `norm_outro_${requestId}.ts`);
   const localOutputPath = path.join(tmpDir, `final_${requestId}.mp4`);
-  const listFilePath = path.join(tmpDir, `list_${requestId}.txt`);
+
+  const searchParams = new URL(req.url).searchParams;
+  const reelId = searchParams.get('id');
+
+  const logContext: any = {
+    requestId,
+    reelId,
+    temporaryDirectory: tmpDir,
+    ffmpegPath,
+    steps: []
+  };
 
   try {
-    const { searchParams } = new URL(req.url);
-    const reelId = searchParams.get('id');
-
     if (!reelId) {
       return NextResponse.json({ error: 'REEL_ID_MISSING' }, { status: 400 });
     }
@@ -38,8 +50,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'REEL_NOT_FOUND' }, { status: 404 });
     }
 
+    logContext.sourceVideo = reel.video_url;
+
     // 1. Download original reel video
-    console.log('[DOWNLOAD] Fetching original video:', reel.video_url);
+    logContext.steps.push('fetching_original');
     const origRes = await fetch(reel.video_url);
     if (!origRes.ok) {
       console.error('[DOWNLOAD] Failed to fetch original video:', origRes.status);
@@ -49,9 +63,9 @@ export async function GET(req: NextRequest) {
     fs.writeFileSync(localOriginalPath, origBuffer);
 
     // 2. Retrieve Branded Outro from Supabase Storage
-    // The authoritative path is brand-reels/master/mastercart-reel-outro.mp4
+    logContext.steps.push('fetching_outro');
     const outroPath = 'master/mastercart-reel-outro.mp4';
-    console.log('[DOWNLOAD] Fetching branded outro from storage:', outroPath);
+    logContext.outroAsset = outroPath;
     
     const { data: publicUrlData } = supabaseAdmin.storage
       .from('brand-reels')
@@ -60,7 +74,6 @@ export async function GET(req: NextRequest) {
     const outroRes = await fetch(publicUrlData.publicUrl);
     if (!outroRes.ok) {
       console.error('[DOWNLOAD] Branded outro asset unavailable at:', publicUrlData.publicUrl, 'Status:', outroRes.status);
-      // Detailed error for internal logging, clean message for user
       return NextResponse.json({ 
         error: 'OUTRO_ASSET_UNAVAILABLE',
         message: 'Branded outro asset unavailable. Please contact support.' 
@@ -70,39 +83,41 @@ export async function GET(req: NextRequest) {
     const outroBuffer = Buffer.from(await outroRes.arrayBuffer());
     fs.writeFileSync(localOutroPath, outroBuffer);
 
-    // 3. Normalize both videos using FFmpeg
-    console.log('[DOWNLOAD] Normalizing videos with FFmpeg...');
+    // 3. Process and Concatenate using single FFmpeg filter_complex command
+    logContext.steps.push('processing_and_concatenating');
     
-    // Normalize original video
+    // Get outro duration dynamically using ffprobe or assume 5.2 seconds
+    let outroDuration = '5.208';
     try {
-      await execAsync(`ffmpeg -i "${localOriginalPath}" -vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,fps=30,format=yuv420p" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -ar 44100 -ac 2 "${localNormOrigPath}" -y`);
-    } catch (ffmpegErr) {
-      console.error('[DOWNLOAD] FFmpeg normalization failed for original:', ffmpegErr);
+      // Simple ffprobe to get exact duration of outro
+      const { stdout } = await execAsync(`"${ffmpegPath}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${localOutroPath}"`);
+      const parsed = parseFloat(stdout.trim());
+      if (!isNaN(parsed) && parsed > 0) {
+        outroDuration = parsed.toString();
+      }
+    } catch (e) {
+      // fallback to default 5.208
+    }
+
+    const ffmpegCmd = `"${ffmpegPath}" -i "${localOriginalPath}" -i "${localOutroPath}" -f lavfi -i anullsrc=r=44100:cl=stereo -filter_complex "[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,fps=30,format=yuv420p[v0];[0:a]aformat=sample_rates=44100:channel_layouts=stereo[a0];[1:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,fps=30,format=yuv420p[v1];[2:a]atrim=duration=${outroDuration}[a1];[v0][a0][v1][a1]concat=n=2:v=1:a=1[v][a]" -map "[v]" -map "[a]" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -b:a 128k "${localOutputPath}" -y`;
+
+    logContext.ffmpegCommand = ffmpegCmd;
+
+    try {
+      await execAsync(ffmpegCmd);
+    } catch (err: any) {
+      console.error('[REEL DOWNLOAD ERROR]', {
+        ...logContext,
+        error: err.message,
+        exitCode: err.code,
+        stderr: err.stderr,
+        stdout: err.stdout
+      });
       return NextResponse.json({ error: 'VIDEO_PROCESSING_FAILED' }, { status: 500 });
     }
 
-    // Normalize outro video
-    try {
-      await execAsync(`ffmpeg -i "${localOutroPath}" -vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,fps=30,format=yuv420p" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -ar 44100 -ac 2 "${localNormOutroPath}" -y`);
-    } catch (ffmpegErr) {
-      console.error('[DOWNLOAD] FFmpeg normalization failed for outro:', ffmpegErr);
-      return NextResponse.json({ error: 'OUTRO_PROCESSING_FAILED' }, { status: 500 });
-    }
-
-    // 4. Create concat list file
-    fs.writeFileSync(listFilePath, `file '${localNormOrigPath}'\nfile '${localNormOutroPath}'\n`);
-
-    // 5. Concatenate using ffmpeg concat demuxer
-    console.log('[DOWNLOAD] Concatenating videos...');
-    try {
-      await execAsync(`ffmpeg -f concat -safe 0 -i "${listFilePath}" -c copy "${localOutputPath}" -y`);
-    } catch (concatErr) {
-      console.error('[DOWNLOAD] FFmpeg concatenation failed:', concatErr);
-      return NextResponse.json({ error: 'VIDEO_CONCATENATION_FAILED' }, { status: 500 });
-    }
-
     if (!fs.existsSync(localOutputPath)) {
-      console.error('[DOWNLOAD] Final output file not found after concatenation');
+      console.error('[DOWNLOAD] Final output file not found after processing');
       return NextResponse.json({ error: 'OUTPUT_GENERATION_FAILED' }, { status: 500 });
     }
 
@@ -111,7 +126,7 @@ export async function GET(req: NextRequest) {
     const filename = `MasterCart_Reel_${sanitizedTitle}.mp4`;
 
     // Cleanup temp files
-    cleanupFiles([localOriginalPath, localOutroPath, localNormOrigPath, localNormOutroPath, localOutputPath, listFilePath]);
+    cleanupFiles([localOriginalPath, localOutroPath, localOutputPath]);
 
     return new NextResponse(finalVideoBuffer, {
       headers: {
@@ -121,8 +136,12 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (err: any) {
-    console.error('[DOWNLOAD] Unexpected error:', err);
-    cleanupFiles([localOriginalPath, localOutroPath, localNormOrigPath, localNormOutroPath, localOutputPath, listFilePath]);
+    console.error('[REEL DOWNLOAD ERROR] Unexpected:', {
+      ...logContext,
+      error: err.message,
+      stack: err.stack
+    });
+    cleanupFiles([localOriginalPath, localOutroPath, localOutputPath]);
     return NextResponse.json({ error: 'INTERNAL_SERVER_ERROR' }, { status: 500 });
   }
 }
