@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Reel } from '@/types/reel';
 import styles from './reels.module.css';
-import { ArrowLeft, Heart, MessageCircle, Share2, Volume2, VolumeX, Play, ChevronUp, ChevronDown, X, Search, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, Share2, Volume2, VolumeX, Play, ChevronUp, ChevronDown, X, Search } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ReelsPage() {
@@ -27,6 +27,7 @@ export default function ReelsPage() {
   const [activeProduct, setActiveProduct] = useState<any>(null);
 
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
+  const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
     fetchReels();
@@ -65,8 +66,34 @@ export default function ReelsPage() {
     fetchReels(searchQuery);
   };
 
-  const currentReel = reels[currentIndex];
+  // Intersection observer for native scroll snap tracking
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const indexStr = entry.target.getAttribute('data-index');
+            if (indexStr !== null) {
+              const idx = parseInt(indexStr, 10);
+              setCurrentIndex(idx);
+              setIsPlaying(true);
+            }
+          }
+        });
+      },
+      { threshold: 0.6 }
+    );
 
+    Object.values(cardRefs.current).forEach((card) => {
+      if (card) observer.observe(card);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [reels]);
+
+  // Video autoplay & pausing across indices
   useEffect(() => {
     Object.keys(videoRefs.current).forEach((id, idx) => {
       const v = videoRefs.current[id];
@@ -83,17 +110,6 @@ export default function ReelsPage() {
       }
     });
   }, [currentIndex, isPlaying, reels]);
-
-  const handleScroll = (e: React.WheelEvent) => {
-    if (isSearchOpen) return;
-    if (e.deltaY > 30 && currentIndex < reels.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-      setIsPlaying(true);
-    } else if (e.deltaY < -30 && currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-      setIsPlaying(true);
-    }
-  };
 
   const toggleLike = async (reelId: string) => {
     try {
@@ -130,6 +146,8 @@ export default function ReelsPage() {
     }
   };
 
+  const currentReel = reels[currentIndex];
+
   if (loading && !reels.length) {
     return (
       <div className={styles.loadingContainer}>
@@ -140,7 +158,7 @@ export default function ReelsPage() {
   }
 
   return (
-    <div className={styles.reelsContainer} onWheel={handleScroll}>
+    <div className={styles.reelsContainer}>
       {/* Top Header */}
       <div className={styles.topHeader}>
         <Link href="/" className={styles.backBtn}><ArrowLeft size={24} /></Link>
@@ -201,7 +219,10 @@ export default function ReelsPage() {
                   className={styles.searchGridCard}
                   onClick={() => {
                     const idx = reels.findIndex(r => r.id === reel.id);
-                    if (idx !== -1) setCurrentIndex(idx);
+                    if (idx !== -1) {
+                      setCurrentIndex(idx);
+                      cardRefs.current[reel.id]?.scrollIntoView({ behavior: 'smooth' });
+                    }
                     setIsSearchOpen(false);
                   }}
                 >
@@ -228,13 +249,18 @@ export default function ReelsPage() {
           <Link href="/" className="btn btn-primary" style={{ marginTop: '1rem' }}>Return to Marketplace</Link>
         </div>
       ) : (
-        <div className={styles.feedWrapper} style={{ transform: `translateY(-${currentIndex * 100}vh)` }}>
+        <div className={styles.feedWrapper}>
           {reels.map((reel, idx) => {
             const brandSlug = reel.brands?.name?.toLowerCase().replace(/\s+/g, '-') || 'brand';
             const attachedProduct = reel.reel_products?.[0]?.products;
 
             return (
-              <div key={reel.id} className={styles.reelCard}>
+              <div 
+                key={reel.id} 
+                data-index={idx}
+                ref={el => { cardRefs.current[reel.id] = el; }}
+                className={styles.reelCard}
+              >
                 <video
                   ref={el => { videoRefs.current[reel.id] = el; }}
                   src={reel.video_url}
@@ -316,13 +342,23 @@ export default function ReelsPage() {
       <div className={styles.navChevrons}>
         <button 
           disabled={currentIndex === 0} 
-          onClick={() => { setCurrentIndex(prev => Math.max(0, prev - 1)); setIsPlaying(true); }}
+          onClick={() => {
+            const prevIdx = Math.max(0, currentIndex - 1);
+            setCurrentIndex(prevIdx);
+            const reelId = reels[prevIdx]?.id;
+            if (reelId) cardRefs.current[reelId]?.scrollIntoView({ behavior: 'smooth' });
+          }}
         >
           <ChevronUp size={24} />
         </button>
         <button 
           disabled={currentIndex === reels.length - 1} 
-          onClick={() => { setCurrentIndex(prev => Math.min(reels.length - 1, prev + 1)); setIsPlaying(true); }}
+          onClick={() => {
+            const nextIdx = Math.min(reels.length - 1, currentIndex + 1);
+            setCurrentIndex(nextIdx);
+            const reelId = reels[nextIdx]?.id;
+            if (reelId) cardRefs.current[reelId]?.scrollIntoView({ behavior: 'smooth' });
+          }}
         >
           <ChevronDown size={24} />
         </button>
