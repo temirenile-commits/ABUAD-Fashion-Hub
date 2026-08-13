@@ -185,8 +185,9 @@ export async function POST(req: NextRequest) {
     if (coverUrl) {
       await supabaseAdmin
         .from('reels')
-        .update({ cover_url: coverUrl })
+        .update({ thumbnail_url: coverUrl })
         .eq('id', reelData.id);
+      reelData.thumbnail_url = coverUrl;
       reelData.cover_url = coverUrl;
     }
 
