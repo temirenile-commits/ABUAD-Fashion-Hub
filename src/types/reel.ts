@@ -50,5 +50,6 @@ export interface Reel {
     logo_url?: string;
   };
   reel_products?: ReelProduct[];
+  reel_comments?: ReelComment[];
   is_liked_by_user?: boolean;
 }

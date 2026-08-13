@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getAuthenticatedUser } from '@/lib/server-auth';
 
+// GET /api/reels - Fetch published reels with products, search, and author info (strictly excluding deleted)
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const section = searchParams.get('section') || 'fashion';
     const brandId = searchParams.get('brand_id');
+    const search = searchParams.get('search');
 
     let query = supabaseAdmin
       .from('reels')
@@ -33,16 +36,27 @@ export async function GET(req: NextRequest) {
             media_urls,
             stock_count
           )
+        ),
+        reel_likes (id, user_id),
+        reel_comments (
+          id,
+          content,
+          created_at,
+          user_id
         )
       `)
+      .neq('status', 'deleted')
       .eq('status', 'published')
       .order('created_at', { ascending: false });
 
-    if (section) {
+    if (section && section !== 'all') {
       query = query.eq('product_section', section);
     }
     if (brandId) {
       query = query.eq('brand_id', brandId);
+    }
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,caption.ilike.%${search}%`);
     }
 
     const { data, error } = await query;
@@ -59,8 +73,14 @@ export async function GET(req: NextRequest) {
   }
 }
 
+// POST /api/reels - Vendor upload reel with title, caption, products
 export async function POST(req: NextRequest) {
   try {
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
     const { brand_id, video_url, thumbnail_url, title, caption, product_section, product_ids } = body;
 
@@ -102,6 +122,64 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, reel: reelData });
   } catch (err: any) {
     console.error('Unexpected error creating reel:', err);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+// DELETE /api/reels - Authoritative deletion from database
+export async function DELETE(req: NextRequest) {
+  try {
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const reelId = searchParams.get('id');
+
+    if (!reelId) {
+      return NextResponse.json({ error: 'Reel ID is required' }, { status: 400 });
+    }
+
+    // Verify vendor ownership or admin status
+    const { data: reelData, error: fetchErr } = await supabaseAdmin
+      .from('reels')
+      .select('brand_id, brands(owner_id)')
+      .eq('id', reelId)
+      .single();
+
+    if (fetchErr || !reelData) {
+      return NextResponse.json({ error: 'Reel not found' }, { status: 404 });
+    }
+
+    const isOwner = (reelData.brands as any)?.owner_id === user.id;
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
+
+    if (!isOwner && !isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // Mark as deleted in database (source of truth)
+    const { error: deleteErr } = await supabaseAdmin
+      .from('reels')
+      .update({ status: 'deleted' })
+      .eq('id', reelId);
+
+    if (deleteErr) {
+      return NextResponse.json({ error: deleteErr.message }, { status: 400 });
+    }
+
+    // Clean up junction relations
+    await supabaseAdmin.from('reel_products').delete().eq('reel_id', reelId);
+
+    return NextResponse.json({ success: true, message: 'Reel deleted successfully' });
+  } catch (err: any) {
+    console.error('Error deleting reel:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

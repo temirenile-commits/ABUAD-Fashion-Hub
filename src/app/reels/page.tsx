@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { useMarketplaceStore } from '@/store/marketplaceStore';
 import { Reel } from '@/types/reel';
 import styles from './reels.module.css';
-import { ArrowLeft, Heart, MessageCircle, Share2, Store, ShoppingBag, Volume2, VolumeX, Play, Pause, ChevronUp, ChevronDown, X } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, Share2, Volume2, VolumeX, Play, ChevronUp, ChevronDown, X, Search, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ReelsPage() {
@@ -13,8 +12,14 @@ export default function ReelsPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
-  const [activeSection, setActiveSection] = useState<'fashion' | 'delicacies'>('fashion');
+  const [activeSection, setActiveSection] = useState<'fashion' | 'delicacies' | 'all'>('all');
   
+  // Search state
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Reel[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   // Modals & Sheets
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
@@ -27,25 +32,42 @@ export default function ReelsPage() {
     fetchReels();
   }, [activeSection]);
 
-  const fetchReels = async () => {
+  const fetchReels = async (query = '') => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/reels?section=${activeSection}`);
+      const url = query 
+        ? `/api/reels?search=${encodeURIComponent(query)}`
+        : `/api/reels?section=${activeSection}`;
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
-        setReels(data.reels || []);
+        if (query) {
+          setSearchResults(data.reels || []);
+        } else {
+          setReels(data.reels || []);
+        }
       }
     } catch (err) {
       console.error('Failed to load reels:', err);
     } finally {
       setLoading(false);
+      setIsSearching(false);
     }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) {
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    fetchReels(searchQuery);
   };
 
   const currentReel = reels[currentIndex];
 
   useEffect(() => {
-    // Handle video autoplay & pausing across indices
     Object.keys(videoRefs.current).forEach((id, idx) => {
       const v = videoRefs.current[id];
       if (!v) return;
@@ -63,6 +85,7 @@ export default function ReelsPage() {
   }, [currentIndex, isPlaying, reels]);
 
   const handleScroll = (e: React.WheelEvent) => {
+    if (isSearchOpen) return;
     if (e.deltaY > 30 && currentIndex < reels.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setIsPlaying(true);
@@ -77,18 +100,37 @@ export default function ReelsPage() {
       const res = await fetch('/api/reels/interact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'like', reel_id: reelId, user_id: 'anonymous-user' })
+        body: JSON.stringify({ action: 'like', reel_id: reelId })
       });
       const data = await res.json();
       if (data.success) {
-        setReels(prev => prev.map(r => r.id === reelId ? { ...r, likes_count: data.liked ? r.likes_count + 1 : r.likes_count - 1 } : r));
+        setReels(prev => prev.map(r => r.id === reelId ? { ...r, likes_count: data.liked ? (r.likes_count || 0) + 1 : Math.max(0, (r.likes_count || 1) - 1) } : r));
       }
     } catch (err) {
       console.error('Like error:', err);
     }
   };
 
-  if (loading) {
+  const submitComment = async (reelId: string) => {
+    if (!newComment.trim()) return;
+    try {
+      const res = await fetch('/api/reels/interact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'comment', reel_id: reelId, content: newComment })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setComments(prev => [...prev, data.comment]);
+        setNewComment('');
+        setReels(prev => prev.map(r => r.id === reelId ? { ...r, comments_count: (r.comments_count || 0) + 1 } : r));
+      }
+    } catch (err) {
+      console.error('Comment error:', err);
+    }
+  };
+
+  if (loading && !reels.length) {
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.spinner} />
@@ -104,6 +146,12 @@ export default function ReelsPage() {
         <Link href="/" className={styles.backBtn}><ArrowLeft size={24} /></Link>
         <div className={styles.tabSwitcher}>
           <button 
+            className={activeSection === 'all' ? styles.activeTab : styles.tab} 
+            onClick={() => setActiveSection('all')}
+          >
+            All
+          </button>
+          <button 
             className={activeSection === 'fashion' ? styles.activeTab : styles.tab} 
             onClick={() => setActiveSection('fashion')}
           >
@@ -116,7 +164,62 @@ export default function ReelsPage() {
             Delicacies
           </button>
         </div>
+        <button className={styles.searchToggleBtn} onClick={() => setIsSearchOpen(true)}>
+          <Search size={22} />
+        </button>
       </div>
+
+      {/* Search Modal / Overlay */}
+      {isSearchOpen && (
+        <div className={styles.searchOverlay}>
+          <div className={styles.searchHeader}>
+            <button className={styles.backBtn} onClick={() => { setIsSearchOpen(false); setSearchQuery(''); setSearchResults([]); }}>
+              <ArrowLeft size={22} />
+            </button>
+            <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
+              <Search size={18} className={styles.searchIcon} />
+              <input 
+                type="text" 
+                placeholder="Search sneakers, black hoodie, wrist watch, cakes..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                autoFocus
+              />
+            </form>
+            <button className={styles.closeSearch} onClick={() => setIsSearchOpen(false)}>
+              <X size={22} />
+            </button>
+          </div>
+
+          <div className={styles.searchResultsGrid}>
+            {isSearching ? (
+              <div className={styles.searchLoading}>Searching reels & products...</div>
+            ) : searchResults.length > 0 ? (
+              searchResults.map(reel => (
+                <div 
+                  key={reel.id} 
+                  className={styles.searchGridCard}
+                  onClick={() => {
+                    const idx = reels.findIndex(r => r.id === reel.id);
+                    if (idx !== -1) setCurrentIndex(idx);
+                    setIsSearchOpen(false);
+                  }}
+                >
+                  <img src={reel.thumbnail_url || reel.video_url} alt="" />
+                  <div className={styles.searchGridOverlay}>
+                    <h5>{reel.title || reel.caption}</h5>
+                    <span>@{reel.brands?.name}</span>
+                  </div>
+                </div>
+              ))
+            ) : searchQuery ? (
+              <div className={styles.emptySearch}>No reels found matching "{searchQuery}"</div>
+            ) : (
+              <div className={styles.searchPrompt}>Type a keyword above to explore matching reels and products across campus brands.</div>
+            )}
+          </div>
+        </div>
+      )}
 
       {reels.length === 0 ? (
         <div className={styles.emptyFeed}>
@@ -142,14 +245,12 @@ export default function ReelsPage() {
                   onClick={() => setIsPlaying(!isPlaying)}
                 />
 
-                {/* Play/Pause indicator overlay */}
                 {!isPlaying && idx === currentIndex && (
                   <div className={styles.pauseIndicator} onClick={() => setIsPlaying(true)}>
                     <Play size={48} fill="white" />
                   </div>
                 )}
 
-                {/* Audio Mute/Unmute */}
                 <button className={styles.audioToggle} onClick={() => setIsMuted(!isMuted)}>
                   {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
                 </button>
@@ -158,11 +259,14 @@ export default function ReelsPage() {
                 <div className={styles.actionStack}>
                   <button className={styles.actionBtn} onClick={() => toggleLike(reel.id)}>
                     <Heart size={28} className={styles.heartIcon} />
-                    <span>{reel.likes_count}</span>
+                    <span>{reel.likes_count || 0}</span>
                   </button>
-                  <button className={styles.actionBtn} onClick={() => setShowComments(true)}>
+                  <button className={styles.actionBtn} onClick={() => {
+                    setComments(reel.reel_comments || []);
+                    setShowComments(true);
+                  }}>
                     <MessageCircle size={28} />
-                    <span>{reel.comments_count}</span>
+                    <span>{reel.comments_count || reel.reel_comments?.length || 0}</span>
                   </button>
                   <button className={styles.actionBtn} onClick={() => {
                     if (navigator.share) {
@@ -187,11 +291,10 @@ export default function ReelsPage() {
                     )}
                     <div>
                       <h4 className={styles.vendorName}>{reel.brands?.name} {reel.brands?.verified && '✓'}</h4>
-                      <p className={styles.reelTitle}>{reel.title || reel.caption}</p>
+                      <p className={styles.reelTitle}><strong>{reel.title}</strong> {reel.caption}</p>
                     </div>
                   </Link>
 
-                  {/* Attached Product Card */}
                   {attachedProduct && (
                     <div className={styles.productCard} onClick={() => setActiveProduct(attachedProduct)}>
                       <img src={attachedProduct.image_url || attachedProduct.media_urls?.[0]} alt="" />
@@ -225,6 +328,41 @@ export default function ReelsPage() {
         </button>
       </div>
 
+      {/* Comments Drawer */}
+      {showComments && currentReel && (
+        <div className={styles.drawerBackdrop} onClick={() => setShowComments(false)}>
+          <div className={styles.commentsDrawer} onClick={e => e.stopPropagation()}>
+            <div className={styles.drawerHeader}>
+              <h3>Comments ({comments.length})</h3>
+              <button onClick={() => setShowComments(false)}><X size={20} /></button>
+            </div>
+            <div className={styles.commentsList}>
+              {comments.length === 0 ? (
+                <p className={styles.noComments}>No comments yet. Be the first to comment!</p>
+              ) : (
+                comments.map((c, i) => (
+                  <div key={i} className={styles.commentItem}>
+                    <div className={styles.commentUser}>User</div>
+                    <p>{c.content}</p>
+                    <span className={styles.commentTime}>{new Date(c.created_at || Date.now()).toLocaleDateString()}</span>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className={styles.commentInputBox}>
+              <input 
+                type="text" 
+                placeholder="Add a comment..." 
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && submitComment(currentReel.id)}
+              />
+              <button onClick={() => submitComment(currentReel.id)}>Post</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Product Quick View Modal */}
       {activeProduct && (
         <div className={styles.modalBackdrop} onClick={() => setActiveProduct(null)}>
@@ -233,8 +371,8 @@ export default function ReelsPage() {
             <img src={activeProduct.image_url || activeProduct.media_urls?.[0]} alt="" className={styles.modalImage} />
             <h3>{activeProduct.title}</h3>
             <p className={styles.modalPrice}>₦{activeProduct.price?.toLocaleString()}</p>
-            <p className={styles.modalStock}>In Stock: {activeProduct.stock_count}</p>
-            <Link href={`/product/${activeProduct.id}`} className="btn btn-primary" style={{ width: '100%', textAlign: 'center', marginTop: '1rem' }}>
+            <p className={styles.modalStock}>In Stock: {activeProduct.stock_count || 'Available'}</p>
+            <Link href={`/product/${activeProduct.id}`} className="btn btn-primary" style={{ width: '100%', textAlign: 'center', marginTop: '1rem', display: 'block' }}>
               View Full Product Page & Cart
             </Link>
           </div>
