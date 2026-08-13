@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     const reelId = searchParams.get('id');
 
     if (!reelId) {
-      return NextResponse.json({ error: 'Reel ID is required' }, { status: 400 });
+      return NextResponse.json({ error: 'REEL_ID_MISSING' }, { status: 400 });
     }
 
     // Fetch reel from authoritative table
@@ -34,52 +34,76 @@ export async function GET(req: NextRequest) {
       .single();
 
     if (reelError || !reel || reel.status === 'deleted') {
-      return NextResponse.json({ error: 'Reel not found' }, { status: 404 });
+      console.error('[DOWNLOAD] Reel not found:', reelId, reelError);
+      return NextResponse.json({ error: 'REEL_NOT_FOUND' }, { status: 404 });
     }
 
     // 1. Download original reel video
+    console.log('[DOWNLOAD] Fetching original video:', reel.video_url);
     const origRes = await fetch(reel.video_url);
     if (!origRes.ok) {
-      return NextResponse.json({ error: 'Failed to fetch original video' }, { status: 502 });
+      console.error('[DOWNLOAD] Failed to fetch original video:', origRes.status);
+      return NextResponse.json({ error: 'ORIGINAL_VIDEO_FETCH_FAILED' }, { status: 502 });
     }
     const origBuffer = Buffer.from(await origRes.arrayBuffer());
     fs.writeFileSync(localOriginalPath, origBuffer);
 
-    // 2. Upload/ensure outro asset in storage or use local fallback
-    // For reliability, we upload the provided master outro to brand-reels/master/outro.mp4 if not present,
-    // or we can read it from the local upload path if available.
-    const localUploadedOutro = '/home/ubuntu/upload/20260814_000930.mp4';
-    let outroBuffer: Buffer;
-    if (fs.existsSync(localUploadedOutro)) {
-      outroBuffer = fs.readFileSync(localUploadedOutro);
-    } else {
-      // Fallback: try fetching from Supabase storage
-      const { data: publicUrlData } = supabaseAdmin.storage
-        .from('brand-reels')
-        .getPublicUrl('master/outro.mp4');
-      const outroRes = await fetch(publicUrlData.publicUrl);
-      if (!outroRes.ok) {
-        return NextResponse.json({ error: 'Branded outro asset unavailable' }, { status: 500 });
-      }
-      outroBuffer = Buffer.from(await outroRes.arrayBuffer());
+    // 2. Retrieve Branded Outro from Supabase Storage
+    // The authoritative path is brand-reels/master/mastercart-reel-outro.mp4
+    const outroPath = 'master/mastercart-reel-outro.mp4';
+    console.log('[DOWNLOAD] Fetching branded outro from storage:', outroPath);
+    
+    const { data: publicUrlData } = supabaseAdmin.storage
+      .from('brand-reels')
+      .getPublicUrl(outroPath);
+      
+    const outroRes = await fetch(publicUrlData.publicUrl);
+    if (!outroRes.ok) {
+      console.error('[DOWNLOAD] Branded outro asset unavailable at:', publicUrlData.publicUrl, 'Status:', outroRes.status);
+      // Detailed error for internal logging, clean message for user
+      return NextResponse.json({ 
+        error: 'OUTRO_ASSET_UNAVAILABLE',
+        message: 'Branded outro asset unavailable. Please contact support.' 
+      }, { status: 500 });
     }
+    
+    const outroBuffer = Buffer.from(await outroRes.arrayBuffer());
     fs.writeFileSync(localOutroPath, outroBuffer);
 
-    // 3. Normalize both videos to uniform dimensions (1080x1920 vertical 9:16 with padding if needed), fps (30), sample rate (44100Hz), h264/aac
-    // Scale and pad original video to fit 1080x1920 without distortion
-    await execAsync(`ffmpeg -i "${localOriginalPath}" -vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,fps=30,format=yuv420p" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -ar 44100 -ac 2 "${localNormOrigPath}" -y`);
+    // 3. Normalize both videos using FFmpeg
+    console.log('[DOWNLOAD] Normalizing videos with FFmpeg...');
+    
+    // Normalize original video
+    try {
+      await execAsync(`ffmpeg -i "${localOriginalPath}" -vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,fps=30,format=yuv420p" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -ar 44100 -ac 2 "${localNormOrigPath}" -y`);
+    } catch (ffmpegErr) {
+      console.error('[DOWNLOAD] FFmpeg normalization failed for original:', ffmpegErr);
+      return NextResponse.json({ error: 'VIDEO_PROCESSING_FAILED' }, { status: 500 });
+    }
 
-    // Normalize outro video similarly
-    await execAsync(`ffmpeg -i "${localOutroPath}" -vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,fps=30,format=yuv420p" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -ar 44100 -ac 2 "${localNormOutroPath}" -y`);
+    // Normalize outro video
+    try {
+      await execAsync(`ffmpeg -i "${localOutroPath}" -vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,fps=30,format=yuv420p" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -ar 44100 -ac 2 "${localNormOutroPath}" -y`);
+    } catch (ffmpegErr) {
+      console.error('[DOWNLOAD] FFmpeg normalization failed for outro:', ffmpegErr);
+      return NextResponse.json({ error: 'OUTRO_PROCESSING_FAILED' }, { status: 500 });
+    }
 
     // 4. Create concat list file
     fs.writeFileSync(listFilePath, `file '${localNormOrigPath}'\nfile '${localNormOutroPath}'\n`);
 
     // 5. Concatenate using ffmpeg concat demuxer
-    await execAsync(`ffmpeg -f concat -safe 0 -i "${listFilePath}" -c copy "${localOutputPath}" -y`);
+    console.log('[DOWNLOAD] Concatenating videos...');
+    try {
+      await execAsync(`ffmpeg -f concat -safe 0 -i "${listFilePath}" -c copy "${localOutputPath}" -y`);
+    } catch (concatErr) {
+      console.error('[DOWNLOAD] FFmpeg concatenation failed:', concatErr);
+      return NextResponse.json({ error: 'VIDEO_CONCATENATION_FAILED' }, { status: 500 });
+    }
 
     if (!fs.existsSync(localOutputPath)) {
-      throw new Error('Failed to generate concatenated video');
+      console.error('[DOWNLOAD] Final output file not found after concatenation');
+      return NextResponse.json({ error: 'OUTPUT_GENERATION_FAILED' }, { status: 500 });
     }
 
     const finalVideoBuffer = fs.readFileSync(localOutputPath);
@@ -87,14 +111,7 @@ export async function GET(req: NextRequest) {
     const filename = `MasterCart_Reel_${sanitizedTitle}.mp4`;
 
     // Cleanup temp files
-    try {
-      fs.unlinkSync(localOriginalPath);
-      fs.unlinkSync(localOutroPath);
-      fs.unlinkSync(localNormOrigPath);
-      fs.unlinkSync(localNormOutroPath);
-      fs.unlinkSync(localOutputPath);
-      fs.unlinkSync(listFilePath);
-    } catch {}
+    cleanupFiles([localOriginalPath, localOutroPath, localNormOrigPath, localNormOutroPath, localOutputPath, listFilePath]);
 
     return new NextResponse(finalVideoBuffer, {
       headers: {
@@ -104,17 +121,18 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (err: any) {
-    console.error('Error generating reel download with outro:', err);
-    // Cleanup on error
-    try {
-      if (fs.existsSync(localOriginalPath)) fs.unlinkSync(localOriginalPath);
-      if (fs.existsSync(localOutroPath)) fs.unlinkSync(localOutroPath);
-      if (fs.existsSync(localNormOrigPath)) fs.unlinkSync(localNormOrigPath);
-      if (fs.existsSync(localNormOutroPath)) fs.unlinkSync(localNormOutroPath);
-      if (fs.existsSync(localOutputPath)) fs.unlinkSync(localOutputPath);
-      if (fs.existsSync(listFilePath)) fs.unlinkSync(listFilePath);
-    } catch {}
-
-    return NextResponse.json({ error: 'Couldn\'t prepare this Reel for download. Please try again.' }, { status: 500 });
+    console.error('[DOWNLOAD] Unexpected error:', err);
+    cleanupFiles([localOriginalPath, localOutroPath, localNormOrigPath, localNormOutroPath, localOutputPath, listFilePath]);
+    return NextResponse.json({ error: 'INTERNAL_SERVER_ERROR' }, { status: 500 });
   }
+}
+
+function cleanupFiles(files: string[]) {
+  files.forEach(file => {
+    try {
+      if (fs.existsSync(file)) fs.unlinkSync(file);
+    } catch (err) {
+      console.error('[DOWNLOAD] Cleanup failed for:', file, err);
+    }
+  });
 }
