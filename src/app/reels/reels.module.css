@@ -1,210 +1,374 @@
 .reelsContainer {
-  height: 100dvh;
+  position: relative;
   width: 100vw;
-  background: #000000;
-  color: #FFFFFF;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1000;
+  height: 100vh;
+  height: 100dvh;
+  background: #000;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  color: #fff;
+  font-family: inherit;
 }
 
-.topNav {
+.topHeader {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  padding: 0 1rem;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
-  z-index: 10;
-  gap: 1rem;
-}
-
-.topNav h1 {
-  font-size: 1.2rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.backBtn {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: #121214;
-  backdrop-filter: blur(8px);
-}
-
-.feed {
-  flex: 1;
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  scrollbar-width: none;
-}
-
-.feed::-webkit-scrollbar {
-  display: none;
-}
-
-.feedItem {
-  height: 100%;
-  width: 100%;
-  scroll-snap-align: start;
-  position: relative;
-}
-
-.reelWrapper {
-  height: 100%;
-  width: 100%;
-  position: relative;
-}
-
-.video {
-  height: 100%;
-  width: 100%;
-  object-fit: cover;
-}
-
-.overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 40%);
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 1.5rem;
-  padding-bottom: 5rem; /* Space for bottom nav if any */
-}
-
-.meta {
-  max-width: 80%;
-}
-
-.brandInfo {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 2px solid var(--primary);
-  object-fit: cover;
-}
-
-.brandInfo span {
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-
-.meta h3 {
-  font-size: 0.9rem;
-  font-weight: 400;
-  line-height: 1.4;
-  opacity: 0.9;
-}
-
-.actions {
-  position: absolute;
-  right: 1rem;
-  bottom: 6rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  align-items: center;
-}
-
-.actionBtn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: #121214;
-  padding: 0.75rem;
-  border-radius: 12px;
-  backdrop-filter: blur(8px);
-  border: 1px solid #27272A;
-}
-
-/* Vendor Row Styling */
-.vendorRowWrapper {
-  height: 100%;
-  width: 100%;
-  background: var(--bg-100);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 2rem;
-}
-
-.rowHeader {
+  height: 70px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 2rem;
+  padding: 0 1.5rem;
+  z-index: 50;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
 }
 
-.rowHeader h2 {
-  font-size: 1.5rem;
-  font-weight: 900;
-  color: var(--primary);
+.backBtn {
+  color: #fff;
+  background: rgba(255,255,255,0.1);
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  transition: background 0.2s;
 }
 
-.allLink {
-  color: var(--text-300);
+.backBtn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.tabSwitcher {
+  display: flex;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  padding: 4px;
+  border-radius: 30px;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  color: #ccc;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.activeTab {
+  background: #fff;
+  color: #000;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 600;
+  cursor: pointer;
 }
 
-.scroller {
+.feedWrapper {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reelCard {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
-  gap: 1.5rem;
-  overflow-x: auto;
-  padding-bottom: 1rem;
-  scrollbar-width: none;
+  align-items: center;
+  justify-content: center;
 }
 
-.scroller::-webkit-scrollbar { display: none; }
+.videoPlayer {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+}
 
-.miniVendorCard {
-  min-width: 120px;
+.pauseIndicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.5);
+  border-radius: 50%;
+  padding: 20px;
+  backdrop-filter: blur(5px);
+  z-index: 20;
+  cursor: pointer;
+}
+
+.audioToggle {
+  position: absolute;
+  top: 90px;
+  right: 20px;
+  background: rgba(0,0,0,0.5);
+  border: none;
+  color: #fff;
+  padding: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  backdrop-filter: blur(5px);
+  z-index: 20;
+}
+
+.actionStack {
+  position: absolute;
+  right: 16px;
+  bottom: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  z-index: 30;
+}
+
+.actionBtn {
+  background: rgba(0,0,0,0.4);
+  border: none;
+  color: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 4px;
+  cursor: pointer;
+  backdrop-filter: blur(5px);
+  padding: 10px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  transition: transform 0.2s;
 }
 
-.miniVendorCard img {
-  width: 100px;
-  height: 100px;
-  border-radius: 20px;
+.actionBtn:hover {
+  transform: scale(1.1);
+}
+
+.bottomOverlay {
+  position: absolute;
+  bottom: 30px;
+  left: 20px;
+  right: 80px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  padding-top: 40px;
+}
+
+.vendorInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #fff;
+}
+
+.vendorLogo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
   object-fit: cover;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-md);
+  border: 2px solid #fff;
 }
 
-.miniVendorCard span {
+.vendorLogoFallback {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--primary, #6366f1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  border: 2px solid #fff;
+}
+
+.vendorName {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.reelTitle {
+  font-size: 0.85rem;
+  color: #ddd;
+  margin: 2px 0 0 0;
+}
+
+.productCard {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  max-width: 320px;
+}
+
+.productCard:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.productCard img {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.productDetails {
+  flex: 1;
+  min-width: 0;
+}
+
+.productDetails h5 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.productDetails p {
   font-size: 0.85rem;
   font-weight: 700;
+  color: #34d399;
+  margin: 2px 0 0 0;
+}
+
+.viewProductBtn {
+  background: #fff;
+  color: #000;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.navChevrons {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  z-index: 40;
+}
+
+.navChevrons button {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: #fff;
+  padding: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: background 0.2s;
+}
+
+.navChevrons button:hover:not(:disabled) {
+  background: rgba(255,255,255,0.4);
+}
+
+.navChevrons button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(5px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modalContent {
+  background: #1e1e24;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  position: relative;
   text-align: center;
 }
 
-/* ===== Very small phones: shrink the vendor scroller cards ===== */
-@media (max-width: 380px) {
-  .miniVendorCard { min-width: 105px; }
-  .miniVendorCard img { width: 85px; height: 85px; }
-  .scroller { gap: 1rem; }
+.closeModal {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.modalImage {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.modalPrice {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #34d399;
+  margin: 8px 0;
+}
+
+.modalStock {
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.loadingContainer, .emptyFeed {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #000;
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255,255,255,0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

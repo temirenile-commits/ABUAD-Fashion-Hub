@@ -612,6 +612,18 @@ export default function VendorDashboard() {
           product_section: 'fashion'
         });
 
+      // Also insert into our unified reels table for the immersive feed
+      await supabase
+        .from('reels')
+        .insert({
+          brand_id: brand.id,
+          video_url: url,
+          title: 'New Fashion Collection',
+          caption: 'Fresh campus arrivals just landed!',
+          product_section: 'fashion',
+          status: 'published'
+        });
+
       if (!dbError) {
         const { data: reelData } = await supabase
           .from('brand_reels')
