@@ -199,20 +199,37 @@ export default function ReelsPage() {
     }
   };
 
-  const handleDownload = async (videoUrl: string, title: string) => {
+  const [downloadingReelId, setDownloadingReelId] = useState<string | null>(null);
+
+  const handleDownload = async (reelId: string, title: string) => {
+    if (downloadingReelId === reelId) return; // Prevent duplicate requests
+    setDownloadingReelId(reelId);
+    
+    // Show toast or alert indicating preparation
+    const toastId = 'download-toast';
+    
     try {
-      const response = await fetch(videoUrl);
-      const blob = await response.blob();
+      const res = await fetch(`/api/reels/download?id=${reelId}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to prepare video');
+      }
+
+      const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${title.replace(/\s+/g, '_')}_reel.mp4`;
+      const sanitizedTitle = (title || 'MasterCart_Reel').replace(/[^a-zA-Z0-9_-]/g, '_');
+      a.download = `MasterCart_Reel_${sanitizedTitle}.mp4`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (err) {
-      alert('Failed to download video. Please try again.');
+    } catch (err: any) {
+      console.error('Download error:', err);
+      alert(err.message || 'Couldn\'t prepare this Reel for download. Please try again.');
+    } finally {
+      setDownloadingReelId(null);
     }
   };
 
@@ -424,8 +441,17 @@ export default function ReelsPage() {
                 }}>
                   <Share2 size={26} />
                 </button>
-                <button className={styles.actionBtn} onClick={() => handleDownload(reel.video_url, reel.title || 'reel')}>
-                  <Download size={26} />
+                <button 
+                  className={styles.actionBtn} 
+                  onClick={() => handleDownload(reel.id, reel.title || 'reel')}
+                  disabled={downloadingReelId === reel.id}
+                  title={downloadingReelId === reel.id ? 'Preparing video with MasterCart outro...' : 'Download Reel'}
+                >
+                  {downloadingReelId === reel.id ? (
+                    <div className={styles.animSpin} style={{ width: 26, height: 26, border: '3px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%' }} />
+                  ) : (
+                    <Download size={26} />
+                  )}
                 </button>
               </div>
 
