@@ -1096,3 +1096,8 @@
     gap: 10px;
   }
 }
+
+/* Compatibility alias for the existing React class reference. */
+.animSpin {
+  animation: spin 1s linear infinite;
+}
