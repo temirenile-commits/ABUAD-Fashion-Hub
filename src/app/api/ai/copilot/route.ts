@@ -1,6 +1,6 @@
 ﻿import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/server-auth';
-import { deepseekChat } from '@/lib/ai/deepseek';
+import { deepseekChat, DeepSeekProviderError } from '@/lib/ai/deepseek';
 import {
   getVendorProfile,
   getVendorProducts,
@@ -129,7 +129,12 @@ Rules:
 
     return NextResponse.json({ text: response.text, structured: { vendorId: brand.id, currentTab, model: response.model } });
   } catch (error) {
+    if (error instanceof DeepSeekProviderError) {
+      console.error('[COPILOT] Provider failure:', { code: error.providerCode, status: error.status, message: error.message });
+      const status = typeof error.status === 'number' && error.status >= 400 && error.status < 500 ? error.status : 502;
+      return NextResponse.json({ error: error.message, code: error.providerCode || 'AI_PROVIDER_ERROR' }, { status });
+    }
     console.error('[COPILOT] Request failed:', error instanceof Error ? error.message : 'Unknown error');
-    return NextResponse.json({ error: 'MasterCart AI is temporarily unavailable. Please try again shortly.' }, { status: 502 });
+    return NextResponse.json({ error: 'MasterCart AI is temporarily unavailable. Please try again shortly.', code: 'AI_INTERNAL_ERROR' }, { status: 502 });
   }
 }

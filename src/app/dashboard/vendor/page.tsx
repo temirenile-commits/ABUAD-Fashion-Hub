@@ -1171,12 +1171,12 @@ export default function VendorDashboard() {
       if (data.text) {
         setCopilotMsgs([...newMsgs, { role: 'assistant', content: data.text }]);
       } else if (data.error) {
-        setCopilotMsgs([...newMsgs, { role: 'assistant', content: `?? [VER-3] ${data.error}` }]);
+        setCopilotMsgs([...newMsgs, { role: 'assistant', content: `[${data.code || 'AI_ERROR'}] ${data.error}` }]);
       } else {
-        setCopilotMsgs([...newMsgs, { role: 'assistant', content: '?? [VER-3] No response received.' }]);
+        setCopilotMsgs([...newMsgs, { role: 'assistant', content: '[AI_EMPTY_RESPONSE] No response received.' }]);
       }
     } catch (err: any) {
-      setCopilotMsgs([...newMsgs, { role: 'assistant', content: `?? [VER-3] Connection error: ${err.message}` }]);
+      setCopilotMsgs([...newMsgs, { role: 'assistant', content: `[AI_CONNECTION_ERROR] ${err.message}` }]);
     }
     setCopilotLoading(false);
   };
