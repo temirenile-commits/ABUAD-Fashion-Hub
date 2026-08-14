@@ -38,6 +38,7 @@ export default function Home() {
   const [preferredCategories, setPreferredCategories] = useState<string[]>([]);
   const [targetedProducts, setTargetedProducts] = useState<LiveProduct[]>([]);
   const [userUniversityId, setUserUniversityId] = useState<string | undefined>(undefined);
+  const [userUniversityName, setUserUniversityName] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const initPreferences = async () => {
@@ -51,7 +52,20 @@ export default function Home() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
         const { data: profile } = await supabase.from('users').select('university_id').eq('id', session.user.id).single();
-        setUserUniversityId(profile?.university_id || undefined);
+        const universityId = profile?.university_id || undefined;
+        setUserUniversityId(universityId);
+
+        if (universityId) {
+          const { data: university } = await supabase
+            .from('universities')
+            .select('name')
+            .eq('id', universityId)
+            .maybeSingle();
+          setUserUniversityName(university?.name?.trim() || undefined);
+        } else {
+          setUserUniversityName(undefined);
+        }
+
         const response = await fetch(`/api/discovery?userId=${session.user.id}`);
         const discovery = await response.json();
         if (discovery.products) setTargetedProducts(discovery.products as LiveProduct[]);
@@ -139,7 +153,10 @@ export default function Home() {
               <MainSlider defaultContent={
                 <>
                   <div className={styles.heroCopy}>
-                    <div className={styles.eyebrow}><span className={styles.liveDot} /> ABUAD / CAMPUS MARKETPLACE</div>
+                    <div className={styles.eyebrow}>
+                      <span className={styles.liveDot} />
+                      {userUniversityName ? `${userUniversityName} / ` : ''}CAMPUS MARKETPLACE
+                    </div>
                     <h1>Everything you need.<br /><em>One campus.</em></h1>
                     <p>Discover verified student brands, everyday essentials, and the next big thing before it sells out.</p>
                     <div className={styles.heroActions}>
@@ -147,7 +164,9 @@ export default function Home() {
                       <Link href="/vendors" className={styles.secondaryButton}>Discover stores</Link>
                     </div>
                   </div>
-                  <div className={styles.heroLocation}><MapPin size={14} /> Available around ABUAD</div>
+                  <div className={styles.heroLocation}>
+                    <MapPin size={14} /> {userUniversityName ? `Available around ${userUniversityName}` : 'Available around campus'}
+                  </div>
                   <div className={styles.heroStats}>
                     <div><strong>{allProducts.filter((product) => !product.is_draft).length}</strong><span>campus finds</span></div>
                     <div><strong>{allBrands.filter((vendor) => vendor.verification_status === 'approved' || (vendor as unknown as { verified?: boolean }).verified === true).length}</strong><span>verified stores</span></div>
