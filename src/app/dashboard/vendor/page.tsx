@@ -135,6 +135,16 @@ export default function VendorDashboard() {
   const [pendingMilesAction, setPendingMilesAction] = useState<any>(null);
   const [milesActionLoading, setMilesActionLoading] = useState(false);
 
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem('mastercart-miles-conversation-vendor');
+      if (saved) setCopilotMsgs(JSON.parse(saved));
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try { window.localStorage.setItem('mastercart-miles-conversation-vendor', JSON.stringify(copilotMsgs.slice(-30))); } catch {}
+  }, [copilotMsgs]);
+
   const [newProduct, setNewProduct] = useState({
     title: '',
     description: '',

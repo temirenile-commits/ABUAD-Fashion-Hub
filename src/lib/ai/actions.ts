@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getVendorAISettings, getVendorProfile } from '@/lib/ai/vendor-tools';
 
-type ActionType = 'create_product' | 'update_product' | 'update_store_profile';
+type ActionType = 'create_product' | 'update_product' | 'update_store_profile' | 'update_service';
 type JsonRecord = Record<string, unknown>;
 
 type AuditRow = {
@@ -20,6 +20,7 @@ type AuditRow = {
 const CONFIRMATION_TTL_MS = 5 * 60 * 1000;
 const SAFE_STORE_FIELDS = ['name', 'description', 'logo_url', 'banner_url', 'cover_url', 'whatsapp_number', 'instagram_link', 'return_policy', 'shipping_policy', 'social_links'] as const;
 const PRODUCT_FIELDS = ['title', 'description', 'price', 'original_price', 'category', 'stock_count', 'media_urls', 'image_url', 'video_url', 'variants', 'is_draft', 'is_preorder', 'preorder_arrival_date', 'location_availability', 'delivery_rate', 'cafeteria_ids'] as const;
+const SERVICE_FIELDS = ['title', 'description', 'price', 'portfolio_urls', 'is_featured'] as const;
 
 export class MilesActionError extends Error {
   constructor(public readonly code: 'INVALID_ACTION' | 'NOT_ALLOWED' | 'NOT_FOUND' | 'EXPIRED' | 'ALREADY_USED' | 'CONFIRMATION_REQUIRED' | 'ACTION_FAILED', message: string) {
@@ -44,7 +45,7 @@ function hashRequest(actionType: ActionType, payload: JsonRecord): string {
 
 function scrubPayload(actionType: ActionType, input: unknown): JsonRecord {
   if (!isRecord(input)) throw new MilesActionError('INVALID_ACTION', 'The requested action details are incomplete.');
-  const allowed = actionType === 'update_store_profile' ? SAFE_STORE_FIELDS : PRODUCT_FIELDS;
+  const allowed = actionType === 'update_store_profile' ? SAFE_STORE_FIELDS : actionType === 'update_service' ? SERVICE_FIELDS : PRODUCT_FIELDS;
   const payload: JsonRecord = {};
   for (const field of allowed) {
     if (!(field in input)) continue;
@@ -67,7 +68,7 @@ function scrubPayload(actionType: ActionType, input: unknown): JsonRecord {
       payload[field] = text || null;
     } else if (field === 'is_draft' || field === 'is_preorder') {
       payload[field] = Boolean(value);
-    } else if (field === 'media_urls' || field === 'variants' || field === 'cafeteria_ids' || field === 'social_links') {
+    } else if (field === 'media_urls' || field === 'variants' || field === 'cafeteria_ids' || field === 'social_links' || field === 'portfolio_urls') {
       if (typeof value !== 'object') throw new MilesActionError('INVALID_ACTION', `The ${field.replaceAll('_', ' ')} value is invalid.`);
       payload[field] = value;
     } else if (field === 'preorder_arrival_date' || field === 'logo_url' || field === 'banner_url' || field === 'cover_url') {
@@ -83,16 +84,23 @@ function scrubPayload(actionType: ActionType, input: unknown): JsonRecord {
 function actionSummary(actionType: ActionType, payload: JsonRecord, brandName: string): string {
   if (actionType === 'create_product') return `Create a new product in ${brandName}: ${String(payload.title || 'untitled product')}.`;
   if (actionType === 'update_store_profile') return `Update the store profile for ${brandName}.`;
+  if (actionType === 'update_service') return `Update service ${String(payload.service_title || 'selected service')} in ${brandName}.`;
   return `Update product ${String(payload.product_title || 'selected product')} in ${brandName}.`;
 }
 
-export function detectMilesActionRequest(message: string, products: Array<{ id: string; title?: string | null }>) {
+export function detectMilesActionRequest(message: string, products: Array<{ id: string; title?: string | null }>, services: Array<{ id: string; title?: string | null }> = []) {
   const text = message.trim();
   const storeNameMatch = text.match(/(?:change|update|rename)\s+(?:my\s+)?(?:store|shop|brand)\s+name\s+to\s+["']?(.+?)["']?$/i);
   if (storeNameMatch?.[1]) return { actionType: 'update_store_profile' as const, payload: { name: storeNameMatch[1].trim() } };
 
   const createMatch = text.match(/(?:add|create|list)\s+(?:a\s+)?product\s+(?:called|named)\s+["']?(.+?)["']?\s+(?:for|at)\s+(?:₦|ngn|n)?\s*([0-9][0-9,]*(?:\.\d+)?)(?:\s+(?:with|and)\s+(?:stock|quantity)\s*[:=]?\s*(\d+))?$/i);
   if (createMatch?.[1] && createMatch?.[2]) return { actionType: 'create_product' as const, payload: { title: createMatch[1].trim(), price: Number(createMatch[2].replaceAll(',', '')), stock_count: createMatch[3] ? Number(createMatch[3]) : 0 } };
+
+  const servicePriceMatch = text.match(/(?:set|change|update)\s+(?:the\s+)?price\s+(?:of|for)\s+(?:the\s+)?service\s+["']?(.+?)["']?\s+to\s+(?:₦|ngn|n)?\s*([0-9][0-9,]*(?:\.\d+)?)\s*$/i);
+  if (servicePriceMatch?.[1] && servicePriceMatch?.[2]) {
+    const service = services.find((item) => item.title?.toLowerCase() === servicePriceMatch[1].trim().toLowerCase());
+    if (service) return { actionType: 'update_service' as const, payload: { service_id: service.id, price: Number(servicePriceMatch[2].replaceAll(',', '')) } };
+  }
 
   const stockMatch = text.match(/(?:set|change|update)\s+(?:the\s+)?stock\s+(?:of|for)\s+["']?(.+?)["']?\s+to\s+(\d+)\s*$/i);
   if (stockMatch?.[1] && stockMatch?.[2]) {
@@ -110,14 +118,23 @@ export function detectMilesActionRequest(message: string, products: Array<{ id: 
 }
 
 export async function proposeMilesAction(userId: string, actionType: ActionType, input: unknown) {
-  if (!['create_product', 'update_product', 'update_store_profile'].includes(actionType)) throw new MilesActionError('NOT_ALLOWED', 'Miles cannot perform that type of action.');
+  if (!['create_product', 'update_product', 'update_store_profile', 'update_service'].includes(actionType)) throw new MilesActionError('NOT_ALLOWED', 'Miles cannot perform that type of action.');
   const brand = await getVendorProfile(userId);
   if (!brand) throw new MilesActionError('NOT_FOUND', 'No vendor store is associated with this account.');
   const settings = await getVendorAISettings(brand.id);
   if (!settings.store_access_enabled) throw new MilesActionError('NOT_ALLOWED', 'Store access is not activated for Miles.');
   if (!settings.store_write_enabled) throw new MilesActionError('NOT_ALLOWED', 'Store write access is not activated for Miles.');
   const payload = scrubPayload(actionType, input);
-  if (actionType === 'update_product') {
+      if (actionType === 'update_service') {
+      const serviceId = String(isRecord(input) ? input.service_id || '' : '');
+      if (!serviceId) throw new MilesActionError('INVALID_ACTION', 'A service must be selected before updating it.');
+      const { data: service } = await supabaseAdmin.from('services').select('id, brand_id, title').eq('id', serviceId).maybeSingle();
+      if (!service || service.brand_id !== brand.id) throw new MilesActionError('NOT_FOUND', 'That service is not part of your store.');
+      payload.service_id = service.id;
+      payload.service_title = service.title;
+    }
+    if (actionType === 'update_product') {
+
     const productId = String(isRecord(input) ? input.product_id || '' : '');
     if (!productId) throw new MilesActionError('INVALID_ACTION', 'A product must be selected before updating it.');
     const { data: product } = await supabaseAdmin.from('products').select('id, brand_id, title').eq('id', productId).maybeSingle();
@@ -161,10 +178,20 @@ async function executeMilesAction(userId: string, action: AuditRow): Promise<{ s
   if (!brand || brand.id !== action.brand_id) throw new MilesActionError('NOT_ALLOWED', 'The vendor store could not be verified.');
   const payload = { ...action.payload };
   delete payload.product_title;
+  const serviceId = String(payload.service_id || '');
+  delete payload.service_id;
+  delete payload.service_title;
   if (action.action_type === 'update_store_profile') {
     const { error } = await supabaseAdmin.from('brands').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', brand.id).eq('owner_id', userId);
     if (error) throw error;
     return { actionType: action.action_type, summary: 'Your store profile was updated.' };
+  }
+  if (action.action_type === 'update_service') {
+    const { data: service } = await supabaseAdmin.from('services').select('id, brand_id').eq('id', serviceId).maybeSingle();
+    if (!service || service.brand_id !== brand.id) throw new MilesActionError('NOT_FOUND', 'That service is not part of your store.');
+    const { error } = await supabaseAdmin.from('services').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', serviceId).eq('brand_id', brand.id);
+    if (error) throw error;
+    return { actionType: action.action_type, summary: 'Your service was updated.' };
   }
   if (action.action_type === 'create_product') {
     const product: JsonRecord = { ...payload, brand_id: brand.id, owner_id: userId, product_section: brand.marketplace_type === 'delicacies' ? 'delicacies' : 'fashion', university_id: brand.university_id, visibility_type: 'university' };

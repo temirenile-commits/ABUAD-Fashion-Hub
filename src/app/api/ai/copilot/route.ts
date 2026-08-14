@@ -117,7 +117,7 @@ export async function POST(req: Request) {
       getVendorMessages(user.id),
     ]);
 
-    const actionRequest = detectMilesActionRequest(lastUserMessage, products);
+    const actionRequest = detectMilesActionRequest(lastUserMessage, products, services);
     if (actionRequest) {
       if (!aiSettings.store_write_enabled) return NextResponse.json({ error: 'Write access is not activated for Miles. Turn on Store Write Access in AI Settings first.', code: 'MILES_STORE_WRITE_DISABLED' }, { status: 403 });
       const proposal = await proposeMilesAction(user.id, actionRequest.actionType, actionRequest.payload);
