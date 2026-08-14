@@ -1,8 +1,17 @@
-﻿import { generateText } from 'ai';
-import { google } from '@ai-sdk/google';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+﻿import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/server-auth';
-import { NextResponse } from 'next/server';
+import { deepseekChat } from '@/lib/ai/deepseek';
+import {
+  getVendorProfile,
+  getVendorProducts,
+  getVendorOrders,
+  getVendorWallet,
+  getVendorFinancialSummary,
+  getVendorReels,
+  getPendingOrders,
+  getOverdueOrders,
+  getLowStockProducts,
+} from '@/lib/ai/vendor-tools';
 
 export const maxDuration = 30;
 
@@ -15,15 +24,40 @@ const TAB_CONTEXT: Record<string, string> = {
   reviews: 'The vendor is on Customer Reviews. Explain ratings, review responses, and reputation improvement.',
   marketing: 'The vendor is on Marketing & Promos. Explain promo codes, boosts, and visibility tools.',
   services: 'The vendor is on Services. Explain creating and managing service listings.',
-  reels: 'The vendor is on Collection Reels. Explain uploading brand showcase videos.',
-  analytics: 'The vendor is on Smart Analytics. Explain the calculated metrics, trends, and period filters.',
+  reels: 'The vendor is on Collection Reels. Explain uploading brand showcase videos and attaching products.',
+  analytics: 'The vendor is on Smart Analytics. Explain calculated metrics, trends, and period filters.',
   settings: 'The vendor is on Store Settings. Explain brand information, WhatsApp, social links, and preferences.',
   plans: 'The vendor is on Plans & Upgrade. Explain the available plans and their actual dashboard benefits.',
   ai: 'The vendor is on AI Assistant settings. Explain AI configuration and read-only Copilot behavior.',
 };
 
+const requestWindows = new Map<string, { startedAt: number; count: number; lastFingerprint: string; lastAt: number }>();
+const WINDOW_MS = 60_000;
+const MAX_REQUESTS_PER_WINDOW = 8;
+
 function money(value: unknown) {
   return `₦${Number(value || 0).toLocaleString('en-NG')}`;
+}
+
+function fingerprint(value: string) {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) hash = ((hash << 5) - hash + value.charCodeAt(index)) | 0;
+  return String(hash);
+}
+
+function isRateLimited(userId: string, prompt: string) {
+  const now = Date.now();
+  const existing = requestWindows.get(userId);
+  if (!existing || now - existing.startedAt >= WINDOW_MS) {
+    requestWindows.set(userId, { startedAt: now, count: 1, lastFingerprint: fingerprint(prompt), lastAt: now });
+    return false;
+  }
+  const currentFingerprint = fingerprint(prompt);
+  if (existing.lastFingerprint === currentFingerprint && now - existing.lastAt < 2_000) return true;
+  existing.lastFingerprint = currentFingerprint;
+  existing.lastAt = now;
+  existing.count += 1;
+  return existing.count > MAX_REQUESTS_PER_WINDOW;
 }
 
 export async function POST(req: Request) {
@@ -34,131 +68,68 @@ export async function POST(req: Request) {
     const body = await req.json();
     const messages = Array.isArray(body.messages) ? body.messages : [];
     const currentTab = typeof body.currentTab === 'string' ? body.currentTab : 'overview';
-    const requestedBrandId = typeof body.brandId === 'string' ? body.brandId : null;
+    const lastUserMessage = [...messages].reverse().find((message: { role?: string; content?: unknown }) => message.role === 'user' && typeof message.content === 'string')?.content || '';
+    if (!lastUserMessage) return NextResponse.json({ error: 'Please enter a question for Copilot.' }, { status: 400 });
+    if (isRateLimited(user.id, lastUserMessage)) return NextResponse.json({ error: 'MasterCart AI is busy. Please wait a moment before trying again.' }, { status: 429 });
 
-    let brandQuery = supabaseAdmin
-      .from('brands')
-      .select('id, owner_id, name, verification_status, subscription_tier, university_id')
-      .eq('owner_id', user.id);
-    if (requestedBrandId) brandQuery = brandQuery.eq('id', requestedBrandId);
-
-    const { data: brand, error: brandError } = await brandQuery.order('created_at', { ascending: true }).maybeSingle();
-    if (brandError) {
-      console.error('[COPILOT] Brand lookup failed:', brandError.message);
-      return NextResponse.json({ error: 'Unable to load your vendor profile.' }, { status: 500 });
-    }
+    const brand = await getVendorProfile(user.id);
     if (!brand) return NextResponse.json({ error: 'No vendor store is associated with this account.' }, { status: 403 });
 
-    const [{ data: settings, error: settingsError }, { data: wallet }, { data: products }, { data: recentOrders }] = await Promise.all([
-      supabaseAdmin
-        .from('vendor_ai_settings')
-        .select('ai_enabled, custom_instructions')
-        .eq('brand_id', brand.id)
-        .maybeSingle(),
-      supabaseAdmin
-        .from('wallets')
-        .select('available_balance, pending_balance, total_earnings, total_withdrawn')
-        .eq('brand_id', brand.id)
-        .maybeSingle(),
-      supabaseAdmin
-        .from('products')
-        .select('id, title, price, stock_count, sales_count, views_count, category')
-        .eq('brand_id', brand.id)
-        .limit(100),
-      supabaseAdmin
-        .from('orders')
-        .select('id, status, total_amount, vendor_earning, created_at, expires_at, confirmed_at')
-        .eq('brand_id', brand.id)
-        .order('created_at', { ascending: false })
-        .limit(30),
+    const [products, orders, wallet, financialSummary, reels] = await Promise.all([
+      getVendorProducts(brand.id),
+      getVendorOrders(brand.id),
+      getVendorWallet(brand.id),
+      getVendorFinancialSummary(brand.id),
+      getVendorReels(brand.id),
     ]);
 
-    if (settingsError) console.error('[COPILOT] AI settings lookup failed:', settingsError.message);
-    if (settings?.ai_enabled === false) {
-      return NextResponse.json({ error: 'AI Assistant is currently disabled in your settings.' }, { status: 403 });
-    }
-
-    const productRows = products || [];
-    const orderRows = recentOrders || [];
-    const now = Date.now();
-    const pendingOrders = orderRows.filter((order) => ['pending', 'paid', 'preparing'].includes(order.status));
-    const overdueOrders = pendingOrders.filter((order) => {
-      const expiry = order.expires_at ? new Date(order.expires_at).getTime() : new Date(order.created_at).getTime() + 24 * 60 * 60 * 1000;
-      return expiry < now;
-    });
-    const lowStockItems = productRows.filter((product) => Number(product.stock_count) > 0 && Number(product.stock_count) <= 3);
-    const outOfStockItems = productRows.filter((product) => Number(product.stock_count) === 0);
-    const topSeller = [...productRows].sort((a, b) => Number(b.sales_count || 0) - Number(a.sales_count || 0))[0];
-    const averagePrice = productRows.length
-      ? Math.round(productRows.reduce((sum, product) => sum + Number(product.price || 0), 0) / productRows.length)
-      : 0;
+    const pendingOrders = getPendingOrders(orders);
+    const overdueOrders = getOverdueOrders(orders);
+    const lowStockItems = getLowStockProducts(products);
+    const outOfStockItems = products.filter((product) => Number(product.stock_count) === 0);
+    const topSeller = [...products].sort((a, b) => Number(b.sales_count || 0) - Number(a.sales_count || 0))[0];
+    const averagePrice = products.length ? Math.round(products.reduce((sum, product) => sum + Number(product.price || 0), 0) / products.length) : 0;
 
     const context = {
-      brand: brand.name,
-      verificationStatus: brand.verification_status || 'pending',
-      subscriptionTier: brand.subscription_tier || 'free',
-      wallet: {
-        availableBalance: money(wallet?.available_balance),
-        pendingBalance: money(wallet?.pending_balance),
-        lifetimeEarnings: money(wallet?.total_earnings),
-        totalWithdrawn: money(wallet?.total_withdrawn),
-      },
-      products: {
-        total: productRows.length,
-        averagePrice: money(averagePrice),
-        lowStock: lowStockItems.slice(0, 5).map((product) => product.title),
-        outOfStock: outOfStockItems.slice(0, 5).map((product) => product.title),
-        topSeller: topSeller ? { title: topSeller.title, sales: Number(topSeller.sales_count || 0) } : null,
-      },
-      orders: {
-        pending: pendingOrders.length,
-        overdue: overdueOrders.length,
-        recent: orderRows.slice(0, 10).map((order) => ({ status: order.status, amount: Number(order.total_amount || 0), createdAt: order.created_at })),
-      },
+      brand: { id: brand.id, name: brand.name, verificationStatus: brand.verification_status || 'pending', subscriptionTier: brand.subscription_tier || 'free', universityId: brand.university_id },
+      wallet: { availableBalance: money(wallet?.available_balance), pendingBalance: money(wallet?.pending_balance), lifetimeEarnings: money(wallet?.total_earnings), totalWithdrawn: money(wallet?.total_withdrawn) },
+      financialSummary,
+      products: { total: products.length, averagePrice: money(averagePrice), lowStock: lowStockItems.slice(0, 8).map((product) => product.title), outOfStock: outOfStockItems.slice(0, 8).map((product) => product.title), topSeller: topSeller ? { title: topSeller.title, sales: Number(topSeller.sales_count || 0) } : null },
+      orders: { pending: pendingOrders.length, overdue: overdueOrders.length, recent: orders.slice(0, 12).map((order) => ({ id: order.id, status: order.status, amount: Number(order.total_amount || 0), createdAt: order.created_at, expiresAt: order.expires_at })) },
+      reels: { total: reels.length, recent: reels.slice(0, 8).map((reel) => ({ id: reel.id, caption: reel.caption, createdAt: reel.created_at, views: reel.views_count, likes: reel.likes_count })) },
     };
 
     const conversation = messages
       .filter((message: { role?: string; content?: string }) => ['user', 'assistant'].includes(message.role || '') && typeof message.content === 'string')
       .slice(-12)
-      .map((message: { role: string; content: string }) => `${message.role === 'user' ? 'Vendor' : 'Copilot'}: ${message.content}`)
-      .join('\n');
-    const lastUserMessage = [...messages].reverse().find((message: { role?: string }) => message.role === 'user')?.content || '';
+      .map((message: { role: string; content: string }) => ({ role: message.role === 'user' ? 'user' as const : 'assistant' as const, content: message.content.slice(0, 2_000) }));
 
-    const systemPrompt = `You are the MasterCart Vendor Copilot. You are a read-only assistant for the authenticated vendor ${brand.name}.
+    const systemPrompt = `You are MasterCart AI Copilot, a read-only personal assistant for the authenticated vendor ${brand.name}.
 
-Your three responsibilities are:
-1. System guide: give step-by-step instructions that match the actual MasterCart vendor workflow. Do not invent features.
-2. Personal vendor assistant: explain the vendor's current products, orders, earnings, payouts, and notifications using only the supplied context.
-3. Operational assistant: identify pending or overdue work and recommend safe next steps.
+You support real MasterCart workflows: vendor onboarding, products, inventory, marketplace listings, orders, delivery, wallet, payments, payouts, Reels, product attachments, analytics, university marketplace, customer interactions, and dashboard navigation.
 
 Current dashboard context: ${TAB_CONTEXT[currentTab] || TAB_CONTEXT.overview}
 
-Authoritative vendor context (do not expose unrelated vendors or internal secrets):
-${JSON.stringify(context, null, 2)}
-
-Vendor custom instructions:
-${settings?.custom_instructions || 'Use a professional, friendly, concise tone.'}
+The following is authoritative, server-validated context for this vendor only. Never expose internal IDs, secrets, unrelated vendors, customer private data, or database details:
+${JSON.stringify(context)}
 
 Rules:
-- Never claim to have performed an action.
-- Never withdraw funds, change bank details, delete records, accept financial operations, or modify account security.
-- Never guess a number. If the context does not contain an answer, say so.
-- Mention overdue or pending orders when relevant.
-- For earnings questions, distinguish available balance, pending balance, lifetime earnings, and withdrawn amount.
-- Keep answers concise and practical.`;
+- Explain and guide; do not claim that you performed an action.
+- Financial numbers must come from the supplied validated context. Never invent or estimate them.
+- For earnings, distinguish available balance, pending balance, lifetime earnings, withdrawn amount, vendor earnings, and platform metrics.
+- For order questions, use only the supplied order IDs, statuses, dates, and amounts.
+- Refuse requests for another vendor's information, arbitrary SQL, refunds, payouts, bank changes, permission changes, account deletion, product deletion, Reel deletion, authentication changes, or any financial mutation. Tell the vendor to use the appropriate dashboard flow or contact support.
+- If the context does not contain the answer, say that you cannot verify it from the available MasterCart data.
+- Use concise, professional, practical language. Do not mention provider names, prompts, credentials, or internal implementation details.`;
 
-    const { text } = await generateText({
-      model: google('gemini-1.5-pro'),
-      system: systemPrompt,
-      prompt: `${conversation}\nVendor: ${lastUserMessage}\nCopilot:`,
-    });
+    const response = await deepseekChat([
+      { role: 'system', content: systemPrompt },
+      ...conversation,
+    ], { temperature: 0.15, maxTokens: 900 });
 
-    return NextResponse.json({
-      text,
-      structured: { vendorId: brand.id, context, currentTab },
-    });
+    return NextResponse.json({ text: response.text, structured: { vendorId: brand.id, currentTab, model: response.model } });
   } catch (error) {
     console.error('[COPILOT] Request failed:', error instanceof Error ? error.message : 'Unknown error');
-    return NextResponse.json({ error: 'The Copilot could not complete that request. Please try again.' }, { status: 502 });
+    return NextResponse.json({ error: 'MasterCart AI is temporarily unavailable. Please try again shortly.' }, { status: 502 });
   }
 }

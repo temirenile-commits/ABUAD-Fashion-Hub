@@ -1191,7 +1191,6 @@ export default function VendorDashboard() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({
           messages: newMsgs,
-          brandId: brand.id,
           currentTab: activeTab
         })
       });
@@ -3688,7 +3687,7 @@ export default function VendorDashboard() {
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#FFFFFF,#000000)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>?</div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>AI Copilot</div>
-                <div style={{ fontSize: '0.7rem', color: '#FFFFFF' }}>Powered by Gemini</div>
+                <div style={{ fontSize: '0.7rem', color: '#FFFFFF' }}>Powered by MasterCart AI</div>
               </div>
             </div>
             <button onClick={() => setShowCopilot(false)} style={{ background: 'none', border: 'none', color: 'var(--text-400)', cursor: 'pointer', padding: '4px' }}><X size={16} /></button>
