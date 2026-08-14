@@ -23,6 +23,31 @@
   position: relative;
   height: 100%;
   overflow: hidden;
+  min-width: 0;
+}
+
+.defaultSlide {
+  background: #101815;
+}
+
+.defaultBackground {
+  object-fit: cover;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 0.92;
+}
+
+.defaultShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(3, 12, 9, 0.94) 0%, rgba(3, 12, 9, 0.64) 42%, rgba(3, 12, 9, 0.15) 100%), linear-gradient(0deg, rgba(0, 0, 0, 0.74), transparent 60%);
+  z-index: 1;
+}
+
+.defaultContent {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
 }
 
 .img {
@@ -110,6 +135,10 @@
 }
 
 @media (max-width: 600px) {
+  .defaultContent :global(.heroCopy) {
+    padding: 2rem 1.5rem;
+  }
+
   .overlay {
     padding: 1.5rem;
     background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 80%);

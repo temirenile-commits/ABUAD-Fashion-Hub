@@ -136,24 +136,24 @@ export default function Home() {
             </aside>
 
             <div className={styles.heroCard}>
-              <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-                <MainSlider />
-              </div>
-              <div className={styles.heroOverlay} style={{ zIndex: 1, pointerEvents: 'none' }} />
-              <div className={styles.heroCopy} style={{ zIndex: 2, position: 'relative' }}>
-                <div className={styles.eyebrow}><span className={styles.liveDot} /> ABUAD / CAMPUS MARKETPLACE</div>
-                <h1>Everything you need.<br /><em>One campus.</em></h1>
-                <p>Discover verified student brands, everyday essentials, and the next big thing before it sells out.</p>
-                <div className={styles.heroActions}>
-                  <Link href="/explore" className={styles.primaryButton}>Explore marketplace <ArrowRight size={16} /></Link>
-                  <Link href="/vendors" className={styles.secondaryButton}>Discover stores</Link>
-                </div>
-              </div>
-              <div className={styles.heroLocation} style={{ zIndex: 2, position: 'relative' }}><MapPin size={14} /> Available around ABUAD</div>
-              <div className={styles.heroStats} style={{ zIndex: 2, position: 'relative' }}>
-                <div><strong>{allProducts.filter((product) => !product.is_draft).length}</strong><span>campus finds</span></div>
-                <div><strong>{allBrands.filter((vendor) => vendor.verification_status === 'approved' || (vendor as unknown as { verified?: boolean }).verified === true).length}</strong><span>verified stores</span></div>
-              </div>
+              <MainSlider defaultContent={
+                <>
+                  <div className={styles.heroCopy}>
+                    <div className={styles.eyebrow}><span className={styles.liveDot} /> ABUAD / CAMPUS MARKETPLACE</div>
+                    <h1>Everything you need.<br /><em>One campus.</em></h1>
+                    <p>Discover verified student brands, everyday essentials, and the next big thing before it sells out.</p>
+                    <div className={styles.heroActions}>
+                      <Link href="/explore" className={styles.primaryButton}>Explore marketplace <ArrowRight size={16} /></Link>
+                      <Link href="/vendors" className={styles.secondaryButton}>Discover stores</Link>
+                    </div>
+                  </div>
+                  <div className={styles.heroLocation}><MapPin size={14} /> Available around ABUAD</div>
+                  <div className={styles.heroStats}>
+                    <div><strong>{allProducts.filter((product) => !product.is_draft).length}</strong><span>campus finds</span></div>
+                    <div><strong>{allBrands.filter((vendor) => vendor.verification_status === 'approved' || (vendor as unknown as { verified?: boolean }).verified === true).length}</strong><span>verified stores</span></div>
+                  </div>
+                </>
+              } />
             </div>
 
             <aside className={styles.dealPanel}>
