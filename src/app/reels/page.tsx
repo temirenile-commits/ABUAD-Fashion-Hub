@@ -6,7 +6,8 @@ import styles from './reels.module.css';
 import { 
   ArrowLeft, Heart, MessageCircle, Share2, Volume2, VolumeX, 
   Play, ChevronUp, ChevronDown, X, Search, Download, 
-  Loader2, Send, ShoppingBag, VideoOff, Info, CheckCircle, User
+  Loader2, Send, ShoppingBag, VideoOff, Info, CheckCircle, User,
+  ShieldCheck, ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -25,6 +26,7 @@ export default function ReelsPage() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Reel[]>([]);
+  const [searchVendors, setSearchVendors] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   // Modals & Sheets
@@ -72,10 +74,37 @@ export default function ReelsPage() {
     }
   };
 
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setSearchVendors([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const [reelsRes, vendorsRes] = await Promise.all([
+          fetch(`/api/reels?search=${encodeURIComponent(searchQuery)}`),
+          supabase.from('brands').select('id, name, logo_url, verified, category, owner_id').ilike('name', `%${searchQuery}%`).limit(5)
+        ]);
+        const reelsData = await reelsRes.json();
+        if (reelsData.success && reelsData.reels) {
+          setSearchResults(reelsData.reels);
+        }
+        if (vendorsRes.data) {
+          setSearchVendors(vendorsRes.data);
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
-    fetchReels(searchQuery);
   };
 
   // Intersection observer for native scroll snap tracking
@@ -318,59 +347,100 @@ export default function ReelsPage() {
             </button>
           </div>
 
-          <div className={styles.searchResultsGrid}>
+          <div className={styles.searchBody}>
             {isSearching ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className={`${styles.searchGridCard} ${styles.skeleton}`} />
-              ))
-            ) : searchResults.length > 0 ? (
-              searchResults.map(reel => (
-                <div 
-                  key={reel.id} 
-                  className={styles.searchGridCard}
-                  onClick={() => {
-                    const idx = reels.findIndex(r => r.id === reel.id);
-                    if (idx !== -1) {
-                      setCurrentIndex(idx);
-                      cardRefs.current[reel.id]?.scrollIntoView({ behavior: 'smooth' });
-                    } else {
-                      setReels([reel, ...reels]);
-                      setCurrentIndex(0);
-                    }
-                    setIsSearchOpen(false);
-                  }}
-                >
-                  <div style={{ position: 'relative', width: '100%', height: '100%', background: '#000' }}>
-                    <img src={reel.cover_url || reel.thumbnail_url || '/branding/mastercart-mark.png'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
-                        <Play size={16} fill="currentColor" />
-                      </div>
+              <div style={{ padding: '3rem', textAlign: 'center', color: 'rgba(255,255,255,0.5)' }}>
+                <Loader2 className={styles.animSpin} size={28} style={{ margin: '0 auto 10px' }} />
+                <p>Searching vendors and reels...</p>
+              </div>
+            ) : searchQuery.trim() ? (
+              <div>
+                {searchVendors.length > 0 && (
+                  <div style={{ marginBottom: '24px' }}>
+                    <div className={styles.searchSectionTitle}>Vendors</div>
+                    <div className={styles.vendorsList}>
+                      {searchVendors.map(vendor => {
+                        const slug = vendor.name?.toLowerCase().replace(/\s+/g, '-') || 'store';
+                        return (
+                          <div 
+                            key={vendor.id} 
+                            className={styles.vendorResultCard}
+                            onClick={() => {
+                              setIsSearchOpen(false);
+                              router.push(`/vendor/${slug}?id=${vendor.id}`);
+                            }}
+                          >
+                            <div className={styles.vendorResultLeft}>
+                              <div className={styles.vendorAvatarWrap}>
+                                {vendor.logo_url ? <img src={vendor.logo_url} alt="" /> : vendor.name?.[0]}
+                              </div>
+                              <div className={styles.vendorInfo}>
+                                <h4>
+                                  {vendor.name}
+                                  {vendor.verified && <ShieldCheck size={14} color="var(--primary)" fill="currentColor" />}
+                                </h4>
+                                <span>{vendor.category || 'Verified Store'}</span>
+                              </div>
+                            </div>
+                            <ChevronRight size={18} className={styles.vendorArrow} />
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                  <div className={styles.searchGridOverlay}>
-                    <h5>{reel.title}</h5>
-                    <span>@{reel.brands?.name}</span>
+                )}
+
+                {searchResults.length > 0 && (
+                  <div>
+                    <div className={styles.searchSectionTitle}>Reels</div>
+                    <div className={styles.reelsSearchGrid}>
+                      {searchResults.map(reel => (
+                        <div 
+                          key={reel.id} 
+                          className={styles.searchGridCard}
+                          onClick={() => {
+                            const idx = reels.findIndex(r => r.id === reel.id);
+                            if (idx !== -1) {
+                              setCurrentIndex(idx);
+                              cardRefs.current[reel.id]?.scrollIntoView({ behavior: 'smooth' });
+                            } else {
+                              setReels([reel, ...reels]);
+                              setCurrentIndex(0);
+                            }
+                            setIsSearchOpen(false);
+                          }}
+                        >
+                          <div style={{ position: 'relative', width: '100%', height: '100%', background: '#000' }}>
+                            <img src={reel.cover_url || reel.thumbnail_url || '/branding/mastercart-mark.png'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
+                                <Play size={16} fill="currentColor" />
+                              </div>
+                            </div>
+                          </div>
+                          <div className={styles.searchGridOverlay}>
+                            <h5>{reel.title}</h5>
+                            <span>@{reel.brands?.name}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))
-            ) : searchQuery ? (
-              <div style={{ gridColumn: '1 / -1', paddingTop: '4rem' }}>
-                <div className={styles.emptyStateContainer} style={{ height: 'auto', background: 'transparent' }}>
-                  <div className={styles.emptyIconWrapper}>
-                    <Search size={40} />
+                )}
+
+                {searchVendors.length === 0 && searchResults.length === 0 && (
+                  <div className={styles.searchStateBox}>
+                    <Search size={40} style={{ opacity: 0.3 }} />
+                    <h3>No matching results</h3>
+                    <p>We couldn&apos;t find a vendor or Reel matching &quot;{searchQuery}&quot;.</p>
                   </div>
-                  <h2 className={styles.emptyTitle}>No Reels Found</h2>
-                  <p className={styles.emptyDesc}>We couldn't find any reels matching "{searchQuery}". Try a different keyword.</p>
-                  <button className={styles.emptyBtn} onClick={() => setSearchQuery('')}>
-                    Clear Search
-                  </button>
-                </div>
+                )}
               </div>
             ) : (
-              <div style={{ gridColumn: '1 / -1', padding: '3rem 2rem', textAlign: 'center', opacity: 0.5 }}>
-                <Info size={40} style={{ margin: '0 auto 1rem auto', display: 'block' }} />
-                <p>Type a keyword above to explore matching reels and products across campus brands.</p>
+              <div className={styles.searchStateBox}>
+                <Search size={44} style={{ opacity: 0.3 }} />
+                <h3>Search Reels & Vendors</h3>
+                <p>Type to instantly discover vendors, videos, and products.</p>
               </div>
             )}
           </div>
