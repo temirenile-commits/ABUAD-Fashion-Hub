@@ -15,9 +15,8 @@
   width: 100%;
   height: 100%;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  /* Prevent the inner track from expanding the layout beyond one slide */
+  /* The parent frame clips the track; do not clip the translated track itself. */
   overflow: visible;
-  clip-path: inset(0);
 }
 
 .slide {
@@ -114,27 +113,33 @@
 
 .dots {
   position: absolute;
-  bottom: 1.5rem;
+  bottom: 0.85rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.3rem;
   z-index: 10;
 }
 
-.dot {
-  width: 8px;
-  height: 8px;
+.dot,
+.dotActive {
+  appearance: none;
+  box-sizing: border-box;
+  width: 5px;
+  min-width: 5px;
+  height: 5px;
+  min-height: 5px;
+  padding: 0;
+  border: 0;
   border-radius: 50%;
-  background: #27272A;
+  background: rgba(255, 255, 255, 0.45);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: opacity 0.2s ease, background 0.2s ease;
 }
 
 .dotActive {
   background: var(--primary);
-  width: 20px;
-  border-radius: 4px;
 }
 
 @media (max-width: 600px) {
