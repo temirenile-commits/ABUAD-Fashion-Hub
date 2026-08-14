@@ -7,6 +7,7 @@ import RealtimeProvider from '@/components/providers/RealtimeProvider';
 import LayoutWrapper from '@/components/LayoutWrapper';
 import { ThemeProvider } from '@/context/ThemeContext';
 import MilesPersistentBubble from '@/components/MilesPersistentBubble';
+import MilesGlobalWorkspace from '@/components/MilesGlobalWorkspace';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -107,6 +108,7 @@ export default function RootLayout({
                       />
                       {children}
                       <MilesPersistentBubble />
+                      <MilesGlobalWorkspace />
                     </LayoutWrapper>
                   </TourProvider>
                 </NotificationProvider>

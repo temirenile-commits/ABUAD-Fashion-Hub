@@ -1,4 +1,4 @@
-import type { AIProviderName } from '@/lib/ai/provider-types';
+import type { AIProviderName, AIProviderState } from '@/lib/ai/provider-types';
 
 export const MILES_AI_CONFIG = {
   gateway: 'server-provider-router',
@@ -6,10 +6,21 @@ export const MILES_AI_CONFIG = {
   freeRouter: 'openrouter/free',
   fallbackRoutes: ['openrouter'] as AIProviderName[],
   enabledProviders: ['deepseek', 'openrouter'] as AIProviderName[],
+  providerStates: {
+    deepseek: 'active',
+    openrouter: 'fallback',
+    openai: 'inactive',
+    gemini: 'inactive',
+    claude: 'inactive',
+    future: 'inactive',
+  } as Record<AIProviderName, AIProviderState>,
   capabilities: {
     readOnlyContext: true,
-    vendorScopedTools: true,
-    toolsAreMutationFree: true,
+    roleAwareTools: true,
+    scopeAwareTools: true,
+    confirmationGatedMutations: true,
+    vendorScopedTools: false,
+    toolsAreMutationFree: false,
   },
   timeoutMs: 25_000,
   retryPolicy: {

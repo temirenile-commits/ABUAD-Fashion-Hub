@@ -13,7 +13,9 @@ export type AIFailureType =
   | 'INVALID_REQUEST'
   | 'UNKNOWN';
 
-export type AIProviderName = 'deepseek' | 'openrouter';
+export type AIProviderName = 'deepseek' | 'openrouter' | 'openai' | 'gemini' | 'claude' | 'future';
+
+export type AIProviderState = 'active' | 'inactive' | 'fallback' | 'disabled';
 
 export type AIProviderResult = {
   text: string;

@@ -44,7 +44,7 @@ function deepseekProvider() {
   };
 }
 
-function providers(): Record<AIProviderName, { name: AIProviderName; model: string; generateResponse: (messages: AIMessage[], options?: { temperature?: number; maxTokens?: number }) => Promise<AIProviderResult> }> {
+function providers(): Partial<Record<AIProviderName, { name: AIProviderName; model: string; generateResponse: (messages: AIMessage[], options?: { temperature?: number; maxTokens?: number }) => Promise<AIProviderResult> }>> {
   return { deepseek: deepseekProvider(), openrouter: new OpenRouterProvider() };
 }
 
@@ -55,7 +55,12 @@ export async function milesChat(messages: AIMessage[], options?: { temperature?:
   const priority = configuredProviderPriority();
   for (const providerName of priority) {
     try {
-      const result = await available[providerName].generateResponse(messages, options);
+      const provider = available[providerName];
+      if (!provider) {
+        failures.push({ provider: providerName, failureType: 'PROVIDER_UNAVAILABLE' });
+        continue;
+      }
+      const result = await provider.generateResponse(messages, options);
       console.info('[AI_PROVIDER_SUCCESS]', { provider: providerName, fallbackAttempted: failures.length > 0 });
       return result;
     } catch (error) {

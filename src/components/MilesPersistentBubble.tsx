@@ -16,22 +16,19 @@ function clampTop(top: number) {
 
 export default function MilesPersistentBubble() {
   const pathname = usePathname();
-  const [position, setPosition] = useState<BubblePosition>({ side: 'right', top: null });
-  const [hidden, setHidden] = useState(false);
-  const [isVendor, setIsVendor] = useState(false);
+  const [position, setPosition] = useState<BubblePosition>(() => {
+    if (typeof window === 'undefined') return { side: 'right', top: null };
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(POSITION_KEY) || 'null') as Partial<BubblePosition> | null;
+      return saved?.side === 'left' || saved?.side === 'right' ? { side: saved.side, top: typeof saved.top === 'number' ? saved.top : null } : { side: 'right', top: null };
+    } catch { return { side: 'right', top: null }; }
+  });
+  const [hidden, setHidden] = useState(() => typeof window !== 'undefined' && window.localStorage.getItem(HIDDEN_KEY) === 'true');
+  const [isAuthenticatedRole, setIsAuthenticatedRole] = useState(false);
   const [authResolved, setAuthResolved] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const dragRef = useRef<{ pointerId: number; offsetX: number; offsetY: number } | null>(null);
   const draggedRef = useRef(false);
-
-  useEffect(() => {
-    try {
-      const savedPosition = JSON.parse(window.localStorage.getItem(POSITION_KEY) || 'null') as Partial<BubblePosition> | null;
-      if (savedPosition?.side === 'left' || savedPosition?.side === 'right') {
-        setPosition({ side: savedPosition.side, top: typeof savedPosition.top === 'number' ? savedPosition.top : null });
-      }
-      if (window.localStorage.getItem(HIDDEN_KEY) === 'true') setHidden(true);
-    } catch {}
-  }, []);
 
   useEffect(() => {
     try { window.localStorage.setItem(POSITION_KEY, JSON.stringify(position)); } catch {}
@@ -43,19 +40,20 @@ export default function MilesPersistentBubble() {
 
   useEffect(() => {
     let active = true;
-    const resolveVendor = async () => {
+    const resolveAuthenticatedRole = async () => {
       setAuthResolved(false);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        if (active) { setIsVendor(false); setAuthResolved(true); }
+        if (active) { setIsAuthenticatedRole(false); setAuthResolved(true); }
         return;
       }
-      const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', user.id).limit(1).maybeSingle();
-      const metadataVendor = user.user_metadata?.role === 'vendor' || user.user_metadata?.user_type === 'vendor';
-      if (active) { setIsVendor(Boolean(brand || metadataVendor)); setAuthResolved(true); }
+      const { data: profile } = await supabase.from('users').select('role, status').eq('id', user.id).maybeSingle();
+      const role = profile?.role || user.user_metadata?.role || user.user_metadata?.user_type;
+      const activeAccount = profile?.status !== 'suspended' && profile?.status !== 'blocked' && Boolean(role);
+      if (active) { setIsAuthenticatedRole(activeAccount); setAuthResolved(true); }
     };
-    resolveVendor();
-    const { data: listener } = supabase.auth.onAuthStateChange(() => { resolveVendor(); });
+    resolveAuthenticatedRole();
+    const { data: listener } = supabase.auth.onAuthStateChange(() => { resolveAuthenticatedRole(); });
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, [pathname]);
 
@@ -78,6 +76,7 @@ export default function MilesPersistentBubble() {
     const rect = event.currentTarget.getBoundingClientRect();
     dragRef.current = { pointerId: event.pointerId, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top };
     draggedRef.current = false;
+    setDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
@@ -93,11 +92,12 @@ export default function MilesPersistentBubble() {
   const onPointerUp = (event: React.PointerEvent<HTMLButtonElement>) => {
     if (!dragRef.current || dragRef.current.pointerId !== event.pointerId) return;
     dragRef.current = null;
+    setDragging(false);
     try { event.currentTarget.releasePointerCapture(event.pointerId); } catch {}
     window.setTimeout(() => { draggedRef.current = false; }, 0);
   };
 
-  if (!authResolved || !isVendor) return null;
+  if (!authResolved || !isAuthenticatedRole) return null;
 
   const dockStyle = position.top === null
     ? { bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }
@@ -156,7 +156,7 @@ export default function MilesPersistentBubble() {
         fontSize: '1.35rem',
         cursor: 'grab',
         boxShadow: '0 10px 34px rgba(37,99,235,0.38), 0 0 0 4px rgba(34,211,238,0.08)',
-        transition: dragRef.current ? 'none' : 'transform 160ms ease, box-shadow 160ms ease',
+        transition: dragging ? 'none' : 'transform 160ms ease, box-shadow 160ms ease',
       }}
       onMouseEnter={event => { event.currentTarget.style.transform = 'scale(1.06)'; }}
       onMouseLeave={event => { event.currentTarget.style.transform = 'scale(1)'; }}

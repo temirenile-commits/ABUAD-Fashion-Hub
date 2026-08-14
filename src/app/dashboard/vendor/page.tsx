@@ -1200,7 +1200,8 @@ export default function VendorDashboard() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({
           messages: newMsgs,
-          currentTab: activeTab
+          currentTab: activeTab,
+          pathname: window.location.pathname
         })
       });
       const data = await res.json();
