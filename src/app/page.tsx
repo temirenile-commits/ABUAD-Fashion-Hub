@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Truck,
   Zap,
+  Video,
 } from 'lucide-react';
 import ProductCard, { LiveProduct } from '@/components/ProductCard';
 import VendorCard, { LiveVendor } from '@/components/VendorCard';
@@ -221,8 +222,8 @@ export default function Home() {
                     {image ? (
                       <img src={image} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                      <div className={styles.reelUnavailable} style={{ background: 'linear-gradient(135deg, #18181b 0%, #09090b 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a1a1aa', fontSize: '0.8rem', fontWeight: 600 }}>
-                        {title.substring(0, 15)}
+                      <div className={styles.reelUnavailable} style={{ background: 'linear-gradient(135deg, #18181b 0%, #09090b 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a1a1aa' }}>
+                        <Video size={28} style={{ opacity: 0.6 }} />
                       </div>
                     )}
                     <span className={styles.reelPlay}><Play size={16} fill="currentColor" /></span>
