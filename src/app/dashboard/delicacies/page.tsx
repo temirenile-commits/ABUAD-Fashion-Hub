@@ -1198,7 +1198,8 @@ export default function VendorDashboard() {
       if (data.text) {
         setCopilotMsgs([...newMsgs, { role: 'assistant', content: data.text }]);
       } else if (data.error) {
-        setCopilotMsgs([...newMsgs, { role: 'assistant', content: `[${data.code || 'AI_ERROR'}] ${data.error}` }]);
+        const message = data.code === 'AI_UNAVAILABLE' ? data.error : `[${data.code || 'AI_ERROR'}] ${data.error}`;
+        setCopilotMsgs([...newMsgs, { role: 'assistant', content: message }]);
       } else {
         setCopilotMsgs([...newMsgs, { role: 'assistant', content: '[AI_EMPTY_RESPONSE] No response received.' }]);
       }
