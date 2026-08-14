@@ -25,7 +25,8 @@ interface Review {
   comment: string;
   created_at: string;
   user: {
-    full_name: string;
+    name?: string;
+    full_name?: string;
     avatar_url: string;
   }
 }
@@ -43,12 +44,14 @@ export default function ReviewSection({ productId }: { productId: string }) {
       .from('reviews')
       .select(`
         *,
-        user:users(full_name, avatar_url)
+        user:users(name, full_name, avatar_url)
       `)
       .eq('product_id', productId)
       .order('created_at', { ascending: false });
     
-    if (!error) setReviews(data as Review[]);
+    if (!error && data) {
+      setReviews(data as unknown as Review[]);
+    }
     setLoading(false);
   };
 
@@ -68,12 +71,12 @@ export default function ReviewSection({ productId }: { productId: string }) {
     if (!comment.trim()) return;
 
     setSubmitting(true);
-    const { error } = await supabase.from('reviews').insert({
+    const { error } = await supabase.from('reviews').upsert({
       product_id: productId,
       user_id: user.id,
       rating,
       comment
-    });
+    }, { onConflict: 'user_id,product_id' });
 
     if (error) {
       alert(error.message);
@@ -148,7 +151,9 @@ export default function ReviewSection({ productId }: { productId: string }) {
                 )}
               </div>
               <div className={styles.reviewerInfo}>
-                <p className={styles.reviewerName}>{review.user?.full_name || 'Anonymous'}</p>
+                <p className={styles.reviewerName}>
+                  {review.user?.name || review.user?.full_name || 'Anonymous'}
+                </p>
                 <div className={styles.cardStars}>
                   {[1, 2, 3, 4, 5].map(s => (
                     <Star key={s} size={12} fill={s <= review.rating ? "var(--primary)" : "none"} color={s <= review.rating ? "var(--primary)" : "#000000"} />
