@@ -132,6 +132,8 @@ export default function VendorDashboard() {
   const [copilotMsgs, setCopilotMsgs] = useState<any[]>([{ role: 'assistant', content: "Hi! I'm your AI Copilot. How can I help you grow your store today?" }]);
   const [copilotInput, setCopilotInput] = useState('');
   const [copilotLoading, setCopilotLoading] = useState(false);
+  const [pendingMilesAction, setPendingMilesAction] = useState<any>(null);
+  const [milesActionLoading, setMilesActionLoading] = useState(false);
 
   const [newProduct, setNewProduct] = useState({
     title: '',
@@ -1168,7 +1170,10 @@ export default function VendorDashboard() {
         })
       });
       const data = await res.json();
-      if (data.text) {
+      if (data.proposal) {
+        setPendingMilesAction(data.proposal);
+        setCopilotMsgs([...newMsgs, { role: 'assistant', content: `${data.proposal.summary} If you want me to apply this exact change, confirm it below.` }]);
+      } else if (data.text) {
         setCopilotMsgs([...newMsgs, { role: 'assistant', content: data.text }]);
       } else if (data.error) {
         const message = data.code === 'AI_UNAVAILABLE' ? data.error : `[${data.code || 'AI_ERROR'}] ${data.error}`;
@@ -1182,6 +1187,22 @@ export default function VendorDashboard() {
     setCopilotLoading(false);
   };
 
+  const confirmMilesAction = async () => {
+    if (!pendingMilesAction) return;
+    setMilesActionLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Please sign in again to confirm this change.');
+      const response = await fetch('/api/ai/actions', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ mode: 'confirm', actionId: pendingMilesAction.actionId, confirmation: 'CONFIRM' }) });
+      const data = await response.json();
+      setCopilotMsgs(prev => [...prev, { role: 'assistant', content: data.result?.summary || data.error || 'Miles could not complete that change.' }]);
+      if (response.ok) setPendingMilesAction(null);
+    } catch (error: any) {
+      setCopilotMsgs(prev => [...prev, { role: 'assistant', content: error?.message || 'Miles could not complete that change.' }]);
+    } finally {
+      setMilesActionLoading(false);
+    }
+  };
   const addVariant = () => {
     setNewProduct(prev => ({
       ...prev,
@@ -3706,6 +3727,15 @@ export default function VendorDashboard() {
                 </div>
               </div>
             ))}
+            {pendingMilesAction && (
+              <div style={{ padding: '0.75rem', border: '1px solid #A0A0A0', borderRadius: 12, background: 'var(--bg-300)' }}>
+                <div style={{ fontSize: '0.75rem', marginBottom: '0.5rem' }}>Confirm this exact store change?</div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button type="button" onClick={confirmMilesAction} disabled={milesActionLoading} style={{ flex: 1, border: 'none', borderRadius: 8, padding: '0.5rem', background: '#111', color: '#fff', cursor: 'pointer' }}>{milesActionLoading ? 'Applying…' : 'Confirm'}</button>
+                  <button type="button" onClick={() => setPendingMilesAction(null)} disabled={milesActionLoading} style={{ flex: 1, border: '1px solid #888', borderRadius: 8, padding: '0.5rem', background: 'transparent', color: 'inherit', cursor: 'pointer' }}>Cancel</button>
+                </div>
+              </div>
+            )}
             {copilotLoading && (
               <div style={{ display: 'flex', gap: '4px', padding: '0.5rem' }}>
                 {[0,1,2].map(i => <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#121214', animation: `bounce 1.2s ${i * 0.2}s infinite` }} />)}

@@ -2,12 +2,12 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 const ELIGIBLE_ORDER_STATUSES = ['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered', 'received'];
 
-type Brand = { id: string; owner_id: string; name: string; verification_status: string | null; subscription_tier: string | null; university_id: string | null };
+type Brand = { id: string; owner_id: string; name: string; verification_status: string | null; subscription_tier: string | null; university_id: string | null; marketplace_type?: string | null };
 
 export async function getVendorProfile(ownerId: string, requestedBrandId?: string | null) {
   let query = supabaseAdmin
     .from('brands')
-    .select('id, owner_id, name, verification_status, subscription_tier, university_id')
+    .select('id, owner_id, name, verification_status, subscription_tier, university_id, marketplace_type')
     .eq('owner_id', ownerId);
   if (requestedBrandId) query = query.eq('id', requestedBrandId);
   const { data, error } = await query.order('created_at', { ascending: true }).maybeSingle();

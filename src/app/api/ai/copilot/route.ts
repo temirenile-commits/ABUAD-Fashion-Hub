@@ -2,6 +2,7 @@
 import { getAuthenticatedUser } from '@/lib/server-auth';
 import { milesChat } from '@/lib/ai/orchestrator';
 import { AIOrchestrationError } from '@/lib/ai/provider-types';
+import { detectMilesActionRequest, proposeMilesAction } from '@/lib/ai/actions';
 import { isSimpleGreeting, requiresVendorData, sanitizeMilesResponse } from '@/lib/ai/intelligence';
 import {
   getVendorProfile,
@@ -101,6 +102,12 @@ export async function POST(req: Request) {
       getVendorFinancialSummary(brand.id),
       getVendorReels(brand.id),
     ]);
+
+    const actionRequest = detectMilesActionRequest(lastUserMessage, products);
+    if (actionRequest) {
+      const proposal = await proposeMilesAction(user.id, actionRequest.actionType, actionRequest.payload);
+      return NextResponse.json({ proposal, text: `${proposal.summary} I will wait for your confirmation before applying it.` });
+    }
 
     const pendingOrders = getPendingOrders(orders);
     const overdueOrders = getOverdueOrders(orders);
