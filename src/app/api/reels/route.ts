@@ -55,7 +55,7 @@ async function generateAndUploadReelCover(videoUrl: string, brandId: string, ree
   }
 }
 
-// GET /api/reels - Fetch published reels with products, search, and author info
+// GET /api/reels - Fetch published reels with products, search, and author info across all vendor types
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -78,7 +78,9 @@ export async function GET(req: NextRequest) {
           name,
           whatsapp_number,
           verified,
-          logo_url
+          logo_url,
+          category,
+          marketplace_type
         ),
         reel_products (
           id,
@@ -179,7 +181,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/reels - Vendor upload reel with title, caption, products, and automatic cover generation
+// POST /api/reels - Universal vendor upload reel with title, caption, products, and automatic cover generation for all vendor types
 export async function POST(req: NextRequest) {
   try {
     const user = await getAuthenticatedUser(req);
@@ -194,15 +196,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'video_url is required' }, { status: 400 });
     }
 
-    // Verify brand ownership
+    // Verify brand ownership for any vendor type (Fashion, Delicacies, Electronics, Gadgets, etc.)
     const { data: brand, error: brandError } = await supabaseAdmin
       .from('brands')
-      .select('id')
+      .select('id, category, marketplace_type')
       .eq('owner_id', user.id)
       .single();
 
     if (brandError || !brand) {
-      return NextResponse.json({ error: 'Brand not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Brand not found or vendor profile incomplete' }, { status: 404 });
     }
 
     // First insert reel without cover_url to get id
@@ -238,15 +240,31 @@ export async function POST(req: NextRequest) {
       reelData.cover_url = coverUrl;
     }
 
-    // Attach products if provided
+    // Attach products if provided with strict server-side ownership validation
     if (product_ids && Array.isArray(product_ids) && product_ids.length > 0) {
-      const reelProducts = product_ids.map((pid: string, idx: number) => ({
-        reel_id: reelData.id,
-        product_id: pid,
-        sort_order: idx
-      }));
+      // Verify that all product_ids belong to this vendor's brand_id
+      const { data: validProducts, error: prodVerifyError } = await supabaseAdmin
+        .from('products')
+        .select('id')
+        .eq('brand_id', brand.id)
+        .in('id', product_ids);
 
-      await supabaseAdmin.from('reel_products').insert(reelProducts);
+      if (prodVerifyError) {
+        console.error('Product ownership verification error:', prodVerifyError);
+      } else if (validProducts && validProducts.length > 0) {
+        const validIds = new Set(validProducts.map(p => p.id));
+        const reelProducts = product_ids
+          .filter((pid: string) => validIds.has(pid))
+          .map((pid: string, idx: number) => ({
+            reel_id: reelData.id,
+            product_id: pid,
+            sort_order: idx
+          }));
+
+        if (reelProducts.length > 0) {
+          await supabaseAdmin.from('reel_products').insert(reelProducts);
+        }
+      }
     }
 
     return NextResponse.json({ success: true, reel: reelData });
