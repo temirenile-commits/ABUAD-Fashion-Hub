@@ -7,6 +7,8 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
+export const dynamic = 'force-dynamic';
+
 const execAsync = util.promisify(exec);
 
 async function generateAndUploadReelCover(videoUrl: string, brandId: string, reelId: string): Promise<string | null> {
@@ -53,7 +55,7 @@ async function generateAndUploadReelCover(videoUrl: string, brandId: string, ree
   }
 }
 
-// GET /api/reels - Fetch published reels with products, search, and author info (strictly excluding deleted)
+// GET /api/reels - Fetch published reels with products, search, and author info
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -61,6 +63,10 @@ export async function GET(req: NextRequest) {
     const brandId = searchParams.get('brand_id');
     const search = searchParams.get('search');
     const universityId = searchParams.get('universityId');
+
+    // Get current authenticated user if any, to determine is_liked per reel
+    const currentUser = await getAuthenticatedUser(req);
+    const currentUserId = currentUser?.id;
 
     let query = supabaseAdmin
       .from('reels')
@@ -125,7 +131,48 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, reels: data || [] });
+    // Fetch user profiles for comment authors if needed
+    const userIds = new Set<string>();
+    (data || []).forEach(reel => {
+      (reel.reel_comments || []).forEach((c: any) => {
+        if (c.user_id) userIds.add(c.user_id);
+      });
+    });
+
+    let profileMap: { [key: string]: string } = {};
+    if (userIds.size > 0) {
+      const { data: profiles } = await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', Array.from(userIds));
+
+      if (profiles) {
+        profiles.forEach(p => {
+          profileMap[p.id] = p.full_name || p.email?.split('@')[0] || 'Campus User';
+        });
+      }
+    }
+
+    // Process reels to add is_liked and user_name to comments
+    const processedReels = (data || []).map(reel => {
+      const likes = reel.reel_likes || [];
+      const comments = (reel.reel_comments || []).map((c: any) => ({
+        ...c,
+        user_name: profileMap[c.user_id] || 'Campus User'
+      })).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      const isLiked = currentUserId ? likes.some((l: any) => l.user_id === currentUserId) : false;
+
+      return {
+        ...reel,
+        likes_count: likes.length,
+        comments_count: comments.length,
+        is_liked: isLiked,
+        reel_comments: comments
+      };
+    });
+
+    return NextResponse.json({ success: true, reels: processedReels });
   } catch (err: any) {
     console.error('Unexpected error in reels API:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -185,7 +232,7 @@ export async function POST(req: NextRequest) {
     if (coverUrl) {
       await supabaseAdmin
         .from('reels')
-        .update({ thumbnail_url: coverUrl })
+        .update({ thumbnail_url: coverUrl, cover_url: coverUrl })
         .eq('id', reelData.id);
       reelData.thumbnail_url = coverUrl;
       reelData.cover_url = coverUrl;
@@ -218,17 +265,17 @@ export async function DELETE(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const reelId = searchParams.get('id');
+    const id = searchParams.get('id');
 
-    if (!reelId) {
-      return NextResponse.json({ error: 'Reel ID is required' }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: 'reel id is required' }, { status: 400 });
     }
 
-    // Verify brand ownership of the reel
+    // Verify ownership via brand
     const { data: reel, error: reelFetchError } = await supabaseAdmin
       .from('reels')
-      .select('brand_id, brands(owner_id)')
-      .eq('id', reelId)
+      .select('id, brand_id, brands(owner_id)')
+      .eq('id', id)
       .single();
 
     if (reelFetchError || !reel) {
@@ -237,28 +284,21 @@ export async function DELETE(req: NextRequest) {
 
     const brandInfo = reel.brands as any;
     if (!brandInfo || brandInfo.owner_id !== user.id) {
-      return NextResponse.json({ error: 'Unauthorized to delete this reel' }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Authoritative soft delete or hard delete
-    const { error: updateError } = await supabaseAdmin
+    const { error: deleteError } = await supabaseAdmin
       .from('reels')
       .update({ status: 'deleted' })
-      .eq('id', reelId);
+      .eq('id', id);
 
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    if (deleteError) {
+      return NextResponse.json({ error: deleteError.message }, { status: 500 });
     }
 
-    // Clean up junction products
-    await supabaseAdmin
-      .from('reel_products')
-      .delete()
-      .eq('reel_id', reelId);
-
-    return NextResponse.json({ success: true, message: 'Reel deleted authoritatively' });
+    return NextResponse.json({ success: true, message: 'Reel deleted successfully' });
   } catch (err: any) {
-    console.error('Unexpected error deleting reel:', err);
+    console.error('Error deleting reel:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
