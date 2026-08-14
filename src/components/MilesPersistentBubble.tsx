@@ -1,167 +1,173 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { MILES_ASSISTANT_NAME } from '@/lib/ai/ui-config';
+
+type Dock = 'free' | 'top' | 'top-left' | 'top-right' | 'left' | 'right' | 'bottom' | 'bottom-left' | 'bottom-right';
+type Position = { x: number; y: number; dock: Dock };
+
+type DragState = { pointerId: number; offsetX: number; offsetY: number; moved: boolean };
 
 const POSITION_KEY = 'mastercart-miles-bubble-position-global';
 const HIDDEN_KEY = 'mastercart-miles-bubble-hidden-global';
-type Side = 'left' | 'right';
-type BubblePosition = { side: Side; top: number | null };
+const BUBBLE_SIZE = 64;
+const EDGE_GAP = 12;
+const SNAP_DISTANCE = 48;
+const SAFE_BOTTOM = 18;
 
-function clampTop(top: number) {
-  if (typeof window === 'undefined') return top;
-  return Math.max(12, Math.min(top, Math.max(12, window.innerHeight - 86)));
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(value, max));
+
+function viewportPosition(): Position {
+  if (typeof window === 'undefined') return { x: 0, y: 0, dock: 'right' };
+  return { x: Math.max(EDGE_GAP, window.innerWidth - BUBBLE_SIZE - EDGE_GAP), y: Math.max(EDGE_GAP, window.innerHeight - BUBBLE_SIZE - SAFE_BOTTOM), dock: 'right' };
+}
+
+function normalizePosition(saved: Partial<Position> | null): Position {
+  const fallback = viewportPosition();
+  if (!saved || typeof saved.x !== 'number' || typeof saved.y !== 'number') return fallback;
+  return { x: saved.x, y: saved.y, dock: typeof saved.dock === 'string' ? saved.dock as Dock : 'free' };
+}
+
+function clampPosition(x: number, y: number): Position {
+  if (typeof window === 'undefined') return { x, y, dock: 'free' };
+  return {
+    x: clamp(x, EDGE_GAP, Math.max(EDGE_GAP, window.innerWidth - BUBBLE_SIZE - EDGE_GAP)),
+    y: clamp(y, EDGE_GAP, Math.max(EDGE_GAP, window.innerHeight - BUBBLE_SIZE - SAFE_BOTTOM)),
+    dock: 'free',
+  };
+}
+
+function snapPosition(position: Position): Position {
+  if (typeof window === 'undefined') return position;
+  const maxX = Math.max(EDGE_GAP, window.innerWidth - BUBBLE_SIZE - EDGE_GAP);
+  const maxY = Math.max(EDGE_GAP, window.innerHeight - BUBBLE_SIZE - SAFE_BOTTOM);
+  const x = clamp(position.x, EDGE_GAP, maxX);
+  const y = clamp(position.y, EDGE_GAP, maxY);
+  const candidates: Array<{ dock: Dock; x: number; y: number; distance: number }> = [
+    { dock: 'left', x: EDGE_GAP, y, distance: x },
+    { dock: 'right', x: maxX, y, distance: maxX - x },
+    { dock: 'top', x, y: EDGE_GAP, distance: y },
+    { dock: 'bottom', x, y: maxY, distance: maxY - y },
+    { dock: 'top-left', x: EDGE_GAP, y: EDGE_GAP, distance: Math.hypot(x, y) },
+    { dock: 'top-right', x: maxX, y: EDGE_GAP, distance: Math.hypot(maxX - x, y) },
+    { dock: 'bottom-left', x: EDGE_GAP, y: maxY, distance: Math.hypot(x, maxY - y) },
+    { dock: 'bottom-right', x: maxX, y: maxY, distance: Math.hypot(maxX - x, maxY - y) },
+  ];
+  const nearest = candidates.reduce((best, candidate) => candidate.distance < best.distance ? candidate : best);
+  return nearest.distance <= SNAP_DISTANCE ? { x: nearest.x, y: nearest.y, dock: nearest.dock } : { x, y, dock: 'free' };
 }
 
 export default function MilesPersistentBubble() {
-  const pathname = usePathname();
-  const [position, setPosition] = useState<BubblePosition>(() => {
-    if (typeof window === 'undefined') return { side: 'right', top: null };
-    try {
-      const saved = JSON.parse(window.localStorage.getItem(POSITION_KEY) || 'null') as Partial<BubblePosition> | null;
-      return saved?.side === 'left' || saved?.side === 'right' ? { side: saved.side, top: typeof saved.top === 'number' ? saved.top : null } : { side: 'right', top: null };
-    } catch { return { side: 'right', top: null }; }
+  const [position, setPosition] = useState<Position>(() => {
+    if (typeof window === 'undefined') return { x: 0, y: 0, dock: 'right' };
+    try { return normalizePosition(JSON.parse(window.localStorage.getItem(POSITION_KEY) || 'null')); } catch { return viewportPosition(); }
   });
   const [hidden, setHidden] = useState(() => typeof window !== 'undefined' && window.localStorage.getItem(HIDDEN_KEY) === 'true');
   const [isAuthenticatedRole, setIsAuthenticatedRole] = useState(false);
   const [authResolved, setAuthResolved] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const dragRef = useRef<{ pointerId: number; offsetX: number; offsetY: number } | null>(null);
-  const draggedRef = useRef(false);
+  const dragRef = useRef<DragState | null>(null);
+  const clickTimerRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    try { window.localStorage.setItem(POSITION_KEY, JSON.stringify(position)); } catch {}
-  }, [position]);
-
-  useEffect(() => {
-    try { window.localStorage.setItem(HIDDEN_KEY, String(hidden)); } catch {}
-  }, [hidden]);
+  useEffect(() => { try { window.localStorage.setItem(POSITION_KEY, JSON.stringify(position)); } catch {} }, [position]);
+  useEffect(() => { try { window.localStorage.setItem(HIDDEN_KEY, String(hidden)); } catch {} }, [hidden]);
 
   useEffect(() => {
     let active = true;
-    const resolveAuthenticatedRole = async () => {
+    const resolveRole = async () => {
       setAuthResolved(false);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        if (active) { setIsAuthenticatedRole(false); setAuthResolved(true); }
-        return;
-      }
+      if (!user) { if (active) { setIsAuthenticatedRole(false); setAuthResolved(true); } return; }
       const { data: profile } = await supabase.from('users').select('role, status').eq('id', user.id).maybeSingle();
       const role = profile?.role || user.user_metadata?.role || user.user_metadata?.user_type;
-      const activeAccount = profile?.status !== 'suspended' && profile?.status !== 'blocked' && Boolean(role);
-      if (active) { setIsAuthenticatedRole(activeAccount); setAuthResolved(true); }
+      if (active) { setIsAuthenticatedRole(profile?.status !== 'suspended' && profile?.status !== 'blocked' && Boolean(role)); setAuthResolved(true); }
     };
-    resolveAuthenticatedRole();
-    const { data: listener } = supabase.auth.onAuthStateChange(() => { resolveAuthenticatedRole(); });
+    resolveRole();
+    const { data: listener } = supabase.auth.onAuthStateChange(resolveRole);
     return () => { active = false; listener.subscription.unsubscribe(); };
-  }, [pathname]);
+  }, []);
 
-  const openAssistant = () => {
-    window.dispatchEvent(new CustomEvent('mastercart:miles-open'));
-    if (pathname !== '/dashboard/vendor' && pathname !== '/dashboard/delicacies') {
-      window.location.href = '/dashboard/vendor?miles=open';
-    }
-  };
+  useEffect(() => {
+    const reposition = () => setPosition((current) => clampPosition(current.x, current.y));
+    window.addEventListener('resize', reposition);
+    return () => window.removeEventListener('resize', reposition);
+  }, []);
 
-  const openFullAssistant = () => {
-    window.dispatchEvent(new CustomEvent('mastercart:miles-full-open'));
-    if (pathname !== '/dashboard/vendor' && pathname !== '/dashboard/delicacies') {
-      window.location.href = '/dashboard/vendor?miles=open&full=1';
-    }
-  };
+  useEffect(() => () => { if (clickTimerRef.current) window.clearTimeout(clickTimerRef.current); }, []);
+
+  const openAssistant = () => window.dispatchEvent(new CustomEvent('mastercart:miles-open'));
+  const openFullAssistant = () => window.dispatchEvent(new CustomEvent('mastercart:miles-full-open'));
 
   const onPointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     const rect = event.currentTarget.getBoundingClientRect();
-    dragRef.current = { pointerId: event.pointerId, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top };
-    draggedRef.current = false;
+    dragRef.current = { pointerId: event.pointerId, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top, moved: false };
     setDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
+    event.stopPropagation();
   };
 
   const onPointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
-    if (!dragRef.current || dragRef.current.pointerId !== event.pointerId) return;
-    const moved = Math.abs(event.movementX) + Math.abs(event.movementY) > 2;
-    if (moved) draggedRef.current = true;
-    const nextSide: Side = event.clientX < window.innerWidth / 2 ? 'left' : 'right';
-    setPosition({ side: nextSide, top: clampTop(event.clientY - dragRef.current.offsetY) });
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const next = clampPosition(event.clientX - drag.offsetX, event.clientY - drag.offsetY);
+    if (Math.abs(next.x - position.x) > 2 || Math.abs(next.y - position.y) > 2) drag.moved = true;
+    setPosition(next);
     event.preventDefault();
+    event.stopPropagation();
   };
 
   const onPointerUp = (event: React.PointerEvent<HTMLButtonElement>) => {
-    if (!dragRef.current || dragRef.current.pointerId !== event.pointerId) return;
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
     dragRef.current = null;
     setDragging(false);
+    setPosition((current) => snapPosition(current));
     try { event.currentTarget.releasePointerCapture(event.pointerId); } catch {}
-    window.setTimeout(() => { draggedRef.current = false; }, 0);
+    event.stopPropagation();
+  };
+
+  const onClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (dragRef.current?.moved) return;
+    if (clickTimerRef.current) window.clearTimeout(clickTimerRef.current);
+    clickTimerRef.current = window.setTimeout(() => { clickTimerRef.current = null; openAssistant(); }, 220);
+  };
+
+  const onDoubleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (clickTimerRef.current) window.clearTimeout(clickTimerRef.current);
+    clickTimerRef.current = null;
+    openFullAssistant();
   };
 
   if (!authResolved || !isAuthenticatedRole) return null;
 
-  const dockStyle = position.top === null
-    ? { bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }
-    : { top: `${clampTop(position.top)}px` };
+  const style = {
+    position: 'fixed' as const,
+    left: `${position.x}px`,
+    top: `${position.y}px`,
+    width: BUBBLE_SIZE,
+    height: BUBBLE_SIZE,
+    zIndex: 1000,
+    touchAction: 'none' as const,
+    userSelect: 'none' as const,
+    border: '1px solid rgba(255,255,255,.22)',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg,#2563eb,#4f46e5)',
+    color: '#fff',
+    fontSize: '1.35rem',
+    cursor: dragging ? 'grabbing' : 'grab',
+    boxShadow: '0 10px 30px rgba(0,0,0,.35),0 0 20px rgba(37,99,235,.20)',
+    transition: dragging ? 'none' : 'left 220ms ease, top 220ms ease, transform 160ms ease, box-shadow 160ms ease',
+  };
 
-  if (hidden) {
-    return (
-      <button
-        type="button"
-        aria-label="Show Miles assistant"
-        onClick={() => setHidden(false)}
-        style={{
-          position: 'fixed',
-          ...dockStyle,
-          [position.side]: 0,
-          zIndex: 10001,
-          border: '1px solid rgba(34,211,238,0.5)',
-          borderRight: position.side === 'left' ? '1px solid rgba(34,211,238,0.5)' : 'none',
-          borderLeft: position.side === 'right' ? '1px solid rgba(34,211,238,0.5)' : 'none',
-          borderRadius: position.side === 'left' ? '0 14px 14px 0' : '14px 0 0 14px',
-          background: 'linear-gradient(180deg, #0F766E, #312E81)',
-          color: '#ECFEFF',
-          padding: '0.7rem 0.45rem',
-          cursor: 'pointer',
-          boxShadow: '0 8px 24px rgba(8,47,73,0.45)',
-        }}
-      >✦</button>
-    );
-  }
+  if (hidden) return <button type="button" aria-label={`Show ${MILES_ASSISTANT_NAME} assistant`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setHidden(false); }} style={{ ...style, width: 24, borderRadius: position.x < window.innerWidth / 2 ? '0 14px 14px 0' : '14px 0 0 14px' }}>✦</button>;
 
   return (
-    <button
-      type="button"
-      aria-label="Open Miles assistant"
-      title="Drag Miles or tap to open"
-      onClick={() => { if (!draggedRef.current) openAssistant(); }}
-      onDoubleClick={openFullAssistant}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-      style={{
-        position: 'fixed',
-        ...dockStyle,
-        left: position.side === 'left' ? '1.5rem' : 'auto',
-        right: position.side === 'right' ? '1.5rem' : 'auto',
-        width: 58,
-        height: 58,
-        zIndex: 10001,
-        touchAction: 'none',
-        userSelect: 'none',
-        border: '1px solid rgba(103,232,249,0.65)',
-        borderRadius: '50%',
-        background: 'linear-gradient(135deg, #0F766E 0%, #2563EB 48%, #7C3AED 100%)',
-        color: '#F0FDFA',
-        fontSize: '1.35rem',
-        cursor: 'grab',
-        boxShadow: '0 10px 34px rgba(37,99,235,0.38), 0 0 0 4px rgba(34,211,238,0.08)',
-        transition: dragging ? 'none' : 'transform 160ms ease, box-shadow 160ms ease',
-      }}
-      onMouseEnter={event => { event.currentTarget.style.transform = 'scale(1.06)'; }}
-      onMouseLeave={event => { event.currentTarget.style.transform = 'scale(1)'; }}
-    >
-      ✦
-    </button>
+    <button type="button" aria-label={`Open ${MILES_ASSISTANT_NAME} AI assistant`} title={`Drag ${MILES_ASSISTANT_NAME} or tap to open`} onClick={onClick} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={style}>✦</button>
   );
 }
