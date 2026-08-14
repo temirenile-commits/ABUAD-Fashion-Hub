@@ -3655,7 +3655,13 @@ export default function VendorDashboard() {
 
             {/* Custom Instructions */}
             <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid #27272A', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
-              <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>?? Custom AI Instructions</div>
+              <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>Assistant Settings</div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.5rem' }}>Choose the name your personal MasterCart assistant will use.</div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                <input value={aiSettings?.assistant_name || 'Miles'} onChange={e => setAiSettings({ ...aiSettings, assistant_name: e.target.value })} maxLength={40} style={{ flex: 1, background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.7rem 0.85rem', color: '#FFFFFF', fontSize: '0.85rem' }} />
+                <button onClick={() => handleUpdateAiSettings({ assistant_name: (aiSettings?.assistant_name || 'Miles').trim() || 'Miles' })} disabled={isSettingsLoading} className="btn btn-primary">Save</button>
+              </div>
+              <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>Custom AI Instructions</div>
               <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.75rem' }}>Tell the AI how to represent your brand. E.g. "Always greet customers with 'Hey boss!'", "Never negotiate on prices", "Speak in a friendly, casual tone".</div>
               <textarea
                 rows={4}
@@ -3714,7 +3720,7 @@ export default function VendorDashboard() {
       {/* --- AI Copilot Floating Widget --- */}
       {showCopilot && (
         <div style={{
-          position: 'fixed', bottom: '6rem', right: '1.5rem', width: '360px', maxHeight: '500px',
+          position: 'fixed', bottom: '6rem', right: '1.5rem', width: 'min(360px, calc(100vw - 2rem))', maxHeight: 'min(500px, calc(100dvh - 8rem))',
           background: 'var(--bg-200)', border: '1px solid #A0A0A0', borderRadius: '20px',
           boxShadow: '0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.12)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 9999,
@@ -3725,8 +3731,8 @@ export default function VendorDashboard() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#FFFFFF,#000000)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>?</div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>AI Copilot</div>
-                <div style={{ fontSize: '0.7rem', color: '#FFFFFF' }}>Powered by MasterCart AI</div>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{aiSettings?.assistant_name || 'Miles'}</div>
+                <div style={{ fontSize: '0.7rem', color: '#FFFFFF' }}>Your MasterCart assistant · {aiSettings?.store_write_enabled ? 'Read & write active' : aiSettings?.store_access_enabled ? 'Read access active' : 'Store access off'}</div>
               </div>
             </div>
             <button onClick={() => setShowCopilot(false)} style={{ background: 'none', border: 'none', color: 'var(--text-400)', cursor: 'pointer', padding: '4px' }}><X size={16} /></button>
@@ -3734,6 +3740,11 @@ export default function VendorDashboard() {
 
           {/* Messages */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {copilotMsgs.length === 1 && !copilotLoading && (
+              <div style={{ display: 'grid', gap: '0.5rem' }}>
+                {['Show my pending orders', 'Show my products', 'Which products have low stock?', 'Help me add a product'].map((suggestion) => <button key={suggestion} type="button" onClick={() => setCopilotInput(suggestion)} style={{ textAlign: 'left', padding: '0.65rem 0.8rem', borderRadius: 10, border: '1px solid #27272A', background: 'var(--bg-300)', color: 'inherit', cursor: 'pointer', fontSize: '0.78rem' }}>{suggestion}</button>)}
+              </div>
+            )}
             {copilotMsgs.map((msg, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                 <div style={{

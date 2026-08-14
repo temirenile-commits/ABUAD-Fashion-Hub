@@ -18,11 +18,11 @@ export async function getVendorProfile(ownerId: string, requestedBrandId?: strin
 export async function getVendorAISettings(brandId: string) {
   const { data, error } = await supabaseAdmin
     .from('vendor_ai_settings')
-    .select('ai_enabled, store_access_enabled, store_write_enabled, sensitive_action_confirmation_required, custom_instructions')
+    .select('ai_enabled, store_access_enabled, store_write_enabled, sensitive_action_confirmation_required, assistant_name, custom_instructions')
     .eq('brand_id', brandId)
     .maybeSingle();
   if (error) throw new Error('Unable to load vendor AI permissions.');
-  return data || { ai_enabled: false, store_access_enabled: false, store_write_enabled: false, sensitive_action_confirmation_required: true, custom_instructions: null };
+  return data || { ai_enabled: false, store_access_enabled: false, store_write_enabled: false, sensitive_action_confirmation_required: true, assistant_name: 'Miles', custom_instructions: null };
 }
 
 export async function getVendorProducts(brandId: string) {

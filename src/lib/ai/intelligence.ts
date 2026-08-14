@@ -9,7 +9,7 @@ export function isSimpleGreeting(value: string): boolean {
 
 export function requiresVendorData(value: string): boolean {
   const normalized = value.toLowerCase();
-  return /(sales?|revenue|earning|income|wallet|balance|payout|withdraw|payment|order|delivery|product|inventory|stock|listing|reel|likes?|views?|analytics|performance|customer|message|enquir|marketplace|university|visibility|show me|how many|which|last month|this month|today|yesterday|late|delayed|missing|disappeared|not showing|not visible|did .* publish)/i.test(normalized);
+  return /(store|shop|brand|business|profile|name|settings?|sales?|revenue|earning|income|wallet|balance|payout|withdraw|payment|order|delivery|product|inventory|stock|listing|service|promotion|promo|reel|likes?|views?|analytics|performance|customer|message|enquir|marketplace|university|visibility|show me|how many|which|last month|this month|today|yesterday|late|delayed|missing|disappeared|not showing|not visible|did .* publish)/i.test(normalized);
 }
 
 export function sanitizeMilesResponse(value: string): string {
