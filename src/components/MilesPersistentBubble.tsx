@@ -9,25 +9,6 @@ const HIDDEN_KEY = 'mastercart-miles-bubble-hidden-global';
 type Side = 'left' | 'right';
 type BubblePosition = { side: Side; top: number | null };
 
-const vendorAccountRoutes = [
-  '/dashboard/vendor',
-  '/dashboard/delicacies',
-  '/dashboard/support',
-  '/dashboard/vendor/pay-fee',
-  '/dashboard/delicacies/pay-fee',
-  '/reels',
-  '/services',
-  '/messages',
-  '/notifications',
-  '/settings',
-  '/wishlist',
-  '/onboarding',
-];
-
-function isVendorRoute(pathname: string) {
-  return vendorAccountRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`));
-}
-
 function clampTop(top: number) {
   if (typeof window === 'undefined') return top;
   return Math.max(12, Math.min(top, Math.max(12, window.innerHeight - 86)));
@@ -41,8 +22,6 @@ export default function MilesPersistentBubble() {
   const [authResolved, setAuthResolved] = useState(false);
   const dragRef = useRef<{ pointerId: number; offsetX: number; offsetY: number } | null>(null);
   const draggedRef = useRef(false);
-
-  const accountPage = isVendorRoute(pathname);
 
   useEffect(() => {
     try {
@@ -118,7 +97,7 @@ export default function MilesPersistentBubble() {
     window.setTimeout(() => { draggedRef.current = false; }, 0);
   };
 
-  if (!authResolved || !accountPage || !isVendor) return null;
+  if (!authResolved || !isVendor) return null;
 
   const dockStyle = position.top === null
     ? { bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }
