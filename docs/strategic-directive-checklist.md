@@ -51,3 +51,9 @@
 - [ ] Preserve Reels, marketplace purchasing, wallet, payout, vendor posting, and authentication behavior unless a confirmed dependency requires a repair.
 - [ ] Commit, deploy, and verify production only after all applicable checklist items pass.
 - [ ] Produce a technical report covering root causes, architecture, files, database functions/queries, formulas, chart data source, ranking formula, eliminated errors, tests, and remaining issues.
+
+## Execution evidence update
+
+The implementation tranche passed direct TypeScript compilation and a production Next.js build. The canonical analytics functions returned a stable JSON contract and were independently compared against the underlying production order aggregates for the 30-day period; both returned zero eligible orders and zero GMV in the current production dataset. An initial privilege test exposed that the platform summary function was still executable by anonymous and authenticated roles. The explicit privilege-lock migration corrected this: anonymous and authenticated execution are now false, while service-role execution is true.
+
+The latest GitHub commit before the privilege-lock correction is `786edd0`. The post-lock correction, super-admin period selector, and final validation will be committed separately before final Vercel verification.
