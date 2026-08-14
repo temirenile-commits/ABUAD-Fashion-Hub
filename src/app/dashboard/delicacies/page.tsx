@@ -150,6 +150,11 @@ export default function VendorDashboard() {
   const [milesFullScreen, setMilesFullScreen] = useState(false);
   const [milesBubbleSide, setMilesBubbleSide] = useState<'left' | 'right'>('right');
   useEffect(() => {
+    const openMiles = () => setShowCopilot(true);
+    window.addEventListener('mastercart:miles-open', openMiles);
+    return () => window.removeEventListener('mastercart:miles-open', openMiles);
+  }, []);
+  useEffect(() => {
     try {
       const savedSide = window.localStorage.getItem('mastercart-miles-bubble-side-delicacies');
       if (savedSide === 'left' || savedSide === 'right') setMilesBubbleSide(savedSide);
@@ -3822,7 +3827,7 @@ export default function VendorDashboard() {
         style={{
           position: 'fixed', bottom: 'calc(1.5rem + env(safe-area-inset-bottom))', left: milesBubbleSide === 'left' ? '1.5rem' : 'auto', right: milesBubbleSide === 'right' ? '1.5rem' : 'auto', width: '56px', height: '56px',
           borderRadius: '50%', background: 'linear-gradient(135deg,#000000,#FFFFFF)',
-          border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          border: 'none', cursor: 'pointer', display: 'none', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: 10000,
         }}
         onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
