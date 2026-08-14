@@ -659,8 +659,7 @@ export default function ReelsPage() {
             <button 
               className="btn btn-primary w-full"
               onClick={() => {
-                const brandSlug = currentReel?.brands?.name?.toLowerCase().replace(/\s+/g, '-') || 'brand';
-                router.push(`/vendor/${brandSlug}/product/${activeProduct.id}`);
+                router.push(`/product/${activeProduct.id}`);
               }}
             >
               View Full Details
