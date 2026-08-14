@@ -122,8 +122,11 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
       if (active && reelData) setReels(reelData as any);
     };
 
-    if (!isInitialized) fetchInitialData();
-    fetchReels(); // Always refresh reels
+    if (!isInitialized) {
+      fetchInitialData();
+    } else {
+      fetchReels();
+    }
 
     // We bind a single global channel for public tables
     const publicChannel = supabase.channel('public:marketplace');

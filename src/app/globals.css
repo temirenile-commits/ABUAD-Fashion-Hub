@@ -98,8 +98,19 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* GPU acceleration layer for fixed/sticky elements to eliminate mobile blinking/glitching */
+header, nav, footer, [class*="modal"], [class*="drawer"], [class*="overlay"], [class*="nav"] {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
