@@ -875,7 +875,7 @@ export default function DeliveryDashboard() {
             </label>
             <input
               type="number"
-              className={styles.capacityInput}
+              className={`${styles.capacityInput} form-input`}
               value={agent?.batch_capacity ?? 10}
               onChange={(e) =>
                 supabase
@@ -897,7 +897,7 @@ export default function DeliveryDashboard() {
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <input
                   type="number"
-                  className={styles.capacityInput}
+                  className={`${styles.capacityInput} form-input`}
                   value={agent?.base_delivery_fee ?? 0}
                   onChange={(e) => setAgent({ ...agent, base_delivery_fee: Number(e.target.value) })}
                   placeholder="e.g. 1500"
@@ -1588,7 +1588,7 @@ export default function DeliveryDashboard() {
               <label>Amount (Min: ₦1,000)</label>
               <input
                 type="number"
-                className={styles.modalInput}
+                className={`${styles.modalInput} form-input`}
                 defaultValue={wallet?.available_balance ?? wallet?.balance ?? 0}
                 id="withdraw-amount"
                 min={1000}
@@ -1618,7 +1618,7 @@ export default function DeliveryDashboard() {
                   <label>{label}</label>
                   <input
                     type="text"
-                    className={styles.modalInput}
+                    className={`${styles.modalInput} form-input`}
                     placeholder={placeholder}
                     value={bankForm[key as keyof typeof bankForm]}
                     onChange={(e) => setBankForm({ ...bankForm, [key]: e.target.value })}

@@ -742,7 +742,7 @@ export default function AdminDashboard() {
           <div className={styles.headerActions}>
             <div className={styles.searchBar}>
               <Search size={16} />
-              <input type="text" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} />
+              <input type="text" className="form-input" style={{ background: 'transparent', border: 'none', padding: '0 0.5rem' }} placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} />
             </div>
             <button className="btn btn-ghost" onClick={fetchAll}><RefreshCw size={18} className={loading ? 'spin' : ''} /></button>
           </div>
@@ -1758,19 +1758,19 @@ export default function AdminDashboard() {
                   <div className={styles.settingsGrid} style={{ marginTop: '1.5rem' }}>
                     <div className={styles.settingsBox}>
                       <label>New Promo Code</label>
-                      <input value={promoForm.code} onChange={e => setPromoForm({ ...promoForm, code: e.target.value })} placeholder="e.g. WELCOME50" className="input mb-2" />
+                      <input value={promoForm.code} onChange={e => setPromoForm({ ...promoForm, code: e.target.value })} placeholder="e.g. WELCOME50" className="form-input mb-2" />
                       <div className="flex gap-2 mb-2">
-                        <select className="input" value={promoForm.type} onChange={e => setPromoForm({ ...promoForm, type: e.target.value })}>
+                        <select className="form-input" value={promoForm.type} onChange={e => setPromoForm({ ...promoForm, type: e.target.value })}>
                            <option value="percentage">Percentage (%)</option>
                            <option value="fixed">Fixed Amount (₦)</option>
                         </select>
-                        <input type="number" className="input" value={promoForm.value} onChange={e => setPromoForm({ ...promoForm, value: Number(e.target.value) })} />
+                        <input type="number" className="form-input" value={promoForm.value} onChange={e => setPromoForm({ ...promoForm, value: Number(e.target.value) })} />
                       </div>
                       <label>Max Uses</label>
-                      <input type="number" className="input mb-2" value={promoForm.max_uses} onChange={e => setPromoForm({ ...promoForm, max_uses: Number(e.target.value) })} />
+                      <input type="number" className="form-input mb-2" value={promoForm.max_uses} onChange={e => setPromoForm({ ...promoForm, max_uses: Number(e.target.value) })} />
                       <label>Product Specific <span className={styles.subText}>(optional)</span></label>
                       <select 
-                        className="input mb-2" 
+                        className="form-input mb-2" 
                         value={promoForm.product_id || ''} 
                         onChange={e => setPromoForm({ ...promoForm, product_id: e.target.value || '' })}
                       >
@@ -1783,25 +1783,25 @@ export default function AdminDashboard() {
                       </select>
                       
                       <label>Target Customer UUID (Optional)</label>
-                      <input value={(promoForm as any).target_customer_id || ''} onChange={e => setPromoForm({ ...promoForm, target_customer_id: e.target.value } as any)} placeholder="Customer ID" className="input mb-2" />
+                      <input value={(promoForm as any).target_customer_id || ''} onChange={e => setPromoForm({ ...promoForm, target_customer_id: e.target.value } as any)} placeholder="Customer ID" className="form-input mb-2" />
                       
                       <label>Expiration Date & Time</label>
-                      <input type="datetime-local" className="input mb-2" value={(promoForm as any).expires_at || ''} onChange={e => setPromoForm({ ...promoForm, expires_at: e.target.value } as any)} />
+                      <input type="datetime-local" className="form-input mb-2" value={(promoForm as any).expires_at || ''} onChange={e => setPromoForm({ ...promoForm, expires_at: e.target.value } as any)} />
                       
                       <div className="flex gap-2 mb-2">
                         <div style={{ flex: 1 }}>
                            <label>Min Account Age (Days)</label>
-                           <input type="number" className="input" value={(promoForm as any).min_account_age_days || ''} onChange={e => setPromoForm({ ...promoForm, min_account_age_days: Number(e.target.value) } as any)} />
+                           <input type="number" className="form-input" value={(promoForm as any).min_account_age_days || ''} onChange={e => setPromoForm({ ...promoForm, min_account_age_days: Number(e.target.value) } as any)} />
                         </div>
                         <div style={{ flex: 1 }}>
                            <label>Min Amount Spent (₦)</label>
-                           <input type="number" className="input" value={(promoForm as any).min_purchase_amount || ''} onChange={e => setPromoForm({ ...promoForm, min_purchase_amount: Number(e.target.value) } as any)} />
+                           <input type="number" className="form-input" value={(promoForm as any).min_purchase_amount || ''} onChange={e => setPromoForm({ ...promoForm, min_purchase_amount: Number(e.target.value) } as any)} />
                         </div>
                       </div>
 
                       <label>University Scope <span className={styles.subText}>(optional — leave blank for global)</span></label>
                       <select
-                        className="input mb-2"
+                        className="form-input mb-2"
                         value={(promoForm as any).university_id || ''}
                         onChange={e => setPromoForm({ ...promoForm, university_id: e.target.value || undefined } as any)}
                       >
@@ -1815,7 +1815,7 @@ export default function AdminDashboard() {
                          <label style={{ fontSize: '0.8rem', color: '#FFFFFF', fontWeight: 600 }}>Subsidiary Capital / Budget (₦)</label>
                          <input 
                             type="number" 
-                            className="input" 
+                            className="form-input" 
                             placeholder="Optional max budget (e.g. 5000)" 
                             value={(promoForm as any).subsidiary_capital || ''} 
                             onChange={e => setPromoForm({ ...promoForm, subsidiary_capital: Number(e.target.value) } as any)} 
@@ -3302,12 +3302,12 @@ export default function AdminDashboard() {
               <div className={styles.sectionCard}>
                 <h2>Send Platform Notice</h2>
                 <div style={{ maxWidth: 560, marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  <input value={notifForm.title} onChange={e => setNotifForm(f => ({ ...f, title: e.target.value }))} placeholder="Notification Title" className="input" />
-                  <textarea value={notifForm.content} onChange={e => setNotifForm(f => ({ ...f, content: e.target.value }))} rows={4} placeholder="Message body..." className="input" style={{ resize: 'vertical' }} />
+                  <input value={notifForm.title} onChange={e => setNotifForm(f => ({ ...f, title: e.target.value }))} placeholder="Notification Title" className="form-input" />
+                  <textarea value={notifForm.content} onChange={e => setNotifForm(f => ({ ...f, content: e.target.value }))} rows={4} placeholder="Message body..." className="form-input" style={{ resize: 'vertical' }} />
                   <select 
                     value={notifForm.target} 
                     onChange={e => setNotifForm(f => ({ ...f, target: e.target.value }))}
-                    className="input"
+                    className="form-input"
                   >
                     <option value="all">📢 All Users (Broadcast)</option>
                     <option value="all_vendors">🏪 All Vendors</option>
@@ -3319,7 +3319,7 @@ export default function AdminDashboard() {
                   </select>
                   {(notifForm.target === 'university_all' || notifForm.target === 'university_vendors') && (
                     <select 
-                      className="input"
+                      className="form-input"
                       onChange={e => setNotifForm(f => ({ ...f, universityId: e.target.value }))}
                     >
                       <option value="">Select University...</option>
@@ -3331,7 +3331,7 @@ export default function AdminDashboard() {
                       value={notifForm.userId} 
                       onChange={e => setNotifForm(f => ({ ...f, userId: e.target.value }))} 
                       placeholder="Paste User UUID" 
-                      className="input"
+                      className="form-input"
                     />
                   )}
                   <button

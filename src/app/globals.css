@@ -356,8 +356,15 @@ input, textarea, select, button { font-family: inherit; }
 ::-webkit-scrollbar-thumb:hover { background: #A0A0A0; }
 
 /* ============================================
-   DIVIDER
+   CARD & CONTAINER UTILITIES
    ============================================ */
+.card {
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
 .divider { height: 1px; background: var(--border); width: 100%; }
 
 

@@ -1837,11 +1837,11 @@ export default function VendorDashboard() {
                   <div style={{ flex: 1, minWidth: 220 }}>
                     <div className={styles.inputGroup}>
                       <label>Store Name</label>
-                      <input type="text" defaultValue={brand.name} onBlur={(e) => handleUpdateSettings({ name: e.target.value })} />
+                      <input type="text" className="form-input" defaultValue={brand.name} onBlur={(e) => handleUpdateSettings({ name: e.target.value })} />
                     </div>
                     <div className={styles.inputGroup} style={{ marginTop: '0.75rem' }}>
                       <label>WhatsApp Number</label>
-                      <input type="text" defaultValue={brand.whatsapp_number} onBlur={(e) => handleUpdateSettings({ whatsapp_number: e.target.value })} />
+                      <input type="text" className="form-input" defaultValue={brand.whatsapp_number} onBlur={(e) => handleUpdateSettings({ whatsapp_number: e.target.value })} />
                     </div>
                   </div>
                 </div>
@@ -1882,6 +1882,7 @@ export default function VendorDashboard() {
                   <label>Instagram / Portfolio Link</label>
                   <input
                     type="text"
+                    className="form-input"
                     defaultValue={brand.instagram_handle}
                     placeholder="@yourbrand or https://..."
                     onBlur={(e) => handleUpdateSettings({ instagram_handle: e.target.value })}
@@ -1891,6 +1892,7 @@ export default function VendorDashboard() {
                 <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
                   <label>Store Description</label>
                   <textarea
+                    className="form-input"
                     rows={4}
                     defaultValue={brand.description}
                     onBlur={(e) => handleUpdateSettings({ description: e.target.value })}
@@ -2022,14 +2024,14 @@ export default function VendorDashboard() {
                   <div className={styles.bankSetupForm}>
                     <div className={styles.inputGroup}>
                       <label>Bank</label>
-                      <select id="setupBankCode">
+                      <select id="setupBankCode" className="form-select">
                         <option value="">Select Bank</option>
                         {banks.map(b => <option key={b.code} value={b.code}>{b.name}</option>)}
                       </select>
                     </div>
                     <div className={styles.inputGroup}>
                       <label>Account Number</label>
-                      <input id="setupAccNum" type="text" maxLength={10} placeholder="10-digit account number" />
+                      <input id="setupAccNum" type="text" className="form-input" maxLength={10} placeholder="10-digit account number" />
                     </div>
                     <button 
                       className="btn btn-primary" 
@@ -2127,6 +2129,7 @@ export default function VendorDashboard() {
                       <label>New Password</label>
                       <input 
                         type="password" 
+                        className="form-input"
                         placeholder="At least 6 characters"
                         required
                         value={passForm.next}
@@ -2137,6 +2140,7 @@ export default function VendorDashboard() {
                       <label>Confirm New Password</label>
                       <input 
                         type="password" 
+                        className="form-input"
                         placeholder="Repeat new password"
                         required
                         value={passForm.confirm}
@@ -2550,6 +2554,7 @@ export default function VendorDashboard() {
                   <div className={styles.inputGroup}>
                     <label>Description</label>
                     <textarea
+                      className="form-input"
                       placeholder="Tell your customers about the material, fit, and style..."
                       rows={4}
                       value={newProduct.description}
@@ -2990,7 +2995,7 @@ export default function VendorDashboard() {
                 <form onSubmit={handleWithdrawalRequest} className={styles.productForm}>
                   <div className={styles.inputGroup}>
                     <label>Amount to Withdraw (?)</label>
-                    <input name="amount" type="number" placeholder="0.00" autoFocus required />
+                    <input name="amount" type="number" className="form-input" placeholder="0.00" autoFocus required />
                     <p className={styles.formHint}>Available: <strong>{formatPrice(wallet?.available_balance || 0)}</strong></p>
                   </div>
                   <div className={styles.inputGroup}>

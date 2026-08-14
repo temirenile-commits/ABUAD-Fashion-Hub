@@ -187,7 +187,7 @@ export default function Home() {
           <div className={styles.productRail}>
             {flashItems.length ? flashItems.map((item) => (
               <Link href="/explore" className={styles.saleCard} key={item.title}>
-                <div className={styles.saleImageWrap}><img src={item.image} alt={item.title} /><span>{item.tag}</span><button type="button" aria-label={`Save ${item.title}`}><Heart size={15} /></button></div>
+                <div className={styles.saleImageWrap}><img src={item.image} alt={item.title} /><span>{item.tag}</span><button type="button" className="btn btn-icon btn-ghost" style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff' }} aria-label={`Save ${item.title}`}><Heart size={15} /></button></div>
                 <div className={styles.saleInfo}><span>{item.brand}</span><h3>{item.title}</h3><div><strong>{formatNaira(item.price)}</strong><del>{formatNaira(item.oldPrice)}</del></div></div>
               </Link>
             )) : <p className={styles.emptyNotice}>No products available yet.</p>}

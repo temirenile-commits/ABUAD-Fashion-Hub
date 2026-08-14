@@ -301,14 +301,20 @@ export default function SupportDashboard() {
                   </tbody>
                 </table>
 
-                <div style={{ display: 'flex', gap: '1rem', maxWidth: '500px' }}>
-                   <input className="form-input" placeholder="User Email Address" value={agentForm.email} onChange={e => setAgentForm({ email: e.target.value })} />
-                   <button className="btn btn-primary" disabled={actionLoading || !agentForm.email} onClick={() => {
-                      apiAction('add_agent', { email: agentForm.email });
-                      setAgentForm({ email: '' });
-                   }}>
-                      <UserPlus size={14} /> Hire Agent
-                   </button>
+                <div className="card" style={{ padding: '1.5rem', maxWidth: '500px', marginTop: '2rem' }}>
+                   <h4 style={{ marginBottom: '1rem' }}>Hire New Support Agent</h4>
+                   <div className="form-group" style={{ gap: '1rem' }}>
+                      <div className="form-group">
+                        <label className="form-label">User Email Address</label>
+                        <input className="form-input" placeholder="e.g. agent@mastercart.com" value={agentForm.email} onChange={e => setAgentForm({ email: e.target.value })} />
+                      </div>
+                      <button className="btn btn-primary" disabled={actionLoading || !agentForm.email} onClick={() => {
+                          apiAction('add_agent', { email: agentForm.email });
+                          setAgentForm({ email: '' });
+                      }}>
+                          <UserPlus size={14} /> Hire Agent
+                      </button>
+                   </div>
                 </div>
               </div>
 

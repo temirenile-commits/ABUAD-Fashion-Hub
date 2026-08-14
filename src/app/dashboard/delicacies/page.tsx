@@ -1857,11 +1857,11 @@ export default function VendorDashboard() {
                   <div style={{ flex: 1, minWidth: 220 }}>
                     <div className={styles.inputGroup}>
                       <label>Store Name</label>
-                      <input type="text" defaultValue={brand.name} onBlur={(e) => handleUpdateSettings({ name: e.target.value })} />
+                      <input type="text" className="form-input" defaultValue={brand.name} onBlur={(e) => handleUpdateSettings({ name: e.target.value })} />
                     </div>
                     <div className={styles.inputGroup} style={{ marginTop: '0.75rem' }}>
                       <label>WhatsApp Number</label>
-                      <input type="text" defaultValue={brand.whatsapp_number} onBlur={(e) => handleUpdateSettings({ whatsapp_number: e.target.value })} />
+                      <input type="text" className="form-input" defaultValue={brand.whatsapp_number} onBlur={(e) => handleUpdateSettings({ whatsapp_number: e.target.value })} />
                     </div>
                   </div>
                 </div>
@@ -1911,6 +1911,7 @@ export default function VendorDashboard() {
                 <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
                   <label>Store Description</label>
                   <textarea
+                    className="form-input"
                     rows={4}
                     defaultValue={brand.description}
                     onBlur={(e) => handleUpdateSettings({ description: e.target.value })}
@@ -2042,14 +2043,14 @@ export default function VendorDashboard() {
                   <div className={styles.bankSetupForm}>
                     <div className={styles.inputGroup}>
                       <label>Bank</label>
-                      <select id="setupBankCode">
+                      <select id="setupBankCode" className="form-select">
                         <option value="">Select Bank</option>
                         {banks.map(b => <option key={b.code} value={b.code}>{b.name}</option>)}
                       </select>
                     </div>
                     <div className={styles.inputGroup}>
                       <label>Account Number</label>
-                      <input id="setupAccNum" type="text" maxLength={10} placeholder="10-digit account number" />
+                      <input id="setupAccNum" type="text" className="form-input" maxLength={10} placeholder="10-digit account number" />
                     </div>
                     <button 
                       className="btn btn-primary" 
@@ -2147,6 +2148,7 @@ export default function VendorDashboard() {
                       <label>New Password</label>
                       <input 
                         type="password" 
+                        className="form-input"
                         placeholder="At least 6 characters"
                         required
                         value={passForm.next}
@@ -2157,6 +2159,7 @@ export default function VendorDashboard() {
                       <label>Confirm New Password</label>
                       <input 
                         type="password" 
+                        className="form-input"
                         placeholder="Repeat new password"
                         required
                         value={passForm.confirm}
@@ -2376,7 +2379,7 @@ export default function VendorDashboard() {
                       </div>
                     ) : (
                       <div className={styles.replyForm}>
-                        <textarea id={`reply-${review.id}`} placeholder="Reply to this review..." rows={2}></textarea>
+                        <textarea id={`reply-${review.id}`} className="form-input" placeholder="Reply to this review..." rows={2}></textarea>
                         <button
                           className="btn btn-secondary btn-sm"
                           onClick={() => {
@@ -2464,6 +2467,7 @@ export default function VendorDashboard() {
                       <label>{isChef ? 'Meal / Item Name' : 'Product Name'}</label>
                       <input
                         type="text"
+                        className="form-input"
                         placeholder={isChef ? 'e.g. Special Jollof Rice' : 'e.g. Classic Vintage Denim Jacket'}
                         required
                         value={newProduct.title}
@@ -2476,6 +2480,7 @@ export default function VendorDashboard() {
                       <label>Sale Price (?) - What customers pay</label>
                       <input
                         type="number"
+                        className="form-input"
                         placeholder="0.00"
                         required
                         value={newProduct.price}
@@ -2486,6 +2491,7 @@ export default function VendorDashboard() {
                       <label>Original Price (?) - Optional "Discount" tag</label>
                       <input
                         type="number"
+                        className="form-input"
                         placeholder="e.g. 15000"
                         value={newProduct.originalPrice}
                         onChange={(e) => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
@@ -2497,6 +2503,7 @@ export default function VendorDashboard() {
                     <div className={styles.inputGroup}>
                       <label>Category</label>
                       <select
+                        className="form-select"
                         value={newProduct.category}
                         onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                       >
@@ -2529,6 +2536,7 @@ export default function VendorDashboard() {
                       <label>{isChef ? 'Quantity (Plates / Pieces)' : 'Total Global Stock'}</label>
                       <input
                         type="number"
+                        className="form-input"
                         placeholder={isChef ? '50' : '10'}
                         value={newProduct.stockCount}
                         onChange={(e) => setNewProduct({ ...newProduct, stockCount: e.target.value })}
@@ -2547,6 +2555,7 @@ export default function VendorDashboard() {
                       {newProduct.variants.map((v, i) => (
                         <div key={i} className={styles.variantRow}>
                           <select
+                            className="form-select"
                             value={v.type}
                             onChange={(e) => {
                               const updated = [...newProduct.variants];
@@ -2571,12 +2580,14 @@ export default function VendorDashboard() {
                           </select>
                           <input
                             type="text"
+                            className="form-input"
                             placeholder={v.type === 'Location / Hostel' ? "e.g. Talba, Whole University" : "e.g. XL or Maroon"}
                             value={v.value}
                             onChange={(e) => updateVariant(i, e.target.value)}
                           />
                           <input
                             type="number"
+                            className="form-input"
                             placeholder="Price override (₦)"
                             value={v.price || ''}
                             onChange={(e) => updateVariantPrice(i, e.target.value)}
@@ -2620,6 +2631,7 @@ export default function VendorDashboard() {
                   <div className={styles.inputGroup}>
                     <label>Description & Availability</label>
                     <textarea
+                      className="form-input"
                       placeholder={isChef ? "Describe the meal, ingredients, prep time..." : "Tell your customers about the material, fit, and style..."}
                       rows={4}
                       value={newProduct.description}
@@ -3125,7 +3137,7 @@ export default function VendorDashboard() {
                 <form onSubmit={handleWithdrawalRequest} className={styles.productForm}>
                   <div className={styles.inputGroup}>
                     <label>Amount to Withdraw (?)</label>
-                    <input name="amount" type="number" placeholder="0.00" autoFocus required />
+                    <input name="amount" type="number" className="form-input" placeholder="0.00" autoFocus required />
                     <p className={styles.formHint}>Available: <strong>{formatPrice(wallet?.available_balance || 0)}</strong></p>
                   </div>
                   <div className={styles.inputGroup}>

@@ -171,20 +171,7 @@ export default function ProductCard({ product }: Props) {
         )}
 
         {product.award_history && product.award_history.length > 0 && (
-          <div className={styles.awardBadge} style={{ 
-            position: 'absolute', 
-            top: '8px', 
-            right: '40px', 
-            background: 'var(--primary)', 
-            color: 'white', 
-            padding: '4px', 
-            borderRadius: '50%', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-            zIndex: 5
-          }}>
+          <div className={styles.awardBadge}>
             <Trophy size={12} fill="currentColor" />
           </div>
         )}
@@ -236,12 +223,12 @@ export default function ProductCard({ product }: Props) {
               <span>•</span>
               <span>{formatPrice(Number(product.price) + Number(product.commission_price || 0) + Number(product.delivery_rate || 0))}</span>
               <span>•</span>
-              <div className={styles.rating} style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+              <div className={styles.rating}>
+                <div className={styles.ratingItem}>
                   <Star size={10} fill="currentColor" color="#FFFFFF" />
                   <span>{product.rating ? Number(product.rating).toFixed(1) : '5.0'}</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '2px', opacity: 0.7 }}>
+                <div className={styles.ratingItem} style={{ opacity: 0.7 }}>
                   <Eye size={10} />
                   <span>{product.views_count || 0}</span>
                 </div>
