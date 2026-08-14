@@ -3658,7 +3658,7 @@ export default function VendorDashboard() {
               <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>Assistant Settings</div>
               <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '0.5rem' }}>Choose the name your personal MasterCart assistant will use.</div>
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                <input value={aiSettings?.assistant_name || 'Miles'} onChange={e => setAiSettings({ ...aiSettings, assistant_name: e.target.value })} maxLength={40} style={{ flex: 1, background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.7rem 0.85rem', color: '#FFFFFF', fontSize: '0.85rem' }} />
+                <input value={aiSettings?.assistant_name ?? 'Miles'} onChange={e => setAiSettings({ ...aiSettings, assistant_name: e.target.value })} maxLength={40} style={{ flex: 1, background: 'var(--bg-300)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.7rem 0.85rem', color: '#FFFFFF', fontSize: '0.85rem' }} />
                 <button onClick={() => handleUpdateAiSettings({ assistant_name: (aiSettings?.assistant_name || 'Miles').trim() || 'Miles' })} disabled={isSettingsLoading} className="btn btn-primary">Save</button>
               </div>
               <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>Custom AI Instructions</div>
