@@ -83,16 +83,11 @@ export default function ReelsPage() {
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const [reelsRes, vendorsRes] = await Promise.all([
-          fetch(`/api/reels?search=${encodeURIComponent(searchQuery)}`),
-          supabase.from('brands').select('id, name, logo_url, verified, category, owner_id').ilike('name', `%${searchQuery}%`).limit(5)
-        ]);
+        const reelsRes = await fetch(`/api/reels?search=${encodeURIComponent(searchQuery)}`);
         const reelsData = await reelsRes.json();
-        if (reelsData.success && reelsData.reels) {
-          setSearchResults(reelsData.reels);
-        }
-        if (vendorsRes.data) {
-          setSearchVendors(vendorsRes.data);
+        if (reelsData.success) {
+          setSearchResults(reelsData.reels || []);
+          setSearchVendors(reelsData.vendors || []);
         }
       } catch (err) {
         console.error('Search error:', err);

@@ -67,6 +67,7 @@ export async function GET(req: NextRequest) {
     // Get current authenticated user if any, to determine is_liked per reel
     const currentUser = await getAuthenticatedUser(req);
     const currentUserId = currentUser?.id;
+    const normalizedSearch = search?.trim().toLowerCase() || '';
 
     let query = supabaseAdmin
       .from('reels')
@@ -115,9 +116,9 @@ export async function GET(req: NextRequest) {
     if (brandId) {
       query = query.eq('brand_id', brandId);
     }
-    if (search) {
-      query = query.or(`title.ilike.%${search}%,caption.ilike.%${search}%`);
-    }
+    // Search is applied after the relational data is loaded so vendor and
+    // attached-product metadata participate in the same database-backed result.
+    // This preserves the existing feed filters and avoids a disconnected client-only filter.
 
     // Respect university visibility logic
     if (universityId) {
@@ -133,9 +134,54 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    let matchingVendors: any[] = [];
+    let visibleReels = data || [];
+
+    if (normalizedSearch) {
+      const safeSearch = normalizedSearch.replace(/[%,()]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (safeSearch) {
+        const { data: vendorMatches, error: vendorSearchError } = await supabaseAdmin
+          .from('brands')
+          .select('id, name, logo_url, verified, category, marketplace_type')
+          .or(`name.ilike.%${safeSearch}%,category.ilike.%${safeSearch}%,marketplace_type.ilike.%${safeSearch}%`)
+          .limit(10);
+
+        if (vendorSearchError) {
+          console.error('Vendor search error:', vendorSearchError);
+        }
+        matchingVendors = vendorMatches || [];
+      }
+
+      const scoreMatch = (value: unknown, weight: number) => {
+        const text = String(value || '').toLowerCase();
+        if (!text || !text.includes(normalizedSearch)) return 0;
+        if (text === normalizedSearch) return weight * 4;
+        if (text.startsWith(normalizedSearch)) return weight * 3;
+        return weight;
+      };
+
+      visibleReels = visibleReels
+        .map((reel: any) => {
+          const productTitles = (reel.reel_products || [])
+            .map((relation: any) => relation.products?.title)
+            .filter(Boolean);
+          const score = Math.max(
+            scoreMatch(reel.brands?.name, 100),
+            scoreMatch(reel.title, 90),
+            ...productTitles.map((title: string) => scoreMatch(title, 80)),
+            scoreMatch(reel.caption, 40),
+            scoreMatch(reel.brands?.category, 30)
+          );
+          return { reel, score };
+        })
+        .filter(({ score }) => score > 0)
+        .sort((a: any, b: any) => b.score - a.score)
+        .map(({ reel }: any) => reel);
+    }
+
     // Fetch user details for comment authors
     const userIds = new Set<string>();
-    (data || []).forEach(reel => {
+    visibleReels.forEach(reel => {
       (reel.reel_comments || []).forEach((c: any) => {
         if (c.user_id) userIds.add(c.user_id);
       });
@@ -184,7 +230,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Process reels to add is_liked and detailed comment author info
-    const processedReels = (data || []).map(reel => {
+    const processedReels = visibleReels.map(reel => {
       const likes = reel.reel_likes || [];
       const comments = (reel.reel_comments || []).map((c: any) => {
         const identity = authorIdentityMap[c.user_id] || {
@@ -216,7 +262,7 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({ success: true, reels: processedReels });
+    return NextResponse.json({ success: true, reels: processedReels, vendors: matchingVendors });
   } catch (err: any) {
     console.error('Unexpected error in reels API:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
