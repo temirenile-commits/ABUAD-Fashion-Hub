@@ -144,6 +144,17 @@ export default function VendorDashboard() {
   useEffect(() => {
     try { window.localStorage.setItem('mastercart-miles-conversation-vendor', JSON.stringify(copilotMsgs.slice(-30))); } catch {}
   }, [copilotMsgs]);
+  const [milesFullScreen, setMilesFullScreen] = useState(false);
+  const [milesBubbleSide, setMilesBubbleSide] = useState<'left' | 'right'>('right');
+  useEffect(() => {
+    try {
+      const savedSide = window.localStorage.getItem('mastercart-miles-bubble-side-vendor');
+      if (savedSide === 'left' || savedSide === 'right') setMilesBubbleSide(savedSide);
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try { window.localStorage.setItem('mastercart-miles-bubble-side-vendor', milesBubbleSide); } catch {}
+  }, [milesBubbleSide]);
 
   const [newProduct, setNewProduct] = useState({
     title: '',
@@ -3730,8 +3741,8 @@ export default function VendorDashboard() {
       {/* --- AI Copilot Floating Widget --- */}
       {showCopilot && (
         <div style={{
-          position: 'fixed', bottom: '6rem', right: '1.5rem', width: 'min(360px, calc(100vw - 2rem))', maxHeight: 'min(500px, calc(100dvh - 8rem))',
-          background: 'var(--bg-200)', border: '1px solid #A0A0A0', borderRadius: '20px',
+          position: 'fixed', bottom: milesFullScreen ? 0 : '6rem', right: milesFullScreen || milesBubbleSide === 'left' ? 0 : '1.5rem', left: milesFullScreen || milesBubbleSide === 'left' ? 0 : 'auto', width: milesFullScreen ? '100vw' : 'min(360px, calc(100vw - 2rem))', maxHeight: milesFullScreen ? '100dvh' : 'min(500px, calc(100dvh - 8rem))',
+          background: 'var(--bg-200)', border: '1px solid #A0A0A0', borderRadius: milesFullScreen ? 0 : '20px',
           boxShadow: '0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.12)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 9999,
           backdropFilter: 'blur(24px)'
@@ -3745,7 +3756,10 @@ export default function VendorDashboard() {
                 <div style={{ fontSize: '0.7rem', color: '#FFFFFF' }}>Your MasterCart assistant · {aiSettings?.store_write_enabled ? 'Read & write active' : aiSettings?.store_access_enabled ? 'Read access active' : 'Store access off'}</div>
               </div>
             </div>
-            <button onClick={() => setShowCopilot(false)} style={{ background: 'none', border: 'none', color: 'var(--text-400)', cursor: 'pointer', padding: '4px' }}><X size={16} /></button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <button onClick={() => setMilesFullScreen(v => !v)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 8, color: 'inherit', cursor: 'pointer', padding: '4px 7px', fontSize: '0.7rem' }}>{milesFullScreen ? '← Back' : 'Open full assistant'}</button>
+              <button onClick={() => { setShowCopilot(false); setMilesFullScreen(false); }} style={{ background: 'none', border: 'none', color: 'var(--text-400)', cursor: 'pointer', padding: '4px' }}><X size={16} /></button>
+            </div>
           </div>
 
           {/* Messages */}
@@ -3801,16 +3815,18 @@ export default function VendorDashboard() {
       {/* Floating AI Copilot Button */}
       <button
         onClick={() => setShowCopilot(v => !v)}
-        title="Open AI Copilot"
+        title={`Open ${aiSettings?.assistant_name || 'Miles'}`}
+        draggable
+        onDragEnd={e => setMilesBubbleSide(e.clientX < window.innerWidth / 2 ? 'left' : 'right')}
         style={{
-          position: 'fixed', bottom: '1.5rem', right: '1.5rem', width: '56px', height: '56px',
+          position: 'fixed', bottom: 'calc(1.5rem + env(safe-area-inset-bottom))', left: milesBubbleSide === 'left' ? '1.5rem' : 'auto', right: milesBubbleSide === 'right' ? '1.5rem' : 'auto', width: '56px', height: '56px',
           borderRadius: '50%', background: 'linear-gradient(135deg,#000000,#FFFFFF)',
           border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: 10000,
         }}
         onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
         onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
-      >?</button>
+      ><span>?</span>{pendingMilesAction && <span aria-label="Miles has an update" style={{ position: 'absolute', top: 2, right: 2, width: 9, height: 9, borderRadius: '50%', background: '#FFFFFF', border: '2px solid #121214' }} />}</button>
       </>
       )}
     </div>
