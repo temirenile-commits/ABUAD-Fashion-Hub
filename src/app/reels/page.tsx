@@ -6,7 +6,7 @@ import styles from './reels.module.css';
 import { 
   ArrowLeft, Heart, MessageCircle, Share2, Volume2, VolumeX, 
   Play, ChevronUp, ChevronDown, X, Search, Download, 
-  Loader2, Send, ShoppingBag, VideoOff, Info
+  Loader2, Send, ShoppingBag, VideoOff, Info, CheckCircle, User
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -33,6 +33,7 @@ export default function ReelsPage() {
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [activeProduct, setActiveProduct] = useState<any>(null);
+  const [showIdentityCard, setShowIdentityCard] = useState<any>(null);
 
   // Double tap animation state
   const [showHeart, setShowHeart] = useState<{ id: string, x: number, y: number } | null>(null);
@@ -199,14 +200,20 @@ export default function ReelsPage() {
     }
   };
 
+  const handleIdentityClick = (comment: any) => {
+    if (comment.author_type === 'vendor' && comment.author_brand_id) {
+      const slug = comment.author_name?.toLowerCase().replace(/\s+/g, '-') || 'brand';
+      router.push(`/vendor/${slug}?id=${comment.author_brand_id}`);
+    } else {
+      setShowIdentityCard(comment);
+    }
+  };
+
   const [downloadingReelId, setDownloadingReelId] = useState<string | null>(null);
 
   const handleDownload = async (reelId: string, title: string) => {
     if (downloadingReelId === reelId) return; // Prevent duplicate requests
     setDownloadingReelId(reelId);
-    
-    // Show toast or alert indicating preparation
-    const toastId = 'download-toast';
     
     try {
       const res = await fetch(`/api/reels/download?id=${reelId}`);
@@ -313,7 +320,6 @@ export default function ReelsPage() {
 
           <div className={styles.searchResultsGrid}>
             {isSearching ? (
-              // Skeleton Loading State
               Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className={`${styles.searchGridCard} ${styles.skeleton}`} />
               ))
@@ -349,7 +355,6 @@ export default function ReelsPage() {
                 </div>
               ))
             ) : searchQuery ? (
-              // No Search Results State
               <div style={{ gridColumn: '1 / -1', paddingTop: '4rem' }}>
                 <div className={styles.emptyStateContainer} style={{ height: 'auto', background: 'transparent' }}>
                   <div className={styles.emptyIconWrapper}>
@@ -363,7 +368,6 @@ export default function ReelsPage() {
                 </div>
               </div>
             ) : (
-              // Search Prompt
               <div style={{ gridColumn: '1 / -1', padding: '3rem 2rem', textAlign: 'center', opacity: 0.5 }}>
                 <Info size={40} style={{ margin: '0 auto 1rem auto', display: 'block' }} />
                 <p>Type a keyword above to explore matching reels and products across campus brands.</p>
@@ -465,7 +469,7 @@ export default function ReelsPage() {
                   )}
                   <div className={styles.vendorDetails}>
                     <h4 className={styles.vendorName}>
-                      {reel.brands?.name} {reel.brands?.verified && <Info size={14} className={styles.verifiedBadge} fill="currentColor" />}
+                      {reel.brands?.name} {reel.brands?.verified && <CheckCircle size={14} className={styles.verifiedBadge} fill="currentColor" />}
                     </h4>
                   </div>
                 </Link>
@@ -539,11 +543,20 @@ export default function ReelsPage() {
               ) : (
                 comments.map((c, i) => (
                   <div key={i} className={styles.commentItem}>
-                    <div className={styles.commentAvatar}>
-                      {c.user_name?.substring(0, 1) || 'U'}
+                    <div className={styles.commentIdentity} onClick={() => handleIdentityClick(c)}>
+                      {c.author_avatar ? (
+                        <img src={c.author_avatar} alt="" className={styles.commentAvatarImg} />
+                      ) : (
+                        <div className={styles.commentAvatar}>
+                          {c.author_name?.substring(0, 1) || 'U'}
+                        </div>
+                      )}
                     </div>
                     <div className={styles.commentContent}>
-                      <div className={styles.commentUser}>{c.user_name || 'Anonymous User'}</div>
+                      <div className={styles.commentUser} onClick={() => handleIdentityClick(c)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {c.author_type === 'customer' ? `@${c.author_name?.toLowerCase().replace(/\s+/g, '')}` : c.author_name}
+                        {c.author_verified && <CheckCircle size={14} className={styles.verifiedBadgeSmall} fill="currentColor" />}
+                      </div>
                       <p className={styles.commentText}>{c.content}</p>
                       <div className={styles.commentMeta}>
                         <span>{new Date(c.created_at || Date.now()).toLocaleDateString()}</span>
@@ -576,27 +589,82 @@ export default function ReelsPage() {
         </div>
       )}
 
+      {/* Identity Card Modal */}
+      {showIdentityCard && (
+        <div className={styles.modalBackdrop} onClick={() => setShowIdentityCard(null)}>
+          <div className={styles.identityCard} onClick={e => e.stopPropagation()}>
+            <button className={styles.closeModal} onClick={() => setShowIdentityCard(null)}>
+              <X size={20} />
+            </button>
+            
+            {showIdentityCard.author_avatar ? (
+              <img src={showIdentityCard.author_avatar} alt="" className={styles.cardAvatar} />
+            ) : (
+              <div className={styles.cardAvatar}>
+                {showIdentityCard.author_name?.substring(0, 1) || 'U'}
+              </div>
+            )}
+            
+            <h3 className={styles.cardName}>
+              {showIdentityCard.author_type === 'customer' 
+                ? `@${showIdentityCard.author_name?.toLowerCase().replace(/\s+/g, '')}` 
+                : showIdentityCard.author_name}
+            </h3>
+            <p className={styles.cardRole}>
+              {showIdentityCard.author_type === 'vendor' ? 'Verified Vendor' : 'Customer'}
+            </p>
+            
+            <div className={styles.cardDivider} />
+            
+            <div className={styles.cardPrivacyNotice}>
+              <Info size={16} style={{ margin: '0 auto 8px auto', display: 'block', opacity: 0.5 }} />
+              <p>
+                {showIdentityCard.author_type === 'vendor' 
+                  ? 'This is a public vendor profile. Tap to visit their store.' 
+                  : 'Customer profiles are private to protect user data and activity.'}
+              </p>
+            </div>
+            
+            {showIdentityCard.author_type === 'vendor' && (
+              <button 
+                className="btn btn-primary w-full" 
+                style={{ marginTop: '20px' }}
+                onClick={() => {
+                  const slug = showIdentityCard.author_name?.toLowerCase().replace(/\s+/g, '-') || 'brand';
+                  router.push(`/vendor/${slug}?id=${showIdentityCard.author_brand_id}`);
+                }}
+              >
+                Visit Store
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Product Quick View Modal */}
       {activeProduct && (
         <div className={styles.modalBackdrop} onClick={() => setActiveProduct(null)}>
           <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
             <button className={styles.closeModal} onClick={() => setActiveProduct(null)}>
-              <X size={22} />
+              <X size={20} />
             </button>
+            
             <img src={activeProduct.image_url || activeProduct.media_urls?.[0]} alt="" className={styles.modalImage} />
             <h3 className={styles.modalTitle}>{activeProduct.title}</h3>
             <p className={styles.modalPrice}>₦{activeProduct.price?.toLocaleString()}</p>
             <p className={styles.modalStock}>
-              {activeProduct.stock_count > 0 ? `In Stock: ${activeProduct.stock_count}` : 'Out of Stock'}
+              {activeProduct.stock_count > 0 ? `${activeProduct.stock_count} units in stock` : 'Out of stock'}
             </p>
-            <Link 
-              href={`/product/${activeProduct.id}`} 
-              className="btn btn-primary" 
-              style={{ width: '100%', padding: '12px', borderRadius: '30px', fontWeight: 700 }}
+            
+            <button 
+              className="btn btn-primary w-full"
+              onClick={() => {
+                const brandSlug = currentReel?.brands?.name?.toLowerCase().replace(/\s+/g, '-') || 'brand';
+                router.push(`/vendor/${brandSlug}/product/${activeProduct.id}`);
+              }}
             >
-              <ShoppingBag size={18} style={{ marginRight: '8px', display: 'inline-block', verticalAlign: 'middle' }} />
-              View Product Details
-            </Link>
+              View Full Details
+            </button>
           </div>
         </div>
       )}

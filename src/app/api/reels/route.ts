@@ -133,7 +133,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Fetch user profiles for comment authors if needed
+    // Fetch user details for comment authors
     const userIds = new Set<string>();
     (data || []).forEach(reel => {
       (reel.reel_comments || []).forEach((c: any) => {
@@ -141,27 +141,69 @@ export async function GET(req: NextRequest) {
       });
     });
 
-    let profileMap: { [key: string]: string } = {};
+    let authorIdentityMap: { [key: string]: any } = {};
     if (userIds.size > 0) {
-      const { data: profiles } = await supabaseAdmin
-        .from('profiles')
-        .select('id, full_name, email')
-        .in('id', Array.from(userIds));
+      const idList = Array.from(userIds);
+      
+      // Fetch users
+      const { data: users } = await supabaseAdmin
+        .from('users')
+        .select('id, name, avatar_url, role')
+        .in('id', idList);
 
-      if (profiles) {
-        profiles.forEach(p => {
-          profileMap[p.id] = p.full_name || p.email?.split('@')[0] || 'Campus User';
+      // Fetch brands (vendors)
+      const { data: brands } = await supabaseAdmin
+        .from('brands')
+        .select('id, owner_id, name, logo_url, verified')
+        .in('owner_id', idList);
+
+      if (users) {
+        users.forEach(u => {
+          const brand = brands?.find(b => b.owner_id === u.id);
+          
+          if (brand) {
+            // Vendor Identity
+            authorIdentityMap[u.id] = {
+              type: 'vendor',
+              name: brand.name,
+              avatar: brand.logo_url,
+              verified: brand.verified,
+              brand_id: brand.id
+            };
+          } else {
+            // Customer Identity
+            authorIdentityMap[u.id] = {
+              type: 'customer',
+              name: u.name || 'Campus User',
+              avatar: u.avatar_url,
+              verified: false
+            };
+          }
         });
       }
     }
 
-    // Process reels to add is_liked and user_name to comments
+    // Process reels to add is_liked and detailed comment author info
     const processedReels = (data || []).map(reel => {
       const likes = reel.reel_likes || [];
-      const comments = (reel.reel_comments || []).map((c: any) => ({
-        ...c,
-        user_name: profileMap[c.user_id] || 'Campus User'
-      })).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const comments = (reel.reel_comments || []).map((c: any) => {
+        const identity = authorIdentityMap[c.user_id] || {
+          type: 'customer',
+          name: 'Campus User',
+          avatar: null,
+          verified: false
+        };
+        
+        return {
+          ...c,
+          author_type: identity.type,
+          user_name: identity.name, // Keep for backward compatibility
+          author_name: identity.name,
+          author_avatar: identity.avatar,
+          author_verified: identity.verified,
+          author_brand_id: identity.brand_id
+        };
+      }).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       const isLiked = currentUserId ? likes.some((l: any) => l.user_id === currentUserId) : false;
 
@@ -199,7 +241,7 @@ export async function POST(req: NextRequest) {
     // Verify brand ownership for any vendor type (Fashion, Delicacies, Electronics, Gadgets, etc.)
     const { data: brand, error: brandError } = await supabaseAdmin
       .from('brands')
-      .select('id, category, marketplace_type')
+      .select('id, category, marketplace_type, university_id')
       .eq('owner_id', user.id)
       .single();
 
@@ -217,8 +259,8 @@ export async function POST(req: NextRequest) {
         title: title || 'New Collection',
         caption: caption || '',
         product_section: product_section || 'fashion',
-        visibility_type: visibility_type || 'university',
-        university_id: university_id || null,
+        visibility_type: visibility_type || (brand.university_id ? 'university' : 'public'),
+        university_id: university_id || brand.university_id || null,
         status: 'published'
       })
       .select()

@@ -50,7 +50,48 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
-      return NextResponse.json({ success: true, comment: data });
+      // Resolve author identity for immediate UI update
+      const { data: userData } = await supabaseAdmin
+        .from('users')
+        .select('id, name, avatar_url')
+        .eq('id', userId)
+        .single();
+
+      const { data: brandData } = await supabaseAdmin
+        .from('brands')
+        .select('id, name, logo_url, verified')
+        .eq('owner_id', userId)
+        .single();
+
+      let identity;
+      if (brandData) {
+        identity = {
+          type: 'vendor',
+          name: brandData.name,
+          avatar: brandData.logo_url,
+          verified: brandData.verified,
+          brand_id: brandData.id
+        };
+      } else {
+        identity = {
+          type: 'customer',
+          name: userData?.name || 'Campus User',
+          avatar: userData?.avatar_url,
+          verified: false
+        };
+      }
+
+      const enrichedComment = {
+        ...data,
+        author_type: identity.type,
+        user_name: identity.name,
+        author_name: identity.name,
+        author_avatar: identity.avatar,
+        author_verified: identity.verified,
+        author_brand_id: identity.brand_id
+      };
+
+      return NextResponse.json({ success: true, comment: enrichedComment });
     }
 
     if (action === 'view') {
