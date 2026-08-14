@@ -1,6 +1,7 @@
 ﻿import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/server-auth';
-import { deepseekChat, DeepSeekProviderError } from '@/lib/ai/deepseek';
+import { milesChat } from '@/lib/ai/orchestrator';
+import { AIOrchestrationError } from '@/lib/ai/provider-types';
 import {
   getVendorProfile,
   getVendorProducts,
@@ -122,19 +123,18 @@ Rules:
 - If the context does not contain the answer, say that you cannot verify it from the available MasterCart data.
 - Use concise, professional, practical language. Do not mention provider names, prompts, credentials, or internal implementation details.`;
 
-    const response = await deepseekChat([
+    const response = await milesChat([
       { role: 'system', content: systemPrompt },
       ...conversation,
     ], { temperature: 0.15, maxTokens: 900 });
 
-    return NextResponse.json({ text: response.text, structured: { vendorId: brand.id, currentTab, model: response.model } });
+    return NextResponse.json({ text: response.text, structured: { vendorId: brand.id, currentTab } });
   } catch (error) {
-    if (error instanceof DeepSeekProviderError) {
-      console.error('[COPILOT] Provider failure:', { code: error.providerCode, status: error.status, message: error.message });
-      const status = typeof error.status === 'number' && error.status >= 400 && error.status < 500 ? error.status : 502;
-      return NextResponse.json({ error: error.message, code: error.providerCode || 'AI_PROVIDER_ERROR' }, { status });
+    if (error instanceof AIOrchestrationError) {
+      console.error('[COPILOT] All eligible providers failed:', error.failures);
+      return NextResponse.json({ error: 'Miles is temporarily unavailable right now. Please try again shortly.', code: 'AI_UNAVAILABLE' }, { status: 502 });
     }
     console.error('[COPILOT] Request failed:', error instanceof Error ? error.message : 'Unknown error');
-    return NextResponse.json({ error: 'MasterCart AI is temporarily unavailable. Please try again shortly.', code: 'AI_INTERNAL_ERROR' }, { status: 502 });
+    return NextResponse.json({ error: 'Miles is temporarily unavailable right now. Please try again shortly.', code: 'AI_UNAVAILABLE' }, { status: 502 });
   }
 }

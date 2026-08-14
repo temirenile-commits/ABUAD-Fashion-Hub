@@ -1,4 +1,4 @@
-﻿import { deepseekChat } from '@/lib/ai/deepseek';
+﻿import { milesChat } from '@/lib/ai/orchestrator';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAuthenticatedUser } from '@/lib/server-auth';
 import { NextResponse } from 'next/server';
@@ -51,7 +51,7 @@ RULES:
 3. Do NOT make up prices or products.
 4. Keep the answer under 3 sentences. Be friendly and concise.`;
 
-    const { text } = await deepseekChat([
+    const { text } = await milesChat([
       { role: 'system', content: systemPrompt },
       { role: 'user', content: `Customer message: "${content}"` },
     ], { temperature: 0.1, maxTokens: 240 });
@@ -66,8 +66,8 @@ RULES:
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[AUTO-REPLY] Request failed:', error instanceof Error ? error.message : 'Unknown error');
-    return NextResponse.json({ error: 'MasterCart AI is temporarily unavailable. Please try again shortly.' }, { status: 502 });
+    console.error('[AUTO-REPLY] Miles request failed:', error instanceof Error ? error.message : 'Unknown error');
+    return NextResponse.json({ error: 'MasterCart AI is temporarily unavailable. Please try again shortly.', code: 'AI_UNAVAILABLE' }, { status: 502 });
   }
 }
 
