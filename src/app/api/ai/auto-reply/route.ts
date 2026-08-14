@@ -24,8 +24,8 @@ export async function POST(req: Request) {
     if (!brand) return NextResponse.json({ success: true, message: 'Receiver is not a vendor' });
 
     // Check AI settings
-    const { data: settings } = await supabaseAdmin.from('vendor_ai_settings').select('ai_enabled, auto_reply_enabled, custom_instructions').eq('brand_id', brand.id).maybeSingle();
-    if (!settings || !settings.ai_enabled || !settings.auto_reply_enabled) {
+    const { data: settings } = await supabaseAdmin.from('vendor_ai_settings').select('ai_enabled, auto_reply_enabled, store_access_enabled, custom_instructions').eq('brand_id', brand.id).maybeSingle();
+    if (!settings || !settings.ai_enabled || !settings.auto_reply_enabled || !settings.store_access_enabled) {
       return NextResponse.json({ success: true, message: 'Auto-reply disabled' });
     }
 

@@ -15,6 +15,16 @@ export async function getVendorProfile(ownerId: string, requestedBrandId?: strin
   return data as Brand | null;
 }
 
+export async function getVendorAISettings(brandId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('vendor_ai_settings')
+    .select('ai_enabled, store_access_enabled, store_write_enabled, sensitive_action_confirmation_required, custom_instructions')
+    .eq('brand_id', brandId)
+    .maybeSingle();
+  if (error) throw new Error('Unable to load vendor AI permissions.');
+  return data || { ai_enabled: false, store_access_enabled: false, store_write_enabled: false, sensitive_action_confirmation_required: true, custom_instructions: null };
+}
+
 export async function getVendorProducts(brandId: string) {
   const { data, error } = await supabaseAdmin
     .from('products')
@@ -22,6 +32,26 @@ export async function getVendorProducts(brandId: string) {
     .eq('brand_id', brandId)
     .limit(100);
   if (error) throw new Error('Unable to load vendor products.');
+  return data || [];
+}
+
+export async function getVendorServices(brandId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('services')
+    .select('id, service_type, title, description, price, portfolio_urls, is_featured, locked, created_at')
+    .eq('brand_id', brandId)
+    .limit(100);
+  if (error) throw new Error('Unable to load vendor services.');
+  return data || [];
+}
+
+export async function getVendorPromos(brandId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('promo_codes')
+    .select('id, code, type, value, min_order_amount, expiry_date, is_active, usage_count, max_uses, product_id, expires_at')
+    .eq('brand_id', brandId)
+    .limit(100);
+  if (error) throw new Error('Unable to load vendor promotions.');
   return data || [];
 }
 
@@ -56,6 +86,17 @@ export async function getVendorFinancialSummary(brandId: string) {
   });
   if (error) throw new Error('Unable to load vendor financial summary.');
   return data || {};
+}
+
+export async function getVendorMessages(userId: string, limit = 50) {
+  const { data, error } = await supabaseAdmin
+    .from('messages')
+    .select('id, sender_id, receiver_id, content, is_read, created_at, answered_by_ai')
+    .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw new Error('Unable to load vendor messages.');
+  return data || [];
 }
 
 export async function getVendorReels(brandId: string) {

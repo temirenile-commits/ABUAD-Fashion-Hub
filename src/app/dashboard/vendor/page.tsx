@@ -3619,6 +3619,24 @@ export default function VendorDashboard() {
               </div>
             </div>
 
+            {/* Miles Store Access */}
+            <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid #27272A', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                <div>
+                  <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>Miles Store Access</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-400)' }}>Allow Miles to read your products, services, promotions, orders, Reels, messages, and store analytics. Financial mutations remain blocked.</div>
+                </div>
+                <button onClick={() => handleUpdateAiSettings({ store_access_enabled: !aiSettings?.store_access_enabled, access_activated_at: !aiSettings?.store_access_enabled ? new Date().toISOString() : null })} style={{ width: 52, height: 28, borderRadius: '999px', border: 'none', cursor: 'pointer', background: aiSettings?.store_access_enabled ? '#000000' : 'var(--bg-300)', position: 'relative', flexShrink: 0 }} aria-label="Toggle Miles store access">
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#121214', position: 'absolute', top: 3, left: aiSettings?.store_access_enabled ? 26 : 4 }} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #27272A' }}>
+                <div><div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>Miles Store Write Access</div><div style={{ fontSize: '0.82rem', color: 'var(--text-400)' }}>Allow ordinary store updates after Miles shows the exact change and you confirm it. Sensitive and destructive actions require an additional confirmation.</div></div>
+                <button onClick={() => handleUpdateAiSettings({ store_write_enabled: !aiSettings?.store_write_enabled })} disabled={!aiSettings?.store_access_enabled} style={{ width: 52, height: 28, borderRadius: '999px', border: 'none', cursor: aiSettings?.store_access_enabled ? 'pointer' : 'not-allowed', background: aiSettings?.store_write_enabled ? '#000000' : 'var(--bg-300)', position: 'relative', flexShrink: 0 }} aria-label="Toggle Miles store write access">
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#121214', position: 'absolute', top: 3, left: aiSettings?.store_write_enabled ? 26 : 4 }} />
+                </button>
+              </div>
+            </div>
             {/* Auto-Reply Toggle */}
             <div style={{ background: 'var(--bg-200)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem', border: '1px solid #27272A', opacity: aiSettings?.ai_enabled ? 1 : 0.5, pointerEvents: aiSettings?.ai_enabled ? 'auto' : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

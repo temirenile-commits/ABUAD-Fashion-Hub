@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getVendorProfile } from '@/lib/ai/vendor-tools';
+import { getVendorAISettings, getVendorProfile } from '@/lib/ai/vendor-tools';
 
 type ActionType = 'create_product' | 'update_product' | 'update_store_profile';
 type JsonRecord = Record<string, unknown>;
@@ -113,6 +113,9 @@ export async function proposeMilesAction(userId: string, actionType: ActionType,
   if (!['create_product', 'update_product', 'update_store_profile'].includes(actionType)) throw new MilesActionError('NOT_ALLOWED', 'Miles cannot perform that type of action.');
   const brand = await getVendorProfile(userId);
   if (!brand) throw new MilesActionError('NOT_FOUND', 'No vendor store is associated with this account.');
+  const settings = await getVendorAISettings(brand.id);
+  if (!settings.store_access_enabled) throw new MilesActionError('NOT_ALLOWED', 'Store access is not activated for Miles.');
+  if (!settings.store_write_enabled) throw new MilesActionError('NOT_ALLOWED', 'Store write access is not activated for Miles.');
   const payload = scrubPayload(actionType, input);
   if (actionType === 'update_product') {
     const productId = String(isRecord(input) ? input.product_id || '' : '');
