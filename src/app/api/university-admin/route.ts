@@ -28,13 +28,20 @@ export async function GET(req: NextRequest) {
 
   // â”€â”€ Stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (action === 'stats') {
-    const [usersRes, vendorsRes, ordersRes, ridersRes, productsRes] = await Promise.all([
+    const periodEnd = searchParams.get('end') ? new Date(searchParams.get('end') as string) : new Date();
+    const periodStart = searchParams.get('start')
+      ? new Date(searchParams.get('start') as string)
+      : new Date(periodEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const [usersRes, vendorsRes, analyticsRes, ridersRes, productsRes] = await Promise.all([
       supabaseAdmin.from('users').select('id', { count: 'exact', head: true })
         .eq('university_id', universityId),
       supabaseAdmin.from('brands').select('id', { count: 'exact', head: true })
         .eq('university_id', universityId),
-      supabaseAdmin.from('orders').select('total_amount, status')
-        .eq('university_id', universityId),
+      supabaseAdmin.rpc('get_platform_financial_summary', {
+        p_start: periodStart.toISOString(),
+        p_end: periodEnd.toISOString(),
+        p_university_id: universityId,
+      }),
       supabaseAdmin.from('delivery_agents').select('id', { count: 'exact', head: true })
         .eq('university_id', universityId),
       supabaseAdmin.from('products')
@@ -43,13 +50,8 @@ export async function GET(req: NextRequest) {
         .order('sales_count', { ascending: false })
         .limit(5),
     ]);
-
-    const orders = ordersRes.data || [];
-    const paidStatuses = ['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered', 'received'];
-    const paidOrders = orders.filter((o: any) => paidStatuses.includes(o.status));
-    const completedOrders = orders.filter((o: any) => o.status === 'delivered' || o.status === 'received');
-    const totalRevenue = paidOrders.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0);
-    const acquiredRevenue = completedOrders.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0);
+    if (analyticsRes.error) return NextResponse.json({ error: analyticsRes.error.message }, { status: 500 });
+    const analytics = analyticsRes.data || {};
 
     // Projected Revenue: Value of active stock
     const { data: stockData } = await supabaseAdmin
@@ -65,14 +67,21 @@ export async function GET(req: NextRequest) {
       stats: {
         totalUsers: usersRes.count ?? 0,
         totalVendors: vendorsRes.count ?? 0,
-        totalOrders: orders.length,
-        paidOrders: paidOrders.length,
-        totalRevenue, // paid but not necessarily completed
-        acquiredRevenue, // completed (money already made)
-        projectedRevenue, // stock value (potential revenue)
-        activeStockCount, // total units/plates available
+        totalOrders: Number(analytics.order_volume || 0),
+        paidOrders: Number(analytics.order_volume || 0),
+        totalRevenue: Number(analytics.marketplace_gmv || 0),
+        acquiredRevenue: Number(analytics.vendor_earnings || 0),
+        platformRevenue: Number(analytics.platform_revenue || 0),
+        deliveryRevenue: Number(analytics.delivery_revenue || 0),
+        pendingPayouts: Number(analytics.pending_payouts || 0),
+        completedPayouts: Number(analytics.completed_payouts || 0),
+        transactionVolume: Number(analytics.transaction_volume || 0),
+        projectedRevenue,
+        activeStockCount,
         totalRiders: ridersRes.count ?? 0,
         popularProducts: productsRes.data || [],
+        periodStart: periodStart.toISOString(),
+        periodEnd: periodEnd.toISOString(),
       },
     });
   }
@@ -351,20 +360,16 @@ export async function GET(req: NextRequest) {
   }
 
   if (action === 'billboards') {
-    // Fetch from dedicated table first, fall back to platform_settings
-    const { data: tableData, error: tableErr } = await supabaseAdmin
-      .from('manual_billboards')
-      .select('*')
-      .eq('university_id', universityId)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
-    
-    if (!tableErr) return NextResponse.json({ billboards: tableData || [] });
-    
-    // Fallback: platform_settings
-    const { data: settingData } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'manual_billboards').single();
-    const all = (settingData?.value as any[]) || [];
-    const filtered = all.filter((b: any) => !b.university_id || b.university_id === universityId);
+    const { data: settingData, error: settingsError } = await supabaseAdmin
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'manual_billboards')
+      .maybeSingle();
+    if (settingsError) return NextResponse.json({ error: settingsError.message }, { status: 500 });
+    const all = Array.isArray(settingData?.value) ? settingData.value as any[] : [];
+    const filtered = all
+      .filter((billboard: any) => (!billboard.university_id || billboard.university_id === universityId) && billboard.is_active !== false)
+      .sort((a: any, b: any) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
     return NextResponse.json({ billboards: filtered });
   }
 
@@ -988,29 +993,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
-  // ─── Manual Billboard (scoped table) ──────────────────────────────────────
+  // ─── Manual Billboard (canonical platform-settings JSON store) ─────────────
   if (action === 'add_manual_billboard') {
-    const { title, description, link, cover_url } = body;
-    if (!title) return NextResponse.json({ error: 'Title is required' }, { status: 400 });
-    
-    // Try dedicated table first
-    const { error: tableErr } = await supabaseAdmin.from('manual_billboards').insert({
+    const { title, description, link, cover_url, display_order } = body;
+    if (!title || !cover_url) return NextResponse.json({ error: 'Title and cover image are required' }, { status: 400 });
+
+    const { data: exist, error: readError } = await supabaseAdmin
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'manual_billboards')
+      .maybeSingle();
+    if (readError) return NextResponse.json({ error: readError.message }, { status: 500 });
+
+    const list = Array.isArray(exist?.value) ? exist.value as any[] : [];
+    list.push({
+      id: `mb_${Date.now()}`,
       title,
-      description,
-      link,
+      description: description || null,
+      link: link || null,
       cover_url,
       university_id: ctx.universityId,
       created_by: ctx.userId,
+      display_order: Number.isFinite(Number(display_order)) ? Number(display_order) : list.length,
       is_active: true,
+      created_at: new Date().toISOString(),
     });
-    
-    if (!tableErr) return NextResponse.json({ success: true });
-    
-    // Fallback: platform_settings JSON array
-    const { data: exist } = await supabaseAdmin.from('platform_settings').select('value').eq('key', 'manual_billboards').single();
-    const list = (exist?.value as any[]) || [];
-    list.push({ id: `mb_${Date.now()}`, title, description, link, cover_url, university_id: ctx.universityId });
-    const { error } = await supabaseAdmin.from('platform_settings').upsert({ key: 'manual_billboards', value: list, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    const { error } = await supabaseAdmin
+      .from('platform_settings')
+      .upsert({ key: 'manual_billboards', value: list, updated_at: new Date().toISOString() }, { onConflict: 'key' });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }

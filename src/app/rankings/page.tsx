@@ -12,17 +12,24 @@ interface UniversityRanking {
   abbreviation: string;
   logo_url: string;
   monthly_revenue: number;
+  gmv: number;
+  order_count: number;
+  sales_volume: number;
+  vendor_activity: number;
+  growth: number;
 }
 
 export default function RankingsPage() {
   const [rankings, setRankings] = useState<UniversityRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rangeKey, setRangeKey] = useState<'today' | '7d' | '30d' | '3m' | '6m' | '12m'>('30d');
 
   useEffect(() => {
     async function fetchRankings() {
+      setLoading(true);
       try {
-        const res = await fetch('/api/universities?action=rankings');
+        const res = await fetch(`/api/universities?action=rankings&range=${rangeKey}`);
         const data = await res.json();
         if (data.rankings) {
           setRankings(data.rankings);
@@ -36,7 +43,7 @@ export default function RankingsPage() {
       }
     }
     fetchRankings();
-  }, []);
+  }, [rangeKey]);
 
   if (loading) {
     return (
@@ -72,35 +79,24 @@ export default function RankingsPage() {
               </div>
               <h1 className="text-5xl md:text-6xl font-black mb-4 tracking-tight leading-none">University <br /><span className="text-[#000000]">Leaderboard</span></h1>
               <p className="text-muted text-lg max-w-md">
-                Live rankings based on monthly transaction volume and sales velocity across all campuses.
+                Transparent campus rankings based on eligible marketplace GMV, order volume, vendor activity, and period-over-period growth.
               </p>
             </div>
 
-            <div className="w-full md:w-[500px]">
-               <PremiumChart 
-                 title="Total Platform Volume"
-                 subtitle="Real-time sales across all universities"
-                 realtimeConfig={{ table: 'orders' }}
-                 multiLineConfig={{
-                   keys: rankings.slice(0, 5).map((r, i) => ({
-                     dataKey: r.id || `school_${i}`,
-                     color: ['#000000', '#000000', '#FFFFFF', '#FFFFFF', '#000000'][i % 5],
-                     label: r.abbreviation || r.name,
-                     isProjected: i === 0 // Pulse only the top university
-                   })),
-                   categorize: (row) => {
-                     // Orders belong to a vendor, and vendors belong to a university.
-                     // The orders table might not have university_id directly on the row 
-                     // unless it was added. If it doesn't, this will group by 'unknown'.
-                     // Assuming 'university_id' exists on the order for analytical purposes.
-                     const val = Number(row.total_amount || 0);
-                     const schoolId = row.university_id;
-                     if (!schoolId) return [];
-                     return [{ dataKey: schoolId, value: val }];
-                   }
-                 }}
-                 height={250}
-               />
+            <div className="w-full md:w-[500px] rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div><h2 className="font-black text-lg">Campus GMV</h2><p className="text-xs text-muted">Database-calculated marketplace volume</p></div>
+                <Globe size={20} className="text-[#000000]" />
+              </div>
+              <div className="space-y-4">
+                {rankings.slice(0, 5).map((row, index) => {
+                  const maxGmv = Math.max(...rankings.map((item) => Number(item.gmv || 0)), 1);
+                  return <div key={row.id}>
+                    <div className="flex justify-between text-xs mb-1"><span className="font-bold">{index + 1}. {row.abbreviation || row.name}</span><span className="text-muted">₦{Number(row.gmv || 0).toLocaleString()}</span></div>
+                    <div className="h-2 rounded-full bg-white/10 overflow-hidden"><div className="h-full rounded-full bg-[#000000]" style={{ width: `${Math.max(2, (Number(row.gmv || 0) / maxGmv) * 100)}%` }} /></div>
+                  </div>;
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -115,7 +111,9 @@ export default function RankingsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between px-6 mb-6 text-sm font-bold text-muted uppercase tracking-widest">
               <span>Campus Rankings</span>
-              <span>Monthly Volume</span>
+              <div className="flex items-center gap-2">
+                {([['today', 'Today'], ['7d', '7 Days'], ['30d', '30 Days'], ['3m', '3 Months'], ['6m', '6 Months'], ['12m', '12 Months']] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setRangeKey(value)} className="normal-case tracking-normal px-2 py-1 rounded-lg border" style={{ borderColor: rangeKey === value ? '#000000' : 'rgba(255,255,255,0.1)', color: rangeKey === value ? '#000000' : undefined }}>{label}</button>)}
+              </div>
             </div>
 
             {rankings.map((uni, index) => {
@@ -172,10 +170,11 @@ export default function RankingsPage() {
                   {/* Revenue Stats */}
                   <div className="text-right">
                     <div className="text-xl md:text-2xl font-black text-white tabular-nums">
-                      ₦{uni.monthly_revenue.toLocaleString()}
+                      ₦{Number(uni.gmv || 0).toLocaleString()}
                     </div>
-                    <div className="flex items-center justify-end gap-1 text-xs font-bold text-status mt-1 uppercase tracking-tighter">
-                      <TrendingUp size={12} /> Live Growth
+                    <div className="flex items-center justify-end gap-2 text-xs font-bold text-status mt-1 uppercase tracking-tighter">
+                      <span>{Number(uni.order_count || 0).toLocaleString()} orders</span>
+                      <span className={Number(uni.growth || 0) >= 0 ? 'text-status' : 'text-muted'}>{Number(uni.growth || 0) >= 0 ? '+' : ''}{Number(uni.growth || 0).toFixed(1)}%</span>
                     </div>
                   </div>
                 </div>
@@ -192,7 +191,7 @@ export default function RankingsPage() {
 
         <footer className="mt-20 text-center">
           <p className="text-sm text-muted">
-            Ratings are updated in real-time. Calculated based on delivered orders since the 1st of the current month.
+            Rankings use eligible paid and fulfilment orders within the selected period. GMV, orders, sales volume, vendor activity, and growth are calculated in the database.
           </p>
         </footer>
       </main>

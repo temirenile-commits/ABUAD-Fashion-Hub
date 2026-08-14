@@ -353,13 +353,13 @@ export default function VendorDashboard() {
         .gt('expires_at', new Date().toISOString())
         .order('expires_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
       setActiveDelicaciesBillboard(activeDelBillboard || null);
 
       // Fetch Reviews
       const { data: reviewData } = await supabase
         .from('reviews')
-        .select('*, user:user_id(name:full_name), product:product_id(title)')
+        .select('id, user_id, product_id, rating, comment, created_at, user:users!reviews_user_id_fkey(name, avatar_url), product:products!reviews_product_id_fkey(title)')
         .in('product_id', productData ? productData.map(p => p.id) : []); 
       setReviews(reviewData || []);
 
@@ -1184,12 +1184,13 @@ export default function VendorDashboard() {
     setCopilotLoading(true);
 
     try {
-      const res = await fetch(`/api/ai/copilot?v=3&t=${Date.now()}`, {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Please sign in again to use Copilot.');
+      const res = await fetch(`/api/ai/copilot?v=4&t=${Date.now()}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({
           messages: newMsgs,
-          vendorId: brand.owner_id,
           brandId: brand.id,
           currentTab: activeTab
         })

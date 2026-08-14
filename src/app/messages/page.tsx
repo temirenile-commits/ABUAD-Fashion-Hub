@@ -212,9 +212,10 @@ function MessagesContent() {
       });
 
       if (activePartner.role === 'vendor') {
+        const { data: { session } } = await supabase.auth.getSession();
         fetch('/api/ai/auto-reply', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', Authorization: session ? `Bearer ${session.access_token}` : '' },
           body: JSON.stringify({
             receiverId: activePartner.id,
             senderId: user.id,

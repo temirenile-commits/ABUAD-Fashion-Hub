@@ -254,6 +254,7 @@ export default function AdminDashboard() {
   const [uploadingProof, setUploadingProof] = useState(false);
 
   const [stats, setStats] = useState({ userCount: 0, brandCount: 0, productCount: 0, totalRevenue: 0, totalSubsidies: 0, totalCommission: 0, totalDelivery: 0, totalProductViews: 0, totalProfileViews: 0 });
+  const [financialRange, setFinancialRange] = useState<'today' | '7d' | '30d' | '3m' | '6m' | '12m'>('30d');
   const [error, setError] = useState<string | null>(null);
   const [vendors, setVendors] = useState<Brand[]>([]);
   const [onlyVendorsWithOrders, setOnlyVendorsWithOrders] = useState(false);
@@ -384,8 +385,17 @@ export default function AdminDashboard() {
     try {
       // Step 1: Fire all requests simultaneously
       const keys = ['stats','vendors','products','users','transactions','orders','reviews','payouts','settings','market_analytics','delivery_agents','promo_codes', 'universities_list', 'deleted_users', 'categories'] as const;
+      const periodEnd = new Date();
+      const periodStart = new Date(periodEnd);
+      if (financialRange === 'today') periodStart.setUTCHours(0, 0, 0, 0);
+      else if (financialRange === '7d') periodStart.setUTCDate(periodStart.getUTCDate() - 7);
+      else if (financialRange === '3m') periodStart.setUTCMonth(periodStart.getUTCMonth() - 3);
+      else if (financialRange === '6m') periodStart.setUTCMonth(periodStart.getUTCMonth() - 6);
+      else if (financialRange === '12m') periodStart.setUTCFullYear(periodStart.getUTCFullYear() - 1);
+      else periodStart.setUTCDate(periodStart.getUTCDate() - 30);
+      const statsPeriod = `&start=${encodeURIComponent(periodStart.toISOString())}&end=${encodeURIComponent(periodEnd.toISOString())}`;
       const fetchResults = await Promise.allSettled(
-        keys.map(k => adminFetch(`/api/admin?action=${k}`))
+        keys.map(k => adminFetch(`/api/admin?action=${k}${k === 'stats' ? statsPeriod : ''}`))
       );
 
       // Step 2: Immediately parse all response bodies before streams close
@@ -493,7 +503,7 @@ export default function AdminDashboard() {
       setError('Connection error: Could not reach the administration server.');
     }
     setLoading(false);
-  }, []);
+  }, [financialRange]);
 
 
   const fetchUniData = async (uniId: string) => {
@@ -534,10 +544,8 @@ export default function AdminDashboard() {
     setUniLoading(false);
   };
 
-  useEffect(() => { 
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
-    fetchAll(); 
+  useEffect(() => {
+    fetchAll();
   }, [fetchAll]);
 
   const adminAction = async (action: string, payload: Record<string, unknown>) => {
@@ -806,6 +814,9 @@ export default function AdminDashboard() {
                     </button>
                   </div>
                 )}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.45rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                  {([['today', 'Today'], ['7d', '7 Days'], ['30d', '30 Days'], ['3m', '3 Months'], ['6m', '6 Months'], ['12m', '12 Months']] as const).map(([value, label]) => <button key={value} type="button" className="btn btn-ghost btn-sm" onClick={() => setFinancialRange(value)} style={{ border: financialRange === value ? '1px solid var(--primary)' : '1px solid var(--border)', color: financialRange === value ? 'var(--primary)' : undefined }}>{label}</button>)}
+                </div>
                 <div className={styles.statsGrid}>
                 {[
                   { label: 'Users', val: stats.userCount, color: '#000000', Icon: Users },

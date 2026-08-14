@@ -1,6 +1,7 @@
 ﻿import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getAuthenticatedUser } from '@/lib/server-auth';
 import { NextResponse } from 'next/server';
 
 export const maxDuration = 30;
@@ -8,17 +9,22 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   try {
     const { receiverId, senderId, content } = await req.json();
+    const authenticatedUser = await getAuthenticatedUser(req);
 
-    if (!receiverId || !senderId || !content) {
-      return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
+    if (!authenticatedUser) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    if (!receiverId || !senderId || !content || authenticatedUser.id !== senderId) {
+      return NextResponse.json({ error: 'Invalid auto-reply request' }, { status: 400 });
+    }
+    if (typeof content !== 'string' || content.length > 4000) {
+      return NextResponse.json({ error: 'Message is too long' }, { status: 400 });
     }
 
     // Check if the receiver is a vendor and get their brand
-    const { data: brand } = await supabaseAdmin.from('brands').select('id, name, description').eq('owner_id', receiverId).single();
+    const { data: brand } = await supabaseAdmin.from('brands').select('id, name, description').eq('owner_id', receiverId).maybeSingle();
     if (!brand) return NextResponse.json({ success: true, message: 'Receiver is not a vendor' });
 
     // Check AI settings
-    const { data: settings } = await supabaseAdmin.from('vendor_ai_settings').select('*').eq('brand_id', brand.id).single();
+    const { data: settings } = await supabaseAdmin.from('vendor_ai_settings').select('ai_enabled, auto_reply_enabled, custom_instructions').eq('brand_id', brand.id).maybeSingle();
     if (!settings || !settings.ai_enabled || !settings.auto_reply_enabled) {
       return NextResponse.json({ success: true, message: 'Auto-reply disabled' });
     }
@@ -61,9 +67,9 @@ RULES:
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error('Auto-Reply Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    console.error('[AUTO-REPLY] Request failed:', error instanceof Error ? error.message : 'Unknown error');
+    return NextResponse.json({ error: 'Auto-reply generation failed.' }, { status: 502 });
   }
 }
 

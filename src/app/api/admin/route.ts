@@ -202,26 +202,38 @@ export async function GET(req: NextRequest) {
     let userQuery = supabaseAdmin.from('users').select('*', { count: 'exact', head: true });
     let brandQuery = supabaseAdmin.from('brands').select('id', { count: 'exact', head: true });
     let productQuery = supabaseAdmin.from('products').select('id', { count: 'exact', head: true });
-    let orderQuery = supabaseAdmin.from('orders').select('total_amount, admin_discount, commission_amount, delivery_fee_charged').in('status', ['paid', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered', 'received']);
+    const periodEnd = searchParams.get('end') ? new Date(searchParams.get('end') as string) : new Date();
+    const periodStart = searchParams.get('start')
+      ? new Date(searchParams.get('start') as string)
+      : new Date(periodEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     if (uniId) {
       userQuery = userQuery.eq('university_id', uniId);
       brandQuery = brandQuery.eq('university_id', uniId);
       productQuery = productQuery.eq('university_id', uniId);
-      orderQuery = orderQuery.eq('university_id', uniId);
     }
 
     const [
       userRes,
       brandRes,
       productRes,
-      revenueRes,
+      analyticsRes,
+      subsidyRes,
       sectionsRes
     ] = await Promise.all([
       userQuery,
       brandQuery,
       productQuery,
-      orderQuery,
+      supabaseAdmin.rpc('get_platform_financial_summary', {
+        p_start: periodStart.toISOString(),
+        p_end: periodEnd.toISOString(),
+        p_university_id: uniId || null,
+      }),
+      supabaseAdmin.rpc('get_platform_subsidies', {
+        p_start: periodStart.toISOString(),
+        p_end: periodEnd.toISOString(),
+        p_university_id: uniId || null,
+      }),
       supabaseAdmin.from('homepage_sections').select('*, universities:universities!homepage_sections_university_id_fkey(name, abbreviation)').order('priority', { ascending: true })
     ]);
 
@@ -249,27 +261,33 @@ export async function GET(req: NextRequest) {
       totalProfileViews = (profileData || []).reduce((sum: number, b: any) => sum + (Number(b.profile_views) || 0), 0);
     } catch { }
     
-    const revenueData = revenueRes.data || [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const totalRevenue = revenueData.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const totalSubsidies = revenueData.reduce((sum: number, o: any) => sum + Number(o.admin_discount || 0), 0);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const totalCommission = revenueData.reduce((sum: number, o: any) => sum + Number(o.commission_amount || 0), 0);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const totalDelivery = revenueData.reduce((sum: number, o: any) => sum + Number(o.delivery_fee_charged || 0), 0);
+    const analytics = analyticsRes.data || {};
+    const totalRevenue = Number(analytics.marketplace_gmv || 0);
+    const totalCommission = Number(analytics.platform_revenue || 0);
+    const totalDelivery = Number(analytics.delivery_revenue || 0);
+    const totalSubsidies = Number(subsidyRes.data || 0);
 
     return NextResponse.json({
-      stats: { 
-        userCount, 
-        brandCount, 
-        productCount, 
-        totalRevenue, 
+      stats: {
+        userCount,
+        brandCount,
+        productCount,
+        totalRevenue,
         totalSubsidies,
         totalCommission,
         totalDelivery,
         totalProductViews,
-        totalProfileViews
+        totalProfileViews,
+        marketplaceGmv: totalRevenue,
+        platformRevenue: totalCommission,
+        vendorEarnings: Number(analytics.vendor_earnings || 0),
+        pendingPayouts: Number(analytics.pending_payouts || 0),
+        completedPayouts: Number(analytics.completed_payouts || 0),
+        orderVolume: Number(analytics.order_volume || 0),
+        transactionVolume: Number(analytics.transaction_volume || 0),
+        refunds: Number(analytics.refunds || 0),
+        periodStart: periodStart.toISOString(),
+        periodEnd: periodEnd.toISOString(),
       },
       sections
     });

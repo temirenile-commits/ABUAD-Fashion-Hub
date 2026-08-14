@@ -27,7 +27,7 @@ export default function WishlistButton({ productId, size = 16, className }: Prop
         .select('id')
         .eq('user_id', session.user.id)
         .eq('product_id', productId)
-        .single();
+        .maybeSingle();
       
       if (data) setIsWishlisted(true);
       setLoading(false);

@@ -114,6 +114,10 @@ export default function VendorDashboard() {
   const [promoCodes, setPromoCodes] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [wallet, setWallet] = useState<any>(null);
+  const [financialRange, setFinancialRange] = useState<'today' | '7d' | '30d' | '3m' | '6m' | '12m'>('30d');
+  const [financialSummary, setFinancialSummary] = useState<any>(null);
+  const [financialTrend, setFinancialTrend] = useState<any[]>([]);
+  const [financialGrowth, setFinancialGrowth] = useState(0);
   const [banks, setBanks] = useState<any[]>([]);
   const [verifyingBank, setVerifyingBank] = useState(false);
   const [isSettingUpBank, setIsSettingUpBank] = useState(false);
@@ -158,6 +162,27 @@ export default function VendorDashboard() {
   const [uploadingBillboard, setUploadingBillboard] = useState(false);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<{ state: 'idle' | 'processing' | 'success' | 'pending' | 'failed'; message?: string; credits?: number }>({ state: 'idle' });
+
+  useEffect(() => {
+    if (!brand?.id) return;
+    let cancelled = false;
+    const loadFinancialAnalytics = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const response = await fetch(`/api/analytics?mode=vendor&brandId=${encodeURIComponent(brand.id)}&range=${financialRange}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!response.ok || cancelled) return;
+      const result = await response.json();
+      if (!cancelled) {
+        setFinancialSummary(result.summary || null);
+        setFinancialTrend(result.trend || []);
+        setFinancialGrowth(Number(result.growth || 0));
+      }
+    };
+    loadFinancialAnalytics().catch((error) => console.error('[VENDOR ANALYTICS]', error));
+    return () => { cancelled = true; };
+  }, [brand?.id, financialRange]);
 
   useEffect(() => {
     if (redirectUrl) {
@@ -548,8 +573,12 @@ export default function VendorDashboard() {
     return `${growth > 0 ? '+' : ''}${Math.round(growth)}%`;
   };
 
-  const salesTrendData = getSalesTrend();
-  const growthPercent = calculateGrowth();
+  const salesTrendData = (() => {
+    const values = financialTrend.slice(-7).map((row) => Number(row.vendor_earnings || 0));
+    const max = Math.max(...values, 1);
+    return values.length ? values.map((value) => (value / max) * 100) : getSalesTrend();
+  })();
+  const growthPercent = `${financialGrowth >= 0 ? '+' : ''}${Math.round(financialGrowth)}%`;
 
   const fetchProducts = async (brandId: string) => {
     // Relying on real-time sync, no-op for now.
@@ -1128,12 +1157,13 @@ export default function VendorDashboard() {
     setCopilotLoading(true);
 
     try {
-      const res = await fetch(`/api/ai/copilot?v=3&t=${Date.now()}`, {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Please sign in again to use Copilot.');
+      const res = await fetch(`/api/ai/copilot?v=4&t=${Date.now()}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({
           messages: newMsgs,
-          vendorId: brand.owner_id,
           brandId: brand.id,
           currentTab: activeTab
         })
@@ -1645,15 +1675,20 @@ export default function VendorDashboard() {
                 <ArrowUpRight size={16} style={{ marginLeft: 'auto', color: 'var(--primary)' }} />
               </div>
             )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              {([['today', 'Today'], ['7d', '7 Days'], ['30d', '30 Days'], ['3m', '3 Months'], ['6m', '6 Months'], ['12m', '12 Months']] as const).map(([value, label]) => (
+                <button key={value} type="button" onClick={() => setFinancialRange(value)} className="btn btn-ghost btn-sm" style={{ border: financialRange === value ? '1px solid var(--primary)' : '1px solid #27272A', color: financialRange === value ? 'var(--primary)' : undefined }}>{label}</button>
+              ))}
+            </div>
             <div className={styles.statsGrid}>
               <div className={`${styles.statCard} ${styles.statCardVibrant}`} id="tour-vendor-wallet">
                 <div className={styles.statHead}>
                   <Wallet size={20} color="var(--primary)" />
                   <span>Available Balance</span>
                 </div>
-                <div className={styles.statValue}>{formatPrice(wallet?.available_balance || 0)}</div>
+                <div className={styles.statValue}>{formatPrice(financialSummary?.available_balance ?? wallet?.available_balance ?? 0)}</div>
                 <div className={styles.statTrend}>
-                  {wallet?.pending_balance > 0 && <span style={{ color: '#FFFFFF' }}>{formatPrice(wallet.pending_balance)} pending</span>}
+                  {(financialSummary?.pending_earnings ?? wallet?.pending_balance) > 0 && <span style={{ color: '#FFFFFF' }}>{formatPrice(financialSummary?.pending_earnings ?? wallet?.pending_balance)} pending</span>}
                 </div>
                 <div className={styles.growthBadge}><ArrowUpRight size={12} /> Live</div>
               </div>
@@ -1663,10 +1698,7 @@ export default function VendorDashboard() {
                   <span>Est. Revenue (30d)</span>
                 </div>
                 <div className={styles.statValue}>
-                  {formatPrice(orders.filter(o => {
-                    const diff = (new Date().getTime() - new Date(o.created_at).getTime()) / (1000 * 3600 * 24);
-                    return diff < 30 && ['paid', 'ready', 'picked_up', 'in_transit', 'delivered', 'confirmed', 'completed'].includes(o.status);
-                  }).reduce((acc, curr) => acc + Number(curr.vendor_earning), 0))}
+                  {formatPrice(financialSummary?.vendor_earnings || 0)}
                 </div>
                 <div className={styles.statTrend}>Growth: {growthPercent}</div>
                 <div className={styles.growthChart}>

@@ -9,44 +9,48 @@ export async function GET(req: NextRequest) {
   const action = searchParams.get('action');
 
   if (action === 'rankings') {
-    // 1. Fetch all active universities
     const { data: unis, error: uniError } = await supabaseAdmin
       .from('universities')
       .select('id, name, abbreviation, logo_url')
       .eq('is_active', true);
-    
     if (uniError) return NextResponse.json({ error: uniError.message }, { status: 500 });
 
-    // 2. Get the start of the current month
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
+    const rangeKey = searchParams.get('range') || '30d';
+    const end = new Date();
+    const start = new Date(end);
+    if (rangeKey === 'today') start.setUTCHours(0, 0, 0, 0);
+    else if (rangeKey === '7d') start.setUTCDate(start.getUTCDate() - 7);
+    else if (rangeKey === '3m') start.setUTCMonth(start.getUTCMonth() - 3);
+    else if (rangeKey === '6m') start.setUTCMonth(start.getUTCMonth() - 6);
+    else if (rangeKey === '12m') start.setUTCFullYear(start.getUTCFullYear() - 1);
+    else start.setUTCDate(start.getUTCDate() - 30);
 
-    // 3. Fetch all delivered orders for this month
-    const { data: orders, error: orderError } = await supabaseAdmin
-      .from('orders')
-      .select('total_amount, brands(university_id)')
-      .gte('created_at', startOfMonth.toISOString())
-      .in('status', ['delivered', 'confirmed', 'completed']);
-
-    if (orderError) return NextResponse.json({ error: orderError.message }, { status: 500 });
-
-    // 4. Aggregate revenue per university
-    const revenueMap: Record<string, number> = {};
-    orders?.forEach((o: any) => {
-      const uniId = o.brands?.university_id;
-      if (uniId) {
-        revenueMap[uniId] = (revenueMap[uniId] || 0) + Number(o.total_amount);
-      }
+    const { data: rankedRows, error: rankingError } = await supabaseAdmin.rpc('get_university_gmv_rankings', {
+      p_start: start.toISOString(),
+      p_end: end.toISOString(),
+      p_university_id: null,
     });
+    if (rankingError) return NextResponse.json({ error: rankingError.message }, { status: 500 });
 
-    // 5. Combine with university data and sort
-    const rankings = unis.map(u => ({
-      ...u,
-      monthly_revenue: revenueMap[u.id] || 0
-    })).sort((a, b) => b.monthly_revenue - a.monthly_revenue);
+    const rankingMap = new Map((rankedRows || []).map((row: any) => [row.university_id, row]));
+    const rankings = unis
+      .map((university, index) => {
+        const row = rankingMap.get(university.id) as any;
+        return {
+          ...university,
+          rank: row?.rank || index + 1,
+          gmv: Number(row?.gmv || 0),
+          monthly_revenue: Number(row?.gmv || 0),
+          order_count: Number(row?.order_count || 0),
+          sales_volume: Number(row?.sales_volume || 0),
+          vendor_activity: Number(row?.vendor_activity || 0),
+          growth: Number(row?.growth || 0),
+        };
+      })
+      .sort((a, b) => b.gmv - a.gmv || a.name.localeCompare(b.name))
+      .map((row, index) => ({ ...row, rank: index + 1 }));
 
-    return NextResponse.json({ rankings });
+    return NextResponse.json({ rankings, range: { key: rangeKey, start: start.toISOString(), end: end.toISOString() } });
   }
 
   const { data, error } = await supabaseAdmin
