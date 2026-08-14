@@ -151,8 +151,16 @@ export default function VendorDashboard() {
   const [milesBubbleSide, setMilesBubbleSide] = useState<'left' | 'right'>('right');
   useEffect(() => {
     const openMiles = () => setShowCopilot(true);
+    const openFullMiles = () => { setShowCopilot(true); setMilesFullScreen(true); };
     window.addEventListener('mastercart:miles-open', openMiles);
-    return () => window.removeEventListener('mastercart:miles-open', openMiles);
+    window.addEventListener('mastercart:miles-full-open', openFullMiles);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('miles') === 'open') setShowCopilot(true);
+    if (params.get('full') === '1') setMilesFullScreen(true);
+    return () => {
+      window.removeEventListener('mastercart:miles-open', openMiles);
+      window.removeEventListener('mastercart:miles-full-open', openFullMiles);
+    };
   }, []);
   useEffect(() => {
     try {

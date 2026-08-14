@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 const SIDE_KEY = 'mastercart-miles-bubble-side-global';
 const HIDDEN_KEY = 'mastercart-miles-bubble-hidden-global';
@@ -12,8 +13,21 @@ export default function MilesPersistentBubble() {
   const pathname = usePathname();
   const [side, setSide] = useState<Side>('right');
   const [hidden, setHidden] = useState(false);
+  const [isVendor, setIsVendor] = useState(false);
 
-  const isVendorDashboard = pathname.startsWith('/dashboard/vendor') || pathname.startsWith('/dashboard/delicacies');
+  const vendorAccountRoutes = ['/dashboard/vendor', '/dashboard/delicacies', '/reels', '/services', '/messages', '/notifications', '/settings', '/explore'];
+  const isVendorAccountPage = vendorAccountRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`));
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: brand } = await supabase.from('brands').select('id').eq('owner_id', user.id).limit(1).maybeSingle();
+      if (active) setIsVendor(Boolean(brand));
+    })();
+    return () => { active = false; };
+  }, [pathname]);
 
   useEffect(() => {
     try {
@@ -32,9 +46,20 @@ export default function MilesPersistentBubble() {
     try { window.localStorage.setItem(HIDDEN_KEY, String(hidden)); } catch {}
   }, [hidden]);
 
-  if (!isVendorDashboard) return null;
+  if (!isVendorAccountPage || !isVendor) return null;
 
-  const openAssistant = () => window.dispatchEvent(new CustomEvent('mastercart:miles-open'));
+  const openAssistant = () => {
+    window.dispatchEvent(new CustomEvent('mastercart:miles-open'));
+    if (pathname !== '/dashboard/vendor' && pathname !== '/dashboard/delicacies') {
+      window.location.href = '/dashboard/vendor?miles=open';
+    }
+  };
+  const openFullAssistant = () => {
+    window.dispatchEvent(new CustomEvent('mastercart:miles-full-open'));
+    if (pathname !== '/dashboard/vendor' && pathname !== '/dashboard/delicacies') {
+      window.location.href = '/dashboard/vendor?miles=open&full=1';
+    }
+  };
   const snapToSide = (event: React.DragEvent<HTMLButtonElement>) => {
     setSide(event.clientX < window.innerWidth / 2 ? 'left' : 'right');
   };
@@ -89,7 +114,7 @@ export default function MilesPersistentBubble() {
         boxShadow: '0 10px 34px rgba(37,99,235,0.38), 0 0 0 4px rgba(34,211,238,0.08)',
         transition: 'transform 160ms ease, box-shadow 160ms ease',
       }}
-      onDoubleClick={() => setHidden(true)}
+      onDoubleClick={openFullAssistant}
       onMouseEnter={event => { event.currentTarget.style.transform = 'scale(1.06)'; }}
       onMouseLeave={event => { event.currentTarget.style.transform = 'scale(1)'; }}
     >
