@@ -86,16 +86,17 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
 
         if (active && brandData) setVendors(brandData as any);
 
-        // Brand Reels - include matching uni, null/legacy, or global
+        // Canonical Reels
         let reelQuery = supabase
-          .from('brand_reels')
-          .select('*, brands(name, logo_url)')
+          .from('reels')
+          .select('*, brands(name, logo_url, verified), reel_products(products(*)), reel_likes(id, user_id), reel_comments(id, content, created_at, user_id)')
+          .eq('status', 'published')
           .order('created_at', { ascending: false });
 
         if (userUniId) {
-          reelQuery = reelQuery.or(`university_id.eq.${userUniId},university_id.is.null`);
+          reelQuery = reelQuery.or(`visibility_type.eq.all,visibility_type.eq.public,and(visibility_type.eq.university,university_id.eq.${userUniId})`);
         } else {
-          reelQuery = reelQuery.or(`university_id.eq.${ABUAD_ID},university_id.is.null`);
+          reelQuery = reelQuery.or(`visibility_type.eq.all,visibility_type.eq.public,visibility_type.eq.university`);
         }
         
         const { data: reelData, error: rErr } = await reelQuery;
@@ -111,11 +112,12 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
       }
     };
 
-    // Always re-fetch reels (they update frequently and must always be fresh)
+    // Always re-fetch canonical reels
     const fetchReels = async () => {
       const { data: reelData } = await supabase
-        .from('brand_reels')
-        .select('*, brands(name, logo_url)')
+        .from('reels')
+        .select('*, brands(name, logo_url, verified), reel_products(products(*)), reel_likes(id, user_id), reel_comments(id, content, created_at, user_id)')
+        .eq('status', 'published')
         .order('created_at', { ascending: false });
       if (active && reelData) setReels(reelData as any);
     };
@@ -204,24 +206,16 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
     // --- REELS SYNC ---
     publicChannel.on(
       'postgres_changes',
-      { event: '*', schema: 'public', table: 'brand_reels' },
+      { event: '*', schema: 'public', table: 'reels' },
       async (payload: any) => {
-        if (payload.eventType === 'INSERT') {
-          const { data: userProfile } = await supabase.from('users').select('university_id').eq('id', (await supabase.auth.getSession()).data.session?.user.id).single();
-          const userUniId = userProfile?.university_id;
-
-          if (payload.new.university_id === userUniId) {
-            const { vendors } = useMarketplaceStore.getState();
-            const brand = vendors.find((v: any) => v.id === payload.new.brand_id);
-            const enriched = { 
-              ...payload.new, 
-              brands: brand ? { name: brand.name, logo_url: brand.logo_url } : undefined 
-            };
-            addReel(enriched as any);
-          }
+        if (payload.eventType === 'INSERT' && payload.new.status === 'published') {
+          fetchReels();
         }
-        if (payload.eventType === 'DELETE') {
-          removeReel(payload.old.id);
+        if (payload.eventType === 'UPDATE' && payload.new.status === 'published') {
+          fetchReels();
+        }
+        if (payload.eventType === 'DELETE' || payload.new?.status === 'deleted') {
+          removeReel(payload.old?.id || payload.new?.id);
         }
       }
     );

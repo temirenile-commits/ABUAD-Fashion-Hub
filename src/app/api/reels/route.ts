@@ -121,9 +121,9 @@ export async function GET(req: NextRequest) {
 
     // Respect university visibility logic
     if (universityId) {
-      query = query.or(`visibility_type.eq.all,and(visibility_type.eq.university,university_id.eq.${universityId})`);
+      query = query.or(`visibility_type.eq.all,visibility_type.eq.public,and(visibility_type.eq.university,university_id.eq.${universityId})`);
     } else {
-      query = query.eq('visibility_type', 'all');
+      query = query.or(`visibility_type.eq.all,visibility_type.eq.public,visibility_type.eq.university`);
     }
 
     const { data, error } = await query;
