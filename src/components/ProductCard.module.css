@@ -359,3 +359,24 @@
   border-radius: 4px;
   z-index: 2;
 }
+
+.awardBadge {
+  position: absolute;
+  top: 8px;
+  right: 40px;
+  background: var(--primary);
+  color: white;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  z-index: 5;
+}
+
+.ratingItem {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}

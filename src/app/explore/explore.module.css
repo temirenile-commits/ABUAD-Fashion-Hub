@@ -152,7 +152,7 @@
   .toolbar { flex-wrap: wrap; }
   .filterBtn, .viewToggle { display: none; }
   .productGrid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
 }
