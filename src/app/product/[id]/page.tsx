@@ -24,6 +24,7 @@ import WishlistButton from '@/components/WishlistButton';
 import ReviewSection from '@/components/ReviewSection';
 import VendorActions from '@/app/vendor/[slug]/VendorActions';
 import CountdownTimer from '@/components/CountdownTimer';
+import ProductGallery from '@/components/ProductGallery';
 import styles from './product.module.css';
 
 interface Props {
@@ -159,58 +160,12 @@ export default async function ProductPage({ params }: Props) {
         <div className={styles.productMain}>
           {/* Image/Video Gallery */}
           <div className={styles.gallery}>
-            <div className={styles.mainImg}>
-              <div className={styles.visualContainer} style={{ position: 'relative', width: '100%', height: '100%' }}>
-                {product.video_url ? (
-                  <video 
-                    controls 
-                    className={styles.videoPlayer} 
-                    poster={mainImage}
-                    autoPlay
-                    muted
-                  >
-                    <source src={product.video_url} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                ) : mainImage ? (
-                  <div className={styles.imageWrapper}>
-                    <OptimizedImage
-                      src={mainImage}
-                      alt={product.title}
-                      fill
-                      priority
-                      className={styles.mainImgEl}
-                      useThumbnail={false}
-                    />
-                  </div>
-                ) : (
-                  <div className={styles.mediaUnavailable}>Product image unavailable</div>
-                )}
-                
-                <ShareProductButton
-                  productId={product.id}
-                  productTitle={product.title}
-                  productPrice={product.price}
-                  className={styles.downloadBtn}
-                />
-              </div>
-
-              {discount && discount > 0 ? (
-                <span className={`badge badge-flash ${styles.imgDiscount}`}>
-                  -{discount}% OFF
-                </span>
-              ) : null}
-            </div>
-
-            {allImages.length > 1 && (
-              <div className={styles.thumbs}>
-                {allImages.map((img, i) => (
-                  <div key={i} className={`${styles.thumb} ${img === mainImage ? styles.thumbActive : ''}`}>
-                    <OptimizedImage src={img} alt={`${product.title} ${i + 1}`} fill className={styles.thumbImg} useThumbnail={false} />
-                  </div>
-                ))}
-              </div>
-            )}
+            <ProductGallery 
+              images={allImages} 
+              title={product.title} 
+              videoUrl={product.video_url} 
+              discount={discount} 
+            />
           </div>
 
           {/* Info Panel */}
