@@ -182,14 +182,14 @@ async function executeMilesAction(userId: string, action: AuditRow): Promise<{ s
   delete payload.service_id;
   delete payload.service_title;
   if (action.action_type === 'update_store_profile') {
-    const { error } = await supabaseAdmin.from('brands').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', brand.id).eq('owner_id', userId);
+    const { error } = await supabaseAdmin.from('brands').update(payload).eq('id', brand.id).eq('owner_id', userId);
     if (error) throw error;
     return { actionType: action.action_type, summary: 'Your store profile was updated.' };
   }
   if (action.action_type === 'update_service') {
     const { data: service } = await supabaseAdmin.from('services').select('id, brand_id').eq('id', serviceId).maybeSingle();
     if (!service || service.brand_id !== brand.id) throw new MilesActionError('NOT_FOUND', 'That service is not part of your store.');
-    const { error } = await supabaseAdmin.from('services').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', serviceId).eq('brand_id', brand.id);
+    const { error } = await supabaseAdmin.from('services').update(payload).eq('id', serviceId).eq('brand_id', brand.id);
     if (error) throw error;
     return { actionType: action.action_type, summary: 'Your service was updated.' };
   }
