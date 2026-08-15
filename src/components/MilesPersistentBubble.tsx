@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { MILES_ASSISTANT_NAME } from '@/lib/ai/ui-config';
 
@@ -11,7 +12,7 @@ type DragState = { pointerId: number; offsetX: number; offsetY: number; moved: b
 
 const POSITION_KEY = 'mastercart-miles-bubble-position-global';
 const HIDDEN_KEY = 'mastercart-miles-bubble-hidden-global';
-const BUBBLE_SIZE = 64;
+const BUBBLE_SIZE = 56;
 const EDGE_GAP = 12;
 const SNAP_DISTANCE = 48;
 const SAFE_BOTTOM = 18;
@@ -59,6 +60,8 @@ function snapPosition(position: Position): Position {
 }
 
 export default function MilesPersistentBubble() {
+  const pathname = usePathname();
+  const isReelsRoute = pathname === '/reels' || pathname.startsWith('/reels/');
   const [position, setPosition] = useState<Position>(() => {
     if (typeof window === 'undefined') return { x: 0, y: 0, dock: 'right' };
     try { return normalizePosition(JSON.parse(window.localStorage.getItem(POSITION_KEY) || 'null')); } catch { return viewportPosition(); }
@@ -155,19 +158,28 @@ export default function MilesPersistentBubble() {
     zIndex: 1000,
     touchAction: 'none' as const,
     userSelect: 'none' as const,
-    border: '1px solid rgba(255,255,255,.22)',
+    border: '1px solid rgba(255,255,255,.28)',
     borderRadius: '50%',
-    background: 'linear-gradient(135deg,#2563eb,#4f46e5)',
+    background: isReelsRoute ? 'linear-gradient(135deg,rgba(37,99,235,.72),rgba(79,70,229,.72))' : 'linear-gradient(135deg,#2563eb,#4f46e5)',
     color: '#fff',
-    fontSize: '1.35rem',
+    fontSize: '1.05rem',
+    fontWeight: 800,
+    letterSpacing: '.02em',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     cursor: dragging ? 'grabbing' : 'grab',
-    boxShadow: '0 10px 30px rgba(0,0,0,.35),0 0 20px rgba(37,99,235,.20)',
-    transition: dragging ? 'none' : 'left 220ms ease, top 220ms ease, transform 160ms ease, box-shadow 160ms ease',
+    opacity: isReelsRoute ? .78 : 1,
+    backdropFilter: isReelsRoute ? 'blur(6px)' : 'none',
+    WebkitBackdropFilter: isReelsRoute ? 'blur(6px)' : 'none',
+    boxShadow: isReelsRoute ? '0 8px 22px rgba(0,0,0,.24),0 0 14px rgba(37,99,235,.16)' : '0 10px 30px rgba(0,0,0,.35),0 0 20px rgba(37,99,235,.20)',
+    transition: dragging ? 'none' : 'left 220ms ease, top 220ms ease, transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease',
   };
 
-  if (hidden) return <button type="button" aria-label={`Show ${MILES_ASSISTANT_NAME} assistant`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setHidden(false); }} style={{ ...style, width: 24, borderRadius: position.x < window.innerWidth / 2 ? '0 14px 14px 0' : '14px 0 0 14px' }}>✦</button>;
+  if (hidden) return <button className="miles-bubble" type="button" aria-label={`Show ${MILES_ASSISTANT_NAME} assistant`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setHidden(false); }} style={{ ...style, width: 22, borderRadius: position.x < window.innerWidth / 2 ? '0 12px 12px 0' : '12px 0 0 12px', fontSize: '.78rem' }}>M</button>;
 
-  return (
-    <button type="button" aria-label={`Open ${MILES_ASSISTANT_NAME} AI assistant`} title={`Drag ${MILES_ASSISTANT_NAME} or tap to open`} onClick={onClick} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={style}>✦</button>
-  );
+  return <>
+    <button className="miles-bubble" type="button" aria-label={`Open ${MILES_ASSISTANT_NAME} AI assistant`} title={`Drag ${MILES_ASSISTANT_NAME} or tap to open`} onClick={onClick} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={style}>M</button>
+    <style>{`.miles-bubble:hover,.miles-bubble:focus-visible{transform:scale(1.06);outline:2px solid rgba(255,255,255,.72);outline-offset:2px}.miles-bubble:active{transform:scale(.96)}`}</style>
+  </>;
 }
