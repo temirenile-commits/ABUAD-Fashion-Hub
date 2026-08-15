@@ -69,14 +69,14 @@ async function targetInfo(actionType: AdminActionType, targetId: string) {
 function permitted(context: MilesContext, actionType: AdminActionType, universityId: string | null) {
   const requirement = REQUIREMENTS[actionType];
   if (!context.isFullAdmin && !canUseMilesTool(context, requirement, universityId)) return false;
-  if (!context.isFullAdmin && context.role === 'customer_support_agent' && requirement !== 'user_management') return false;
-  return ['super_admin', 'admin', 'sub_admin', 'university_admin', 'university_staff', 'customer_support_agent'].includes(context.role);
+  if (!context.isFullAdmin && context.roles.includes('customer_support_agent') && requirement !== 'user_management') return false;
+  return context.roles.some((role) => ['super_admin', 'admin', 'sub_admin', 'university_admin', 'university_staff', 'customer_support_agent'].includes(role));
 }
 
 export async function proposeMilesAdminAction(userId: string, actionType: AdminActionType, targetId: string, payload: JsonRecord = {}) {
   if (!Object.prototype.hasOwnProperty.call(REQUIREMENTS, actionType)) throw new MilesAdminActionError('INVALID_ACTION', 'Miles cannot perform that administrative action.');
   const context = await resolveMilesContext(userId, 'Administrative action preview');
-  if (!context || !['super_admin', 'admin', 'sub_admin', 'university_admin', 'university_staff', 'customer_support_agent'].includes(context.role)) throw new MilesAdminActionError('NOT_ALLOWED', 'Your role cannot perform administrative actions through Miles.');
+  if (!context || !context.roles.some((role) => ['super_admin', 'admin', 'sub_admin', 'university_admin', 'university_staff', 'customer_support_agent'].includes(role))) throw new MilesAdminActionError('NOT_ALLOWED', 'Your role cannot perform administrative actions through Miles.');
   const target = await targetInfo(actionType, targetId);
   if (!permitted(context, actionType, target.universityId)) throw new MilesAdminActionError('NOT_ALLOWED', 'You do not have permission or scope for that action.');
   const actionId = crypto.randomUUID();

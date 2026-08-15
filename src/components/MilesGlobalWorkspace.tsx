@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { MILES_ASSISTANT_NAME, MILES_ASSISTANT_SUBTITLE, MILES_MESSAGES } from '@/lib/ai/ui-config';
 
 type Message = { role: 'user' | 'assistant'; content: string };
@@ -60,7 +61,9 @@ export default function MilesGlobalWorkspace() {
     setInput('');
     setBusy(true);
     try {
-      const response = await fetch('/api/ai/copilot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: next, pathname, currentTab: 'overview' }) });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Miles session unavailable');
+      const response = await fetch('/api/ai/copilot', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ messages: next, pathname, currentTab: 'overview' }) });
       if (!response.ok) throw new Error('Miles request failed');
       const data = await response.json() as { text?: unknown; proposal?: Proposal; domain?: 'admin' | 'vendor' };
       if (data.proposal) setProposal({ ...data.proposal, domain: data.domain });
@@ -74,7 +77,9 @@ export default function MilesGlobalWorkspace() {
     if (!proposal || busy) return;
     setBusy(true);
     try {
-      const response = await fetch('/api/ai/actions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ domain: proposal.domain || 'vendor', mode: 'confirm', actionId: proposal.actionId, confirmation: proposal.confirmationPhrase }) });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Miles session unavailable');
+      const response = await fetch('/api/ai/actions', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ domain: proposal.domain || 'vendor', mode: 'confirm', actionId: proposal.actionId, confirmation: proposal.confirmationPhrase }) });
       if (!response.ok) throw new Error('Action confirmation failed');
       const data = await response.json() as { result?: { summary?: unknown } };
       setMessages((previous) => [...previous, { role: 'assistant', content: safeText(data.result?.summary, MILES_MESSAGES.actionFailed) }]);

@@ -126,49 +126,8 @@ export default function VendorDashboard() {
   const products = brand ? allProducts.filter(p => p.brand_id === brand.id && (p.product_section === 'fashion' || !p.product_section)) : [];
   const filteredReels = brand ? reels.filter(r => (r.product_section === 'fashion' || !r.product_section)) : [];
 
-  // AI States
+  // Miles is mounted once globally from the application layout.
   const [aiSettings, setAiSettings] = useState<any>(null);
-  const [showCopilot, setShowCopilot] = useState(false);
-  const [copilotMsgs, setCopilotMsgs] = useState<any[]>([{ role: 'assistant', content: "Hi! I'm your AI Copilot. How can I help you grow your store today?" }]);
-  const [copilotInput, setCopilotInput] = useState('');
-  const [copilotLoading, setCopilotLoading] = useState(false);
-  const [pendingMilesAction, setPendingMilesAction] = useState<any>(null);
-  const [milesActionLoading, setMilesActionLoading] = useState(false);
-
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem('mastercart-miles-conversation-vendor');
-      if (saved) setCopilotMsgs(JSON.parse(saved));
-    } catch {}
-  }, []);
-  useEffect(() => {
-    try { window.localStorage.setItem('mastercart-miles-conversation-vendor', JSON.stringify(copilotMsgs.slice(-30))); } catch {}
-  }, [copilotMsgs]);
-  const [milesFullScreen, setMilesFullScreen] = useState(false);
-  const [milesBubbleSide, setMilesBubbleSide] = useState<'left' | 'right'>('right');
-  useEffect(() => {
-    const openMiles = () => setShowCopilot(true);
-    const openFullMiles = () => { setShowCopilot(true); setMilesFullScreen(true); };
-    window.addEventListener('mastercart:miles-open', openMiles);
-    window.addEventListener('mastercart:miles-full-open', openFullMiles);
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('miles') === 'open') setShowCopilot(true);
-    if (params.get('full') === '1') setMilesFullScreen(true);
-    return () => {
-      window.removeEventListener('mastercart:miles-open', openMiles);
-      window.removeEventListener('mastercart:miles-full-open', openFullMiles);
-    };
-  }, []);
-  useEffect(() => {
-    try {
-      const savedSide = window.localStorage.getItem('mastercart-miles-bubble-side-vendor');
-      if (savedSide === 'left' || savedSide === 'right') setMilesBubbleSide(savedSide);
-    } catch {}
-  }, []);
-  useEffect(() => {
-    try { window.localStorage.setItem('mastercart-miles-bubble-side-vendor', milesBubbleSide); } catch {}
-  }, [milesBubbleSide]);
-
   const [newProduct, setNewProduct] = useState({
     title: '',
     description: '',
@@ -1183,61 +1142,6 @@ export default function VendorDashboard() {
     }
   };
 
-  const handleCopilotSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!copilotInput.trim() || !brand) return;
-    
-    const newMsgs = [...copilotMsgs, { role: 'user', content: copilotInput }];
-    setCopilotMsgs(newMsgs);
-    setCopilotInput('');
-    setCopilotLoading(true);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Please sign in again to use Copilot.');
-      const res = await fetch(`/api/ai/copilot?v=4&t=${Date.now()}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({
-          messages: newMsgs,
-          currentTab: activeTab,
-          pathname: window.location.pathname
-        })
-      });
-      const data = await res.json();
-      if (data.proposal) {
-        setPendingMilesAction(data.proposal);
-        setCopilotMsgs([...newMsgs, { role: 'assistant', content: `${data.proposal.summary} If you want me to apply this exact change, confirm it below.` }]);
-      } else if (data.text) {
-        setCopilotMsgs([...newMsgs, { role: 'assistant', content: data.text }]);
-      } else if (data.error) {
-        const message = data.code === 'AI_UNAVAILABLE' ? data.error : `[${data.code || 'AI_ERROR'}] ${data.error}`;
-        setCopilotMsgs([...newMsgs, { role: 'assistant', content: message }]);
-      } else {
-        setCopilotMsgs([...newMsgs, { role: 'assistant', content: '[AI_EMPTY_RESPONSE] No response received.' }]);
-      }
-    } catch (err: any) {
-      setCopilotMsgs([...newMsgs, { role: 'assistant', content: `[AI_CONNECTION_ERROR] ${err.message}` }]);
-    }
-    setCopilotLoading(false);
-  };
-
-  const confirmMilesAction = async () => {
-    if (!pendingMilesAction) return;
-    setMilesActionLoading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Please sign in again to confirm this change.');
-      const response = await fetch('/api/ai/actions', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ mode: 'confirm', actionId: pendingMilesAction.actionId, confirmation: 'CONFIRM' }) });
-      const data = await response.json();
-      setCopilotMsgs(prev => [...prev, { role: 'assistant', content: data.result?.summary || data.error || 'Miles could not complete that change.' }]);
-      if (response.ok) setPendingMilesAction(null);
-    } catch (error: any) {
-      setCopilotMsgs(prev => [...prev, { role: 'assistant', content: error?.message || 'Miles could not complete that change.' }]);
-    } finally {
-      setMilesActionLoading(false);
-    }
-  };
   const addVariant = () => {
     setNewProduct(prev => ({
       ...prev,
@@ -3720,7 +3624,7 @@ export default function VendorDashboard() {
               <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>?</div>
               <div style={{ fontWeight: 700, marginBottom: '0.4rem' }}>Talk to your Copilot</div>
               <div style={{ fontSize: '0.82rem', color: 'var(--text-400)', marginBottom: '1rem' }}>Ask it anything: "What are my earnings?", "How do I add a product?", "Why is my balance pending?"</div>
-              <button onClick={() => setShowCopilot(true)} className="btn btn-primary" style={{ background: 'var(--primary)', border: 'none', color: '#000000' }}>
+              <button onClick={() => window.dispatchEvent(new CustomEvent('mastercart:miles-open'))} className="btn btn-primary" style={{ background: 'var(--primary)', border: 'none', color: '#000000' }}>
                 Open AI Chat ?
               </button>
             </div>
@@ -3752,95 +3656,6 @@ export default function VendorDashboard() {
         </button>
       </nav>
 
-      {/* --- AI Copilot Floating Widget --- */}
-      {showCopilot && (
-        <div style={{
-          position: 'fixed', bottom: milesFullScreen ? 0 : '6rem', right: milesFullScreen || milesBubbleSide === 'left' ? 0 : '1.5rem', left: milesFullScreen || milesBubbleSide === 'left' ? 0 : 'auto', width: milesFullScreen ? '100vw' : 'min(360px, calc(100vw - 2rem))', maxHeight: milesFullScreen ? '100dvh' : 'min(500px, calc(100dvh - 8rem))',
-          background: 'var(--bg-200)', border: '1px solid #A0A0A0', borderRadius: milesFullScreen ? 0 : '20px',
-          boxShadow: '0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.12)',
-          display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 9999,
-          backdropFilter: 'blur(24px)'
-        }}>
-          {/* Header */}
-          <div style={{ padding: '1rem 1.25rem', background: 'linear-gradient(135deg,rgba(255,255,255,0.2),rgba(0,0,0,0.1))', borderBottom: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#FFFFFF,#000000)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>?</div>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{aiSettings?.assistant_name || 'Miles'}</div>
-                <div style={{ fontSize: '0.7rem', color: '#FFFFFF' }}>Your MasterCart assistant · {aiSettings?.store_write_enabled ? 'Read & write active' : aiSettings?.store_access_enabled ? 'Read access active' : 'Store access off'}</div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <button onClick={() => setMilesFullScreen(v => !v)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 8, color: 'inherit', cursor: 'pointer', padding: '4px 7px', fontSize: '0.7rem' }}>{milesFullScreen ? '← Back' : 'Open full assistant'}</button>
-              <button onClick={() => { setShowCopilot(false); setMilesFullScreen(false); }} style={{ background: 'none', border: 'none', color: 'var(--text-400)', cursor: 'pointer', padding: '4px' }}><X size={16} /></button>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {copilotMsgs.length === 1 && !copilotLoading && (
-              <div style={{ display: 'grid', gap: '0.5rem' }}>
-                {['Show my pending orders', 'Show my products', 'Which products have low stock?', 'Help me add a product'].map((suggestion) => <button key={suggestion} type="button" onClick={() => setCopilotInput(suggestion)} style={{ textAlign: 'left', padding: '0.65rem 0.8rem', borderRadius: 10, border: '1px solid #27272A', background: 'var(--bg-300)', color: 'inherit', cursor: 'pointer', fontSize: '0.78rem' }}>{suggestion}</button>)}
-              </div>
-            )}
-            {copilotMsgs.map((msg, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                <div style={{
-                  maxWidth: '85%', padding: '0.65rem 0.9rem', borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                  background: msg.role === 'user' ? 'linear-gradient(135deg,#000000,#000000)' : 'var(--bg-300)',
-                  fontSize: '0.83rem', lineHeight: 1.5, whiteSpace: 'pre-wrap'
-                }}>
-                  {msg.content}
-                </div>
-              </div>
-            ))}
-            {pendingMilesAction && (
-              <div style={{ padding: '0.75rem', border: '1px solid #A0A0A0', borderRadius: 12, background: 'var(--bg-300)' }}>
-                <div style={{ fontSize: '0.75rem', marginBottom: '0.5rem' }}>Confirm this exact store change?</div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button type="button" onClick={confirmMilesAction} disabled={milesActionLoading} style={{ flex: 1, border: 'none', borderRadius: 8, padding: '0.5rem', background: '#111', color: '#fff', cursor: 'pointer' }}>{milesActionLoading ? 'Applying…' : 'Confirm'}</button>
-                  <button type="button" onClick={() => setPendingMilesAction(null)} disabled={milesActionLoading} style={{ flex: 1, border: '1px solid #888', borderRadius: 8, padding: '0.5rem', background: 'transparent', color: 'inherit', cursor: 'pointer' }}>Cancel</button>
-                </div>
-              </div>
-            )}
-            {copilotLoading && (
-              <div style={{ display: 'flex', gap: '4px', padding: '0.5rem' }}>
-                {[0,1,2].map(i => <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#121214', animation: `bounce 1.2s ${i * 0.2}s infinite` }} />)}
-              </div>
-            )}
-          </div>
-
-          {/* Input */}
-          <form onSubmit={handleCopilotSubmit} style={{ padding: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.15)', display: 'flex', gap: '0.5rem' }}>
-            <input
-              value={copilotInput}
-              onChange={e => setCopilotInput(e.target.value)}
-              placeholder="Ask your AI anything..."
-              disabled={copilotLoading}
-              style={{ flex: 1, background: 'var(--bg-300)', border: '1px solid #27272A', borderRadius: '999px', padding: '0.55rem 1rem', fontSize: '0.83rem', color: '#FFFFFF', outline: 'none' }}
-            />
-            <button type="submit" disabled={copilotLoading || !copilotInput.trim()} style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#000000,#000000)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              {copilotLoading ? <Loader2 size={14} className="anim-spin" color="#FFFFFF" /> : <ArrowRight size={14} color="#FFFFFF" />}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Floating AI Copilot Button */}
-      <button
-        onClick={() => setShowCopilot(v => !v)}
-        title={`Open ${aiSettings?.assistant_name || 'Miles'}`}
-        draggable
-        onDragEnd={e => setMilesBubbleSide(e.clientX < window.innerWidth / 2 ? 'left' : 'right')}
-        style={{
-          position: 'fixed', bottom: 'calc(1.5rem + env(safe-area-inset-bottom))', left: milesBubbleSide === 'left' ? '1.5rem' : 'auto', right: milesBubbleSide === 'right' ? '1.5rem' : 'auto', width: '56px', height: '56px',
-          display: 'none', borderRadius: '50%', background: 'linear-gradient(135deg,#000000,#FFFFFF)',
-          border: 'none', cursor: 'pointer', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: 10000,
-        }}
-        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
-        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
-      ><span>?</span>{pendingMilesAction && <span aria-label="Miles has an update" style={{ position: 'absolute', top: 2, right: 2, width: 9, height: 9, borderRadius: '50%', background: '#FFFFFF', border: '2px solid #121214' }} />}</button>
       </>
       )}
     </div>
