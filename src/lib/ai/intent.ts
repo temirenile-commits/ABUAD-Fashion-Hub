@@ -24,8 +24,11 @@ export type MilesIntent =
   | 'operational_request'
   | 'unknown';
 
+export type MilesMode = 'retrieve' | 'analyze' | 'act';
+
 export type MilesIntentDecision = {
   intent: MilesIntent;
+  mode?: MilesMode;
   query: string;
   requiresMarketplace: boolean;
   requiresVendorContext: boolean;
@@ -42,6 +45,8 @@ const PRODUCT_PATTERNS = /\b(product|products|phone|phones|laptop|laptops|shoes|
 const SEARCH_PATTERNS = /\b(find|search|show|look for|what .* available|who sells|list|browse)\b/i;
 const INFO_PATTERNS = /\b(tell me about|what is|what's|whats|how much|price|cost|available|in stock|does .* sell|store sell)\b/i;
 const ASSISTANCE_PATTERNS = /\b(how do i|how can i|why (is|isn't|isnt)|upload|post a reel|account settings|order|checkout|delivery|change my)\b/i;
+const NAVIGATION_PATTERNS = /\b(where can i|where do i|take me to|open|go to|manage my|locate)\b/i;
+const HELP_PATTERNS = /\b(how do i|how can i|what is the process|guide me|help me with|troubleshoot|not arrived|not working)\b/i;
 const OPERATIONAL_PATTERNS = /\b(update|change|edit|delete|remove|create|add|publish|unpublish|approve|reject|cancel|mark|set)\b/i;
 
 function entityQuery(message: string) {
@@ -50,6 +55,12 @@ function entityQuery(message: string) {
     .replace(/^(pictures?|photos?|images?|videos?|media)\s+(of|for)\s+/i, '')
     .replace(/^(the|a|an)\s+/i, '')
     .trim() || message.trim().slice(0, 160);
+}
+
+export function inferMilesMode(intent: MilesIntent): MilesMode {
+  if (intent === 'action_request') return 'act';
+  if (intent === 'analytics_query' || intent === 'financial_query') return 'analyze';
+  return 'retrieve';
 }
 
 export function classifyMilesIntent(message: string, hasUploadedImage = false, hasRecentCards = false): MilesIntentDecision {
@@ -62,6 +73,9 @@ export function classifyMilesIntent(message: string, hasUploadedImage = false, h
   if (/\b(delivery|deliveries|shipping|shipped|delivered|tracking|dispatch)\b/i.test(normalized)) return { intent: 'delivery_query', query, requiresMarketplace: false, requiresVendorContext: false, requiresCustomerContext: true, requiresAdminContext: false, requiresMedia: false };
   if (/\b(reel|reels|video|videos)\b/i.test(normalized)) return { intent: 'reel_query', query, requiresMarketplace: true, requiresVendorContext: false, requiresCustomerContext: false, requiresAdminContext: false, requiresMedia: /\b(show|find|view|watch)\b/i.test(normalized) };
   if (/\b(review|reviews|rating|ratings)\b/i.test(normalized)) return { intent: 'review_query', query, requiresMarketplace: true, requiresVendorContext: false, requiresCustomerContext: false, requiresAdminContext: false, requiresMedia: false };
+  if (NAVIGATION_PATTERNS.test(normalized) && !/\b(order|delivery|product|store|reel|settings|dashboard|wallet|payout)\b/i.test(normalized)) return { intent: 'navigation_request', query, requiresMarketplace: false, requiresVendorContext: false, requiresCustomerContext: false, requiresAdminContext: false, requiresMedia: false };
+  if (NAVIGATION_PATTERNS.test(normalized)) return { intent: 'navigation_request', query, requiresMarketplace: false, requiresVendorContext: /\b(product|store|vendor|reel|wallet|payout)\b/i.test(normalized), requiresCustomerContext: false, requiresAdminContext: false, requiresMedia: false };
+  if (HELP_PATTERNS.test(normalized) && !PRODUCT_PATTERNS.test(normalized) && !VENDOR_PATTERNS.test(normalized)) return { intent: 'support_request', query, requiresMarketplace: false, requiresVendorContext: false, requiresCustomerContext: true, requiresAdminContext: false, requiresMedia: false };
   if (/\b(account|profile|password|settings|university)\b/i.test(normalized)) return { intent: 'account_query', query, requiresMarketplace: false, requiresVendorContext: false, requiresCustomerContext: true, requiresAdminContext: false, requiresMedia: false };
   if (/\b(sales|analytics|trend|trends|performance|views|engagement|inventory|low stock)\b/i.test(normalized)) return { intent: 'analytics_query', query, requiresMarketplace: false, requiresVendorContext: true, requiresCustomerContext: false, requiresAdminContext: true, requiresMedia: false };
   if (/\b(wallet|balance|payout|payment|payments|financial|revenue|earnings)\b/i.test(normalized)) return { intent: 'financial_query', query, requiresMarketplace: false, requiresVendorContext: true, requiresCustomerContext: true, requiresAdminContext: true, requiresMedia: false };

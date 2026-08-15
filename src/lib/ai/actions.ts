@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getVendorAISettings, getVendorProfile } from '@/lib/ai/vendor-tools';
+import { resolveMilesContext } from '@/lib/ai/role-context';
+import { resolveMilesConfiguration } from '@/lib/ai/miles-configuration';
 
 type ActionType = 'create_product' | 'update_product' | 'update_store_profile' | 'update_service';
 type JsonRecord = Record<string, unknown>;
@@ -21,6 +23,13 @@ const CONFIRMATION_TTL_MS = 5 * 60 * 1000;
 const SAFE_STORE_FIELDS = ['name', 'description', 'logo_url', 'banner_url', 'cover_url', 'whatsapp_number', 'instagram_link', 'return_policy', 'shipping_policy', 'social_links'] as const;
 const PRODUCT_FIELDS = ['title', 'description', 'price', 'original_price', 'category', 'stock_count', 'media_urls', 'image_url', 'video_url', 'variants', 'is_draft', 'is_preorder', 'preorder_arrival_date', 'location_availability', 'delivery_rate', 'cafeteria_ids'] as const;
 const SERVICE_FIELDS = ['title', 'description', 'price', 'portfolio_urls', 'is_featured'] as const;
+
+export const MILES_ACTION_DEFINITIONS = {
+  create_product: { allowedRoles: ['vendor'], requiresOwnership: true, requiresConfirmation: true, requiresVendorWrite: true },
+  update_product: { allowedRoles: ['vendor'], requiresOwnership: true, requiresConfirmation: true, requiresVendorWrite: true },
+  update_store_profile: { allowedRoles: ['vendor'], requiresOwnership: true, requiresConfirmation: true, requiresVendorWrite: true },
+  update_service: { allowedRoles: ['vendor'], requiresOwnership: true, requiresConfirmation: true, requiresVendorWrite: true },
+} as const;
 
 export class MilesActionError extends Error {
   constructor(public readonly code: 'INVALID_ACTION' | 'NOT_ALLOWED' | 'NOT_FOUND' | 'EXPIRED' | 'ALREADY_USED' | 'CONFIRMATION_REQUIRED' | 'ACTION_FAILED', message: string) {
@@ -118,12 +127,17 @@ export function detectMilesActionRequest(message: string, products: Array<{ id: 
 }
 
 export async function proposeMilesAction(userId: string, actionType: ActionType, input: unknown) {
-  if (!['create_product', 'update_product', 'update_store_profile', 'update_service'].includes(actionType)) throw new MilesActionError('NOT_ALLOWED', 'Miles cannot perform that type of action.');
+  const definition = MILES_ACTION_DEFINITIONS[actionType as ActionType];
+  if (!definition) throw new MilesActionError('NOT_ALLOWED', 'Miles cannot perform that type of action.');
   const brand = await getVendorProfile(userId);
   if (!brand) throw new MilesActionError('NOT_FOUND', 'No vendor store is associated with this account.');
+  const context = await resolveMilesContext(userId, 'Miles Action Engine authorization');
+  const configuration = await resolveMilesConfiguration(userId, 'Miles Action Engine authorization');
   const settings = await getVendorAISettings(brand.id);
-  if (!settings.store_access_enabled) throw new MilesActionError('NOT_ALLOWED', 'Store access is not activated for Miles.');
-  if (!settings.store_write_enabled) throw new MilesActionError('NOT_ALLOWED', 'Store write access is not activated for Miles.');
+  if (!context || !context.capabilities.includes('vendor_product_editing')) throw new MilesActionError('NOT_ALLOWED', 'Your current role cannot perform this Miles action.');
+  if (!configuration?.permissions.writeEnabled) throw new MilesActionError('NOT_ALLOWED', 'Write access is not activated for Miles.');
+  if (!configuration.vendor?.storeAccessEnabled && !settings.store_access_enabled) throw new MilesActionError('NOT_ALLOWED', 'Store access is not activated for Miles.');
+  if (!configuration.vendor?.storeWriteEnabled && !settings.store_write_enabled) throw new MilesActionError('NOT_ALLOWED', 'Store write access is not activated for Miles.');
   const payload = scrubPayload(actionType, input);
       if (actionType === 'update_service') {
       const serviceId = String(isRecord(input) ? input.service_id || '' : '');
@@ -184,21 +198,25 @@ async function executeMilesAction(userId: string, action: AuditRow): Promise<{ s
   if (action.action_type === 'update_store_profile') {
     const { error } = await supabaseAdmin.from('brands').update(payload).eq('id', brand.id).eq('owner_id', userId);
     if (error) throw error;
-    return { actionType: action.action_type, summary: 'Your store profile was updated.' };
+    const { data: verifiedBrand } = await supabaseAdmin.from('brands').select('id, name').eq('id', brand.id).eq('owner_id', userId).maybeSingle();
+    if (!verifiedBrand) throw new MilesActionError('ACTION_FAILED', 'The store update could not be verified.');
+    return { actionType: action.action_type, summary: 'Your store profile was updated and verified.' };
   }
   if (action.action_type === 'update_service') {
     const { data: service } = await supabaseAdmin.from('services').select('id, brand_id').eq('id', serviceId).maybeSingle();
     if (!service || service.brand_id !== brand.id) throw new MilesActionError('NOT_FOUND', 'That service is not part of your store.');
     const { error } = await supabaseAdmin.from('services').update(payload).eq('id', serviceId).eq('brand_id', brand.id);
     if (error) throw error;
-    return { actionType: action.action_type, summary: 'Your service was updated.' };
+    const { data: verifiedService } = await supabaseAdmin.from('services').select('id').eq('id', serviceId).eq('brand_id', brand.id).maybeSingle();
+    if (!verifiedService) throw new MilesActionError('ACTION_FAILED', 'The service update could not be verified.');
+    return { actionType: action.action_type, summary: 'Your service was updated and verified.' };
   }
   if (action.action_type === 'create_product') {
     const product: JsonRecord = { ...payload, brand_id: brand.id, owner_id: userId, product_section: brand.marketplace_type === 'delicacies' ? 'delicacies' : 'fashion', university_id: brand.university_id, visibility_type: 'university' };
     delete product.product_id;
-    const { error } = await supabaseAdmin.from('products').insert(product);
-    if (error) throw error;
-    return { actionType: action.action_type, summary: `Product ${String(payload.title)} was added to your store.` };
+    const { data: createdProduct, error } = await supabaseAdmin.from('products').insert(product).select('id, title').maybeSingle();
+    if (error || !createdProduct) throw error || new MilesActionError('ACTION_FAILED', 'The new product could not be verified.');
+    return { actionType: action.action_type, summary: `Product ${String(createdProduct.title || payload.title)} was added to your store and verified.` };
   }
   const productId = String(payload.product_id || '');
   delete payload.product_id;
@@ -206,5 +224,7 @@ async function executeMilesAction(userId: string, action: AuditRow): Promise<{ s
   if (!product || product.brand_id !== brand.id) throw new MilesActionError('NOT_FOUND', 'That product is not part of your store.');
   const { error } = await supabaseAdmin.from('products').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', productId).eq('brand_id', brand.id);
   if (error) throw error;
-  return { actionType: action.action_type, summary: 'Your product was updated.' };
+  const { data: verifiedProduct } = await supabaseAdmin.from('products').select('id, title, price, stock_count').eq('id', productId).eq('brand_id', brand.id).maybeSingle();
+  if (!verifiedProduct) throw new MilesActionError('ACTION_FAILED', 'The product update could not be verified.');
+  return { actionType: action.action_type, summary: `Your product ${String(verifiedProduct.title || '')} was updated and verified.` };
 }
