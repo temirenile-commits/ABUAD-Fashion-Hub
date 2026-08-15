@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 const categories = ['products', 'orders', 'finance', 'payouts', 'users', 'vendors', 'support', 'analytics', 'university'];
 
@@ -15,7 +16,8 @@ export default function AdminMilesPage() {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState('');
 
-  async function load() { const response = await fetch('/api/miles/configuration', { cache: 'no-store' }); if (response.ok) { const result = await response.json(); setData(result); setName(result.effective?.identity?.name || 'Miles'); } }
+  async function authHeaders() { const { data } = await supabase.auth.getSession(); return data.session ? { Authorization: `Bearer ${data.session.access_token}` } : null; }
+  async function load() { const headers = await authHeaders(); if (!headers) { setNotice('Authentication required. Please sign in again.'); return; } const response = await fetch('/api/miles/configuration', { headers, cache: 'no-store' }); const result = await response.json().catch(() => ({})); if (response.ok) { setData(result); setName(result.effective?.identity?.name || 'Miles'); } else setNotice(result.error || 'Miles configuration could not be loaded.'); }
   useEffect(() => { void load(); }, []);
 
   async function save(scopeType: 'USER' | 'GLOBAL' | 'UNIVERSITY', scope?: Scope) {
@@ -23,7 +25,8 @@ export default function AdminMilesPage() {
     const body: any = { scopeType, config: { identity: { name: name.trim().slice(0, 40) } }, reason: 'Miles administrative configuration update' };
     if (scope?.university_id) body.universityId = scope.university_id;
     if (scope?.role_key) body.roleKey = scope.role_key;
-    const response = await fetch('/api/miles/configuration', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const headers = await authHeaders(); if (!headers) { setNotice('Authentication required. Please sign in again.'); setSaving(false); return; }
+    const response = await fetch('/api/miles/configuration', { method: 'PATCH', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const result = await response.json(); setNotice(response.ok ? 'Miles configuration saved and audited.' : (result.error || 'Configuration failed.')); setSaving(false); if (response.ok) void load();
   }
 

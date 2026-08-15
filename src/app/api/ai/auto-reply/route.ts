@@ -2,6 +2,7 @@
 import { sanitizeMilesResponse } from '@/lib/ai/intelligence';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAuthenticatedUser } from '@/lib/server-auth';
+import { resolveMilesConfiguration } from '@/lib/ai/miles-configuration';
 import { NextResponse } from 'next/server';
 
 export const maxDuration = 30;
@@ -23,9 +24,10 @@ export async function POST(req: Request) {
     const { data: brand } = await supabaseAdmin.from('brands').select('id, name, description').eq('owner_id', receiverId).maybeSingle();
     if (!brand) return NextResponse.json({ success: true, message: 'Receiver is not a vendor' });
 
-    // Check AI settings
-    const { data: settings } = await supabaseAdmin.from('vendor_ai_settings').select('ai_enabled, auto_reply_enabled, store_access_enabled, custom_instructions').eq('brand_id', brand.id).maybeSingle();
-    if (!settings || !settings.ai_enabled || !settings.auto_reply_enabled || !settings.store_access_enabled) {
+    // Read the one unified Miles configuration for the vendor. Legacy settings are folded into the resolver as a migration fallback.
+    const configuration = await resolveMilesConfiguration(receiverId, 'Miles is preparing a vendor auto-reply.');
+    const vendorSettings = configuration?.vendor;
+    if (!configuration || !vendorSettings?.aiEnabled || !vendorSettings.autoReplyEnabled || !vendorSettings.storeAccessEnabled) {
       return NextResponse.json({ success: true, message: 'Auto-reply disabled' });
     }
 
@@ -44,7 +46,7 @@ PRODUCTS AVAILABLE:
 ${productList}
 
 VENDOR'S CUSTOM AI INSTRUCTIONS:
-${settings.custom_instructions || 'None.'}
+${vendorSettings.customInstructions || 'None.'}
 
 RULES:
 1. Answer the customer's message based ONLY on the products available above.

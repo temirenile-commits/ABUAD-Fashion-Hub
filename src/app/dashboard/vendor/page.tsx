@@ -12,6 +12,7 @@ import { useNotifications } from '@/context/NotificationContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarketplaceStore } from '@/store/marketplaceStore';
 import CountdownTimer from '@/components/CountdownTimer';
+import MilesSettingsPanel from '@/components/MilesSettingsPanel';
 import styles from './dashboard.module.css';
 
 // Icons mapper for dynamic rates
@@ -3534,8 +3535,13 @@ export default function VendorDashboard() {
           )
         )}
 
-        {/* --- AI Assistant Settings Tab --- */}
+        {/* --- Unified Miles Settings Tab --- */}
         {activeTab === 'ai' && (
+          <div style={{ padding: '2rem', maxWidth: 820, margin: '0 auto' }}>
+            <MilesSettingsPanel />
+          </div>
+        )}
+        {false && activeTab === 'ai' && (
           <div style={{ padding: '2rem', maxWidth: 720, margin: '0 auto' }}>
             <div style={{ marginBottom: '2rem' }}>
               <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.4rem' }}>? AI Assistant <span style={{ fontSize: '0.7rem', color: 'var(--primary)', verticalAlign: 'middle', background: '#121214', padding: '2px 8px', borderRadius: '4px' }}>v3.1 LIVE</span></h2>

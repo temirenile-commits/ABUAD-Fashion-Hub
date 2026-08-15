@@ -10,6 +10,7 @@ export type MilesClientConfiguration = {
   personality?: Record<string, unknown>;
   capabilities?: Record<string, { read: boolean; write: boolean }>;
   allowedTools?: string[];
+  vendor?: { aiEnabled: boolean; autoReplyEnabled: boolean; customInstructions: string; storeAccessEnabled: boolean; storeWriteEnabled: boolean };
   context?: { roles: string[]; permissions: string[]; isOverallSuperAdmin: boolean; universityIds: string[] | null };
 };
 
@@ -19,6 +20,7 @@ const DEFAULT: MilesClientConfiguration = {
   assistance: { proactiveEnabled: true, notificationsEnabled: true, tourGuideEnabled: true },
   capabilities: {},
   allowedTools: [],
+  vendor: { aiEnabled: true, autoReplyEnabled: false, customInstructions: '', storeAccessEnabled: false, storeWriteEnabled: false },
 };
 
 const MilesConfigurationContext = createContext<{ configuration: MilesClientConfiguration; loading: boolean; refresh: () => Promise<void> }>({ configuration: DEFAULT, loading: true, refresh: async () => undefined });

@@ -154,9 +154,10 @@ async function buildRoleContext(context: MilesContext, decision: MilesIntentDeci
 
   if (decision.requiresVendorContext && brand && context.capabilities.includes('vendor_products')) {
     settings = await getVendorAISettings(brand.id);
-    assistantName = configuration.identity.name || settings.assistant_name || 'Miles';
-    writeAccess = configuration.permissions.writeEnabled && Boolean(settings.store_write_enabled);
-    if (settings.store_access_enabled) {
+    const vendorSettings = configuration.vendor;
+    assistantName = configuration.identity.name || settings?.assistant_name || 'Miles';
+    writeAccess = configuration.permissions.writeEnabled && Boolean(vendorSettings?.storeWriteEnabled ?? settings?.store_write_enabled);
+    if (vendorSettings?.storeAccessEnabled ?? settings?.store_access_enabled) {
       const [products, services, promos, orders, wallet, financialSummary, reels, messages] = await Promise.all([
         getVendorProducts(brand.id), getVendorServices(brand.id), getVendorPromos(brand.id), getVendorOrders(brand.id), getVendorWallet(brand.id), getVendorFinancialSummary(brand.id), getVendorReels(brand.id), getVendorMessages(context.userId),
       ]);

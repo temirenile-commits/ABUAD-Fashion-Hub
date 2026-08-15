@@ -11,6 +11,7 @@ export type MilesEffectiveConfiguration = {
   capabilities: Record<string, MilesCapabilityPermission>;
   allowedTools: string[];
   safety: { confirmationRequiredForHighRisk: boolean; financialSourceOfTruth: 'mastercart_backend' };
+  vendor?: { aiEnabled: boolean; autoReplyEnabled: boolean; customInstructions: string; storeAccessEnabled: boolean; storeWriteEnabled: boolean };
 };
 
 const DEFAULT_CONFIG = {
@@ -23,6 +24,7 @@ const DEFAULT_CONFIG = {
     users: { read: false, write: false }, vendors: { read: true, write: false }, support: { read: true, write: false }, analytics: { read: true, write: false }, university: { read: false, write: false },
   },
   safety: { confirmationRequiredForHighRisk: true, financialSourceOfTruth: 'mastercart_backend' as const },
+  vendor: { aiEnabled: true, autoReplyEnabled: false, customInstructions: '', storeAccessEnabled: false, storeWriteEnabled: false },
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -52,10 +54,14 @@ function canRead(context: MilesContext, permission: MilesCapabilityPermission | 
 export async function resolveMilesConfiguration(userId: string, pageContext?: string): Promise<MilesEffectiveConfiguration | null> {
   const context = await resolveMilesContext(userId, pageContext || 'The user is using MasterCart.');
   if (!context) return null;
-  const configs = await supabaseAdmin.from('miles_configurations').select('scope_type, user_id, university_id, role_key, config').limit(200);
+  const [configs, legacyVendor] = await Promise.all([
+    supabaseAdmin.from('miles_configurations').select('scope_type, user_id, university_id, role_key, config').limit(200),
+    context.brandIds.length ? supabaseAdmin.from('vendor_ai_settings').select('ai_enabled, auto_reply_enabled, assistant_name, custom_instructions, store_access_enabled, store_write_enabled').eq('brand_id', context.brandIds[0]).maybeSingle() : Promise.resolve({ data: null }),
+  ]);
+  const legacy = legacyVendor.data ? { identity: { name: legacyVendor.data.assistant_name }, vendor: { aiEnabled: legacyVendor.data.ai_enabled !== false, autoReplyEnabled: legacyVendor.data.auto_reply_enabled === true, customInstructions: legacyVendor.data.custom_instructions || '', storeAccessEnabled: legacyVendor.data.store_access_enabled === true, storeWriteEnabled: legacyVendor.data.store_write_enabled === true } } : {};
   const rows = (configs.data || []).filter((row) => row.scope_type === 'GLOBAL' || (row.scope_type === 'USER' && row.user_id === userId) || (row.scope_type === 'UNIVERSITY' && Boolean(row.university_id && context.universityIds?.includes(row.university_id))) || (row.scope_type === 'ROLE' && Boolean(row.role_key && context.roles.includes(row.role_key))));
   const global = rows.find((row) => row.scope_type === 'GLOBAL')?.config || {};
-  let merged = deepMerge(DEFAULT_CONFIG, global);
+  let merged = deepMerge(deepMerge(DEFAULT_CONFIG, legacy), global);
   for (const universityId of context.universityIds || []) {
     const row = rows.find((item) => item.scope_type === 'UNIVERSITY' && item.university_id === universityId);
     if (row) merged = deepMerge(merged, row.config);
@@ -77,6 +83,7 @@ export async function resolveMilesConfiguration(userId: string, pageContext?: st
   const permissionConfig = (isRecord(merged.permissions) ? merged.permissions : {}) as Record<string, unknown>;
   const assistance = (isRecord(merged.assistance) ? merged.assistance : {}) as Record<string, unknown>;
   const safety = (isRecord(merged.safety) ? merged.safety : {}) as Record<string, unknown>;
+  const vendor = (isRecord(merged.vendor) ? merged.vendor : {}) as Record<string, unknown>;
   const allowedTools = Object.entries(normalizedCapabilities).filter(([, value]) => value.read || value.write).map(([key]) => key);
   return {
     scope: { global: context.isFullAdmin, universityId: context.universityIds?.[0] || null, roles: context.roles, userId },
@@ -87,6 +94,7 @@ export async function resolveMilesConfiguration(userId: string, pageContext?: st
     capabilities: normalizedCapabilities,
     allowedTools,
     safety: { confirmationRequiredForHighRisk: safety.confirmationRequiredForHighRisk !== false, financialSourceOfTruth: 'mastercart_backend' },
+    vendor: { aiEnabled: vendor.aiEnabled !== false, autoReplyEnabled: vendor.autoReplyEnabled === true, customInstructions: typeof vendor.customInstructions === 'string' ? vendor.customInstructions.slice(0, 2000) : '', storeAccessEnabled: vendor.storeAccessEnabled === true, storeWriteEnabled: vendor.storeWriteEnabled === true },
   };
 }
 
