@@ -44,6 +44,13 @@ function deepseekProvider() {
   };
 }
 
+const providerHealth = new Map<AIProviderName, { failures: number; lastFailureAt: number; lastSuccessAt: number }>();
+const PROVIDER_COOLDOWN_MS = 30_000;
+
+function healthFor(provider: AIProviderName) {
+  return providerHealth.get(provider) || { failures: 0, lastFailureAt: 0, lastSuccessAt: 0 };
+}
+
 function providers(): Partial<Record<AIProviderName, { name: AIProviderName; model: string; generateResponse: (messages: AIMessage[], options?: { temperature?: number; maxTokens?: number; preferMultimodal?: boolean }) => Promise<AIProviderResult> }>> {
   return { deepseek: deepseekProvider(), openrouter: new OpenRouterProvider() };
 }
@@ -59,12 +66,18 @@ export async function milesChat(messages: AIMessage[], options?: { temperature?:
         failures.push({ provider: providerName, failureType: 'MODEL_UNAVAILABLE' });
         continue;
       }
+      const health = healthFor(providerName);
+      if (health.failures >= 2 && Date.now() - health.lastFailureAt < PROVIDER_COOLDOWN_MS) {
+        failures.push({ provider: providerName, failureType: 'PROVIDER_UNAVAILABLE' });
+        continue;
+      }
       const provider = available[providerName];
       if (!provider) {
         failures.push({ provider: providerName, failureType: 'PROVIDER_UNAVAILABLE' });
         continue;
       }
       const result = await provider.generateResponse(messages, options);
+      providerHealth.set(providerName, { failures: 0, lastFailureAt: health.lastFailureAt, lastSuccessAt: Date.now() });
       console.info('[AI_PROVIDER_SUCCESS]', { provider: providerName, fallbackAttempted: failures.length > 0 });
       return result;
     } catch (error) {
@@ -72,6 +85,8 @@ export async function milesChat(messages: AIMessage[], options?: { temperature?:
         ? error
         : new AIProviderError('Provider failed unexpectedly.', providerName, 'UNKNOWN', true, true);
       failures.push({ provider: providerName, failureType: normalized.failureType });
+      const nextHealth = healthFor(providerName);
+      providerHealth.set(providerName, { failures: nextHealth.failures + 1, lastFailureAt: Date.now(), lastSuccessAt: nextHealth.lastSuccessAt });
       console.error('[AI_PROVIDER_FAILURE]', {
         provider: providerName,
         failureType: normalized.failureType,

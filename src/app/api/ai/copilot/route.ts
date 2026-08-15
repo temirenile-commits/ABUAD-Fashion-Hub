@@ -9,6 +9,7 @@ import { resolveMilesContext, isAdministrativeRole, isSupportRole, type MilesCon
 import { getCustomerMilesContext, getPublicMarketplaceMilesContext, getPlatformAdminMilesContext, getSupportMilesContext, getUniversityAdminMilesContext, summarizeValidatedAnalytics } from '@/lib/ai/role-tools';
 import { classifyMilesIntent, type MilesIntentDecision } from '@/lib/ai/intent';
 import { memoryPrompt, normalizeMilesMemory, resolveMilesReference, updateMilesMemory, type MilesConversationMemory } from '@/lib/ai/conversation-memory';
+import { nativeBrainRespond, recordNativeLearning, recordNativeToolUsage } from '@/lib/ai/native-intelligence';
 import { getVendorAISettings,
   getVendorFinancialSummary,
   getVendorMessages,
@@ -313,12 +314,23 @@ export async function POST(req: Request) {
 
     const cards = buildMilesCards(prepared.roleData, effectiveDecision.intent);
     const contextCards = reference.referenced ? [reference.referenced] : memory.recentCards;
-    const response = await milesChat([
-      { role: 'system', content: systemRules(context, prepared.assistantName, { ...(prepared.roleData as Record<string, unknown>), conversationMemory: memory, contextualReference: reference, contextCards }, prepared.pageContext || pageDescription(pathname, currentTab), memory, effectiveDecision.intent) },
+    const providerMessages = [
+      { role: 'system' as const, content: systemRules(context, prepared.assistantName, { ...(prepared.roleData as Record<string, unknown>), conversationMemory: memory, contextualReference: reference, contextCards }, prepared.pageContext || pageDescription(pathname, currentTab), memory, effectiveDecision.intent) },
       ...conversation,
-    ], { temperature: 0.15, maxTokens: 900, preferMultimodal: hasUploadedImages });
+    ];
+    let response: { text: string; provider: string; model: string; fallback?: boolean };
+    try {
+      response = await milesChat(providerMessages, { temperature: 0.15, maxTokens: 900, preferMultimodal: hasUploadedImages });
+    } catch (error) {
+      if (!(error instanceof AIOrchestrationError)) throw error;
+      response = await nativeBrainRespond({ question: lastUserMessage, intent: effectiveDecision.intent, roleData: prepared.roleData as Record<string, any>, memory, pageContext: prepared.pageContext || pageDescription(pathname, currentTab) });
+      console.warn('[MNIE_FALLBACK_ACTIVE]', { requestId, failureCount: error.failures.length, intent: effectiveDecision.intent });
+    }
 
-    console.info('[MILES_REQUEST_SUCCESS]', { requestId, userId: user.id, roles: context.roles, capabilityCount: context.capabilities.length, latencyMs: Date.now() - startedAt });
+    console.info('[MILES_REQUEST_SUCCESS]', { requestId, userId: user.id, roles: context.roles, capabilityCount: context.capabilities.length, provider: response.provider === 'native' ? 'native' : 'external', latencyMs: Date.now() - startedAt });
+    const learningTools = effectiveDecision.intent === 'order_query' || effectiveDecision.intent === 'delivery_query' ? ['get_customer_orders', 'get_order_details'] : effectiveDecision.intent === 'analytics_query' ? ['get_dashboard_metrics', 'get_vendor_analytics'] : effectiveDecision.intent === 'reel_query' ? ['get_user_role', 'get_vendor_profile', 'get_reel_permissions', 'get_vendor_reels'] : effectiveDecision.intent === 'product_search' || effectiveDecision.intent === 'product_info' ? ['search_products', 'get_product'] : effectiveDecision.intent === 'vendor_search' || effectiveDecision.intent === 'vendor_info' ? ['search_vendors', 'get_vendor'] : [];
+    void recordNativeLearning({ question: lastUserMessage, answer: response.text, intent: effectiveDecision.intent, outcome: response.fallback ? 'native_fallback' : 'external_completed', provider: response.provider, model: response.model, toolNames: learningTools });
+    if (learningTools.length) void recordNativeToolUsage({ intent: effectiveDecision.intent, toolNames: learningTools, outcome: response.fallback ? 'native_fallback' : 'completed' });
     const displayCards = cards.length ? cards : (effectiveDecision.intent === 'product_info' || effectiveDecision.intent === 'vendor_info' ? contextCards : []);
     const searchableIntent = ['product_search', 'vendor_search', 'product_info', 'vendor_info', 'media_request'].includes(effectiveDecision.intent);
     const text = searchableIntent && displayCards.length === 0 ? `I couldn't verify a matching ${effectiveDecision.intent.startsWith('vendor') ? 'vendor or store' : 'product'} from the available MasterCart data.` : displayCards.length && /couldn't find|could not find|no matching/i.test(response.text) ? `I found ${displayCards.length} relevant MasterCart result${displayCards.length === 1 ? '' : 's'}.` : sanitizeMilesResponse(response.text, { preservePrivateIdentifiers: context.isOverallSuperAdmin });

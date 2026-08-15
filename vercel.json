@@ -7,5 +7,11 @@
     "src/app/api/reels/download/route.ts": {
       "includeFiles": "node_modules/ffmpeg-static/**/*"
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/miles-evolution",
+      "schedule": "0 3 * * *"
+    }
+  ]
 }

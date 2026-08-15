@@ -41,6 +41,7 @@ export default function MilesGlobalWorkspace() {
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [cards, setCards] = useState<MilesCard[]>([]);
   const [memory, setMemory] = useState<MilesMemory>({ recentCards: [] });
+  const [feedbackSent, setFeedbackSent] = useState<Record<number, boolean>>({});
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [messages, setMessages] = useState<Message[]>([initialMessage]);
 
@@ -93,6 +94,16 @@ export default function MilesGlobalWorkspace() {
     finally { setBusy(false); }
   }
 
+  async function sendFeedback(messageIndex: number, feedbackType: 'success' | 'failure', rating: number) {
+    if (feedbackSent[messageIndex]) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      await fetch('/api/ai/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ feedbackType, rating, message: messages[messageIndex]?.content, intent: memory.lastIntent }) });
+      setFeedbackSent((previous) => ({ ...previous, [messageIndex]: true }));
+    } catch { /* feedback is non-blocking */ }
+  }
+
   async function confirmAction() {
     if (!proposal || busy) return;
     setBusy(true);
@@ -120,7 +131,7 @@ export default function MilesGlobalWorkspace() {
         <div style={{ display: 'flex', gap: 8 }}>{full && <button type="button" onClick={() => setFull(false)} aria-label={`Return to ${MILES_ASSISTANT_NAME} compact panel`} style={iconButton}>←</button>}{!full && <button type="button" onClick={() => setFull(true)} aria-label={`Open ${MILES_ASSISTANT_NAME} fullscreen`} style={iconButton}>□</button>}<button type="button" onClick={() => full ? setFull(false) : close()} aria-label={full ? `Minimize ${MILES_ASSISTANT_NAME}` : `Close ${MILES_ASSISTANT_NAME}`} style={iconButton}>{full ? '−' : '×'}</button></div>
       </header>
       <div style={{ flex: 1, minHeight: full ? 0 : 280, overflowY: 'auto', padding: full ? '24px max(18px, env(safe-area-inset-left))' : 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {messages.map((message, index) => <div key={`${message.role}-${index}`} style={{ alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '92%', display: 'flex', alignItems: 'flex-end', gap: 8, flexDirection: message.role === 'user' ? 'row-reverse' : 'row' }}>{message.role === 'assistant' && <MilesProfileAvatar size={30} />}<div style={{ padding: '10px 12px', borderRadius: message.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px', border: message.role === 'user' ? '1px solid rgba(0,211,154,.20)' : '1px solid rgba(255,255,255,.08)', background: message.role === 'user' ? 'rgba(0,211,154,.12)' : '#111413', whiteSpace: 'pre-wrap', lineHeight: 1.45, fontSize: 14 }}>{message.attachments?.map((attachment) => <img key={attachment.url} src={attachment.thumbUrl || attachment.url} alt={attachment.name} style={{ display: 'block', width: 180, maxWidth: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 10, marginBottom: 8 }} />)}{message.content}</div></div>)}
+        {messages.map((message, index) => <div key={`${message.role}-${index}`} style={{ alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '92%', display: 'flex', alignItems: 'flex-end', gap: 8, flexDirection: message.role === 'user' ? 'row-reverse' : 'row' }}>{message.role === 'assistant' && <MilesProfileAvatar size={30} />}<div style={{ padding: '10px 12px', borderRadius: message.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px', border: message.role === 'user' ? '1px solid rgba(0,211,154,.20)' : '1px solid rgba(255,255,255,.08)', background: message.role === 'user' ? 'rgba(0,211,154,.12)' : '#111413', whiteSpace: 'pre-wrap', lineHeight: 1.45, fontSize: 14 }}>{message.attachments?.map((attachment) => <img key={attachment.url} src={attachment.thumbUrl || attachment.url} alt={attachment.name} style={{ display: 'block', width: 180, maxWidth: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 10, marginBottom: 8 }} />)}{message.content}{message.role === 'assistant' && index > 0 && <div style={{ display: 'flex', gap: 5, marginTop: 7, opacity: feedbackSent[index] ? 0.55 : 1 }}><button type="button" onClick={() => void sendFeedback(index, 'success', 5)} disabled={Boolean(feedbackSent[index])} aria-label="Mark Miles response helpful" style={feedbackButton}>Helpful</button><button type="button" onClick={() => void sendFeedback(index, 'failure', 1)} disabled={Boolean(feedbackSent[index])} aria-label="Mark Miles response not helpful" style={feedbackButton}>Not helpful</button></div>}</div></div>)}
         {cards.length > 0 && <div style={{ display: 'grid', gap: 8, marginTop: 2 }}><div style={{ fontSize: 12, color: '#9ca3af' }}>MasterCart results</div>{cards.map((card) => <a key={`${card.type}-${card.id}`} href={card.destination} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 9, borderRadius: 13, background: '#111827', border: '1px solid rgba(255,255,255,.10)', color: '#fff', textDecoration: 'none' }}><div style={{ width: 54, height: 54, borderRadius: 10, overflow: 'hidden', flexShrink: 0, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg,#1d4ed8,#4338ca)', color: '#fff', fontWeight: 700 }}>{card.imageUrl ? <img src={card.imageUrl} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : card.type === 'vendor' ? 'V' : 'P'}</div><div style={{ minWidth: 0, flex: 1 }}><div style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{card.title}</div><div style={{ color: '#9ca3af', fontSize: 11, marginTop: 3 }}>{card.subtitle || (card.type === 'vendor' ? 'Store' : 'Product')}</div>{card.type === 'product' && <div style={{ color: '#cbd5e1', fontSize: 12, marginTop: 3 }}>{`₦${Number(card.price || 0).toLocaleString('en-NG')} · ${card.available ? 'Available' : 'Unavailable'}`}</div>}{card.type === 'vendor' && card.verified && <div style={{ color: '#86efac', fontSize: 11, marginTop: 3 }}>✓ Verified vendor</div>}</div><span aria-hidden="true" style={{ color: '#93c5fd', fontSize: 18 }}>›</span></a>)}</div>}
         {media.length > 0 && <div style={{ maxWidth: '100%' }}><div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Relevant media</div><MediaStrip items={media} /></div>}
         {busy && <div role="status" aria-live="polite" style={{ color: '#9ca3af', fontSize: 13 }}>{MILES_MESSAGES.thinking}</div>}
@@ -137,3 +148,4 @@ const iconButton = { border: '1px solid rgba(255,255,255,.16)', borderRadius: 10
 const confirmButton = { border: 'none', borderRadius: 10, background: '#f59e0b', color: '#172033', padding: '8px 12px', fontWeight: 700, cursor: 'pointer' };
 const cancelButton = { border: '1px solid rgba(254,243,199,.35)', borderRadius: 10, background: 'transparent', color: '#fef3c7', padding: '8px 12px', cursor: 'pointer' };
 const sendButton = { border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,#2563eb,#4f46e5)', color: '#fff', width: 46, cursor: 'pointer', fontSize: 18 };
+const feedbackButton = { border: '1px solid rgba(255,255,255,.12)', borderRadius: 8, background: 'transparent', color: '#9ca3af', padding: '3px 7px', fontSize: 10, cursor: 'pointer' };
