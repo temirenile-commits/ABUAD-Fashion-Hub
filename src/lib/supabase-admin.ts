@@ -1,16 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || 'missing-service-role-key';
+const hasRuntimeConfiguration = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-if (!supabaseUrl || !supabaseServiceRole) {
-  console.error('[SUPABASE] CRITICAL Configuration Error: Ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set in Vercel Settings.');
+if (!hasRuntimeConfiguration) {
+  console.error('[SUPABASE] Runtime configuration is missing. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the deployment environment.');
 }
 
 /**
  * Admin client bypasses Row Level Security (RLS).
  * MUST ONLY BE USED ON THE SERVER (e.g. API Routes, Webhooks).
  * NEVER expose this client to the browser.
+ *
+ * The non-empty placeholders allow Next.js to collect route metadata during a
+ * build when an environment is not injected into the compiler. Runtime API
+ * handlers still fail closed against the placeholder endpoint and retain the
+ * configuration diagnostic above.
  */
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole, {
   auth: {
