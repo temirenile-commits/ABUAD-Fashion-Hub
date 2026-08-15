@@ -178,10 +178,27 @@ export default function MilesPersistentBubble() {
     transition: dragging ? 'none' : 'left 220ms ease, top 220ms ease, transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease',
   };
 
-  if (hidden) return <button className="miles-bubble" type="button" aria-label={`Show ${MILES_ASSISTANT_NAME} assistant`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setHidden(false); }} style={{ ...style, width: 22, borderRadius: position.x < window.innerWidth / 2 ? '0 12px 12px 0' : '12px 0 0 12px', fontSize: '.78rem' }}><span className="miles-mark" aria-hidden="true">𝓜</span></button>;
+  const bubbleClassName = `miles-bubble${isReelsRoute ? ' miles-bubble-reels' : ''}${dragging ? ' miles-dragging' : ''}`;
+
+  if (hidden) return <button className={bubbleClassName} type="button" aria-label={`Show ${MILES_ASSISTANT_NAME} assistant`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setHidden(false); }} style={{ ...style, width: 22, borderRadius: position.x < window.innerWidth / 2 ? '0 12px 12px 0' : '12px 0 0 12px', fontSize: '.78rem' }}><span className="miles-orb-core"><span className="miles-mark" aria-hidden="true">𝓜</span></span></button>;
 
   return <>
-    <button className="miles-bubble" type="button" aria-label={`Open ${MILES_ASSISTANT_NAME} AI assistant`} title={`Drag ${MILES_ASSISTANT_NAME} or tap to open`} onClick={onClick} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={style}><span className="miles-mark" aria-hidden="true">𝓜</span></button>
-    <style>{`.miles-mark{display:inline-block;font-family:"Brush Script MT","Segoe Script","URW Chancery L",cursive;font-style:italic;font-weight:700;font-size:1.22em;line-height:1;transform:translateY(-1px) rotate(-8deg);text-shadow:1px 2px 0 rgba(15,23,42,.22)}.miles-bubble:hover,.miles-bubble:focus-visible{transform:scale(1.06);outline:2px solid rgba(255,255,255,.72);outline-offset:2px}.miles-bubble:active{transform:scale(.96)}`}</style>
+    <button className={bubbleClassName} type="button" aria-label={`Open ${MILES_ASSISTANT_NAME} AI assistant`} title={`Drag ${MILES_ASSISTANT_NAME} or tap to open`} onClick={onClick} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={style}><span className="miles-orb-core"><span className="miles-mark" aria-hidden="true">𝓜</span></span></button>
+    <style>{`
+      .miles-bubble{isolation:isolate;overflow:visible;will-change:transform;animation:miles-life 4.2s ease-in-out infinite;}
+      .miles-bubble::before{content:"";position:absolute;inset:-7px;border-radius:inherit;z-index:-2;pointer-events:none;background:radial-gradient(circle,rgba(147,197,253,.38) 0%,rgba(96,165,250,.18) 42%,transparent 72%);filter:blur(7px);opacity:.72;animation:miles-glow 4.2s ease-in-out infinite;}
+      .miles-bubble::after{content:"";position:absolute;inset:2px;border-radius:inherit;z-index:0;pointer-events:none;overflow:hidden;background:radial-gradient(circle at 24% 18%,rgba(255,255,255,.32),transparent 28%),radial-gradient(circle at 78% 74%,rgba(165,243,252,.22),transparent 34%),linear-gradient(125deg,rgba(255,255,255,.12),transparent 48%,rgba(129,140,248,.28));background-size:150% 150%,145% 145%,180% 180%;mix-blend-mode:screen;opacity:.62;animation:miles-liquid 7.5s ease-in-out infinite;}
+      .miles-orb-core{position:relative;z-index:1;display:grid;place-items:center;width:100%;height:100%;border-radius:inherit;background:radial-gradient(circle at 32% 22%,rgba(255,255,255,.18),transparent 32%);}
+      .miles-mark{position:relative;z-index:2;display:inline-block;font-family:"Brush Script MT","Segoe Script","URW Chancery L",cursive;font-style:italic;font-weight:700;font-size:1.22em;line-height:1;transform:translateY(-1px) rotate(-8deg);text-shadow:1px 2px 0 rgba(15,23,42,.22),0 0 9px rgba(255,255,255,.24);}
+      .miles-bubble:hover,.miles-bubble:focus-visible{animation-play-state:paused;transform:scale(1.04);outline:2px solid rgba(255,255,255,.72);outline-offset:2px;box-shadow:0 12px 32px rgba(0,0,0,.34),0 0 25px rgba(147,197,253,.38)!important;}
+      .miles-bubble:active{animation-play-state:paused;transform:scale(.98);}
+      .miles-bubble.miles-dragging{animation-play-state:paused;}
+      .miles-bubble-reels::before{opacity:.46;}
+      .miles-bubble-reels::after{opacity:.48;}
+      @keyframes miles-life{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(0,-1.5px,0) scale(1.012)}}
+      @keyframes miles-glow{0%,100%{transform:scale(.96);opacity:.56}50%{transform:scale(1.04);opacity:.78}}
+      @keyframes miles-liquid{0%,100%{background-position:0% 0%,100% 100%,0% 50%;transform:translate3d(0,0,0) scale(1)}50%{background-position:28% 18%,70% 82%,100% 46%;transform:translate3d(1px,-1px,0) scale(1.025)}}
+      @media (prefers-reduced-motion: reduce){.miles-bubble,.miles-bubble::before,.miles-bubble::after{animation:none!important}.miles-bubble{transition:opacity .2s ease,box-shadow .2s ease,transform .2s ease!important}.miles-bubble:hover,.miles-bubble:focus-visible{transform:scale(1.02)}}
+    `}</style>
   </>;
 }
