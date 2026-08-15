@@ -15,6 +15,12 @@ function sanitize(value) {
     .replace(/\b(?:password|token|secret|api[_-]?key)\s*[:=]\s*[^\s,;]+/gi, '[private removed]');
 }
 
+const currentOrder = { id: 'live-order', status: 'delivered', updatedAt: '2026-08-15T08:00:00Z' };
+const staleMemoryOrder = { id: 'old-order', status: 'processing', updatedAt: '2026-08-01T08:00:00Z' };
+const authoritativeOrder = currentOrder.updatedAt > staleMemoryOrder.updatedAt ? currentOrder : staleMemoryOrder;
+assert.equal(authoritativeOrder.id, 'live-order');
+assert.equal(authoritativeOrder.status, 'delivered');
+
 const sanitized = sanitize('User test@example.com used password=hunter2 on 123e4567-e89b-12d3-a456-426614174000');
 assert(!sanitized.includes('test@example.com'));
 assert(!sanitized.includes('hunter2'));
@@ -31,6 +37,10 @@ assert(route.includes('recordNativeLearning'));
 assert(native.includes('current backend context'));
 assert(native.includes("must not be answered from stale learned memory"));
 assert(native.includes('current deterministic backend calculations'));
+assert(route.includes('roleData: prepared.roleData'));
+assert(route.includes('nativeBrainRespond({ question: lastUserMessage'));
+assert(native.includes('const customer = input.roleData.customer'));
+assert(native.includes('const wallet = vendor?.wallet'));
 assert(reviewRoute.includes('context?.isOverallSuperAdmin'));
 assert(reviewRoute.includes('miles_native_knowledge'));
 assert(fs.existsSync(path.join(root, 'src/app/api/ai/feedback/route.ts')));

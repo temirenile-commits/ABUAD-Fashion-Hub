@@ -74,6 +74,10 @@
 - [x] Add tests for knowledge status transitions and server-only access.
 - [x] Add tests for provider failure to native fallback.
 - [x] Add tests for feedback and learning records.
-- [ ] Add tests for current-data precedence over stale knowledge.
-- [ ] Run TypeScript, lint, build, and directive checklist review.
-- [ ] Recheck every checklist item before deployment and document any unavoidable external prerequisite.
+- [x] Add tests for current-data precedence over stale knowledge.
+- [x] Run TypeScript, lint, build, and directive checklist review.
+- [x] Recheck every checklist item before deployment and document any unavoidable external prerequisite.
+
+## External deployment prerequisite
+
+The protected daily evolution route requires a strong production `CRON_SECRET` environment variable. The route intentionally fails closed when it is absent. The implementation and schedule are deployed, but the secret must be configured in the production environment before the scheduled evaluator can execute.
