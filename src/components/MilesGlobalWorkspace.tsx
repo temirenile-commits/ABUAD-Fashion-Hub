@@ -9,7 +9,8 @@ import MilesProfileAvatar from '@/components/MilesProfileAvatar';
 type MilesAttachment = { type: 'image'; url: string; thumbUrl?: string; name: string };
 type Message = { role: 'user' | 'assistant'; content: string; attachments?: MilesAttachment[] };
 type MediaItem = { kind: 'image' | 'video'; url: string; thumbnailUrl?: string; label: string; source: string; entityId?: string };
-type MilesCard = { type: 'product' | 'vendor'; id: string; title: string; subtitle?: string; imageUrl?: string | null; price?: number; available?: boolean; verified?: boolean; destination: string };
+type MilesCard = { type: 'product' | 'vendor'; id: string; title: string; subtitle?: string; imageUrl?: string | null; price?: number; available?: boolean; verified?: boolean; destination?: string };
+type MilesMemory = { topic?: string; currentTask?: string; previousQuestion?: string; firstQuestion?: string; selectedProduct?: MilesCard; selectedVendor?: MilesCard; recentCards: MilesCard[]; lastIntent?: string };
 type Proposal = { actionId: string; confirmationPhrase: string; summary: string; highRisk?: boolean; expiresAt?: string; domain?: 'admin' | 'vendor' };
 
 const initialMessage: Message = { role: 'assistant', content: `Hi. I’m ${MILES_ASSISTANT_NAME}. How can I help you with MasterCart today?` };
@@ -39,6 +40,7 @@ export default function MilesGlobalWorkspace() {
   const [pendingAttachment, setPendingAttachment] = useState<MilesAttachment | null>(null);
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [cards, setCards] = useState<MilesCard[]>([]);
+  const [memory, setMemory] = useState<MilesMemory>({ recentCards: [] });
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [messages, setMessages] = useState<Message[]>([initialMessage]);
 
@@ -79,12 +81,13 @@ export default function MilesGlobalWorkspace() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Miles session unavailable');
-      const response = await fetch('/api/ai/copilot', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ messages: next, pathname, currentTab: 'overview' }) });
+      const response = await fetch('/api/ai/copilot', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ messages: next, memory, pathname, currentTab: 'overview' }) });
       if (!response.ok) throw new Error('Miles request failed');
-      const data = await response.json() as { text?: unknown; proposal?: Proposal; domain?: 'admin' | 'vendor'; media?: MediaItem[]; cards?: MilesCard[] };
+      const data = await response.json() as { text?: unknown; proposal?: Proposal; domain?: 'admin' | 'vendor'; media?: MediaItem[]; cards?: MilesCard[]; memory?: MilesMemory };
       if (data.proposal) setProposal({ ...data.proposal, domain: data.domain });
       setMedia(Array.isArray(data.media) ? data.media : []);
       setCards(Array.isArray(data.cards) ? data.cards : []);
+      if (data.memory && Array.isArray(data.memory.recentCards)) setMemory(data.memory);
       setMessages([...next, { role: 'assistant', content: data.proposal?.summary || safeText(data.text, MILES_MESSAGES.unavailable) }]);
     } catch { setMessages([...next, { role: 'assistant', content: MILES_MESSAGES.unavailable }]); }
     finally { setBusy(false); }
