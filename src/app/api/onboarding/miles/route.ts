@@ -4,8 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { resolveMilesContext } from '@/lib/ai/role-context';
 import { MILES_ONBOARDING_VERSION } from '@/lib/miles/onboarding';
 
-const ALLOWED_FIELDS = ['roleKey', 'onboardingVersion', 'onboardingStarted', 'currentStep', 'completed', 'skipped'] as const;
-type ProgressBody = Partial<Record<(typeof ALLOWED_FIELDS)[number], unknown>>;
+type ProgressField = 'roleKey' | 'onboardingVersion' | 'onboardingStarted' | 'currentStep' | 'completed' | 'skipped';
+type ProgressBody = Partial<Record<ProgressField, unknown>>;
 
 function normalizeProgress(body: ProgressBody) {
   return {

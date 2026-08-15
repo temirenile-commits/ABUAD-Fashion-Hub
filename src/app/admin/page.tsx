@@ -330,6 +330,15 @@ export default function AdminDashboard() {
   const { addToast } = useToast();
   const fetchedRef = useRef(false);
 
+  useEffect(() => {
+    const handleMilesTourActivation = (event: Event) => {
+      const detail = (event as CustomEvent<{ route?: string; tab?: string }>).detail;
+      if (detail?.route === '/admin' && detail.tab) setActiveTab(detail.tab as Tab);
+    };
+    window.addEventListener('mastercart:miles-tour-activate', handleMilesTourActivation);
+    return () => window.removeEventListener('mastercart:miles-tour-activate', handleMilesTourActivation);
+  }, []);
+
   // Load available banks on component mount
   useEffect(() => {
     const loadBanks = async () => {
@@ -2325,7 +2334,7 @@ export default function AdminDashboard() {
                   </tbody>
                 </table></div>
 
-                <div style={{ marginTop: '3rem', padding: '2rem', background: '#121214', borderRadius: '12px', border: '1px solid var(--border)' }} id="tour-admin-delivery">
+                <div style={{ marginTop: '3rem', padding: '2rem', background: '#121214', borderRadius: '12px', border: '1px solid var(--border)' }} id="tour-admin-delivery" data-miles-tour="admin-delivery">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                     <Activity size={20} color="var(--primary)" />
                     <h3 style={{ margin: 0 }}>Logistics & Delivery Configuration</h3>
@@ -2746,7 +2755,7 @@ export default function AdminDashboard() {
             )}
 
             {activeTab === 'refunds' && (
-              <div className={styles.sectionCard} id="tour-admin-refunds">
+              <div className={styles.sectionCard} id="tour-admin-refunds" data-miles-tour="admin-vendors">
                 <div style={{ marginBottom: '2rem' }}>
                   <h2>Refund Queue (Unconfirmed Deliveries)</h2>
                   <p className={styles.subText}>Orders that have been paid but not confirmed by the customer for over 24 hours.</p>
@@ -2804,7 +2813,7 @@ export default function AdminDashboard() {
             )}
 
             {activeTab === 'financials' && (
-               <div className={styles.sectionCard} id="tour-admin-finances">
+               <div className={styles.sectionCard} id="tour-admin-finances" data-miles-tour="admin-overview">
                  {/* ── SUMMARY CARDS ── */}
                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
                    {[
@@ -3018,7 +3027,7 @@ export default function AdminDashboard() {
              )}
 
               {activeTab === 'settings' && (
-                <div className={styles.sectionCard} id="tour-admin-settings">
+                <div className={styles.sectionCard} id="tour-admin-settings" data-miles-tour="admin-settings">
                   <h2>Campus Configuration & Subscription Settings</h2>
                   <p className={styles.subText}>Select a university to configure its specific subscription rates, feature availability, and booster plans.</p>
 

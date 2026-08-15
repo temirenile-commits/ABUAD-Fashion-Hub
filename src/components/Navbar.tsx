@@ -126,7 +126,7 @@ export default function Navbar() {
     <header className={styles.header}>
       <nav className={`container-wide ${styles.nav}`}>
         {/* Logo */}
-        <Link href="/" className={styles.logo} id="tour-navbar-logo">
+        <Link href="/" className={styles.logo} id="tour-navbar-logo" data-miles-tour="marketplace-overview">
           <img src="/branding/mastercart-mark.png" alt="MasterCart" className={styles.logoImg} />
           <span className={styles.logoLockup}>
             <strong>MasterCart</strong>
@@ -135,7 +135,7 @@ export default function Navbar() {
         </Link>
 
         {/* Search Bar (Jumia Style - Center) */}
-        <form className={styles.searchBar} onSubmit={handleSearch} id="tour-search-bar">
+        <form className={styles.searchBar} onSubmit={handleSearch} id="tour-search-bar" data-miles-tour="marketplace-search">
           <Search size={18} className={styles.searchIcon} />
           <input 
             type="text" 
@@ -170,7 +170,7 @@ export default function Navbar() {
               </div>
 
               {/* Account Profile Pic (Always Visible) */}
-              <div className={styles.actionItem} id="tour-user-account">
+              <div className={styles.actionItem} id="tour-user-account" data-miles-tour="profile">
                 <Link href={dashboardLink} className={styles.actionLink} title="Account" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div className={styles.universityLabel}>
                     <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', textAlign: 'right' }}>
@@ -264,7 +264,7 @@ export default function Navbar() {
                 <button 
                   onClick={(e) => { e.stopPropagation(); setCartOpen(true); setMenuOpen(false); }} 
                   className={styles.moduleItem}
-                  id="tour-cart-btn"
+                  id="tour-cart-btn" data-miles-tour="cart"
                 >
                   <div className={styles.iconWrap}>
                     <ShoppingBag size={18} />
@@ -302,7 +302,7 @@ export default function Navbar() {
       {/* Category Quick Bar */}
       <div className={styles.categoryBar}>
         <div className={`container-wide ${styles.categoryInner}`}>
-          <Link href="/delicacies" className={styles.catPill} id="tour-category-delicacies" style={{ background: 'linear-gradient(135deg, #FFFFFF, #000000)', color: '#FFFFFF', border: 'none', fontWeight: 700 }}>
+          <Link href="/delicacies" className={styles.catPill} id="tour-category-delicacies" data-miles-tour="categories" style={{ background: 'linear-gradient(135deg, #FFFFFF, #000000)', color: '#FFFFFF', border: 'none', fontWeight: 700 }}>
             🍔 Delicacies
           </Link>
 

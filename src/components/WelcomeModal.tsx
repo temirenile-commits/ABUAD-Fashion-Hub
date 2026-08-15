@@ -9,10 +9,19 @@ export default function WelcomeModal() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
+    const handleMilesStart = () => {
+      localStorage.setItem('afh_visited', 'true');
+      setIsOpen(false);
+    };
+    window.addEventListener('mastercart:miles-onboarding-started', handleMilesStart);
+    return () => window.removeEventListener('mastercart:miles-onboarding-started', handleMilesStart);
+  }, []);
+
+  useEffect(() => {
     const hasVisited = localStorage.getItem('afh_visited');
     if (!hasVisited) {
       const timer = setTimeout(() => {
-        setIsOpen(true);
+        if (!localStorage.getItem('afh_visited')) setIsOpen(true);
       }, 1200);
       return () => clearTimeout(timer);
     }

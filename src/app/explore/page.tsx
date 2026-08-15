@@ -108,7 +108,7 @@ export default function ExplorePage() {
   }, [allVendors, search]);
 
   return (
-    <main className="container">
+    <main className="container" data-miles-tour="product-discovery">
       <div className={styles.page}>
         {/* Header */}
         <div className={styles.pageHeader}>
@@ -122,7 +122,7 @@ export default function ExplorePage() {
 
         {/* Toolbar */}
         <div className={styles.toolbar}>
-          <div className={styles.searchWrap}>
+          <div className={styles.searchWrap} data-miles-tour="product-search">
             <Search size={15} className={styles.searchIcon} />
             <input
               type="text"
@@ -151,7 +151,7 @@ export default function ExplorePage() {
         </div>
 
         {/* Category Pills */}
-        <div className={styles.categoryRow}>
+        <div className={styles.categoryRow} data-miles-tour="categories">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}

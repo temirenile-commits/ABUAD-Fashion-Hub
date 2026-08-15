@@ -23,11 +23,11 @@ export default function VendorsPage() {
   const topVendors = [...LIVE_VENDORS].sort((a, b) => Number(b.followers_count || 0) - Number(a.followers_count || 0)).slice(0, 3);
 
   if (!isInitialized) {
-    return <main className="container"><div style={{padding:'3rem',textAlign:'center'}}>Loading Live Vendors...</div></main>
+    return <main className="container" data-miles-tour="vendor-stores"><div style={{padding:'3rem',textAlign:'center'}}>Loading Live Vendors...</div></main>
   }
 
   return (
-    <main className="container">
+    <main className="container" data-miles-tour="vendor-stores">
       <div className={styles.page}>
         {/* Header */}
         <div className={styles.header}>

@@ -932,7 +932,7 @@ export default function DeliveryDashboard() {
       </aside>
 
       {/* ── Main ── */}
-      <main className={styles.main}>
+      <main className={styles.main} data-miles-tour="rider-overview">
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>Dispatch Console</h1>
@@ -966,6 +966,7 @@ export default function DeliveryDashboard() {
         <div className={styles.tabs}>
           <button
             className={`${styles.tab} ${activeTab === 'available' ? styles.tabActive : ''}`}
+            data-miles-tour="rider-available-deliveries"
             onClick={() => { setActiveTab('available'); setNewOrderAlert(false); }}
           >
             <Bell size={14} style={{ marginRight: 4 }} />
@@ -973,6 +974,7 @@ export default function DeliveryDashboard() {
           </button>
           <button
             className={`${styles.tab} ${activeTab === 'queue' ? styles.tabActive : ''}`}
+            data-miles-tour="rider-queue"
             onClick={() => setActiveTab('queue')}
           >
             <Layers size={14} style={{ marginRight: 4 }} />
@@ -1005,7 +1007,7 @@ export default function DeliveryDashboard() {
 
         {/* ── AVAILABLE TAB ── */}
         {activeTab === 'available' && (
-          <div className={styles.deliveryList}>
+          <div className={styles.deliveryList} data-miles-tour="rider-available-list">
             {locationGroups.length === 0 ? (
               <div className={styles.emptyState}>
                 <Truck size={48} className="anim-float" />

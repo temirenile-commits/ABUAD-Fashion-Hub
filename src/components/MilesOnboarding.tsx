@@ -1,13 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import MilesProfileAvatar from './MilesProfileAvatar';
-import { getOnboardingForRole, getPublicOnboarding, MILES_ONBOARDING_VERSION, type MilesOnboardingStep } from '@/lib/miles/onboarding';
 import { supabase } from '@/lib/supabase';
+import MilesTourBubble from './MilesTourBubble';
+import MilesTourHighlight from './MilesTourHighlight';
+import { getOnboardingForRole, getPublicOnboarding, MILES_ONBOARDING_VERSION, type MilesOnboardingStep } from '@/lib/miles/onboarding';
 
 const GUEST_KEY = 'mastercart-miles-public-onboarding-v1';
 const PROGRESS_EVENT = 'mastercart:miles-onboarding-start';
+const STARTED_EVENT = 'mastercart:miles-onboarding-started';
+const TOUR_ROUTES = new Set(['/','/explore','/reels','/vendors','/dashboard/customer','/dashboard/vendor','/dashboard/delivery','/admin','/university-admin']);
+const DEFAULT_DURATION = 3600;
 
 type RemoteState = {
   authenticated: boolean;
@@ -27,15 +31,24 @@ type RemoteState = {
 
 type Rect = { top: number; left: number; width: number; height: number };
 
+function roleSteps(data: RemoteState) {
+  return data.authenticated
+    ? getOnboardingForRole(data.role || 'customer', { capabilities: data.capabilities || [], roles: data.roles || [], permissions: data.permissions || [] })
+    : getPublicOnboarding();
+}
+
 export default function MilesOnboarding() {
   const pathname = usePathname();
   const router = useRouter();
   const [remote, setRemote] = useState<RemoteState | null>(null);
   const [steps, setSteps] = useState<MilesOnboardingStep[]>([]);
   const [active, setActive] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [resumeOffer, setResumeOffer] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
   const targetRef = useRef<Element | null>(null);
+  const missingTimerRef = useRef<number | null>(null);
 
   const isPublic = remote?.authenticated === false;
   const currentStep = steps[stepIndex];
@@ -58,12 +71,16 @@ export default function MilesOnboarding() {
 
   const start = useCallback((requestedMode?: 'public' | 'authenticated', requestedStep = 0) => {
     const mode = requestedMode || (remote?.authenticated ? 'authenticated' : 'public');
-    const nextSteps = mode === 'public' ? getPublicOnboarding() : getOnboardingForRole(remote?.role || 'customer', { capabilities: remote?.capabilities || [], roles: remote?.roles || [] });
+    const nextSteps = mode === 'public' ? getPublicOnboarding() : getOnboardingForRole(remote?.role || 'customer', { capabilities: remote?.capabilities || [], roles: remote?.roles || [], permissions: remote?.permissions || [] });
+    const safeStep = Math.min(Math.max(0, requestedStep), Math.max(0, nextSteps.length - 1));
     setSteps(nextSteps);
-    setStepIndex(Math.min(requestedStep, Math.max(0, nextSteps.length - 1)));
+    setStepIndex(safeStep);
+    setPaused(false);
+    setResumeOffer(false);
     setActive(true);
-    void persist(requestedStep, { onboardingStarted: true, completed: false, skipped: false });
-  }, [persist, remote?.authenticated, remote?.capabilities, remote?.role, remote?.roles]);
+    window.dispatchEvent(new CustomEvent(STARTED_EVENT));
+    void persist(safeStep, { onboardingStarted: true, completed: false, skipped: false });
+  }, [persist, remote?.authenticated, remote?.capabilities, remote?.permissions, remote?.role, remote?.roles]);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,22 +90,51 @@ export default function MilesOnboarding() {
         const data = await response.json() as RemoteState;
         if (cancelled) return;
         setRemote(data);
+        const nextSteps = roleSteps(data);
+        setSteps(nextSteps);
         if (data.authenticated) {
           const progress = data.progress;
-          if (!progress || progress.onboarding_version !== MILES_ONBOARDING_VERSION || (!progress.completed && !progress.skipped)) {
-            const nextSteps = getOnboardingForRole(data.role || 'customer', { capabilities: data.capabilities || [], roles: data.roles || [] });
-            setSteps(nextSteps);
-            setStepIndex(progress?.onboarding_version === MILES_ONBOARDING_VERSION ? progress.current_step : 0);
-            window.setTimeout(() => !cancelled && setActive(true), 700);
+          const incomplete = Boolean(progress && progress.onboarding_version === MILES_ONBOARDING_VERSION && !progress.completed && !progress.skipped);
+          const savedStep = Math.min(progress?.current_step || 0, Math.max(0, nextSteps.length - 1));
+          setStepIndex(savedStep);
+          if (!progress || progress.onboarding_version !== MILES_ONBOARDING_VERSION) {
+            window.setTimeout(() => {
+              if (cancelled) return;
+              window.dispatchEvent(new CustomEvent(STARTED_EVENT));
+              setActive(true);
+            }, 700);
+          } else if (incomplete && savedStep > 0) {
+            window.dispatchEvent(new CustomEvent(STARTED_EVENT));
+            setResumeOffer(true);
+            setActive(true);
+          } else if (incomplete) {
+            window.setTimeout(() => {
+              if (cancelled) return;
+              window.dispatchEvent(new CustomEvent(STARTED_EVENT));
+              setActive(true);
+            }, 700);
+          } else {
+            setActive(false);
+            setResumeOffer(false);
           }
         } else {
           let guestState: { currentStep?: number; completed?: boolean; skipped?: boolean } = {};
           try { guestState = JSON.parse(window.localStorage.getItem(GUEST_KEY) || '{}'); } catch {}
-          if (!guestState.completed && !guestState.skipped) {
-            const nextSteps = getPublicOnboarding();
-            setSteps(nextSteps);
-            setStepIndex(Math.min(guestState.currentStep || 0, nextSteps.length - 1));
-            window.setTimeout(() => !cancelled && setActive(true), 900);
+          const savedStep = Math.min(guestState.currentStep || 0, Math.max(0, nextSteps.length - 1));
+          setStepIndex(savedStep);
+          if (guestState.currentStep && savedStep > 0 && !guestState.completed && !guestState.skipped) {
+            window.dispatchEvent(new CustomEvent(STARTED_EVENT));
+            setResumeOffer(true);
+            setActive(true);
+          } else if (!guestState.completed && !guestState.skipped) {
+            window.setTimeout(() => {
+              if (cancelled) return;
+              window.dispatchEvent(new CustomEvent(STARTED_EVENT));
+              setActive(true);
+            }, 900);
+          } else {
+            setActive(false);
+            setResumeOffer(false);
           }
         }
       } catch {
@@ -102,10 +148,10 @@ export default function MilesOnboarding() {
 
   useEffect(() => {
     const handleRestart = (event: Event) => {
-      const detail = (event as CustomEvent<{ mode?: 'public' | 'authenticated' }>).detail;
-      start(detail?.mode);
+      const detail = (event as CustomEvent<{ mode?: 'public' | 'authenticated'; step?: number }>).detail;
+      start(detail?.mode, detail?.step || 0);
     };
-    const handleEnd = () => setActive(false);
+    const handleEnd = () => { setActive(false); setResumeOffer(false); setPaused(false); };
     window.addEventListener(PROGRESS_EVENT, handleRestart);
     window.addEventListener('mastercart:miles-onboarding-end', handleEnd);
     return () => {
@@ -114,31 +160,60 @@ export default function MilesOnboarding() {
     };
   }, [start]);
 
-  useEffect(() => {
-    if (!active || !currentStep) return;
-    if (pathname !== currentStep.route) router.push(currentStep.route);
-  }, [active, currentStep, pathname, router]);
+  const closeTour = useCallback((status: 'completed' | 'skipped') => {
+    setActive(false);
+    setPaused(false);
+    setResumeOffer(false);
+    setTargetRect(null);
+    void persist(stepIndex, { [status]: true, completed: status === 'completed', skipped: status === 'skipped' });
+  }, [persist, stepIndex]);
 
   useEffect(() => {
-    if (!active || !currentStep || waiting || pathname !== currentStep.route) return;
+    if (!active || resumeOffer || !currentStep) return;
+    if (!TOUR_ROUTES.has(currentStep.route)) {
+      console.warn(`[MilesTour] Refusing unknown route: ${currentStep.route}`);
+      window.setTimeout(() => setStepIndex((value) => Math.min(value + 1, Math.max(0, steps.length - 1))), 0);
+      return;
+    }
+    if (pathname !== currentStep.route) {
+      router.push(currentStep.route);
+      return;
+    }
+    if (currentStep.activate) {
+      window.dispatchEvent(new CustomEvent('mastercart:miles-tour-activate', { detail: { route: currentStep.route, tab: currentStep.activate } }));
+    }
+  }, [active, currentStep, pathname, resumeOffer, router, steps.length]);
+
+  useEffect(() => {
+    if (!active || resumeOffer || !currentStep || waiting) return;
     let frame = 0;
     let attempts = 0;
+    let found = false;
     const locate = () => {
       const target = currentStep.target ? document.querySelector(currentStep.target) : null;
       if (target) {
+        found = true;
         targetRef.current = target;
         const rect = target.getBoundingClientRect();
         setTargetRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height });
-        target.classList.add('miles-onboarding-target');
         return;
       }
-      if (currentStep.target && attempts < 12) {
+      if (currentStep.target && attempts < 18) {
         attempts += 1;
         frame = window.requestAnimationFrame(locate);
         return;
       }
       targetRef.current = null;
       setTargetRect(null);
+      if (currentStep.target) {
+        console.info(`[MilesTour] Skipping missing target ${currentStep.target} on ${currentStep.route}`);
+        missingTimerRef.current = window.setTimeout(() => {
+          if (!found) {
+            if (stepIndex >= steps.length - 1) closeTour('completed');
+            else setStepIndex((value) => value + 1);
+          }
+        }, 360);
+      }
     };
     locate();
     const update = () => {
@@ -151,62 +226,58 @@ export default function MilesOnboarding() {
     window.addEventListener('scroll', update, true);
     return () => {
       window.cancelAnimationFrame(frame);
-      targetRef.current?.classList.remove('miles-onboarding-target');
+      if (missingTimerRef.current) window.clearTimeout(missingTimerRef.current);
       targetRef.current = null;
+      setTargetRect(null);
       window.removeEventListener('resize', update);
       window.removeEventListener('scroll', update, true);
     };
-  }, [active, currentStep, pathname, waiting]);
+  // The target is intentionally re-located for every route and step.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, currentStep, pathname, resumeOffer, waiting, stepIndex, steps.length]);
 
-  useEffect(() => {
-    if (!active || !currentStep) return;
-    void persist(stepIndex, { onboardingStarted: true });
-  }, [active, currentStep, persist, stepIndex]);
-
-  const close = useCallback((status: 'completed' | 'skipped') => {
-    setActive(false);
-    setTargetRect(null);
-    void persist(stepIndex, { [status]: true, completed: status === 'completed', skipped: status === 'skipped' });
-  }, [persist, stepIndex]);
-
-  const next = () => {
-    if (isLast) { close('completed'); return; }
+  const advance = useCallback(() => {
+    if (isLast) { closeTour('completed'); return; }
     const nextIndex = stepIndex + 1;
     setStepIndex(nextIndex);
     void persist(nextIndex, { onboardingStarted: true });
-  };
+  }, [closeTour, isLast, persist, stepIndex]);
+
+  useEffect(() => {
+    if (!active || paused || resumeOffer || waiting || !currentStep || (currentStep.target && !targetRect)) return;
+    const timer = window.setTimeout(advance, currentStep.duration || DEFAULT_DURATION);
+    return () => window.clearTimeout(timer);
+  }, [active, advance, currentStep, paused, resumeOffer, targetRect, waiting]);
+
   const back = () => { if (stepIndex > 0) setStepIndex((value) => value - 1); };
+  const startOver = () => start(isPublic ? 'public' : 'authenticated', 0);
+  const resume = () => { setResumeOffer(false); setPaused(false); setActive(true); void persist(stepIndex, { onboardingStarted: true, completed: false, skipped: false }); };
 
-  const cardStyle = useMemo<React.CSSProperties>(() => {
-    if (typeof window === 'undefined' || !targetRect || !currentStep) return { left: '50%', top: '50%', transform: 'translate(-50%, -50%)' };
-    const gap = 18;
-    const width = Math.min(380, window.innerWidth - 28);
-    const height = 230;
-    const preferred = currentStep.side || 'bottom';
-    const candidates = preferred === 'top' ? [{ left: targetRect.left + targetRect.width / 2 - width / 2, top: targetRect.top - height - gap }, { left: targetRect.left + targetRect.width / 2 - width / 2, top: targetRect.top + targetRect.height + gap }]
-      : preferred === 'left' ? [{ left: targetRect.left - width - gap, top: targetRect.top + targetRect.height / 2 - height / 2 }, { left: targetRect.left + targetRect.width + gap, top: targetRect.top + targetRect.height / 2 - height / 2 }]
-      : preferred === 'right' ? [{ left: targetRect.left + targetRect.width + gap, top: targetRect.top + targetRect.height / 2 - height / 2 }, { left: targetRect.left - width - gap, top: targetRect.top + targetRect.height / 2 - height / 2 }]
-      : [{ left: targetRect.left + targetRect.width / 2 - width / 2, top: targetRect.top + targetRect.height + gap }, { left: targetRect.left + targetRect.width / 2 - width / 2, top: targetRect.top - height - gap }];
-    const safe = candidates.find((candidate) => candidate.left >= 14 && candidate.left + width <= window.innerWidth - 14 && candidate.top >= 72 && candidate.top + height <= window.innerHeight - 18) || { left: Math.max(14, (window.innerWidth - width) / 2), top: Math.max(78, window.innerHeight - height - 22) };
-    return { left: safe.left, top: safe.top };
-  }, [currentStep, targetRect]);
+  if (!active || !remote || !currentStep) return null;
 
-  if (!active || !currentStep || !remote) return null;
+  const title = resumeOffer ? 'Welcome back — your tour is waiting' : waiting ? 'Let’s move to the next section' : currentStep.title;
+  const message = resumeOffer ? `You paused your ${isPublic ? 'MasterCart introduction' : 'role-specific MasterCart tour'} at step ${stepIndex + 1}. Would you like to continue where you left off?` : waiting ? 'I’m taking you there now. Your session and current tour progress will stay intact.' : currentStep.message;
 
   return (
     <>
-      <div className="miles-onboarding-scrim" aria-hidden="true" />
-      <section className="miles-onboarding-card" style={cardStyle} role="dialog" aria-modal="false" aria-labelledby="miles-onboarding-title" aria-describedby="miles-onboarding-message" onKeyDown={(event) => { if (event.key === 'Escape') close('skipped'); }}>
-        <div className="miles-onboarding-header"><MilesProfileAvatar size={36} /><div><strong>Miles</strong><span>{isPublic ? 'Your MasterCart guide' : 'Your guided tour'}</span></div><button type="button" className="miles-onboarding-close" onClick={() => close('skipped')} aria-label="Skip Miles onboarding">×</button></div>
-        {waiting ? <p id="miles-onboarding-message" className="miles-onboarding-message">Let’s take a look at this section…</p> : <><p className="miles-onboarding-progress">Step {stepIndex + 1} of {steps.length}</p><h2 id="miles-onboarding-title">{currentStep.title}</h2><p id="miles-onboarding-message" className="miles-onboarding-message">{currentStep.message}</p></>}
-        {!waiting && <div className="miles-onboarding-actions"><button type="button" className="miles-onboarding-secondary" onClick={() => close('skipped')}>Skip</button><div><button type="button" className="miles-onboarding-secondary" onClick={back} disabled={stepIndex === 0}>Back</button><button type="button" className="miles-onboarding-primary" onClick={next}>{isLast ? 'Finish' : 'Next'}</button></div></div>}
-        {isPublic && !waiting && stepIndex === 0 && <div className="miles-onboarding-entry"><button type="button" onClick={() => router.push('/auth/register')}>Create account</button><button type="button" onClick={() => router.push('/auth/login')}>Log in</button><button type="button" onClick={next}>Explore first</button></div>}
-      </section>
-      <style>{`
-        .miles-onboarding-scrim{position:fixed;inset:0;z-index:998;background:rgba(15,23,42,.16);pointer-events:none;}
-        .miles-onboarding-card{position:fixed;z-index:1002;width:min(380px,calc(100vw - 28px));box-sizing:border-box;padding:18px;border:1px solid rgba(255,255,255,.24);border-radius:24px;background:linear-gradient(145deg,rgba(15,23,42,.96),rgba(30,41,90,.95));box-shadow:0 24px 70px rgba(15,23,42,.38),0 0 34px rgba(96,165,250,.22);color:#f8fafc;animation:miles-onboarding-in .24s ease-out;}
-        .miles-onboarding-header{display:flex;align-items:center;gap:10px}.miles-onboarding-header strong{display:block;font-size:1rem}.miles-onboarding-header span{display:block;color:#cbd5e1;font-size:.75rem}.miles-onboarding-close{margin-left:auto;border:0;background:transparent;color:#cbd5e1;font-size:1.5rem;line-height:1;cursor:pointer}.miles-onboarding-progress{margin:16px 0 6px;color:#93c5fd;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em}.miles-onboarding-card h2{margin:0;font-size:1.18rem}.miles-onboarding-message{margin:10px 0 18px;line-height:1.55;color:#e2e8f0;font-size:.93rem}.miles-onboarding-actions{display:flex;justify-content:space-between;align-items:center;gap:10px}.miles-onboarding-actions>div{display:flex;gap:8px}.miles-onboarding-primary,.miles-onboarding-secondary,.miles-onboarding-entry button{border-radius:999px;padding:9px 13px;border:1px solid rgba(255,255,255,.16);font-weight:700;cursor:pointer}.miles-onboarding-primary{background:linear-gradient(135deg,#60a5fa,#818cf8);color:#0f172a}.miles-onboarding-secondary{background:rgba(255,255,255,.08);color:#e2e8f0}.miles-onboarding-secondary:disabled{opacity:.4;cursor:not-allowed}.miles-onboarding-entry{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.miles-onboarding-entry button{background:rgba(255,255,255,.08);color:#e2e8f0}.miles-onboarding-entry button:first-child{background:#dbeafe;color:#172554}.miles-onboarding-target{position:relative!important;z-index:1001!important;outline:3px solid rgba(96,165,250,.92)!important;outline-offset:5px!important;box-shadow:0 0 0 9px rgba(96,165,250,.14),0 0 26px rgba(96,165,250,.52)!important;border-radius:12px!important;transition:box-shadow .25s ease,outline-color .25s ease!important}.miles-onboarding-target::after{content:"";position:absolute;inset:-9px;border:1px solid rgba(191,219,254,.6);border-radius:inherit;pointer-events:none}.miles-onboarding-card button:focus-visible{outline:2px solid #bfdbfe;outline-offset:2px}@keyframes miles-onboarding-in{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}@media(max-width:640px){.miles-onboarding-card{bottom:max(16px,env(safe-area-inset-bottom));left:14px!important;top:auto!important;transform:none!important;width:calc(100vw - 28px)}.miles-onboarding-scrim{background:rgba(15,23,42,.1)}}@media(prefers-reduced-motion:reduce){.miles-onboarding-card{animation:none}.miles-onboarding-target{transition:none!important}}
-      `}</style>
+      <MilesTourHighlight rect={targetRect} active={active && !resumeOffer} />
+      <MilesTourBubble
+        rect={resumeOffer || waiting ? null : targetRect}
+        title={title}
+        message={message}
+        stepLabel={!resumeOffer && !waiting ? `Step ${stepIndex + 1} of ${steps.length}` : undefined}
+        side={currentStep.side}
+        waiting={waiting}
+        isPaused={paused}
+        isLast={isLast}
+        onSkip={() => closeTour('skipped')}
+        onPause={() => setPaused((value) => !value)}
+        onBack={back}
+        onNext={resumeOffer ? startOver : advance}
+        onResume={resume}
+        canGoBack={stepIndex > 0 && !resumeOffer}
+        resumePrompt={resumeOffer}
+      />
     </>
   );
 }

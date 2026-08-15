@@ -68,6 +68,15 @@ export default function UniversityAdminPage() {
   const [staffSearch, setStaffSearch] = useState("");
   const [platformSettings, setPlatformSettings] = useState<any>({});
 
+  useEffect(() => {
+    const handleMilesTourActivation = (event: Event) => {
+      const detail = (event as CustomEvent<{ route?: string; tab?: string }>).detail;
+      if (detail?.route === '/university-admin' && detail.tab) setTab(detail.tab as Tab);
+    };
+    window.addEventListener('mastercart:miles-tour-activate', handleMilesTourActivation);
+    return () => window.removeEventListener('mastercart:miles-tour-activate', handleMilesTourActivation);
+  }, []);
+
   const [notifForm, setNotifForm] = useState({ title:"", content:"", target:"all" });
   const [notifSending, setNotifSending] = useState(false);
   const [showAddStaff, setShowAddStaff] = useState(false);
@@ -388,7 +397,7 @@ export default function UniversityAdminPage() {
                       </button>
                     </div>
                   )}
-                  <div className={styles.statsGrid} id="tour-uni-admin-overview">
+                  <div className={styles.statsGrid} id="tour-uni-admin-overview" data-miles-tour="university-admin-overview">
                     {[
                       {label:"Vendors",val:stats.totalVendors||0,color:"#000000",bg:"rgba(0,0,0,0.1)"},
                       {label:"Customers",val:stats.totalUsers||0,color:"#000000",bg:"rgba(0,0,0,0.1)"},
@@ -420,7 +429,7 @@ export default function UniversityAdminPage() {
               )}
 
               {tab==="vendors"&&(
-                <div className={styles.sectionCard} id="tour-uni-admin-vendors">
+                <div className={styles.sectionCard} id="tour-uni-admin-vendors" data-miles-tour="university-admin-vendors">
                   <div className={styles.sectionHeader}><div><h2>Vendor Management</h2><p>Approve, reject, and monitor vendors in your university</p></div></div>
                   <div className={styles.tableWrap}>
                     <table className={styles.table}>
@@ -656,7 +665,7 @@ export default function UniversityAdminPage() {
                   </div>
                 </div>
 
-                <div className={styles.sectionCard} style={{ marginTop: '2rem' }} id="tour-uni-admin-notices">
+                <div className={styles.sectionCard} style={{ marginTop: '2rem' }} id="tour-uni-admin-notices" data-miles-tour="university-admin-notices">
                   <div className={styles.sectionHeader}><div><h2>Manual Homepage Billboard</h2><p>Feature a custom promotional banner for your students</p></div></div>
                   <div className={styles.notifForm}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', width: '100%' }}>

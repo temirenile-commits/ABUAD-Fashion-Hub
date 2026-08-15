@@ -6,7 +6,6 @@ import MobileBottomNav from '@/components/MobileBottomNav';
 import SplashScreen from '@/components/SplashScreen';
 import WelcomeModal from '@/components/WelcomeModal';
 
-import AutoTourTrigger from '@/components/AutoTourTrigger';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -18,8 +17,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   return (
     <>
-      <AutoTourTrigger />
-
       <WelcomeModal />
       <SplashScreen />
       <Navbar />

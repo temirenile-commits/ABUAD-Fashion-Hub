@@ -292,14 +292,14 @@ export default function ReelsPage() {
   }
 
   return (
-    <div className={styles.reelsContainer}>
+    <div className={styles.reelsContainer} data-miles-tour="reels">
       {/* Top Header */}
       <div className={styles.topHeader}>
         <button onClick={() => router.back()} className={styles.backBtn}>
           <ArrowLeft size={22} />
         </button>
         
-        <div className={styles.searchPill} onClick={() => setIsSearchOpen(true)}>
+        <div className={styles.searchPill} data-miles-tour="reels-search" onClick={() => setIsSearchOpen(true)}>
           <Search size={18} />
           <span>Search Reels...</span>
         </div>
@@ -443,7 +443,7 @@ export default function ReelsPage() {
       )}
 
       {/* Main Feed */}
-      <div className={styles.feedWrapper}>
+      <div className={styles.feedWrapper} data-miles-tour="reels-feed">
         {reels.map((reel, idx) => {
           const brandSlug = reel.brands?.name?.toLowerCase().replace(/\s+/g, '-') || 'brand';
           const attachedProducts = (reel.reel_products?.map(rp => rp.products).filter(Boolean) || []) as any[];
