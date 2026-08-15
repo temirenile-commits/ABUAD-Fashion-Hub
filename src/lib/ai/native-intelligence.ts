@@ -64,11 +64,11 @@ export async function retrieveNativePatterns(problemType?: string, limit = 4) {
 
 function money(value: unknown) { return `₦${Number(value || 0).toLocaleString('en-NG')}`; }
 
-function questionAwareFallback(question: string, intent: string, pageContext: string, knowledgeStatement?: string) {
+function questionAwareFallback(question: string, intent: string, pageContext: string, knowledgeStatement?: string, assistantName = 'Miles') {
   const safeQuestion = sanitizeNativeText(question, 320);
   const normalized = safeQuestion.toLowerCase();
   if (knowledgeStatement) return `${knowledgeStatement} Your question was: “${safeQuestion}”`;
-  if (/\b(who are you|what is your name|what are you)\b/i.test(normalized)) return `I’m Miles, MasterCart’s role-aware assistant. I can help you find products and vendors, understand orders, navigate your account, and explain the part of MasterCart you’re viewing.`;
+  if (/\b(who are you|what is your name|what are you)\b/i.test(normalized)) return `I’m ${assistantName}, MasterCart’s role-aware assistant. I can help you find products and vendors, understand orders, navigate your account, and explain the part of MasterCart you’re viewing.`;
   if (/\b(what is mastercart|tell me about mastercart)\b/i.test(normalized)) return `MasterCart is a campus marketplace for discovering products, vendors, services, and campus delivery options. I can guide you through the marketplace and your authorized account features.`;
   if (/\b(where|how do i get|take me)\b/i.test(normalized)) return `You are currently on ${pageContext.replace(/^The user is /, '').replace(/\.$/, '')}. Tell me the destination or feature you want, and I’ll guide you there.`;
   if (intent === 'review_query') return `I can help you inspect product or vendor reviews, but I need a specific product, vendor, or review topic to look up from the current MasterCart records.`;
@@ -87,7 +87,8 @@ export async function nativeBrainRespond(input: { question: string; intent: stri
   const customer = input.roleData.customer as any;
   const vendor = input.roleData.vendor as any;
   const analytics = (input.roleData.admin as any)?.analytics;
-  let text = questionAwareFallback(question, input.intent, input.pageContext, knowledge[0]?.statement);
+  const assistantName = typeof input.roleData.assistantName === 'string' && input.roleData.assistantName.trim() ? input.roleData.assistantName.trim() : 'Miles';
+  let text = questionAwareFallback(question, input.intent, input.pageContext, knowledge[0]?.statement, assistantName);
   if (input.intent === 'order_query' || input.intent === 'delivery_query') {
     const orders = Array.isArray(customer?.orders) ? customer.orders : Array.isArray(customer?.recentOrders) ? customer.recentOrders : [];
     text = orders.length ? `I found ${orders.length} current order record${orders.length === 1 ? '' : 's'} in your authorized account context. Check the order card or Orders area for the latest status.` : `I couldn't verify a current order or delivery record in your authorized MasterCart context.`;

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import MilesProfileAvatar from './MilesProfileAvatar';
+import { useMilesConfiguration } from '@/components/MilesConfigurationProvider';
 
 type Rect = { top: number; left: number; width: number; height: number };
 type Side = 'top' | 'bottom' | 'left' | 'right';
@@ -43,6 +44,8 @@ function getPosition(rect: Rect | null, side: Side = 'bottom') {
 
 export default function MilesTourBubble({ rect, title, message, stepLabel, side, waiting, isPaused, isLast, onSkip, onPause, onBack, onNext, onResume, canGoBack = false, resumePrompt = false }: Props) {
   const panelRef = useRef<HTMLElement>(null);
+  const { configuration } = useMilesConfiguration();
+  const assistantName = configuration.identity.name;
   useEffect(() => { panelRef.current?.focus(); }, [title, message, waiting, resumePrompt]);
   const style = getPosition(rect, side);
 
@@ -52,7 +55,7 @@ export default function MilesTourBubble({ rect, title, message, stepLabel, side,
         .miles-tour-bubble{position:fixed;z-index:1002;width:min(380px,calc(100vw - 28px));box-sizing:border-box;padding:16px 17px;border:1px solid rgba(255,255,255,.18);border-radius:22px;background:linear-gradient(145deg,rgba(7,10,18,.98),rgba(24,31,51,.96));box-shadow:0 24px 70px rgba(0,0,0,.42),0 0 28px rgba(96,165,250,.2);color:#f8fafc;animation:miles-tour-enter .22s cubic-bezier(.23,1,.32,1);outline:none}
         .miles-tour-head{display:flex;align-items:center;gap:9px}.miles-tour-head strong{display:block;font-size:.98rem}.miles-tour-head span{display:block;color:#a7b4c7;font-size:.72rem}.miles-tour-close{margin-left:auto;border:0;background:transparent;color:#cbd5e1;font-size:1.45rem;line-height:1;cursor:pointer;padding:4px}.miles-tour-label{margin:13px 0 5px;color:#93c5fd;font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}.miles-tour-bubble h2{margin:0;font-size:1.08rem;line-height:1.25}.miles-tour-message{margin:8px 0 15px;color:#dbe4f0;font-size:.88rem;line-height:1.5}.miles-tour-actions{display:flex;align-items:center;justify-content:space-between;gap:8px}.miles-tour-actions>div{display:flex;gap:7px}.miles-tour-button{border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:8px 11px;font-size:.76rem;font-weight:750;cursor:pointer;transition:transform 150ms ease,background 150ms ease}.miles-tour-button:active{transform:scale(.97)}.miles-tour-button:focus-visible{outline:2px solid #bfdbfe;outline-offset:2px}.miles-tour-button.secondary{background:rgba(255,255,255,.08);color:#e2e8f0}.miles-tour-button.primary{background:linear-gradient(135deg,#93c5fd,#818cf8);color:#101827}.miles-tour-button:disabled{opacity:.42;cursor:not-allowed}.miles-tour-resume{display:flex;gap:8px;flex-wrap:wrap}.miles-tour-resume .miles-tour-button{flex:1;min-width:110px}.miles-tour-scrim{position:fixed;inset:0;z-index:998;pointer-events:none;background:rgba(15,23,42,.2)}.miles-tour-highlight{will-change:top,left,width,height}.miles-tour-bubble button{font-family:inherit}@keyframes miles-tour-enter{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}@media(max-width:640px){.miles-tour-bubble{left:14px!important;right:14px;width:auto;top:auto!important;bottom:max(14px,env(safe-area-inset-bottom));transform:none!important}.miles-tour-actions{align-items:stretch;flex-direction:column}.miles-tour-actions>div{justify-content:space-between}.miles-tour-button{min-height:40px}}@media(prefers-reduced-motion:reduce){.miles-tour-bubble{animation:none}.miles-tour-button{transition:none}.miles-tour-highlight{transition:none!important}}
       `}</style>
-      <div className="miles-tour-head"><MilesProfileAvatar size={34} /><div><strong>Miles</strong><span>{resumePrompt ? 'Your tour is ready to resume' : 'Your MasterCart guide'}</span></div><button className="miles-tour-close" type="button" onClick={onSkip} aria-label="Exit Miles tour">×</button></div>
+      <div className="miles-tour-head"><MilesProfileAvatar size={34} /><div><strong>{assistantName}</strong><span>{resumePrompt ? `Your ${assistantName} tour is ready to resume` : `Your MasterCart ${assistantName} guide`}</span></div><button className="miles-tour-close" type="button" onClick={onSkip} aria-label={`Exit ${assistantName} tour`}>×</button></div>
       {stepLabel && !resumePrompt && <p className="miles-tour-label">{stepLabel}</p>}
       <h2 id="miles-tour-title">{title}</h2>
       <p id="miles-tour-message" className="miles-tour-message">{message}</p>

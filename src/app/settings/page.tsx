@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import styles from './settings.module.css';
+import MilesSettingsPanel from '@/components/MilesSettingsPanel';
 
 /** Simple inline toast for confirmations */
 function Toast({ message, kind }: { message: string; kind: 'success' | 'error' }) {
@@ -156,6 +157,8 @@ export default function SettingsPage() {
         </div>
         <h1 className={styles.title}>Account Settings</h1>
         <p className={styles.sub}>{user.email}</p>
+
+        <MilesSettingsPanel />
 
         {/* ── Saved Checkout Information ─────────────────────────── */}
         <div className={styles.section} style={{ marginTop: '1.5rem' }}>

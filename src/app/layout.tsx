@@ -9,6 +9,7 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import MilesPersistentBubble from '@/components/MilesPersistentBubble';
 import MilesGlobalWorkspace from '@/components/MilesGlobalWorkspace';
 import MilesOnboarding from '@/components/MilesOnboarding';
+import { MilesConfigurationProvider } from '@/components/MilesConfigurationProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -71,7 +72,8 @@ export default function RootLayout({
               <CartProvider>
                 <NotificationProvider>
                   <TourProvider>
-                    <LayoutWrapper>
+                    <MilesConfigurationProvider>
+                      <LayoutWrapper>
                       <script
                         type="application/ld+json"
                         dangerouslySetInnerHTML={{
@@ -111,7 +113,8 @@ export default function RootLayout({
                       <MilesPersistentBubble />
                       <MilesGlobalWorkspace />
                       <MilesOnboarding />
-                    </LayoutWrapper>
+                      </LayoutWrapper>
+                    </MilesConfigurationProvider>
                   </TourProvider>
                 </NotificationProvider>
               </CartProvider>

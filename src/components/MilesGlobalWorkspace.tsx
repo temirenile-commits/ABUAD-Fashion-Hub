@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { MILES_ASSISTANT_NAME, MILES_ASSISTANT_SUBTITLE, MILES_MESSAGES } from '@/lib/ai/ui-config';
+import { MILES_MESSAGES } from '@/lib/ai/ui-config';
 import MilesProfileAvatar from '@/components/MilesProfileAvatar';
+import { useMilesConfiguration } from '@/components/MilesConfigurationProvider';
 
 type MilesAttachment = { type: 'image'; url: string; thumbUrl?: string; name: string };
 type Message = { role: 'user' | 'assistant'; content: string; attachments?: MilesAttachment[] };
@@ -13,7 +14,7 @@ type MilesCard = { type: 'product' | 'vendor'; id: string; title: string; subtit
 type MilesMemory = { topic?: string; currentTask?: string; previousQuestion?: string; firstQuestion?: string; selectedProduct?: MilesCard; selectedVendor?: MilesCard; recentCards: MilesCard[]; lastIntent?: string };
 type Proposal = { actionId: string; confirmationPhrase: string; summary: string; highRisk?: boolean; expiresAt?: string; domain?: 'admin' | 'vendor' };
 
-const initialMessage: Message = { role: 'assistant', content: `Hi. I’m ${MILES_ASSISTANT_NAME}. How can I help you with MasterCart today?` };
+const initialMessage = (name: string): Message => ({ role: 'assistant', content: `Hi. I’m ${name}. How can I help you with MasterCart today?` });
 
 function safeText(value: unknown, fallback: string) {
   return typeof value === 'string' && value.trim() ? value : fallback;
@@ -31,6 +32,8 @@ function MediaStrip({ items }: { items: MediaItem[] }) {
 
 export default function MilesGlobalWorkspace() {
   const pathname = usePathname();
+  const { configuration } = useMilesConfiguration();
+  const assistantName = configuration.identity.name;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [full, setFull] = useState(false);
@@ -43,7 +46,11 @@ export default function MilesGlobalWorkspace() {
   const [memory, setMemory] = useState<MilesMemory>({ recentCards: [] });
   const [feedbackSent, setFeedbackSent] = useState<Record<number, boolean>>({});
   const [proposal, setProposal] = useState<Proposal | null>(null);
-  const [messages, setMessages] = useState<Message[]>([initialMessage]);
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    setMessages((previous) => previous.length ? previous : [initialMessage(assistantName)]);
+  }, [assistantName]);
 
   useEffect(() => {
     const openPanel = () => { setOpen(true); setFull(false); };
@@ -89,8 +96,8 @@ export default function MilesGlobalWorkspace() {
       setMedia(Array.isArray(data.media) ? data.media : []);
       setCards(Array.isArray(data.cards) ? data.cards : []);
       if (data.memory && Array.isArray(data.memory.recentCards)) setMemory(data.memory);
-      setMessages([...next, { role: 'assistant', content: data.proposal?.summary || safeText(data.text, MILES_MESSAGES.unavailable) }]);
-    } catch { setMessages([...next, { role: 'assistant', content: MILES_MESSAGES.unavailable }]); }
+      setMessages([...next, { role: 'assistant', content: data.proposal?.summary || safeText(data.text, `${assistantName} is temporarily unavailable. Please try again shortly.`) }]);
+    } catch { setMessages([...next, { role: 'assistant', content: `${assistantName} is temporarily unavailable. Please try again shortly.` }]); }
     finally { setBusy(false); }
   }
 
@@ -125,20 +132,20 @@ export default function MilesGlobalWorkspace() {
   const panelStyle = full ? { position: 'fixed' as const, inset: 0, width: '100vw', height: '100dvh', borderRadius: 0, background: '#000' } : { position: 'fixed' as const, right: 16, bottom: 'calc(16px + env(safe-area-inset-bottom))', width: panelWidth, maxHeight: 'min(720px, calc(100dvh - 32px))', borderRadius: 20, background: '#0b0d0c' };
 
   return <div role="presentation" onClick={(event) => event.stopPropagation()} style={{ position: 'fixed', inset: 0, zIndex: full ? 9999 : 1100, pointerEvents: 'none' }}>
-    <section role="dialog" aria-modal={full} aria-label={`${MILES_ASSISTANT_NAME} ${full ? 'fullscreen' : 'chat'} assistant`} style={{ ...panelStyle, display: 'flex', flexDirection: 'column', overflow: 'hidden', pointerEvents: 'auto', color: '#fff', border: full ? 'none' : '1px solid rgba(255,255,255,.10)', boxShadow: full ? 'none' : '0 24px 70px rgba(0,0,0,.55)' }}>
+    <section role="dialog" aria-modal={full} aria-label={`${assistantName} ${full ? 'fullscreen' : 'chat'} assistant`} style={{ ...panelStyle, display: 'flex', flexDirection: 'column', overflow: 'hidden', pointerEvents: 'auto', color: '#fff', border: full ? 'none' : '1px solid rgba(255,255,255,.10)', boxShadow: full ? 'none' : '0 24px 70px rgba(0,0,0,.55)' }}>
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: full ? '18px max(18px, env(safe-area-inset-left))' : '14px 16px', borderBottom: '1px solid rgba(255,255,255,.10)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><MilesProfileAvatar size={40} /><div><strong style={{ fontSize: 18 }}>{MILES_ASSISTANT_NAME}</strong><div style={{ fontSize: 12, color: '#9ca3af', marginTop: 3 }}>{MILES_ASSISTANT_SUBTITLE}</div></div></div>
-        <div style={{ display: 'flex', gap: 8 }}>{full && <button type="button" onClick={() => setFull(false)} aria-label={`Return to ${MILES_ASSISTANT_NAME} compact panel`} style={iconButton}>←</button>}{!full && <button type="button" onClick={() => setFull(true)} aria-label={`Open ${MILES_ASSISTANT_NAME} fullscreen`} style={iconButton}>□</button>}<button type="button" onClick={() => full ? setFull(false) : close()} aria-label={full ? `Minimize ${MILES_ASSISTANT_NAME}` : `Close ${MILES_ASSISTANT_NAME}`} style={iconButton}>{full ? '−' : '×'}</button></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><MilesProfileAvatar size={40} /><div><strong style={{ fontSize: 18 }}>{assistantName}</strong><div style={{ fontSize: 12, color: '#9ca3af', marginTop: 3 }}>{'AI Assistant'}</div></div></div>
+        <div style={{ display: 'flex', gap: 8 }}>{full && <button type="button" onClick={() => setFull(false)} aria-label={`Return to ${assistantName} compact panel`} style={iconButton}>←</button>}{!full && <button type="button" onClick={() => setFull(true)} aria-label={`Open ${assistantName} fullscreen`} style={iconButton}>□</button>}<button type="button" onClick={() => full ? setFull(false) : close()} aria-label={full ? `Minimize ${assistantName}` : `Close ${assistantName}`} style={iconButton}>{full ? '−' : '×'}</button></div>
       </header>
       <div style={{ flex: 1, minHeight: full ? 0 : 280, overflowY: 'auto', padding: full ? '24px max(18px, env(safe-area-inset-left))' : 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {messages.map((message, index) => <div key={`${message.role}-${index}`} style={{ alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '92%', display: 'flex', alignItems: 'flex-end', gap: 8, flexDirection: message.role === 'user' ? 'row-reverse' : 'row' }}>{message.role === 'assistant' && <MilesProfileAvatar size={30} />}<div style={{ padding: '10px 12px', borderRadius: message.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px', border: message.role === 'user' ? '1px solid rgba(0,211,154,.20)' : '1px solid rgba(255,255,255,.08)', background: message.role === 'user' ? 'rgba(0,211,154,.12)' : '#111413', whiteSpace: 'pre-wrap', lineHeight: 1.45, fontSize: 14 }}>{message.attachments?.map((attachment) => <img key={attachment.url} src={attachment.thumbUrl || attachment.url} alt={attachment.name} style={{ display: 'block', width: 180, maxWidth: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 10, marginBottom: 8 }} />)}{message.content}{message.role === 'assistant' && index > 0 && <div style={{ display: 'flex', gap: 5, marginTop: 7, opacity: feedbackSent[index] ? 0.55 : 1 }}><button type="button" onClick={() => void sendFeedback(index, 'success', 5)} disabled={Boolean(feedbackSent[index])} aria-label="Mark Miles response helpful" style={feedbackButton}>Helpful</button><button type="button" onClick={() => void sendFeedback(index, 'failure', 1)} disabled={Boolean(feedbackSent[index])} aria-label="Mark Miles response not helpful" style={feedbackButton}>Not helpful</button></div>}</div></div>)}
         {cards.length > 0 && <div style={{ display: 'grid', gap: 8, marginTop: 2 }}><div style={{ fontSize: 12, color: '#9ca3af' }}>MasterCart results</div>{cards.map((card) => <a key={`${card.type}-${card.id}`} href={card.destination} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 9, borderRadius: 13, background: '#111827', border: '1px solid rgba(255,255,255,.10)', color: '#fff', textDecoration: 'none' }}><div style={{ width: 54, height: 54, borderRadius: 10, overflow: 'hidden', flexShrink: 0, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg,#1d4ed8,#4338ca)', color: '#fff', fontWeight: 700 }}>{card.imageUrl ? <img src={card.imageUrl} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : card.type === 'vendor' ? 'V' : 'P'}</div><div style={{ minWidth: 0, flex: 1 }}><div style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{card.title}</div><div style={{ color: '#9ca3af', fontSize: 11, marginTop: 3 }}>{card.subtitle || (card.type === 'vendor' ? 'Store' : 'Product')}</div>{card.type === 'product' && <div style={{ color: '#cbd5e1', fontSize: 12, marginTop: 3 }}>{`₦${Number(card.price || 0).toLocaleString('en-NG')} · ${card.available ? 'Available' : 'Unavailable'}`}</div>}{card.type === 'vendor' && card.verified && <div style={{ color: '#86efac', fontSize: 11, marginTop: 3 }}>✓ Verified vendor</div>}</div><span aria-hidden="true" style={{ color: '#93c5fd', fontSize: 18 }}>›</span></a>)}</div>}
         {media.length > 0 && <div style={{ maxWidth: '100%' }}><div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Relevant media</div><MediaStrip items={media} /></div>}
-        {busy && <div role="status" aria-live="polite" style={{ color: '#9ca3af', fontSize: 13 }}>{MILES_MESSAGES.thinking}</div>}
+        {busy && <div role="status" aria-live="polite" style={{ color: '#9ca3af', fontSize: 13 }}>{`${assistantName} is thinking…`}</div>}
         {proposal && <div style={{ padding: 12, borderRadius: 16, border: '1px solid rgba(251,191,36,.5)', background: 'rgba(120,53,15,.28)' }}><div style={{ fontSize: 13, color: '#fde68a', marginBottom: 10 }}>Confirmation required</div><div style={{ fontSize: 13, marginBottom: 10 }}>{proposal.summary}</div><div style={{ display: 'flex', gap: 8 }}><button type="button" disabled={busy} onClick={confirmAction} style={confirmButton}>Confirm action</button><button type="button" disabled={busy} onClick={() => setProposal(null)} style={cancelButton}>Cancel</button></div></div>}
       </div>
       {pendingAttachment && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderTop: '1px solid rgba(255,255,255,.08)', color: '#cbd5e1', fontSize: 12 }}><img src={pendingAttachment.thumbUrl || pendingAttachment.url} alt="Selected upload" style={{ width: 42, height: 42, objectFit: 'cover', borderRadius: 8 }} /><span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pendingAttachment.name}</span><button type="button" onClick={() => setPendingAttachment(null)} style={cancelButton}>Remove</button></div>}
-      <form onSubmit={(event) => { event.preventDefault(); send(); }} style={{ display: 'flex', gap: 8, padding: 14, paddingBottom: 'calc(14px + env(safe-area-inset-bottom))', borderTop: '1px solid rgba(255,255,255,.10)', flexShrink: 0 }}><input ref={fileInputRef} type="file" accept="image/*" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void handlePictureUpload(file); event.currentTarget.value = ''; }} /><button type="button" onClick={() => fileInputRef.current?.click()} disabled={busy || uploading} aria-label="Upload a picture to Miles" style={iconButton}>{uploading ? '…' : '＋'}</button><input value={input} onChange={(event) => setInput(event.target.value)} placeholder={pendingAttachment ? 'Ask Miles to analyze this picture...' : `Ask ${MILES_ASSISTANT_NAME}...`} aria-label={`Ask ${MILES_ASSISTANT_NAME}`} autoComplete="off" style={{ flex: 1, minWidth: 0, border: '1px solid rgba(255,255,255,.12)', borderRadius: 14, background: '#111413', color: '#fff', padding: '11px 12px', outline: 'none' }} /><button type="submit" disabled={busy || uploading || (!input.trim() && !pendingAttachment)} aria-label={`Send message to ${MILES_ASSISTANT_NAME}`} style={sendButton}>{busy ? '…' : '↑'}</button></form>
+      <form onSubmit={(event) => { event.preventDefault(); send(); }} style={{ display: 'flex', gap: 8, padding: 14, paddingBottom: 'calc(14px + env(safe-area-inset-bottom))', borderTop: '1px solid rgba(255,255,255,.10)', flexShrink: 0 }}><input ref={fileInputRef} type="file" accept="image/*" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void handlePictureUpload(file); event.currentTarget.value = ''; }} /><button type="button" onClick={() => fileInputRef.current?.click()} disabled={busy || uploading} aria-label="Upload a picture to Miles" style={iconButton}>{uploading ? '…' : '＋'}</button><input value={input} onChange={(event) => setInput(event.target.value)} placeholder={pendingAttachment ? 'Ask Miles to analyze this picture...' : `Ask ${assistantName}...`} aria-label={`Ask ${assistantName}`} autoComplete="off" style={{ flex: 1, minWidth: 0, border: '1px solid rgba(255,255,255,.12)', borderRadius: 14, background: '#111413', color: '#fff', padding: '11px 12px', outline: 'none' }} /><button type="submit" disabled={busy || uploading || (!input.trim() && !pendingAttachment)} aria-label={`Send message to ${assistantName}`} style={sendButton}>{busy ? '…' : '↑'}</button></form>
     </section>
     <style>{`@media (max-width: 480px) { [role="dialog"] { width: calc(100vw - 24px) !important; right: 12px !important; bottom: calc(12px + env(safe-area-inset-bottom)) !important; }`}</style>
   </div>;

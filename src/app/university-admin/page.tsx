@@ -1207,6 +1207,7 @@ export default function UniversityAdminPage() {
                     <div>
                       <h2>Campus Settings</h2>
                       <p>Configure university-specific options and support channels.</p>
+                      <a href="/admin/miles" style={{ display: 'inline-flex', marginTop: '0.7rem', padding: '0.5rem 0.75rem', borderRadius: 8, background: 'linear-gradient(135deg,#2563eb,#4f46e5)', color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 12 }}>Configure University Miles</a>
                     </div>
                   </div>
                   

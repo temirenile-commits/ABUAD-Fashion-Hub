@@ -3030,6 +3030,7 @@ export default function AdminDashboard() {
                 <div className={styles.sectionCard} id="tour-admin-settings" data-miles-tour="admin-settings">
                   <h2>Campus Configuration & Subscription Settings</h2>
                   <p className={styles.subText}>Select a university to configure its specific subscription rates, feature availability, and booster plans.</p>
+                  <a href="/admin/miles" style={{ display: 'inline-flex', marginTop: '0.8rem', padding: '0.55rem 0.8rem', borderRadius: 9, background: 'linear-gradient(135deg,#2563eb,#4f46e5)', color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>Open Miles AI Configuration</a>
 
                   {/* Per-university Configuration */}
                   <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { MILES_ASSISTANT_NAME } from '@/lib/ai/ui-config';
+import { useMilesConfiguration } from '@/components/MilesConfigurationProvider';
 
 type Dock = 'free' | 'top' | 'top-left' | 'top-right' | 'left' | 'right' | 'bottom' | 'bottom-left' | 'bottom-right';
 type Position = { x: number; y: number; dock: Dock };
@@ -61,6 +61,9 @@ function snapPosition(position: Position): Position {
 
 export default function MilesPersistentBubble() {
   const pathname = usePathname();
+  const { configuration } = useMilesConfiguration();
+  const assistantName = configuration.identity.name;
+  const assistantInitial = configuration.identity.initial;
   const isReelsRoute = pathname === '/reels' || pathname.startsWith('/reels/');
   const [position, setPosition] = useState<Position>(() => {
     if (typeof window === 'undefined') return { x: 0, y: 0, dock: 'right' };
@@ -180,10 +183,10 @@ export default function MilesPersistentBubble() {
 
   const bubbleClassName = `miles-bubble${isReelsRoute ? ' miles-bubble-reels' : ''}${dragging ? ' miles-dragging' : ''}`;
 
-  if (hidden) return <button className={bubbleClassName} type="button" aria-label={`Show ${MILES_ASSISTANT_NAME} assistant`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setHidden(false); }} style={{ ...style, width: 22, borderRadius: position.x < window.innerWidth / 2 ? '0 12px 12px 0' : '12px 0 0 12px', fontSize: '.78rem' }}><span className="miles-orb-core"><span className="miles-mark" aria-hidden="true">𝓜</span></span></button>;
+  if (hidden) return <button className={bubbleClassName} type="button" aria-label={`Show ${assistantName} assistant`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setHidden(false); }} style={{ ...style, width: 22, borderRadius: position.x < window.innerWidth / 2 ? '0 12px 12px 0' : '12px 0 0 12px', fontSize: '.78rem' }}><span className="miles-orb-core"><span className="miles-mark" aria-hidden="true">{assistantInitial}</span></span></button>;
 
   return <>
-    <button className={bubbleClassName} type="button" aria-label={`Open ${MILES_ASSISTANT_NAME} AI assistant`} title={`Drag ${MILES_ASSISTANT_NAME} or tap to open`} onClick={onClick} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={style}><span className="miles-orb-core"><span className="miles-mark" aria-hidden="true">𝓜</span></span></button>
+    <button className={bubbleClassName} type="button" aria-label={`Open ${assistantName} AI assistant`} title={`Drag ${assistantName} or tap to open`} onClick={onClick} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={style}><span className="miles-orb-core"><span className="miles-mark" aria-hidden="true">{assistantInitial}</span></span></button>
     <style>{`
       .miles-bubble{isolation:isolate;overflow:visible;will-change:transform;animation:miles-life 4.2s ease-in-out infinite;}
       .miles-bubble::before{content:"";position:absolute;inset:-7px;border-radius:inherit;z-index:-2;pointer-events:none;background:radial-gradient(circle,rgba(147,197,253,.38) 0%,rgba(96,165,250,.18) 42%,transparent 72%);filter:blur(7px);opacity:.72;animation:miles-glow 4.2s ease-in-out infinite;}
