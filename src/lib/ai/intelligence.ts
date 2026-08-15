@@ -1,7 +1,7 @@
 const GREETING_WORDS = new Set(['hi', 'hello', 'hey', 'hiya', 'morning', 'afternoon', 'evening', 'yo']);
 
 const SENSITIVE_KEY = /(^|_)(id|ids|uuid|token|secret|key|scope|permissions?|admin_permissions|owner_id|user_id|customer_id|brand_id|product_id|service_id|university_id)(_|$)/i;
-const INTERNAL_LANGUAGE = /(?:system prompt|developer message|internal reasoning|chain of thought|thinking process|current (?:user|scope|permissions)|user_id|owner_id|admin_permissions|access token|api key|deepseek|openrouter|provider\s+(?:failed|error|name)|stack trace)/i;
+const INTERNAL_LANGUAGE = /(?:system prompt|developer message|internal reasoning|chain of thought|thinking process|current (?:user|scope|permissions)\s*[:=]|user_id\s*[:=]|owner_id\s*[:=]|admin_permissions\s*[:=]|access token\s*[:=]|api key\s*[:=]|deepseek\s+(?:balance|key|error)|openrouter\s+(?:key|error)|provider\s+(?:failed|error|name)\s*[:=]|stack trace)/i;
 const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 
 export function isSimpleGreeting(value: string): boolean {
@@ -58,7 +58,7 @@ export function sanitizeMilesResponse(value: string): string {
   const internalStart = cleaned.search(/(?:here(?:'|’)s my thinking process|internal reasoning|system prompt|developer message|chain of thought)/i);
   if (internalStart >= 0) cleaned = cleaned.slice(0, internalStart).trim();
   if (!cleaned || INTERNAL_LANGUAGE.test(cleaned) || /(?:^|\n)\s*\d+\.\s+(?:analyze|check context|let's look|user says)/i.test(cleaned)) {
-    return "I can help with the MasterCart task, but I can’t share internal authorization or system details. What would you like me to check or explain?";
+    return "I can help with MasterCart operations and explain how the system works. What would you like me to check or explain?";
   }
   return cleaned;
 }
