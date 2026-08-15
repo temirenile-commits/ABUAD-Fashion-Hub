@@ -165,6 +165,8 @@ export default function MilesPersistentBubble() {
     fontSize: '1.05rem',
     fontWeight: 800,
     letterSpacing: '.02em',
+    fontFamily: '"Brush Script MT", "Segoe Script", "URW Chancery L", cursive',
+    fontStyle: 'italic',
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -176,10 +178,10 @@ export default function MilesPersistentBubble() {
     transition: dragging ? 'none' : 'left 220ms ease, top 220ms ease, transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease',
   };
 
-  if (hidden) return <button className="miles-bubble" type="button" aria-label={`Show ${MILES_ASSISTANT_NAME} assistant`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setHidden(false); }} style={{ ...style, width: 22, borderRadius: position.x < window.innerWidth / 2 ? '0 12px 12px 0' : '12px 0 0 12px', fontSize: '.78rem' }}>M</button>;
+  if (hidden) return <button className="miles-bubble" type="button" aria-label={`Show ${MILES_ASSISTANT_NAME} assistant`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setHidden(false); }} style={{ ...style, width: 22, borderRadius: position.x < window.innerWidth / 2 ? '0 12px 12px 0' : '12px 0 0 12px', fontSize: '.78rem' }}><span className="miles-mark" aria-hidden="true">𝓜</span></button>;
 
   return <>
-    <button className="miles-bubble" type="button" aria-label={`Open ${MILES_ASSISTANT_NAME} AI assistant`} title={`Drag ${MILES_ASSISTANT_NAME} or tap to open`} onClick={onClick} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={style}>M</button>
-    <style>{`.miles-bubble:hover,.miles-bubble:focus-visible{transform:scale(1.06);outline:2px solid rgba(255,255,255,.72);outline-offset:2px}.miles-bubble:active{transform:scale(.96)}`}</style>
+    <button className="miles-bubble" type="button" aria-label={`Open ${MILES_ASSISTANT_NAME} AI assistant`} title={`Drag ${MILES_ASSISTANT_NAME} or tap to open`} onClick={onClick} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={style}><span className="miles-mark" aria-hidden="true">𝓜</span></button>
+    <style>{`.miles-mark{display:inline-block;font-family:"Brush Script MT","Segoe Script","URW Chancery L",cursive;font-style:italic;font-weight:700;font-size:1.22em;line-height:1;transform:translateY(-1px) rotate(-8deg);text-shadow:1px 2px 0 rgba(15,23,42,.22)}.miles-bubble:hover,.miles-bubble:focus-visible{transform:scale(1.06);outline:2px solid rgba(255,255,255,.72);outline-offset:2px}.miles-bubble:active{transform:scale(.96)}`}</style>
   </>;
 }
