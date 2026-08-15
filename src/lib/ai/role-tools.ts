@@ -64,21 +64,25 @@ export async function getPlatformAdminMilesContext(context: MilesContext) {
   return { users: users.data || [], vendors: brands.data || [], products: products.data || [], orders: orders.data || [], reels: reels.data || [], universities: universities.data || [], operationalAlerts: notifications.data || [], permissionNote: context.isFullAdmin ? 'Platform scope is authorized by the current full-admin role.' : 'Only data returned by the configured sub-admin scope is included.' };
 }
 
-export async function getPublicMarketplaceMilesContext(query: string, universityIds: string[] | null) {
+export async function getPublicMarketplaceMilesContext(query: string, universityIds: string[] | null, intent: 'product' | 'vendor' | 'media' = 'product') {
   const safeQuery = query.replace(/[%_]/g, '').slice(0, 120);
-  let productsQuery = supabaseAdmin.from('products').select('id, brand_id, title, description, price, original_price, category, rating, reviews_count, stock_count, visibility_type, university_id, product_section, image_url').eq('is_draft', false).limit(20);
+  const empty = Promise.resolve({ data: [] as any[] });
+  let productsQuery = supabaseAdmin.from('products').select('id, brand_id, title, description, price, original_price, category, rating, reviews_count, stock_count, visibility_type, university_id, product_section, image_url, media_urls, video_url').eq('is_draft', false).limit(10);
   if (safeQuery) productsQuery = productsQuery.or(`title.ilike.%${safeQuery}%,description.ilike.%${safeQuery}%,category.ilike.%${safeQuery}%`);
   if (universityIds?.length) productsQuery = productsQuery.or(`visibility_type.eq.global,university_id.in.(${universityIds.join(',')})`);
+  const includeProducts = intent === 'product' || intent === 'media';
+  const includeVendors = intent === 'vendor' || intent === 'media';
+  const includeReels = intent === 'media';
   const [products, vendors, reels] = await Promise.all([
-    productsQuery,
-    supabaseAdmin.from('brands').select('id, name, description, logo_url, cover_url, verified, rating, avg_rating, university_id, category, owner_id').limit(20),
-    supabaseAdmin.from('reels').select('id, brand_id, title, caption, video_url, thumbnail_url, cover_url, views_count, likes_count, comments_count, shares_count, university_id').limit(20),
+    includeProducts ? productsQuery : empty,
+    includeVendors ? supabaseAdmin.from('brands').select('id, name, description, logo_url, cover_url, verified, verification_status, rating, avg_rating, university_id, category, owner_id').or(`name.ilike.%${safeQuery}%,description.ilike.%${safeQuery}%,category.ilike.%${safeQuery}%`).limit(10) : empty,
+    includeReels ? supabaseAdmin.from('reels').select('id, brand_id, title, caption, video_url, thumbnail_url, cover_url, views_count, likes_count, comments_count, shares_count, university_id').neq('status', 'deleted').eq('status', 'published').limit(10) : empty,
   ]);
   const vendorRows = vendors.data || [];
   const ownerIds = vendorRows.map((vendor) => vendor.owner_id).filter(Boolean);
   const { data: owners } = ownerIds.length
-    ? await supabaseAdmin.from('users').select('id, avatar_url').in('id', ownerIds)
-    : { data: [] as Array<{ id: string; avatar_url: string | null }> };
+    ? await supabaseAdmin.from('users').select('id, avatar_url, status').in('id', ownerIds).neq('status', 'deleted')
+    : { data: [] as Array<{ id: string; avatar_url: string | null; status?: string }> };
   const avatarByOwner = new Map((owners || []).map((owner) => [owner.id, owner.avatar_url]));
   const publicVendors = vendorRows.map(({ owner_id: _ownerId, ...vendor }) => ({ ...vendor, avatar_url: avatarByOwner.get(_ownerId) || null }));
   return { products: products.data || [], publicVendors, publicReels: reels.data || [] };

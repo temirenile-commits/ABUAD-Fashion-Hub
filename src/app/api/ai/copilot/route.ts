@@ -7,8 +7,8 @@ import { detectMilesAdminActionRequest, proposeMilesAdminAction } from '@/lib/ai
 import { isSimpleGreeting, redactMilesModelContext, safeMilesAuthorization, sanitizeMilesResponse } from '@/lib/ai/intelligence';
 import { resolveMilesContext, isAdministrativeRole, isSupportRole, type MilesContext } from '@/lib/ai/role-context';
 import { getCustomerMilesContext, getPublicMarketplaceMilesContext, getPlatformAdminMilesContext, getSupportMilesContext, getUniversityAdminMilesContext, summarizeValidatedAnalytics } from '@/lib/ai/role-tools';
-import {
-  getVendorAISettings,
+import { classifyMilesIntent, type MilesIntentDecision } from '@/lib/ai/intent';
+import { getVendorAISettings,
   getVendorFinancialSummary,
   getVendorMessages,
   getVendorOrders,
@@ -140,19 +140,16 @@ function conversationFrom(bodyMessages: unknown) {
     });
 }
 
-async function buildRoleContext(context: MilesContext, message: string, brand: any, currentTab: string, pathname: string) {
-  const marketplace = await getPublicMarketplaceMilesContext(message, context.universityIds);
-  const customer = await getCustomerMilesContext(context, message);
+async function buildRoleContext(context: MilesContext, decision: MilesIntentDecision, brand: any, currentTab: string, pathname: string) {
+  const marketplaceIntent = decision.intent === 'vendor_search' || decision.intent === 'vendor_info' ? 'vendor' : decision.requiresMedia ? 'media' : 'product';
+  const marketplace = decision.requiresMarketplace ? await getPublicMarketplaceMilesContext(decision.query, context.universityIds, marketplaceIntent) : { products: [], publicVendors: [], publicReels: [] };
+  const customer = decision.requiresCustomerContext ? await getCustomerMilesContext(context, decision.query) : { scope: 'authenticated_customer' };
   let assistantName = 'Miles';
   let writeAccess = false;
   let settings: any = null;
-  const roleData: Record<string, unknown> = {
-    baseCapabilities: context.capabilities,
-    marketplace,
-    customer,
-  };
+  const roleData: Record<string, unknown> = { baseCapabilities: context.capabilities, marketplace, customer };
 
-  if (brand && context.capabilities.includes('vendor_products')) {
+  if (decision.requiresVendorContext && brand && context.capabilities.includes('vendor_products')) {
     settings = await getVendorAISettings(brand.id);
     assistantName = settings.assistant_name || 'Miles';
     writeAccess = Boolean(settings.store_write_enabled);
@@ -165,32 +162,41 @@ async function buildRoleContext(context: MilesContext, message: string, brand: a
       const lowStockItems = getLowStockProducts(products);
       const topSeller = [...products].sort((a, b) => Number(b.sales_count || 0) - Number(a.sales_count || 0))[0];
       const averagePrice = products.length ? Math.round(products.reduce((sum, product) => sum + Number(product.price || 0), 0) / products.length) : 0;
-      roleData.vendor = {
-        storeAccess: true,
-        brand: { id: brand.id, name: brand.name, verificationStatus: brand.verification_status || 'pending', subscriptionTier: brand.subscription_tier || 'free', universityId: brand.university_id },
-        wallet: { availableBalance: money(wallet?.available_balance), pendingBalance: money(wallet?.pending_balance), lifetimeEarnings: money(wallet?.total_earnings), totalWithdrawn: money(wallet?.total_withdrawn) },
-        financialSummary,
-        products: { total: products.length, items: products.slice(0, 100), averagePrice: money(averagePrice), lowStock: lowStockItems.slice(0, 8).map((product) => product.title), outOfStock: products.filter((product) => Number(product.stock_count) === 0).slice(0, 8).map((product) => product.title), topSeller: topSeller ? { title: topSeller.title, sales: Number(topSeller.sales_count || 0) } : null },
-        services: { total: services.length, items: services },
-        promotions: { total: promos.length, items: promos },
-        orders: { pending: pendingOrders.length, overdue: overdueOrders.length, recent: orders.slice(0, 50).map((order) => ({ id: order.id, status: order.status, amount: Number(order.total_amount || 0), createdAt: order.created_at, expiresAt: order.expires_at })) },
-        reels: { total: reels.length, recent: reels.slice(0, 20).map((reel) => ({ id: reel.id, caption: reel.caption, createdAt: reel.created_at, views: reel.views_count, likes: reel.likes_count })) },
-        messages: { total: messages.length, recent: messages.slice(0, 50).map((item) => ({ id: item.id, content: item.content, isRead: item.is_read, createdAt: item.created_at })) },
-      };
+      roleData.vendor = { storeAccess: true, brand: { id: brand.id, name: brand.name, verificationStatus: brand.verification_status || 'pending', subscriptionTier: brand.subscription_tier || 'free', universityId: brand.university_id }, wallet: { availableBalance: money(wallet?.available_balance), pendingBalance: money(wallet?.pending_balance), lifetimeEarnings: money(wallet?.total_earnings), totalWithdrawn: money(wallet?.total_withdrawn) }, financialSummary, products: { total: products.length, items: products.slice(0, 100), averagePrice: money(averagePrice), lowStock: lowStockItems.slice(0, 8).map((product) => product.title), outOfStock: products.filter((product) => Number(product.stock_count) === 0).slice(0, 8).map((product) => product.title), topSeller: topSeller ? { title: topSeller.title, sales: Number(topSeller.sales_count || 0) } : null }, services: { total: services.length, items: services }, promotions: { total: promos.length, items: promos }, orders: { pending: pendingOrders.length, overdue: overdueOrders.length, recent: orders.slice(0, 50).map((order) => ({ id: order.id, status: order.status, amount: Number(order.total_amount || 0), createdAt: order.created_at, expiresAt: order.expires_at })) }, reels: { total: reels.length, recent: reels.slice(0, 20).map((reel) => ({ id: reel.id, caption: reel.caption, createdAt: reel.created_at, views: reel.views_count, likes: reel.likes_count })) }, messages: { total: messages.length, recent: messages.slice(0, 50).map((item) => ({ id: item.id, content: item.content, isRead: item.is_read, createdAt: item.created_at })) } };
     } else {
       roleData.vendor = { storeAccess: false, message: 'Vendor store access is not activated for Miles.' };
     }
   }
 
-  if (isAdministrativeRole(context)) {
-    // Platform-wide sensitive records are reserved for the overall super administrator.
-    // Other administrator roles receive only their university-scoped operational context.
+  if (decision.requiresAdminContext && isAdministrativeRole(context)) {
     const adminData = context.isOverallSuperAdmin ? await getPlatformAdminMilesContext(context) : await getUniversityAdminMilesContext(context);
     const supportData = isSupportRole(context) ? await getSupportMilesContext(context) : { supportAccess: false, cases: [] };
     roleData.admin = { adminData, supportData, analytics: summarizeValidatedAnalytics(context, adminData) };
   }
 
-  return { assistantName, writeAccess, settings, roleData, media: extractMilesMedia(roleData, context.isOverallSuperAdmin), pageContext: pageDescription(pathname, currentTab) };
+  return { assistantName, writeAccess, settings, roleData, media: decision.requiresMedia ? extractMilesMedia(roleData, context.isOverallSuperAdmin) : [], pageContext: pageDescription(pathname, currentTab) };
+}
+
+function slugify(value: string) { return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+
+type MilesCard = { type: 'product' | 'vendor'; id: string; title: string; subtitle?: string; imageUrl?: string | null; price?: number; available?: boolean; verified?: boolean; destination: string };
+
+function buildMilesCards(roleData: Record<string, any>, intent: MilesIntentDecision['intent']): MilesCard[] {
+  const marketplace = roleData.marketplace as { products?: any[]; publicVendors?: any[] };
+  const cards: MilesCard[] = [];
+  if (intent === 'product_search' || intent === 'product_info' || intent === 'media_request') {
+    (marketplace?.products || []).slice(0, 10).forEach((product: any) => {
+      if (typeof product.id !== 'string' || typeof product.title !== 'string') return;
+      cards.push({ type: 'product', id: product.id, title: product.title, subtitle: product.category || undefined, imageUrl: product.image_url || (Array.isArray(product.media_urls) ? product.media_urls[0] : null), price: Number(product.price || 0), available: Number(product.stock_count || 0) > 0, destination: `/product/${product.id}` });
+    });
+  }
+  if (intent === 'vendor_search' || intent === 'vendor_info' || intent === 'media_request') {
+    (marketplace?.publicVendors || []).slice(0, 10).forEach((vendor: any) => {
+      if (typeof vendor.id !== 'string' || typeof vendor.name !== 'string') return;
+      cards.push({ type: 'vendor', id: vendor.id, title: vendor.name, subtitle: vendor.category || undefined, imageUrl: vendor.avatar_url || vendor.logo_url || vendor.cover_url || null, verified: Boolean(vendor.verified || vendor.verification_status === 'verified'), destination: `/vendor/${slugify(vendor.name)}?id=${vendor.id}` });
+    });
+  }
+  return cards;
 }
 
 function systemRules(context: MilesContext, assistantName: string, roleData: unknown, pageContext: string) {
@@ -230,15 +236,19 @@ export async function POST(req: Request) {
     if (!lastUserMessage) return NextResponse.json({ error: 'Please enter a question for Miles.' }, { status: 400 });
     if (isRateLimited(user.id, lastUserMessage)) return NextResponse.json({ error: 'Miles is busy. Please wait a moment before trying again.' }, { status: 429 });
 
+    const conversation = conversationFrom(messages);
+    const hasUploadedImages = conversation.some((message) => Array.isArray(message.content) && message.content.some((part) => part.type === 'image_url'));
+    const decision = classifyMilesIntent(lastUserMessage, hasUploadedImages);
     const context = await resolveMilesContext(user.id, pageDescription(pathname, currentTab));
     if (!context) return NextResponse.json({ error: 'Your MasterCart role could not be verified.' }, { status: 403 });
-    const brand = context.brandIds[0] ? await getVendorProfile(user.id) : null;
-    const prepared = await buildRoleContext(context, lastUserMessage, brand, currentTab, pathname);
 
-    if (isSimpleGreeting(lastUserMessage)) {
-      const greeting = `Hi. I'm ${prepared.assistantName}. What would you like help with today?`;
-      return NextResponse.json({ text: greeting, structured: { assistantName: prepared.assistantName } });
+    if (decision.intent === 'normal_conversation' || isSimpleGreeting(lastUserMessage)) {
+      const greeting = `Hi. I'm Miles. What would you like help with today?`;
+      return NextResponse.json({ text: greeting, intent: decision.intent, structured: { assistantName: 'Miles', intent: decision.intent, cards: [], media: [] } });
     }
+
+    const brand = decision.requiresVendorContext && context.brandIds[0] ? await getVendorProfile(user.id) : null;
+    const prepared = await buildRoleContext(context, decision, brand, currentTab, pathname);
 
     if (isAdministrativeRole(context)) {
       const adminAction = detectMilesAdminActionRequest(lastUserMessage);
@@ -260,15 +270,16 @@ export async function POST(req: Request) {
       }
     }
 
-    const conversation = conversationFrom(messages);
-    const hasUploadedImages = conversation.some((message) => Array.isArray(message.content) && message.content.some((part) => part.type === 'image_url'));
+    const cards = buildMilesCards(prepared.roleData, decision.intent);
     const response = await milesChat([
       { role: 'system', content: systemRules(context, prepared.assistantName, prepared.roleData, prepared.pageContext || pageDescription(pathname, currentTab)) },
       ...conversation,
     ], { temperature: 0.15, maxTokens: 900, preferMultimodal: hasUploadedImages });
 
     console.info('[MILES_REQUEST_SUCCESS]', { requestId, userId: user.id, roles: context.roles, capabilityCount: context.capabilities.length, latencyMs: Date.now() - startedAt });
-    return NextResponse.json({ text: sanitizeMilesResponse(response.text, { preservePrivateIdentifiers: context.isOverallSuperAdmin }), media: prepared.media, structured: { assistantName: prepared.assistantName, currentTab, pageContext: prepared.pageContext, media: prepared.media } });
+    const searchableIntent = ['product_search', 'vendor_search', 'product_info', 'vendor_info', 'media_request'].includes(decision.intent);
+    const text = searchableIntent && cards.length === 0 ? `I couldn't find a matching ${decision.intent.startsWith('vendor') ? 'vendor or store' : 'product'} in the MasterCart marketplace.` : cards.length && /couldn't find|could not find|no matching/i.test(response.text) ? `I found ${cards.length} relevant MasterCart result${cards.length === 1 ? '' : 's'}.` : sanitizeMilesResponse(response.text, { preservePrivateIdentifiers: context.isOverallSuperAdmin });
+    return NextResponse.json({ text, intent: decision.intent, media: prepared.media, cards, structured: { assistantName: prepared.assistantName, currentTab, pageContext: prepared.pageContext, intent: decision.intent, query: decision.query, cards, media: prepared.media } });
   } catch (error) {
     if (error instanceof AIOrchestrationError) {
       console.error('[MILES_AI_FAILURE]', { requestId, latencyMs: Date.now() - startedAt, failures: error.failures });

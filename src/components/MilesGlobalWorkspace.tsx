@@ -9,6 +9,7 @@ import MilesProfileAvatar from '@/components/MilesProfileAvatar';
 type MilesAttachment = { type: 'image'; url: string; thumbUrl?: string; name: string };
 type Message = { role: 'user' | 'assistant'; content: string; attachments?: MilesAttachment[] };
 type MediaItem = { kind: 'image' | 'video'; url: string; thumbnailUrl?: string; label: string; source: string; entityId?: string };
+type MilesCard = { type: 'product' | 'vendor'; id: string; title: string; subtitle?: string; imageUrl?: string | null; price?: number; available?: boolean; verified?: boolean; destination: string };
 type Proposal = { actionId: string; confirmationPhrase: string; summary: string; highRisk?: boolean; expiresAt?: string; domain?: 'admin' | 'vendor' };
 
 const initialMessage: Message = { role: 'assistant', content: `Hi. I’m ${MILES_ASSISTANT_NAME}. How can I help you with MasterCart today?` };
@@ -37,6 +38,7 @@ export default function MilesGlobalWorkspace() {
   const [uploading, setUploading] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<MilesAttachment | null>(null);
   const [media, setMedia] = useState<MediaItem[]>([]);
+  const [cards, setCards] = useState<MilesCard[]>([]);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [messages, setMessages] = useState<Message[]>([initialMessage]);
 
@@ -73,15 +75,16 @@ export default function MilesGlobalWorkspace() {
     if (!content || busy || uploading) return;
     const nextMessage: Message = { role: 'user', content, ...(pendingAttachment ? { attachments: [pendingAttachment] } : {}) };
     const next = [...messages, nextMessage];
-    setMessages(next); setInput(''); setPendingAttachment(null); setBusy(true); setMedia([]);
+    setMessages(next); setInput(''); setPendingAttachment(null); setBusy(true); setMedia([]); setCards([]);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Miles session unavailable');
       const response = await fetch('/api/ai/copilot', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ messages: next, pathname, currentTab: 'overview' }) });
       if (!response.ok) throw new Error('Miles request failed');
-      const data = await response.json() as { text?: unknown; proposal?: Proposal; domain?: 'admin' | 'vendor'; media?: MediaItem[] };
+      const data = await response.json() as { text?: unknown; proposal?: Proposal; domain?: 'admin' | 'vendor'; media?: MediaItem[]; cards?: MilesCard[] };
       if (data.proposal) setProposal({ ...data.proposal, domain: data.domain });
       setMedia(Array.isArray(data.media) ? data.media : []);
+      setCards(Array.isArray(data.cards) ? data.cards : []);
       setMessages([...next, { role: 'assistant', content: data.proposal?.summary || safeText(data.text, MILES_MESSAGES.unavailable) }]);
     } catch { setMessages([...next, { role: 'assistant', content: MILES_MESSAGES.unavailable }]); }
     finally { setBusy(false); }
@@ -115,7 +118,8 @@ export default function MilesGlobalWorkspace() {
       </header>
       <div style={{ flex: 1, minHeight: full ? 0 : 280, overflowY: 'auto', padding: full ? '24px max(18px, env(safe-area-inset-left))' : 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {messages.map((message, index) => <div key={`${message.role}-${index}`} style={{ alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '92%', display: 'flex', alignItems: 'flex-end', gap: 8, flexDirection: message.role === 'user' ? 'row-reverse' : 'row' }}>{message.role === 'assistant' && <MilesProfileAvatar size={30} />}<div style={{ padding: '10px 12px', borderRadius: message.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px', border: message.role === 'user' ? '1px solid rgba(0,211,154,.20)' : '1px solid rgba(255,255,255,.08)', background: message.role === 'user' ? 'rgba(0,211,154,.12)' : '#111413', whiteSpace: 'pre-wrap', lineHeight: 1.45, fontSize: 14 }}>{message.attachments?.map((attachment) => <img key={attachment.url} src={attachment.thumbUrl || attachment.url} alt={attachment.name} style={{ display: 'block', width: 180, maxWidth: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 10, marginBottom: 8 }} />)}{message.content}</div></div>)}
-        {media.length > 0 && <div style={{ maxWidth: '100%' }}><div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Relevant MasterCart media</div><MediaStrip items={media} /></div>}
+        {cards.length > 0 && <div style={{ display: 'grid', gap: 8, marginTop: 2 }}><div style={{ fontSize: 12, color: '#9ca3af' }}>MasterCart results</div>{cards.map((card) => <a key={`${card.type}-${card.id}`} href={card.destination} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 9, borderRadius: 13, background: '#111827', border: '1px solid rgba(255,255,255,.10)', color: '#fff', textDecoration: 'none' }}><div style={{ width: 54, height: 54, borderRadius: 10, overflow: 'hidden', flexShrink: 0, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg,#1d4ed8,#4338ca)', color: '#fff', fontWeight: 700 }}>{card.imageUrl ? <img src={card.imageUrl} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : card.type === 'vendor' ? 'V' : 'P'}</div><div style={{ minWidth: 0, flex: 1 }}><div style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{card.title}</div><div style={{ color: '#9ca3af', fontSize: 11, marginTop: 3 }}>{card.subtitle || (card.type === 'vendor' ? 'Store' : 'Product')}</div>{card.type === 'product' && <div style={{ color: '#cbd5e1', fontSize: 12, marginTop: 3 }}>{`₦${Number(card.price || 0).toLocaleString('en-NG')} · ${card.available ? 'Available' : 'Unavailable'}`}</div>}{card.type === 'vendor' && card.verified && <div style={{ color: '#86efac', fontSize: 11, marginTop: 3 }}>✓ Verified vendor</div>}</div><span aria-hidden="true" style={{ color: '#93c5fd', fontSize: 18 }}>›</span></a>)}</div>}
+        {media.length > 0 && <div style={{ maxWidth: '100%' }}><div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Relevant media</div><MediaStrip items={media} /></div>}
         {busy && <div role="status" aria-live="polite" style={{ color: '#9ca3af', fontSize: 13 }}>{MILES_MESSAGES.thinking}</div>}
         {proposal && <div style={{ padding: 12, borderRadius: 16, border: '1px solid rgba(251,191,36,.5)', background: 'rgba(120,53,15,.28)' }}><div style={{ fontSize: 13, color: '#fde68a', marginBottom: 10 }}>Confirmation required</div><div style={{ fontSize: 13, marginBottom: 10 }}>{proposal.summary}</div><div style={{ display: 'flex', gap: 8 }}><button type="button" disabled={busy} onClick={confirmAction} style={confirmButton}>Confirm action</button><button type="button" disabled={busy} onClick={() => setProposal(null)} style={cancelButton}>Cancel</button></div></div>}
       </div>
