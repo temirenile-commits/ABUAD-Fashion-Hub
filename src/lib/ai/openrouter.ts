@@ -65,6 +65,7 @@ export class OpenRouterProvider implements AIProvider {
             temperature: options?.temperature ?? 0.2,
             max_tokens: options?.maxTokens ?? 900,
             stream: false,
+            reasoning: { exclude: true },
           }),
           signal: controller.signal,
           cache: 'no-store',
