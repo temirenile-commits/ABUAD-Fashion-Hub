@@ -7,12 +7,14 @@ type Brand = { id: string; owner_id: string; name: string; verification_status: 
 export async function getVendorProfile(ownerId: string, requestedBrandId?: string | null) {
   let query = supabaseAdmin
     .from('brands')
-    .select('id, owner_id, name, verification_status, subscription_tier, university_id, marketplace_type')
+    .select('id, owner_id, name, description, logo_url, cover_url, verification_status, subscription_tier, university_id, marketplace_type')
     .eq('owner_id', ownerId);
   if (requestedBrandId) query = query.eq('id', requestedBrandId);
   const { data, error } = await query.order('created_at', { ascending: true }).maybeSingle();
   if (error) throw new Error('Unable to load your vendor profile.');
-  return data as Brand | null;
+  if (!data) return null;
+  const { data: owner } = await supabaseAdmin.from('users').select('avatar_url').eq('id', ownerId).maybeSingle();
+  return { ...data, ownerAvatarUrl: owner?.avatar_url || null } as Brand | null;
 }
 
 export async function getVendorAISettings(brandId: string) {
@@ -28,7 +30,7 @@ export async function getVendorAISettings(brandId: string) {
 export async function getVendorProducts(brandId: string) {
   const { data, error } = await supabaseAdmin
     .from('products')
-    .select('id, title, price, stock_count, sales_count, views_count, category')
+    .select('id, title, description, price, original_price, stock_count, sales_count, views_count, category, image_url, media_urls, video_url')
     .eq('brand_id', brandId)
     .limit(100);
   if (error) throw new Error('Unable to load vendor products.');
@@ -102,7 +104,7 @@ export async function getVendorMessages(userId: string, limit = 50) {
 export async function getVendorReels(brandId: string) {
   const { data, error } = await supabaseAdmin
     .from('reels')
-    .select('id, caption, video_url, created_at, views_count, likes_count, comments_count')
+    .select('id, title, caption, video_url, thumbnail_url, cover_url, created_at, views_count, likes_count, comments_count')
     .eq('brand_id', brandId)
     .order('created_at', { ascending: false })
     .limit(20);

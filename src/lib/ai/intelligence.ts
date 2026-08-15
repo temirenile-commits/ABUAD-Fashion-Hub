@@ -1,6 +1,7 @@
 const GREETING_WORDS = new Set(['hi', 'hello', 'hey', 'hiya', 'morning', 'afternoon', 'evening', 'yo']);
 
 const SENSITIVE_KEY = /(^|_)(id|ids|uuid|token|secret|key|scope|permissions?|admin_permissions|owner_id|user_id|customer_id|brand_id|product_id|service_id|university_id)(_|$)/i;
+const SECRET_KEY = /(^|_)(token|secret|api[_-]?key|private[_-]?key|password|credential|authorization|cookie|session)(_|$)/i;
 const INTERNAL_LANGUAGE = /(?:system prompt|developer message|internal reasoning|chain of thought|thinking process|current (?:user|scope|permissions)\s*[:=]|user_id\s*[:=]|owner_id\s*[:=]|admin_permissions\s*[:=]|access token\s*[:=]|api key\s*[:=]|deepseek\s+(?:balance|key|error)|openrouter\s+(?:key|error)|provider\s+(?:failed|error|name)\s*[:=]|stack trace)/i;
 const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 
@@ -25,26 +26,29 @@ function isSensitiveKey(key: string) {
  * Keep the model useful while preventing raw authorization topology and database identifiers
  * from entering the prompt. This is defense-in-depth; backend tools still authorize every read.
  */
-export function redactMilesModelContext(value: unknown, key = ''): unknown {
-  if (isSensitiveKey(key)) return undefined;
-  if (Array.isArray(value)) return value.map((item) => redactMilesModelContext(item)).filter((item) => item !== undefined);
+export function redactMilesModelContext(value: unknown, key = '', options: { allowSensitiveOperationalIdentifiers?: boolean } = {}): unknown {
+  const allowSensitiveOperationalIdentifiers = Boolean(options.allowSensitiveOperationalIdentifiers);
+  if (SECRET_KEY.test(key)) return undefined;
+  if (isSensitiveKey(key) && !allowSensitiveOperationalIdentifiers) return undefined;
+  if (Array.isArray(value)) return value.map((item) => redactMilesModelContext(item, '', options)).filter((item) => item !== undefined);
   if (!value || typeof value !== 'object') return value;
   return Object.fromEntries(Object.entries(value as Record<string, unknown>)
-    .filter(([childKey]) => !isSensitiveKey(childKey) && !['permissionNote', 'generatedFrom'].includes(childKey))
-    .map(([childKey, childValue]) => [childKey, redactMilesModelContext(childValue, childKey)])
+    .filter(([childKey]) => !SECRET_KEY.test(childKey) && (allowSensitiveOperationalIdentifiers || !isSensitiveKey(childKey)) && !['permissionNote', 'generatedFrom'].includes(childKey))
+    .map(([childKey, childValue]) => [childKey, redactMilesModelContext(childValue, childKey, options)])
     .filter(([, childValue]) => childValue !== undefined));
 }
 
-export function safeMilesAuthorization(context: { roles: string[]; capabilities: string[]; scope: { kind: string }; isFullAdmin: boolean }) {
+export function safeMilesAuthorization(context: { roles: string[]; capabilities: string[]; scope: { kind: string }; isFullAdmin: boolean; isOverallSuperAdmin?: boolean }) {
   return {
     roleCategories: context.roles.map((role) => role === 'vendor' ? 'vendor' : ['super_admin', 'admin', 'sub_admin', 'university_admin', 'university_staff'].includes(role) ? 'administrator' : role === 'customer_support_agent' ? 'support' : 'customer'),
     capabilityCategories: context.capabilities.map((capability) => capability.split(':')[0]).filter(Boolean),
     scopeLevel: context.scope.kind,
     fullAdmin: context.isFullAdmin,
+    overallSuperAdmin: Boolean(context.isOverallSuperAdmin),
   };
 }
 
-export function sanitizeMilesResponse(value: string): string {
+export function sanitizeMilesResponse(value: string, options: { preservePrivateIdentifiers?: boolean } = {}): string {
   let cleaned = String(value || '')
     .replace(/<think>[\s\S]*?<\/think>/gi, '')
     .replace(/<analysis>[\s\S]*?<\/analysis>/gi, '')
@@ -52,7 +56,7 @@ export function sanitizeMilesResponse(value: string): string {
     .replace(/^\s*(here(?:'|’)s|this is)\s+(my|the)?\s*(thinking|analysis|reasoning|thought process)\s*:[\s\S]*$/i, '')
     .replace(/^\s*(step\s*\d+|analysis|reasoning|internal notes?)\s*[:\-].*$/gim, '')
     .replace(/^\s*(user|assistant|system)\s*[:\-]\s*/gim, '')
-    .replace(UUID, '[private identifier]')
+    .replace(options.preservePrivateIdentifiers ? /$^/g : UUID, '[private identifier]')
     .trim();
 
   const internalStart = cleaned.search(/(?:here(?:'|’)s my thinking process|internal reasoning|system prompt|developer message|chain of thought)/i);

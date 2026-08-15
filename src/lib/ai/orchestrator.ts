@@ -32,7 +32,7 @@ function deepseekProvider() {
   return {
     name: 'deepseek' as const,
     model: 'deepseek-chat',
-    async generateResponse(messages: AIMessage[], options?: { temperature?: number; maxTokens?: number }): Promise<AIProviderResult> {
+    async generateResponse(messages: AIMessage[], options?: { temperature?: number; maxTokens?: number; preferMultimodal?: boolean }): Promise<AIProviderResult> {
       try {
         const result = await deepseekChat(messages, options);
         return { ...result, provider: 'deepseek' };
@@ -44,17 +44,21 @@ function deepseekProvider() {
   };
 }
 
-function providers(): Partial<Record<AIProviderName, { name: AIProviderName; model: string; generateResponse: (messages: AIMessage[], options?: { temperature?: number; maxTokens?: number }) => Promise<AIProviderResult> }>> {
+function providers(): Partial<Record<AIProviderName, { name: AIProviderName; model: string; generateResponse: (messages: AIMessage[], options?: { temperature?: number; maxTokens?: number; preferMultimodal?: boolean }) => Promise<AIProviderResult> }>> {
   return { deepseek: deepseekProvider(), openrouter: new OpenRouterProvider() };
 }
 
-export async function milesChat(messages: AIMessage[], options?: { temperature?: number; maxTokens?: number }) {
+export async function milesChat(messages: AIMessage[], options?: { temperature?: number; maxTokens?: number; preferMultimodal?: boolean }) {
   const available = providers();
   const failures: Array<Pick<AIProviderError, 'provider' | 'failureType'>> = [];
 
   const priority = configuredProviderPriority();
   for (const providerName of priority) {
     try {
+      if (options?.preferMultimodal && providerName === 'deepseek') {
+        failures.push({ provider: providerName, failureType: 'MODEL_UNAVAILABLE' });
+        continue;
+      }
       const provider = available[providerName];
       if (!provider) {
         failures.push({ provider: providerName, failureType: 'PROVIDER_UNAVAILABLE' });

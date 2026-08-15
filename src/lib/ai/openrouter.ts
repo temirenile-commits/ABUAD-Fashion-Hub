@@ -8,7 +8,7 @@ export class OpenRouterProvider implements AIProvider {
   readonly name = 'openrouter' as const;
   readonly model = OPENROUTER_MODEL;
 
-  async generateResponse(messages: AIMessage[], options?: { temperature?: number; maxTokens?: number }): Promise<AIProviderResult> {
+  async generateResponse(messages: AIMessage[], options?: { temperature?: number; maxTokens?: number; preferMultimodal?: boolean }): Promise<AIProviderResult> {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       throw new AIProviderError('OpenRouter is not configured.', this.name, 'PROVIDER_UNAVAILABLE', false, false, 500);

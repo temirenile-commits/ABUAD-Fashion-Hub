@@ -1,10 +1,21 @@
 const DEEPSEEK_ENDPOINT = 'https://api.deepseek.com/chat/completions';
 const DEEPSEEK_MODEL = 'deepseek-chat';
 
+import type { AIMessage } from '@/lib/ai/provider-types';
+
 type DeepSeekMessage = {
   role: 'system' | 'user' | 'assistant';
   content: string;
 };
+
+function toDeepSeekMessages(messages: AIMessage[]): DeepSeekMessage[] {
+  return messages.map((message) => ({
+    role: message.role,
+    content: typeof message.content === 'string'
+      ? message.content
+      : message.content.map((part) => part.type === 'text' ? part.text : `[Uploaded image: ${part.image_url.url}]`).join(' '),
+  }));
+}
 
 export class DeepSeekProviderError extends Error {
   constructor(
@@ -17,7 +28,7 @@ export class DeepSeekProviderError extends Error {
   }
 }
 
-export async function deepseekChat(messages: DeepSeekMessage[], options?: { temperature?: number; maxTokens?: number }) {
+export async function deepseekChat(messages: AIMessage[], options?: { temperature?: number; maxTokens?: number; preferMultimodal?: boolean }) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) throw new DeepSeekProviderError('DeepSeek is not configured on the server.', 500, 'AI_PROVIDER_NOT_CONFIGURED');
 
@@ -34,7 +45,7 @@ export async function deepseekChat(messages: DeepSeekMessage[], options?: { temp
         },
         body: JSON.stringify({
           model: DEEPSEEK_MODEL,
-          messages,
+          messages: toDeepSeekMessages(messages),
           temperature: options?.temperature ?? 0.2,
           max_tokens: options?.maxTokens ?? 900,
           stream: false,

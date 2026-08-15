@@ -21,6 +21,8 @@ export type MilesContext = {
   universityIds: string[] | null;
   brandIds: string[];
   isFullAdmin: boolean;
+  /** Only the designated overall super administrator may receive highly sensitive operational context. */
+  isOverallSuperAdmin: boolean;
   scope: MilesScope;
   pageContext: string;
 };
@@ -119,6 +121,9 @@ export async function resolveMilesContext(userId: string, pageContext = 'The use
     ...teams.map((team) => team.permissions || []),
   ]);
   const isFullAdmin = roles.some((role) => PLATFORM_ROLES.has(role));
+  // `admin` is retained as a legacy platform role, but only the canonical
+  // `super_admin` role is allowed to receive highly sensitive platform context.
+  const isOverallSuperAdmin = roles.includes('super_admin');
   const teamUniversityIds = teams.map((team) => team.university_id).filter(Boolean) as string[];
   const universityIds: string[] | null = isFullAdmin ? null : [...new Set([user.university_id, ...teamUniversityIds].filter(Boolean) as string[])];
 
@@ -138,6 +143,7 @@ export async function resolveMilesContext(userId: string, pageContext = 'The use
     universityIds,
     brandIds,
     isFullAdmin,
+    isOverallSuperAdmin,
     scope: { kind: scopeKind, userId, universityIds, brandIds },
     pageContext,
   };

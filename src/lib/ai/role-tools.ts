@@ -41,11 +41,11 @@ export async function getUniversityAdminMilesContext(context: MilesContext) {
   };
 
   const [vendors, products, orders, users, reels, support] = await Promise.all([
-    scoped(supabaseAdmin.from('brands').select('id, name, owner_id, verified, verification_status, university_id, rating, avg_rating, sales_count, weekly_orders, last_active')).limit(limit),
-    scoped(supabaseAdmin.from('products').select('id, brand_id, title, price, stock_count, sales_count, views_count, rating, university_id, visibility_type')).limit(limit),
+    scoped(supabaseAdmin.from('brands').select('id, name, description, owner_id, logo_url, cover_url, verified, verification_status, university_id, rating, avg_rating, sales_count, weekly_orders, last_active')).limit(limit),
+    scoped(supabaseAdmin.from('products').select('id, brand_id, title, description, price, stock_count, sales_count, views_count, rating, university_id, visibility_type, image_url, media_urls, video_url')).limit(limit),
     scoped(supabaseAdmin.from('orders').select('id, customer_id, brand_id, total_amount, status, created_at, university_id')).order('created_at', { ascending: false }).limit(limit),
     scoped(supabaseAdmin.from('users').select('id, role, status, university_id, created_at, last_active')).limit(limit),
-    scoped(supabaseAdmin.from('reels').select('id, brand_id, title, caption, views_count, likes_count, comments_count, shares_count, created_at, university_id')).limit(limit),
+    scoped(supabaseAdmin.from('reels').select('id, brand_id, title, caption, video_url, thumbnail_url, cover_url, views_count, likes_count, comments_count, shares_count, created_at, university_id')).limit(limit),
     scoped(supabaseAdmin.from('notifications').select('id, type, title, content, created_at, university_id')).order('created_at', { ascending: false }).limit(20),
   ]);
   return { scope: universityIds, vendors: vendors.data || [], products: products.data || [], orders: orders.data || [], users: users.data || [], reels: reels.data || [], supportSignals: support.data || [] };
@@ -54,10 +54,10 @@ export async function getUniversityAdminMilesContext(context: MilesContext) {
 export async function getPlatformAdminMilesContext(context: MilesContext) {
   const [users, brands, products, orders, reels, universities, notifications] = await Promise.all([
     supabaseAdmin.from('users').select('id, role, status, university_id, created_at, last_active').limit(limit),
-    supabaseAdmin.from('brands').select('id, name, owner_id, verified, verification_status, university_id, rating, avg_rating, sales_count, weekly_orders, last_active').limit(limit),
-    supabaseAdmin.from('products').select('id, brand_id, title, price, stock_count, sales_count, views_count, rating, university_id').limit(limit),
+    supabaseAdmin.from('brands').select('id, name, description, owner_id, logo_url, cover_url, verified, verification_status, university_id, rating, avg_rating, sales_count, weekly_orders, last_active').limit(limit),
+    supabaseAdmin.from('products').select('id, brand_id, title, description, price, stock_count, sales_count, views_count, rating, university_id, image_url, media_urls, video_url').limit(limit),
     supabaseAdmin.from('orders').select('id, customer_id, brand_id, total_amount, status, created_at, university_id').order('created_at', { ascending: false }).limit(limit),
-    supabaseAdmin.from('reels').select('id, brand_id, title, views_count, likes_count, comments_count, shares_count, created_at, university_id').limit(limit),
+    supabaseAdmin.from('reels').select('id, brand_id, title, caption, video_url, thumbnail_url, cover_url, views_count, likes_count, comments_count, shares_count, created_at, university_id').limit(limit),
     supabaseAdmin.from('universities').select('id, name, is_active, created_at').limit(limit),
     supabaseAdmin.from('notifications').select('id, type, title, content, created_at, university_id').order('created_at', { ascending: false }).limit(20),
   ]);
@@ -71,10 +71,17 @@ export async function getPublicMarketplaceMilesContext(query: string, university
   if (universityIds?.length) productsQuery = productsQuery.or(`visibility_type.eq.global,university_id.in.(${universityIds.join(',')})`);
   const [products, vendors, reels] = await Promise.all([
     productsQuery,
-    supabaseAdmin.from('brands').select('id, name, description, logo_url, verified, rating, avg_rating, university_id, category').limit(20),
-    supabaseAdmin.from('reels').select('id, brand_id, title, caption, views_count, likes_count, comments_count, shares_count, university_id').limit(20),
+    supabaseAdmin.from('brands').select('id, name, description, logo_url, cover_url, verified, rating, avg_rating, university_id, category, owner_id').limit(20),
+    supabaseAdmin.from('reels').select('id, brand_id, title, caption, video_url, thumbnail_url, cover_url, views_count, likes_count, comments_count, shares_count, university_id').limit(20),
   ]);
-  return { products: products.data || [], publicVendors: vendors.data || [], publicReels: reels.data || [] };
+  const vendorRows = vendors.data || [];
+  const ownerIds = vendorRows.map((vendor) => vendor.owner_id).filter(Boolean);
+  const { data: owners } = ownerIds.length
+    ? await supabaseAdmin.from('users').select('id, avatar_url').in('id', ownerIds)
+    : { data: [] as Array<{ id: string; avatar_url: string | null }> };
+  const avatarByOwner = new Map((owners || []).map((owner) => [owner.id, owner.avatar_url]));
+  const publicVendors = vendorRows.map(({ owner_id: _ownerId, ...vendor }) => ({ ...vendor, avatar_url: avatarByOwner.get(_ownerId) || null }));
+  return { products: products.data || [], publicVendors, publicReels: reels.data || [] };
 }
 
 export async function getSupportMilesContext(context: MilesContext) {

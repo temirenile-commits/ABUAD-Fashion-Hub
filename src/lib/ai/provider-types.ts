@@ -1,6 +1,10 @@
+export type AIMessagePart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } };
+
 export type AIMessage = {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content: string | AIMessagePart[];
 };
 
 export type AIFailureType =
@@ -47,5 +51,5 @@ export class AIOrchestrationError extends Error {
 export interface AIProvider {
   readonly name: AIProviderName;
   readonly model: string;
-  generateResponse(messages: AIMessage[], options?: { temperature?: number; maxTokens?: number }): Promise<AIProviderResult>;
+  generateResponse(messages: AIMessage[], options?: { temperature?: number; maxTokens?: number; preferMultimodal?: boolean }): Promise<AIProviderResult>;
 }
