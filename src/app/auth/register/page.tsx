@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import styles from '../auth.module.css';
 import { supabase } from '@/lib/supabase';
+import { getAuthCallbackUrl } from '@/lib/auth-redirect';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function RegisterPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getAuthCallbackUrl(new URLSearchParams(window.location.search).get('redirect')),
         },
       });
       if (error) throw error;
