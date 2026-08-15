@@ -2,13 +2,13 @@ import type { AIProviderName, AIProviderState } from '@/lib/ai/provider-types';
 
 export const MILES_AI_CONFIG = {
   gateway: 'server-provider-router',
-  defaultRoute: 'deepseek' as AIProviderName,
+  defaultRoute: 'openrouter' as AIProviderName,
   freeRouter: (process.env.OPENROUTER_MODEL || 'openrouter/free').trim(),
-  fallbackRoutes: ['openrouter'] as AIProviderName[],
+  fallbackRoutes: ['deepseek'] as AIProviderName[],
   enabledProviders: ['deepseek', 'openrouter'] as AIProviderName[],
   providerStates: {
-    deepseek: 'active',
-    openrouter: 'fallback',
+    deepseek: 'fallback',
+    openrouter: 'active',
     openai: 'inactive',
     gemini: 'inactive',
     claude: 'inactive',
@@ -40,5 +40,6 @@ export function configuredProviderPriority(): AIProviderName[] {
     .split(',')
     .map((value) => value.trim().toLowerCase())
     .filter((value): value is AIProviderName => (MILES_AI_CONFIG.enabledProviders as readonly string[]).includes(value));
-  return [...new Set(configured.length ? configured : [MILES_AI_CONFIG.defaultRoute, ...MILES_AI_CONFIG.fallbackRoutes])];
+  const requested = configured.length ? configured : [MILES_AI_CONFIG.defaultRoute, ...MILES_AI_CONFIG.fallbackRoutes];
+  return [MILES_AI_CONFIG.defaultRoute, ...new Set(requested.filter((provider) => provider !== MILES_AI_CONFIG.defaultRoute))];
 }
