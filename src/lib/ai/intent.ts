@@ -5,6 +5,7 @@ export type MilesIntent =
   | 'vendor_search'
   | 'product_info'
   | 'vendor_info'
+  | 'personal_store_query'
   | 'order_query'
   | 'delivery_query'
   | 'reel_query'
@@ -55,6 +56,7 @@ export function classifyMilesIntent(message: string, hasUploadedImage = false, h
   const query = entityQuery(message);
   const normalized = message.trim().toLowerCase();
   if (hasUploadedImage) return { intent: 'image_analysis', query, requiresMarketplace: false, requiresVendorContext: false, requiresCustomerContext: false, requiresAdminContext: false, requiresMedia: false };
+  if (/\b(my|our|own)\b.*\b(store|shop|brand|vendor)\b|\b(store|shop|brand)\s+name\b.*\b(my|mine|own)\b/i.test(normalized)) return { intent: 'personal_store_query', query, requiresMarketplace: false, requiresVendorContext: true, requiresCustomerContext: false, requiresAdminContext: false, requiresMedia: false };
   if (hasRecentCards && /\b(cheapest|lowest|least expensive|most expensive|best|which one|second|third|first|that vendor|who sells|is it verified)\b/i.test(normalized)) return { intent: /\b(vendor|seller|store|brand|who sells|verified)\b/i.test(normalized) ? 'vendor_info' : 'product_info', query, requiresMarketplace: true, requiresVendorContext: false, requiresCustomerContext: false, requiresAdminContext: false, requiresMedia: false };
   if (/\b(that thing i bought|what i bought|purchase|purchased|order|orders)\b/i.test(normalized)) return { intent: 'order_query', query, requiresMarketplace: false, requiresVendorContext: false, requiresCustomerContext: true, requiresAdminContext: false, requiresMedia: false };
   if (/\b(delivery|deliveries|shipping|shipped|delivered|tracking|dispatch)\b/i.test(normalized)) return { intent: 'delivery_query', query, requiresMarketplace: false, requiresVendorContext: false, requiresCustomerContext: true, requiresAdminContext: false, requiresMedia: false };

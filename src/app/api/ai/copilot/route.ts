@@ -267,6 +267,17 @@ export async function POST(req: Request) {
     const configuration = await resolveMilesConfiguration(user.id, pageDescription(pathname, currentTab));
     if (!configuration) return NextResponse.json({ error: 'Miles configuration could not be resolved.' }, { status: 500 });
 
+    if (effectiveDecision.intent === 'personal_store_query') {
+      const ownBrand = await getVendorProfile(user.id);
+      if (!ownBrand) {
+        const answer = context.roles.includes('vendor') ? 'I could not verify a store profile linked to your vendor account yet.' : 'Your account is not currently linked to a vendor store profile.';
+        return NextResponse.json({ text: answer, intent: effectiveDecision.intent, memory, cards: [], structured: { assistantName: configuration.identity.name, intent: effectiveDecision.intent, cards: [], media: [], memory } });
+      }
+      const ownCard = { type: 'vendor' as const, id: ownBrand.id, title: ownBrand.name, subtitle: ownBrand.marketplace_type || 'Your MasterCart store', verified: ownBrand.verification_status === 'verified', destination: `/vendor/${ownBrand.id}` };
+      const answer = `Your store name is “${ownBrand.name}”.`;
+      const nextMemory = updateMilesMemory(memory, { question: lastUserMessage, intent: effectiveDecision.intent, cards: [ownCard] });
+      return NextResponse.json({ text: answer, intent: effectiveDecision.intent, memory: nextMemory, cards: [ownCard], structured: { assistantName: configuration.identity.name, intent: effectiveDecision.intent, cards: [ownCard], media: [], memory: nextMemory } });
+    }
     if (decision.intent === 'normal_conversation' || isSimpleGreeting(lastUserMessage)) {
       const nextMemory = updateMilesMemory(memory, { question: lastUserMessage, intent: decision.intent });
       return NextResponse.json({ text: naturalReply(lastUserMessage).replace(/\bMiles\b/g, configuration.identity.name), intent: decision.intent, memory: nextMemory, structured: { assistantName: configuration.identity.name, intent: decision.intent, cards: [], media: [], memory: nextMemory } });
