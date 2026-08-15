@@ -195,9 +195,9 @@ export default function MilesPersistentBubble() {
       .miles-bubble.miles-dragging{animation-play-state:paused;}
       .miles-bubble-reels::before{opacity:.46;}
       .miles-bubble-reels::after{opacity:.48;}
-      @keyframes miles-life{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(0,-1.5px,0) scale(1.012)}}
-      @keyframes miles-glow{0%,100%{transform:scale(.96);opacity:.56}50%{transform:scale(1.04);opacity:.78}}
-      @keyframes miles-liquid{0%,100%{background-position:0% 0%,100% 100%,0% 50%;transform:translate3d(0,0,0) scale(1)}50%{background-position:28% 18%,70% 82%,100% 46%;transform:translate3d(1px,-1px,0) scale(1.025)}}
+      @keyframes miles-life{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(0,-2.5px,0) scale(1.018)}}
+      @keyframes miles-glow{0%,100%{transform:scale(.92);opacity:.48}50%{transform:scale(1.08);opacity:.9}}
+      @keyframes miles-liquid{0%,100%{background-position:0% 0%,100% 100%,0% 50%;transform:translate3d(0,0,0) scale(1)}50%{background-position:32% 20%,68% 80%,100% 46%;transform:translate3d(1px,-1px,0) scale(1.035)}}
       @media (prefers-reduced-motion: reduce){.miles-bubble,.miles-bubble::before,.miles-bubble::after{animation:none!important}.miles-bubble{transition:opacity .2s ease,box-shadow .2s ease,transform .2s ease!important}.miles-bubble:hover,.miles-bubble:focus-visible{transform:scale(1.02)}}
     `}</style>
   </>;
