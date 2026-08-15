@@ -1,4 +1,4 @@
-const PRODUCTION_AUTH_ORIGIN = 'https://master-cart-reshuffled.vercel.app';
+const PRODUCTION_AUTH_ORIGIN = 'https://master-cart-camp.vercel.app';
 const ALLOWED_PRODUCTION_HOSTS = new Set([
   'master-cart-reshuffled.vercel.app',
   'master-cart-camp.vercel.app',
