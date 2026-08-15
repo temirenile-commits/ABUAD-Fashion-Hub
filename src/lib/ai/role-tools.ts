@@ -73,9 +73,11 @@ export async function getPublicMarketplaceMilesContext(query: string, university
   const includeProducts = intent === 'product' || intent === 'media';
   const includeVendors = intent === 'vendor' || intent === 'media';
   const includeReels = intent === 'media';
+  const vendorTokens = safeQuery.split(/\s+/).map((token) => token.trim()).filter((token) => token.length >= 2).slice(0, 5);
+  const vendorFilter = vendorTokens.length ? vendorTokens.flatMap((token) => [`name.ilike.%${token}%`, `description.ilike.%${token}%`, `category.ilike.%${token}%`]).join(',') : 'name.ilike.% %';
   const [products, vendors, reels] = await Promise.all([
     includeProducts ? productsQuery : empty,
-    includeVendors ? supabaseAdmin.from('brands').select('id, name, description, logo_url, cover_url, verified, verification_status, rating, avg_rating, university_id, category, owner_id').or(`name.ilike.%${safeQuery}%,description.ilike.%${safeQuery}%,category.ilike.%${safeQuery}%`).limit(10) : empty,
+    includeVendors ? supabaseAdmin.from('brands').select('id, name, description, logo_url, cover_url, verified, verification_status, rating, avg_rating, university_id, category, owner_id').or(vendorFilter).limit(10) : empty,
     includeReels ? supabaseAdmin.from('reels').select('id, brand_id, title, caption, video_url, thumbnail_url, cover_url, views_count, likes_count, comments_count, shares_count, university_id').neq('status', 'deleted').eq('status', 'published').limit(10) : empty,
   ]);
   const vendorRows = vendors.data || [];
