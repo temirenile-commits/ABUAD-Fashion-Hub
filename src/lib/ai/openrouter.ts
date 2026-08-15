@@ -45,30 +45,37 @@ export class OpenRouterProvider implements AIProvider {
       }
 
       const rawBody = await response.text();
-      let payload: { choices?: Array<{ message?: { content?: string } }>; error?: { code?: string; message?: string } } = {};
+      let payload: { choices?: Array<{ message?: { content?: string | Array<{ type?: string; text?: string }> } }>; error?: { code?: string | number; message?: string } } = {};
       try {
         payload = rawBody ? JSON.parse(rawBody) : {};
       } catch {
         throw new AIProviderError('OpenRouter returned malformed data.', this.name, 'UNKNOWN', true, true, 'malformed');
       }
 
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
+      const upstreamCode = String(payload.error?.code || '').toLowerCase();
+      const upstreamMessage = typeof payload.error?.message === 'string' ? payload.error.message.slice(0, 240) : '';
+      if (!response.ok || payload.error) {
+        if (response.status === 401 || response.status === 403 || /auth|invalid.*key|unauthorized/i.test(upstreamMessage)) {
           throw new AIProviderError('OpenRouter authentication failed.', this.name, 'AUTHENTICATION', false, false, response.status);
         }
-        if (response.status === 402) {
-          throw new AIProviderError('OpenRouter free usage is unavailable.', this.name, 'INSUFFICIENT_BALANCE', true, true, response.status);
+        if (response.status === 402 || /credit|balance|free.*usage|quota/i.test(`${upstreamCode} ${upstreamMessage}`)) {
+          throw new AIProviderError(`OpenRouter free usage is unavailable${upstreamMessage ? `: ${upstreamMessage}` : '.'}`, this.name, 'INSUFFICIENT_BALANCE', true, true, response.status || 402);
         }
-        if (response.status === 429) {
+        if (response.status === 429 || /rate.?limit|too many/i.test(`${upstreamCode} ${upstreamMessage}`)) {
           throw new AIProviderError('OpenRouter free usage is rate limited.', this.name, 'RATE_LIMIT', true, true, response.status);
         }
-        if (response.status === 400 || response.status === 404) {
-          throw new AIProviderError('OpenRouter free model request was rejected.', this.name, 'MODEL_UNAVAILABLE', true, true, response.status);
+        if (response.status === 400 || response.status === 404 || /model|endpoint|not found|unsupported/i.test(`${upstreamCode} ${upstreamMessage}`)) {
+          throw new AIProviderError(`OpenRouter model request was rejected${upstreamMessage ? `: ${upstreamMessage}` : '.'}`, this.name, 'MODEL_UNAVAILABLE', true, true, response.status || 400);
         }
-        throw new AIProviderError('OpenRouter returned an upstream error.', this.name, 'PROVIDER_UNAVAILABLE', true, true, response.status);
+        throw new AIProviderError(`OpenRouter returned an upstream error${upstreamMessage ? `: ${upstreamMessage}` : '.'}`, this.name, 'PROVIDER_UNAVAILABLE', true, true, response.status || 502);
       }
 
-      const text = payload.choices?.[0]?.message?.content?.trim();
+      const rawContent = payload.choices?.[0]?.message?.content;
+      const text = typeof rawContent === 'string'
+        ? rawContent.trim()
+        : Array.isArray(rawContent)
+          ? rawContent.map((part) => typeof part?.text === 'string' ? part.text : '').join('').trim()
+          : '';
       if (!text) throw new AIProviderError('OpenRouter returned an empty response.', this.name, 'UNKNOWN', true, true, 'malformed');
       return { text, model: this.model, provider: this.name };
     } finally {

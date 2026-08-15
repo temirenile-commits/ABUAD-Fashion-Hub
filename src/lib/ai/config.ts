@@ -3,7 +3,7 @@ import type { AIProviderName, AIProviderState } from '@/lib/ai/provider-types';
 export const MILES_AI_CONFIG = {
   gateway: 'server-provider-router',
   defaultRoute: 'deepseek' as AIProviderName,
-  freeRouter: 'openrouter/free',
+  freeRouter: (process.env.OPENROUTER_MODEL || 'openrouter/free').trim(),
   fallbackRoutes: ['openrouter'] as AIProviderName[],
   enabledProviders: ['deepseek', 'openrouter'] as AIProviderName[],
   providerStates: {

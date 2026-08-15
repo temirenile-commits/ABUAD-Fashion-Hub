@@ -90,6 +90,8 @@ export async function milesChat(messages: AIMessage[], options?: { temperature?:
       console.error('[AI_PROVIDER_FAILURE]', {
         provider: providerName,
         failureType: normalized.failureType,
+        status: normalized.status,
+        detail: normalized.message.slice(0, 240),
         fallbackAttempted: true,
         fallbackProvider: priority.find((candidate) => candidate !== providerName),
       });

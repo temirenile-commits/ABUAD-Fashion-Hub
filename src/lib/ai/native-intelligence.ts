@@ -64,6 +64,22 @@ export async function retrieveNativePatterns(problemType?: string, limit = 4) {
 
 function money(value: unknown) { return `₦${Number(value || 0).toLocaleString('en-NG')}`; }
 
+function questionAwareFallback(question: string, intent: string, pageContext: string, knowledgeStatement?: string) {
+  const safeQuestion = sanitizeNativeText(question, 320);
+  const normalized = safeQuestion.toLowerCase();
+  if (knowledgeStatement) return `${knowledgeStatement} Your question was: “${safeQuestion}”`;
+  if (/\b(who are you|what is your name|what are you)\b/i.test(normalized)) return `I’m Miles, MasterCart’s role-aware assistant. I can help you find products and vendors, understand orders, navigate your account, and explain the part of MasterCart you’re viewing.`;
+  if (/\b(what is mastercart|tell me about mastercart)\b/i.test(normalized)) return `MasterCart is a campus marketplace for discovering products, vendors, services, and campus delivery options. I can guide you through the marketplace and your authorized account features.`;
+  if (/\b(where|how do i get|take me)\b/i.test(normalized)) return `You are currently on ${pageContext.replace(/^The user is /, '').replace(/\.$/, '')}. Tell me the destination or feature you want, and I’ll guide you there.`;
+  if (intent === 'review_query') return `I can help you inspect product or vendor reviews, but I need a specific product, vendor, or review topic to look up from the current MasterCart records.`;
+  if (intent === 'account_query') return `I can guide you through account settings, profile details, university information, and password workflows. Tell me which account area you want to open or understand.`;
+  if (intent === 'reel_query') return `I can help with MasterCart Reels, including finding videos, understanding Reel actions, and explaining publishing or interaction workflows. Tell me which Reel or action you mean.`;
+  if (intent === 'support_request') return `I can help structure the issue for MasterCart support. Tell me what happened, which page or order is affected, and what result you expected.`;
+  if (intent === 'admin_query' || intent === 'operational_request') return `I can explain the authorized MasterCart administration workflow for “${safeQuestion}”. Tell me the specific module or record you want to inspect.`;
+  if (intent === 'image_analysis') return `I received the image request, but I need the picture to be available in the current message before I can analyze it. You can upload it with a short description of what you want checked.`;
+  return `I received your ${intent.replace(/_/g, ' ')} question: “${safeQuestion}”. I can help with MasterCart navigation, products, vendors, orders, account workflows, and troubleshooting. Tell me the outcome you want, and I’ll narrow it down.`;
+}
+
 export async function nativeBrainRespond(input: { question: string; intent: string; roleData: Record<string, any>; memory: MilesConversationMemory; pageContext: string }) {
   const question = sanitizeNativeText(input.question, 400);
   const domain = input.intent.includes('order') || input.intent.includes('delivery') ? 'orders' : input.intent.includes('financial') ? 'financials' : input.intent.includes('reel') ? 'reels' : undefined;
@@ -71,7 +87,7 @@ export async function nativeBrainRespond(input: { question: string; intent: stri
   const customer = input.roleData.customer as any;
   const vendor = input.roleData.vendor as any;
   const analytics = (input.roleData.admin as any)?.analytics;
-  let text = `I can still help with that using the verified MasterCart context available to me. `;
+  let text = questionAwareFallback(question, input.intent, input.pageContext, knowledge[0]?.statement);
   if (input.intent === 'order_query' || input.intent === 'delivery_query') {
     const orders = Array.isArray(customer?.orders) ? customer.orders : Array.isArray(customer?.recentOrders) ? customer.recentOrders : [];
     text = orders.length ? `I found ${orders.length} current order record${orders.length === 1 ? '' : 's'} in your authorized account context. Check the order card or Orders area for the latest status.` : `I couldn't verify a current order or delivery record in your authorized MasterCart context.`;
@@ -87,7 +103,7 @@ export async function nativeBrainRespond(input: { question: string; intent: stri
   } else if (knowledge[0]?.statement) {
     text = knowledge[0].statement;
   }
-  return { text, provider: 'native' as const, model: 'mnie-rule-reasoner', knowledgeIds: knowledge.map((item) => item.id), patternIds: patterns.map((item) => item.id), fallback: true };
+  return { text: sanitizeNativeText(text, 2_000), provider: 'native' as const, model: 'mnie-rule-reasoner', knowledgeIds: knowledge.map((item) => item.id), patternIds: patterns.map((item) => item.id), fallback: true };
 }
 
 export async function recordNativeLearning(input: { question: unknown; answer: unknown; intent?: unknown; outcome?: unknown; provider?: unknown; model?: unknown; toolNames?: string[] }) {
