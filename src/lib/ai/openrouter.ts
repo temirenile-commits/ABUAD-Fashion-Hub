@@ -1,5 +1,6 @@
 import { MILES_AI_CONFIG } from '@/lib/ai/config';
 import { AIProviderError, type AIMessage, type AIProvider, type AIProviderResult } from '@/lib/ai/provider-types';
+import { getCanonicalSiteUrl } from '@/lib/site-url';
 
 const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_MODEL = MILES_AI_CONFIG.freeRouter;
@@ -56,7 +57,7 @@ export class OpenRouterProvider implements AIProvider {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${apiKey}`,
-            'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://master-cart-reshuffled.vercel.app',
+            'HTTP-Referer': getCanonicalSiteUrl(),
             'X-Title': 'MasterCart Miles',
           },
           body: JSON.stringify({

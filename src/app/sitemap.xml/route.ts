@@ -1,9 +1,10 @@
 import { supabase } from '@/lib/supabase';
+import { getCanonicalSiteUrl } from '@/lib/site-url';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://master-cart-camp.vercel.app';
+  const baseUrl = getCanonicalSiteUrl();
 
   // 1. Static Pages
   const staticPages = [

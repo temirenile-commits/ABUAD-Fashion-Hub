@@ -11,9 +11,10 @@ import MilesGlobalWorkspace from '@/components/MilesGlobalWorkspace';
 import MilesOnboarding from '@/components/MilesOnboarding';
 import { MilesConfigurationProvider } from '@/components/MilesConfigurationProvider';
 import './globals.css';
+import { getCanonicalSiteUrl } from '@/lib/site-url';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://master-cart-camp.vercel.app'),
+  metadataBase: new URL(getCanonicalSiteUrl()),
   applicationName: 'MasterCart',
   title: {
     default: 'MasterCart – Campus Marketplace',
@@ -82,10 +83,10 @@ export default function RootLayout({
                             '@graph': [
                               {
                                 '@type': 'Organization',
-                                '@id': 'https://master-cart-camp.vercel.app/#organization',
+                                '@id': `${getCanonicalSiteUrl()}/#organization`,
                                 name: 'MasterCart',
-                                url: 'https://master-cart-camp.vercel.app',
-                                logo: 'https://master-cart-camp.vercel.app/branding/mastercart-mark.png',
+                                url: getCanonicalSiteUrl(),
+                                logo: `${getCanonicalSiteUrl()}/branding/mastercart-mark.png`,
                                 sameAs: [
                                   'https://twitter.com/MasterCart',
                                   'https://instagram.com/MasterCart'
@@ -93,15 +94,15 @@ export default function RootLayout({
                               },
                               {
                                 '@type': 'WebSite',
-                                '@id': 'https://master-cart-camp.vercel.app/#website',
-                                url: 'https://master-cart-camp.vercel.app',
+                                '@id': `${getCanonicalSiteUrl()}/#website`,
+                                url: getCanonicalSiteUrl(),
                                 name: 'MasterCart',
                                 publisher: {
-                                  '@id': 'https://master-cart-camp.vercel.app/#organization'
+                                  '@id': `${getCanonicalSiteUrl()}/#organization`
                                 },
                                 potentialAction: {
                                   '@type': 'SearchAction',
-                                  target: 'https://master-cart-camp.vercel.app/explore?q={search_term_string}',
+                                  target: `${getCanonicalSiteUrl()}/explore?q={search_term_string}`,
                                   'query-input': 'required name=search_term_string'
                                 }
                               }

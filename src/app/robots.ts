@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next';
+import { getCanonicalSiteUrl } from '@/lib/site-url';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://master-cart-camp.vercel.app';
+  const baseUrl = getCanonicalSiteUrl();
 
   return {
     rules: {
