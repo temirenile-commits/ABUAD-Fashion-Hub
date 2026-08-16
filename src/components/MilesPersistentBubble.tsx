@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useMilesConfiguration } from '@/components/MilesConfigurationProvider';
+import MilesVisualIdentity from '@/components/MilesVisualIdentity';
 
 type Dock = 'free' | 'top' | 'top-left' | 'top-right' | 'left' | 'right' | 'bottom' | 'bottom-left' | 'bottom-right';
 type Position = { x: number; y: number; dock: Dock };
@@ -64,6 +65,7 @@ export default function MilesPersistentBubble() {
   const { configuration } = useMilesConfiguration();
   const assistantName = configuration.identity.name;
   const assistantInitial = configuration.identity.initial;
+  const assistantAvatar = configuration.identity.avatar;
   const isReelsRoute = pathname === '/reels' || pathname.startsWith('/reels/');
   const [position, setPosition] = useState<Position>(() => {
     if (typeof window === 'undefined') return { x: 0, y: 0, dock: 'right' };
@@ -161,47 +163,35 @@ export default function MilesPersistentBubble() {
     zIndex: 1000,
     touchAction: 'none' as const,
     userSelect: 'none' as const,
-    border: '1px solid rgba(255,255,255,.28)',
+    border: 'none',
     borderRadius: '50%',
-    background: isReelsRoute ? 'linear-gradient(135deg,rgba(37,99,235,.72),rgba(79,70,229,.72))' : 'linear-gradient(135deg,#2563eb,#4f46e5)',
+    background: 'transparent',
     color: '#fff',
-    fontSize: '1.05rem',
-    fontWeight: 800,
-    letterSpacing: '.02em',
-    fontFamily: '"Brush Script MT", "Segoe Script", "URW Chancery L", cursive',
-    fontStyle: 'italic',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 0,
+    display: 'inline-grid',
+    placeItems: 'center',
     cursor: dragging ? 'grabbing' : 'grab',
-    opacity: isReelsRoute ? .78 : 1,
+    opacity: isReelsRoute ? .82 : 1,
     backdropFilter: isReelsRoute ? 'blur(6px)' : 'none',
     WebkitBackdropFilter: isReelsRoute ? 'blur(6px)' : 'none',
-    boxShadow: isReelsRoute ? '0 8px 22px rgba(0,0,0,.24),0 0 14px rgba(37,99,235,.16)' : '0 10px 30px rgba(0,0,0,.35),0 0 20px rgba(37,99,235,.20)',
     transition: dragging ? 'none' : 'left 220ms ease, top 220ms ease, transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease',
   };
 
   const bubbleClassName = `miles-bubble${isReelsRoute ? ' miles-bubble-reels' : ''}${dragging ? ' miles-dragging' : ''}`;
 
-  if (hidden) return <button className={bubbleClassName} type="button" aria-label={`Show ${assistantName} assistant`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setHidden(false); }} style={{ ...style, width: 22, borderRadius: position.x < window.innerWidth / 2 ? '0 12px 12px 0' : '12px 0 0 12px', fontSize: '.78rem' }}><span className="miles-orb-core"><span className="miles-mark" aria-hidden="true">{assistantInitial}</span></span></button>;
+  if (hidden) return <button className={bubbleClassName} type="button" aria-label={`Show ${assistantName} assistant`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setHidden(false); }} style={{ ...style, width: 22, height: 22, borderRadius: position.x < window.innerWidth / 2 ? '0 12px 12px 0' : '12px 0 0 12px' }}><MilesVisualIdentity name={assistantName} initial={assistantInitial} avatar={assistantAvatar} size={22} compact /></button>;
 
   return <>
-    <button className={bubbleClassName} type="button" aria-label={`Open ${assistantName} AI assistant`} title={`Drag ${assistantName} or tap to open`} onClick={onClick} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={style}><span className="miles-orb-core"><span className="miles-mark" aria-hidden="true">{assistantInitial}</span></span></button>
+    <button className={bubbleClassName} type="button" aria-label={`Open ${assistantName} AI assistant`} title={`Drag ${assistantName} or tap to open`} onClick={onClick} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={style}><MilesVisualIdentity name={assistantName} initial={assistantInitial} avatar={assistantAvatar} size={BUBBLE_SIZE} /></button>
     <style>{`
       .miles-bubble{isolation:isolate;overflow:visible;will-change:transform;animation:miles-life 4.2s ease-in-out infinite;}
-      .miles-bubble::before{content:"";position:absolute;inset:-7px;border-radius:inherit;z-index:-2;pointer-events:none;background:radial-gradient(circle,rgba(147,197,253,.38) 0%,rgba(96,165,250,.18) 42%,transparent 72%);filter:blur(7px);opacity:.72;animation:miles-glow 4.2s ease-in-out infinite;}
-      .miles-bubble::after{content:"";position:absolute;inset:2px;border-radius:inherit;z-index:0;pointer-events:none;overflow:hidden;background:radial-gradient(circle at 24% 18%,rgba(255,255,255,.32),transparent 28%),radial-gradient(circle at 78% 74%,rgba(165,243,252,.22),transparent 34%),linear-gradient(125deg,rgba(255,255,255,.12),transparent 48%,rgba(129,140,248,.28));background-size:150% 150%,145% 145%,180% 180%;mix-blend-mode:screen;opacity:.62;animation:miles-liquid 7.5s ease-in-out infinite;}
-      .miles-orb-core{position:relative;z-index:1;display:grid;place-items:center;width:100%;height:100%;border-radius:inherit;background:radial-gradient(circle at 32% 22%,rgba(255,255,255,.18),transparent 32%);}
-      .miles-mark{position:relative;z-index:2;display:inline-block;font-family:"Brush Script MT","Segoe Script","URW Chancery L",cursive;font-style:italic;font-weight:800;font-size:1.22em;line-height:1;letter-spacing:.015em;transform:translateY(-1px) rotate(-8deg);text-shadow:1px 2px 0 rgba(15,23,42,.22),0 0 9px rgba(255,255,255,.24);}
-      .miles-bubble:hover,.miles-bubble:focus-visible{animation-play-state:paused;transform:scale(1.04);outline:2px solid rgba(255,255,255,.72);outline-offset:2px;box-shadow:0 12px 32px rgba(0,0,0,.34),0 0 25px rgba(147,197,253,.38)!important;}
+      .miles-bubble::before{content:"";position:absolute;inset:-9px;border-radius:inherit;z-index:-2;pointer-events:none;background:radial-gradient(circle,rgba(21,255,199,.32) 0%,rgba(24,182,163,.14) 42%,transparent 72%);filter:blur(7px);opacity:.72;animation:miles-glow 4.2s ease-in-out infinite;}
+      .miles-bubble:hover,.miles-bubble:focus-visible{animation-play-state:paused;transform:scale(1.04);outline:2px solid rgba(143,255,222,.78);outline-offset:3px;}
       .miles-bubble:active{animation-play-state:paused;transform:scale(.98);}
       .miles-bubble.miles-dragging{animation-play-state:paused;}
-      .miles-bubble-reels::before{opacity:.46;}
-      .miles-bubble-reels::after{opacity:.48;}
       @keyframes miles-life{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(0,-2.5px,0) scale(1.018)}}
       @keyframes miles-glow{0%,100%{transform:scale(.92);opacity:.48}50%{transform:scale(1.08);opacity:.9}}
-      @keyframes miles-liquid{0%,100%{background-position:0% 0%,100% 100%,0% 50%;transform:translate3d(0,0,0) scale(1)}50%{background-position:32% 20%,68% 80%,100% 46%;transform:translate3d(1px,-1px,0) scale(1.035)}}
-      @media (prefers-reduced-motion: reduce){.miles-bubble,.miles-bubble::before,.miles-bubble::after{animation:none!important}.miles-bubble{transition:opacity .2s ease,box-shadow .2s ease,transform .2s ease!important}.miles-bubble:hover,.miles-bubble:focus-visible{transform:scale(1.02)}}
+      @media (prefers-reduced-motion: reduce){.miles-bubble,.miles-bubble::before{animation:none!important}.miles-bubble{transition:opacity .2s ease,transform .2s ease!important}.miles-bubble:hover,.miles-bubble:focus-visible{transform:scale(1.02)}}
     `}</style>
   </>;
 }

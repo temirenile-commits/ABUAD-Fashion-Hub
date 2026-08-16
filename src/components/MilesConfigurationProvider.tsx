@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import MilesVisualIdentity from '@/components/MilesVisualIdentity';
 
 export type MilesClientConfiguration = {
   identity: { name: string; initial: string; avatar: string | null; displayName: string };
@@ -40,9 +41,9 @@ export function MilesConfigurationProvider({ children }: { children: React.React
     finally { setLoading(false); }
   };
   useEffect(() => {
-    void refresh();
+    const initialLoad = window.setTimeout(() => { void refresh(); }, 0);
     const { data: listener } = supabase.auth.onAuthStateChange(() => { void refresh(); });
-    return () => listener.subscription.unsubscribe();
+    return () => { window.clearTimeout(initialLoad); listener.subscription.unsubscribe(); };
   }, []);
   const value = useMemo(() => ({ configuration, loading, refresh }), [configuration, loading]);
   return <MilesConfigurationContext.Provider value={value}>{children}</MilesConfigurationContext.Provider>;
@@ -54,8 +55,5 @@ export function MilesIdentity({ name, initial, size = 36, className = '', label 
   const configuration = useMilesConfiguration().configuration;
   const activeName = name || configuration.identity.name;
   const activeInitial = initial || configuration.identity.initial;
-  return <span className={`miles-identity ${className}`} role="img" aria-label={label || `${activeName} profile picture`} style={{ width: size, height: size, minWidth: size, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#2563eb,#4f46e5)', border: '1px solid rgba(255,255,255,.28)', boxShadow: '0 5px 16px rgba(0,0,0,.24),0 0 12px rgba(37,99,235,.18)', color: '#fff', overflow: 'hidden' }}>
-    {configuration.identity.avatar ? <img src={configuration.identity.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span className="miles-initial" aria-hidden="true">{activeInitial}</span>}
-    <style>{`.miles-initial{display:inline-block;font-family:"Brush Script MT","Segoe Script","URW Chancery L",cursive;font-style:italic;font-weight:700;font-size:1.35em;line-height:1;transform:translateY(-1px) rotate(-8deg);text-shadow:1px 2px 0 rgba(15,23,42,.22),0 0 9px rgba(255,255,255,.24)}`}</style>
-  </span>;
+  return <MilesVisualIdentity name={activeName} initial={activeInitial} avatar={configuration.identity.avatar} size={size} className={className} compact label={label} />;
 }
