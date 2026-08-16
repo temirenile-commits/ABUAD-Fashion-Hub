@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ShieldCheck, MessageSquare, Phone, Users, Store, ShoppingCart, Plus, Trash2, Loader2, AlertTriangle, UserPlus, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import styles from '../dashboard.module.css'; // Re-use common dashboard styles if available, or write inline.
+import styles from './support.module.css';
+import ResponsiveAdminChrome from '@/components/ResponsiveAdminChrome';
 
 type Tab = 'orders' | 'customers' | 'vendors' | 'settings';
 
@@ -112,9 +113,25 @@ export default function SupportDashboard() {
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-100)' }}><Loader2 className="anim-spin" size={32} color="var(--primary)" /></div>;
 
+  const navigation = [
+    { id: 'orders', label: 'Recent Orders', icon: ShoppingCart },
+    { id: 'customers', label: 'Customers', icon: Users },
+    { id: 'vendors', label: 'Vendors Directory', icon: Store },
+    ...(isHead ? [{ id: 'settings', label: 'Queue Settings', icon: Phone }] : [])
+  ];
+
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-100)', color: '#FFFFFF' }}>
-      <header style={{ padding: '1.5rem 2rem', background: 'var(--bg-200)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className={styles.root} style={{ minHeight: '100vh', background: 'var(--bg-100)', color: '#FFFFFF' }}>
+      <ResponsiveAdminChrome
+        title="Customer Service Desk"
+        subtitle={`${profile?.universities?.name || 'Campus Support'} · ${teamRole}`}
+        items={navigation}
+        activeId={tab}
+        onSelect={(id) => setTab(id as Tab)}
+        onExit={() => router.push('/')}
+        exitLabel="Exit dashboard"
+      />
+      <header className={styles.header} style={{ padding: '1.5rem 2rem', background: 'var(--bg-200)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0, fontSize: '1.5rem' }}>
             <ShieldCheck color="var(--primary)" /> Customer Service Desk
@@ -124,14 +141,9 @@ export default function SupportDashboard() {
         <Link href="/" className="btn btn-ghost"><ArrowLeft size={16} /> Exit Dashboard</Link>
       </header>
 
-      <div style={{ display: 'flex', padding: '2rem', gap: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
-        <aside style={{ width: '250px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {[
-            { id: 'orders', label: 'Recent Orders', icon: ShoppingCart },
-            { id: 'customers', label: 'Customers', icon: Users },
-            { id: 'vendors', label: 'Vendors Directory', icon: Store },
-            ...(isHead ? [{ id: 'settings', label: 'Queue Settings', icon: Phone }] : [])
-          ].map(t => (
+      <div className={styles.layout} style={{ display: 'flex', padding: '2rem', gap: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+        <aside className={styles.sidebar} style={{ width: '250px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {navigation.map(t => (
             <button 
               key={t.id} 
               onClick={() => setTab(t.id as Tab)}
@@ -142,7 +154,7 @@ export default function SupportDashboard() {
           ))}
         </aside>
 
-        <main style={{ flex: 1, background: 'var(--bg-200)', borderRadius: '12px', border: '1px solid var(--border)', padding: '2rem' }}>
+        <main className={styles.main} style={{ flex: 1, background: 'var(--bg-200)', borderRadius: '12px', border: '1px solid var(--border)', padding: '2rem' }}>
           
           {tab === 'orders' && (
             <div>

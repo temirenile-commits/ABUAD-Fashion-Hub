@@ -867,3 +867,49 @@
   .content { padding: 1rem; }
   .header { padding: 1rem; }
 }
+
+
+/* Mobile administration workspace: desktop layout remains unchanged above. */
+@media (max-width: 768px) {
+  .container { display: block; min-height: 100dvh; overflow-x: hidden; }
+  .sidebar { display: none; }
+  .main { width: 100%; min-width: 0; }
+  .header { display: none; }
+  .content { padding: 1rem; padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)); min-width: 0; }
+  .statsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; margin-bottom: 1rem; }
+  .statCard { min-width: 0; padding: .9rem; border-radius: 12px; }
+  .statLabel { font-size: .62rem; line-height: 1.25; }
+  .statValue { font-size: clamp(1rem, 5vw, 1.35rem); overflow-wrap: anywhere; }
+  .sectionCard { min-width: 0; border-radius: 13px; }
+  .sectionHeader { padding: 1rem; gap: .75rem; align-items: flex-start; }
+  .tableWrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table { min-width: 620px; }
+  .table th, .table td { padding: .75rem .65rem; }
+  .chartGrid { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .chartContainer { height: 240px; padding: .8rem; }
+  .insightGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; padding: .8rem; }
+  .insightCard { min-width: 0; padding: .9rem; }
+  .actionRow { flex-wrap: wrap; }
+  .btnSm, .btnPrimary { min-height: 44px; }
+  .formInput, .formSelect, .notifForm input, .notifForm select, .notifForm textarea { min-height: 44px; max-width: 100%; box-sizing: border-box; }
+  .btnSm, .btnPrimary, .refreshBtn, .footerLink, .navItem, .modalFooter button { min-height: 44px; }
+  .notifForm { padding: 1rem; }
+  .modalOverlay { align-items: stretch; padding: 0; }
+  .modalContent { max-width: none; max-height: 100dvh; min-height: 100dvh; border-radius: 0; padding-bottom: env(safe-area-inset-bottom); }
+  .modalHeader, .modalBody, .modalFooter { padding: 1rem; }
+  .modalHeader { position: sticky; top: 0; z-index: 1; }
+  .modalFooter { flex-wrap: wrap; }
+  .modalFooter > * { flex: 1 1 140px; min-height: 44px; }
+}
+
+@media (max-width: 420px) {
+  .content { padding-left: .7rem; padding-right: .7rem; }
+  .statsGrid, .insightGrid { gap: .55rem; }
+  .statCard, .insightCard { padding: .75rem; }
+  .table { min-width: 560px; }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .content { padding-top: .7rem; }
+  .modalContent { min-height: 100dvh; }
+}

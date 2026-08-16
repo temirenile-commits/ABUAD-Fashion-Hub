@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import PremiumChart from "@/components/PremiumChart"; 
 import { uploadFile } from "@/lib/storage";
+import ResponsiveAdminChrome from "@/components/ResponsiveAdminChrome";
 
 type Tab = "overview" | "vendors" | "customers" | "orders" | "reviews" | "notices" | "analytics" | "insights" | "fleet" | "team" | "catalog" | "merchandising" | "settings" | "promos" | "cafeterias" | "manual_transfers" | "categories";
 
@@ -292,6 +293,18 @@ export default function UniversityAdminPage() {
 
   return (
     <div className={styles.container}>
+      <ResponsiveAdminChrome
+        title={TABS.find(t => t[0] === tab)?.[1] || 'Administration'}
+        subtitle={myUniversity ? `${myUniversity.abbreviation || myUniversity.name} Admin` : 'University Admin'}
+        items={[...visibleManagement, ...visibleCommunication, ...visibleOps].map(([id, label, icon]) => ({ id, label, icon, badge: id === 'vendors' && pendingVendors.length > 0 ? pendingVendors.length : undefined }))}
+        activeId={tab}
+        onSelect={(id) => { setTab(id as Tab); setSearch(''); }}
+        search={search}
+        onSearchChange={setSearch}
+        onRefresh={fetchAll}
+        onExit={() => { window.location.href = '/'; }}
+        exitLabel="Marketplace"
+      />
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <div className={styles.logoMark}>

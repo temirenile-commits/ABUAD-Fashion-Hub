@@ -1,0 +1,15 @@
+.root{min-width:0;overflow-x:hidden}.header{min-width:0}.layout{min-width:0}.sidebar{flex:0 0 250px}.main{min-width:0;overflow:hidden}
+
+@media (max-width: 768px){
+  .header{padding:1rem!important;gap:.75rem;align-items:flex-start!important}.header h1{font-size:1.12rem!important;line-height:1.2;min-width:0}.header h1 svg{width:20px;height:20px;flex:0 0 auto}.header p{font-size:.74rem!important;line-height:1.35}.header a{min-height:44px;white-space:nowrap;padding:.65rem .75rem!important}
+  .layout{display:block!important;padding:1rem!important}.sidebar{display:none}.main{width:100%;padding:1rem!important;border-radius:14px!important}
+  .main h2{font-size:1.1rem;line-height:1.25;margin-bottom:1rem!important}
+  .main table{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}.main th,.main td{min-width:110px;padding:.75rem .65rem!important}.main th:first-child,.main td:first-child{min-width:100px}
+  .main form,.main .card{max-width:100%!important}.main input,.main select,.main textarea{min-height:44px!important;width:100%;max-width:100%;box-sizing:border-box}.main button{min-height:44px}.main .form-group{min-width:0}.main [style*="display: flex"]{max-width:100%}
+}
+
+@media (max-width: 420px){
+  .header{flex-direction:column!important}.header a{align-self:stretch;justify-content:center}.layout{padding:.7rem!important}.main{padding:.8rem!important}.main table{font-size:.8rem!important}.main th,.main td{min-width:96px}
+}
+
+@media (orientation: landscape) and (max-height: 520px){.header{padding-top:.65rem!important;padding-bottom:.65rem!important}.layout{padding:.75rem!important}.main{max-height:none}}

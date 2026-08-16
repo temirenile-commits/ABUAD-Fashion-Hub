@@ -12,8 +12,13 @@ import { supabase } from '@/lib/supabase';
 import styles from './admin.module.css';
 import PremiumChart from '@/components/PremiumChart'; 
 import { useToast } from '@/context/ToastContext';
+import ResponsiveAdminChrome from '@/components/ResponsiveAdminChrome';
 
 type Tab = 'overview' | 'universities' | 'vendors' | 'products' | 'users' | 'financials' | 'orders' | 'settings' | 'reviews' | 'notices' | 'market' | 'delivery_agents' | 'promotions' | 'merchandising' | 'refunds' | 'preorders' | 'delicacies' | 'normal_products' | 'manual_payments' | 'vendor_orders' | 'categories';
+
+const ADMIN_NAVIGATION: [Tab, string, React.ElementType][] = [
+  ['overview', 'Overview', TrendingUp], ['vendors', 'Vendors', Store], ['vendor_orders', 'Vendor Orders', ShoppingCart], ['products', 'Catalog', ShoppingBag], ['users', 'Users', Users], ['orders', 'Orders', ShoppingCart], ['financials', 'Payouts', CreditCard], ['preorders', 'Pre-orders', Clock], ['refunds', 'Refund Queue', ShieldAlert], ['promotions', 'Promotions', Star], ['merchandising', 'Merchandising', Tag], ['settings', 'Settings', Settings], ['reviews', 'Reviews', Star], ['notices', 'Notices', Bell], ['market', 'Market', BarChart3], ['delivery_agents', 'Fleet', Activity], ['universities', 'Universities', MapPin], ['delicacies', 'Delicacies', UtensilsCrossed], ['normal_products', 'Normal Products', TrendingUp], ['manual_payments', 'Manual Transfers', ShieldCheck], ['categories', 'Categories', Tag],
+];
 
 interface University {
   id: string;
@@ -355,13 +360,16 @@ export default function AdminDashboard() {
 
   // Autofill bank settings when platformSettings load
   useEffect(() => {
-    if (platformSettings?.manual_payment_settings) {
-      const bankData = platformSettings.manual_payment_settings;
-      setManualBankCode(bankData.bank_code || '');
-      setManualAccountNumber(bankData.account_number || '');
-      setManualAccountName(bankData.account_name || '');
-      setManualBankSettings(bankData);
-    }
+    const syncBankSettings = window.setTimeout(() => {
+      if (platformSettings?.manual_payment_settings) {
+        const bankData = platformSettings.manual_payment_settings;
+        setManualBankCode(bankData.bank_code || '');
+        setManualAccountNumber(bankData.account_number || '');
+        setManualAccountName(bankData.account_name || '');
+        setManualBankSettings(bankData);
+      }
+    }, 0);
+    return () => window.clearTimeout(syncBankSettings);
   }, [platformSettings]);
 
   // Auto-resolve bank account details
@@ -554,7 +562,8 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    fetchAll();
+    const initialFetch = window.setTimeout(() => { void fetchAll(); }, 0);
+    return () => window.clearTimeout(initialFetch);
   }, [fetchAll]);
 
   const adminAction = async (action: string, payload: Record<string, unknown>) => {
@@ -701,35 +710,25 @@ export default function AdminDashboard() {
 
   return (
     <div className={styles.container}>
+      <ResponsiveAdminChrome
+        title={activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+        subtitle="Super Admin"
+        items={ADMIN_NAVIGATION.map(([id, label, icon]) => ({ id, label, icon, badge: id === 'vendors' && pendingVendors.length > 0 ? pendingVendors.length : undefined }))}
+        activeId={activeTab}
+        onSelect={(id) => { setActiveTab(id as Tab); setSearch(''); setActiveVendorId(null); }}
+        search={search}
+        onSearchChange={setSearch}
+        onRefresh={fetchAll}
+        onExit={() => { window.location.href = '/'; }}
+        exitLabel="Public site"
+      />
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <div className={styles.logo}>MASTERCART ADMIN</div>
           <p>Campus Marketplace Admin</p>
         </div>
         <nav className={styles.nav}>
-          {([
-            ['overview', 'Overview', TrendingUp],
-            ['vendors', 'Vendors', Store],
-            ['vendor_orders', 'Vendor Orders', ShoppingCart],
-            ['products', 'Catalog', ShoppingBag],
-            ['users', 'Users', Users],
-            ['orders', 'Orders', ShoppingCart],
-            ['financials', 'Payouts', CreditCard],
-            ['preorders', 'Pre-orders', Clock],
-            ['refunds', 'Refund Queue', ShieldAlert],
-            ['promotions', 'Promotions ', Star],
-            ['merchandising', 'Merchandising', Tag],
-            ['settings', 'Settings', Settings],
-            ['reviews', 'Reviews ', Star],
-            ['notices', 'Notices ', Bell],
-            ['market', 'Market ', BarChart3],
-            ['delivery_agents', 'Fleet ', Activity],
-            ['universities', 'Universities', MapPin],
-            ['delicacies', 'Delicacies', UtensilsCrossed],
-            ['normal_products', 'Normal Products', TrendingUp],
-            ['manual_payments', 'Manual Transfers', ShieldCheck],
-            ['categories', 'Categories', Tag],
-          ] as [Tab, string, React.ElementType][]).map(([id, label, Icon]) => (
+          {ADMIN_NAVIGATION.map(([id, label, Icon]) => (
             <button
               key={id}
               className={`${styles.navItem} ${activeTab === id ? styles.navActive : ''}`}

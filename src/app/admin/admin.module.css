@@ -711,3 +711,56 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Mobile administration workspace: desktop rules remain unchanged above. */
+@media (max-width: 768px) {
+  .container { display: block; min-height: 100dvh; overflow-x: hidden; }
+  .sidebar { display: none; }
+  .main { max-width: none; padding: 0 1rem calc(1.25rem + env(safe-area-inset-bottom)); }
+  .header { display: none; }
+  .content { gap: 1rem; padding-top: 1rem; }
+  .statsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; margin-bottom: 1rem; }
+  .statCard { min-width: 0; padding: .9rem; border-radius: 12px; gap: .5rem; }
+  .statInfo p { font-size: .62rem; line-height: 1.25; margin-bottom: .35rem; }
+  .statInfo h3 { font-size: clamp(1rem, 5vw, 1.35rem); overflow-wrap: anywhere; }
+  .statIcon { width: 34px; height: 34px; padding: .45rem; flex: 0 0 auto; }
+  .sectionCard { min-width: 0; border-radius: 13px; }
+  .sectionHeader { padding: 1rem; gap: .75rem; align-items: flex-start; }
+  .sectionHeader h3 { font-size: .92rem; }
+  .tableWrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table { min-width: 620px; }
+  .table th, .table td { padding: .75rem .65rem; }
+  .pItem { align-items: flex-start; gap: .65rem; padding: .8rem; }
+  .pActions, .actionRow { flex-wrap: wrap; }
+  .filterBar { overflow-x: auto; padding-bottom: .7rem; margin-bottom: 1rem; scrollbar-width: thin; }
+  .filterBtn { min-height: 42px; white-space: nowrap; }
+  .settingsGrid, .healthGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+  .settingsBox, .healthCard { min-width: 0; padding: .9rem; }
+  .chartsGrid { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .chartContainer { height: 240px; padding: .8rem; }
+  .marketHeader { flex-direction: column; gap: .75rem; }
+  .modalOverlay { align-items: stretch; padding: 0; }
+  .modalContent { max-width: none; max-height: 100dvh; min-height: 100dvh; border-radius: 0; padding-bottom: env(safe-area-inset-bottom); }
+  .modalHeader, .modalBody, .modalFooter { padding: 1rem; }
+  .modalHeader { position: sticky; top: 0; z-index: 1; }
+  .modalFooter { flex-wrap: wrap; }
+  .modalFooter > * { flex: 1 1 140px; min-height: 44px; }
+  .detailsGrid, .docGrid { grid-template-columns: 1fr; gap: 1rem; }
+  .form-input, .form-select, .formInput, .formSelect, .settingsBox input, .settingsBox select, .settingsBox textarea { min-height: 44px; max-width: 100%; box-sizing: border-box; }
+  .navItem, .closeBtn, .filterBtn, .btn, .btnSm, .btnPrimary, .modalFooter button, .pActions button { min-height: 44px; }
+}
+
+@media (max-width: 420px) {
+  .main { padding-left: .7rem; padding-right: .7rem; }
+  .statsGrid, .settingsGrid, .healthGrid { gap: .55rem; }
+  .statCard { padding: .75rem; }
+  .statIcon { width: 30px; height: 30px; }
+  .sectionHeader { padding: .85rem; }
+  .table { min-width: 560px; }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .content { padding-top: .7rem; }
+  .modalContent { min-height: 100dvh; }
+}
