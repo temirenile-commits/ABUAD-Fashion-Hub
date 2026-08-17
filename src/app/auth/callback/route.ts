@@ -120,25 +120,43 @@ export async function GET(request: NextRequest) {
         .from('users')
         .update({ email: profile.email, name: profile.name, avatar_url: profile.avatar_url })
         .eq('id', authUser.id)
-    : await supabaseAdmin.from('users').insert(profile);
+    : await supabaseAdmin.from('users').upsert(profile, { onConflict: 'id', ignoreDuplicates: true });
 
   if (profileWriteError) {
     console.error('OAuth profile provisioning failed:', profileWriteError.message);
     return NextResponse.redirect(new URL('/auth/login?error=account_provisioning_failed', requestUrl.origin));
   }
 
+  // Re-read after provisioning so a concurrent insert/trigger cannot send an
+  // existing vendor or admin to the customer dashboard.
+  const { data: resolvedProfile } = await supabaseAdmin
+    .from('users')
+    .select('role')
+    .eq('id', authUser.id)
+    .maybeSingle();
+
   const referralCode = request.cookies.get('mc_referral_code')?.value;
   if (referralCode) {
-    const { error: referralError } = await supabaseAdmin.rpc('claim_referral_attribution', {
-      p_code: referralCode,
-      p_referred_user_id: authUser.id,
-      p_referred_brand_id: null,
-    });
-    if (referralError) console.warn('[REFERRAL] OAuth attribution was not claimed:', referralError.message);
+    try {
+      const referralClaim = supabaseAdmin.rpc('claim_referral_attribution', {
+        p_code: referralCode,
+        p_referred_user_id: authUser.id,
+        p_referred_brand_id: null,
+      });
+      const { error: referralError } = await Promise.race([
+        referralClaim,
+        new Promise<{ error: { message: string } }>((resolve) =>
+          setTimeout(() => resolve({ error: { message: 'timeout' } }), 1500),
+        ),
+      ]);
+      if (referralError) console.warn('[REFERRAL] OAuth attribution was not claimed:', referralError.message);
+    } catch (referralError) {
+      console.warn('[REFERRAL] OAuth attribution was not claimed:', referralError instanceof Error ? referralError.message : 'unknown error');
+    }
     response.cookies.set('mc_referral_code', '', { path: '/', maxAge: 0 });
   }
 
-  const finalDestination = chooseDestination(requestedDestination, existingProfile?.role || profile.role, requestUrl.origin);
+  const finalDestination = chooseDestination(requestedDestination, resolvedProfile?.role || existingProfile?.role || profile.role, requestUrl.origin);
   response.headers.set('location', finalDestination.toString());
   return response;
 }
