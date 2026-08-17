@@ -67,6 +67,9 @@ export async function POST(req: Request) {
       description: `Funds released from Escrow for order #${order.id.slice(0, 8)}`
     });
 
+    const { error: referralError } = await supabaseAdmin.rpc('process_referral_order', { p_order_id: order.id });
+    if (referralError) console.error('[REFERRAL] Confirmation reward processing failed:', referralError.message);
+
     // D. Notify Vendor
     await supabaseAdmin.from('notifications').insert({
       user_id: order.brand_owner_id || order.brand_id,

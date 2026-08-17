@@ -127,6 +127,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth/login?error=account_provisioning_failed', requestUrl.origin));
   }
 
+  const referralCode = request.cookies.get('mc_referral_code')?.value;
+  if (referralCode) {
+    const { error: referralError } = await supabaseAdmin.rpc('claim_referral_attribution', {
+      p_code: referralCode,
+      p_referred_user_id: authUser.id,
+      p_referred_brand_id: null,
+    });
+    if (referralError) console.warn('[REFERRAL] OAuth attribution was not claimed:', referralError.message);
+    response.cookies.set('mc_referral_code', '', { path: '/', maxAge: 0 });
+  }
+
   const finalDestination = chooseDestination(requestedDestination, existingProfile?.role || profile.role, requestUrl.origin);
   response.headers.set('location', finalDestination.toString());
   return response;

@@ -230,9 +230,14 @@ export default function CustomerDashboard() {
           <h1 className={styles.title}>Welcome, {user?.email?.split('@')[0]}</h1>
           <p className={styles.subtitle}>Track your purchases and view delivery status.</p>
         </div>
-        <Link href="/explore" className="btn btn-primary btn-sm">
-          <ShoppingBag size={16} /> Continue Shopping
-        </Link>
+        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <Link href="/dashboard/customer/referrals" className="btn btn-secondary btn-sm">
+            Referral Rewards
+          </Link>
+          <Link href="/explore" className="btn btn-primary btn-sm">
+            <ShoppingBag size={16} /> Continue Shopping
+          </Link>
+        </div>
       </div>
 
       <div className={styles.dashboardGrid}>

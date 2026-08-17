@@ -15,6 +15,7 @@ import {
   Building
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { claimReferralAttribution } from '@/lib/referral-client';
 import styles from './onboarding.module.css';
 
 const STEPS = [
@@ -165,6 +166,11 @@ export default function OnboardingPage() {
         .single();
 
       if (brandError) throw brandError;
+
+      const { data: currentSession } = await supabase.auth.getSession();
+      if (brand && currentSession.session) {
+        await claimReferralAttribution(currentSession.session.access_token, brand.id);
+      }
 
       // 2. Update university association ONLY — role stays 'customer' until admin approves.
       //    Role is promoted to 'vendor' automatically when admin clicks Verify Vendor.

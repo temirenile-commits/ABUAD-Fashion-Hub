@@ -9,6 +9,7 @@ type ResponsiveAdminItem = {
   label: string;
   icon: React.ElementType;
   badge?: number;
+  href?: string;
 };
 
 type ResponsiveAdminChromeProps = {
@@ -38,7 +39,7 @@ export default function ResponsiveAdminChrome({
 }: ResponsiveAdminChromeProps) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
-  const select = (id: string) => { onSelect(id); close(); };
+  const select = (id: string, href?: string) => { if (href) window.location.href = href; else onSelect(id); close(); };
 
   return (
     <>
@@ -63,7 +64,7 @@ export default function ResponsiveAdminChrome({
           <button className={styles.iconButton} type="button" aria-label="Close admin navigation" onClick={close}><X size={20} /></button>
         </div>
         <nav className={styles.drawerNav} aria-label="Mobile administration navigation">
-          {items.map(({ id, label, icon: Icon, badge }) => <button key={id} type="button" className={`${styles.navItem} ${activeId === id ? styles.navActive : ''}`} onClick={() => select(id)}>
+          {items.map(({ id, label, icon: Icon, badge, href }) => <button key={id} type="button" className={`${styles.navItem} ${activeId === id ? styles.navActive : ''}`} onClick={() => select(id, href)}>
             <Icon size={18} /><span>{label}</span>{badge ? <span className={styles.badge}>{badge}</span> : <ChevronRight size={15} className={styles.chevron} />}
           </button>)}
         </nav>

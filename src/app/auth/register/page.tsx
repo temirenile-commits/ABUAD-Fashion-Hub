@@ -6,6 +6,7 @@ import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import styles from '../auth.module.css';
 import { supabase } from '@/lib/supabase';
 import { getAuthCallbackUrl } from '@/lib/auth-redirect';
+import { claimReferralAttribution } from '@/lib/referral-client';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -20,6 +21,19 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [universities, setUniversities] = useState<any[]>([]);
   const [universityId, setUniversityId] = useState('');
+
+  useEffect(() => {
+    const referralCode = new URLSearchParams(window.location.search).get('ref');
+    if (!referralCode) return;
+    const timer = window.setTimeout(() => {
+      void fetch('/api/referrals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'funnel', eventType: 'registration_started', code: referralCode }),
+      });
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     supabase.from('universities').select('id, name').eq('is_active', true).then(({ data }) => {
@@ -97,6 +111,10 @@ export default function RegisterPage() {
           phone: null,
           university_id: universityId || null,
         }, { onConflict: 'id' });
+
+        if (authData.session) {
+          await claimReferralAttribution(authData.session.access_token);
+        }
 
         // Give a small hint if email confirmation is likely on
         if (authData.session === null) {

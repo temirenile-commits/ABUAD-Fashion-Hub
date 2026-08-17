@@ -58,6 +58,13 @@ export async function POST(req: Request) {
       }
     }
 
+    const { error: referralError } = await supabaseAdmin.rpc('reverse_referral_order', {
+      p_order_id: order.id,
+      p_reason: 'Underlying order was cancelled',
+      p_refund_amount: order.total_amount,
+    });
+    if (referralError) console.error('[REFERRAL] Cancellation reversal failed:', referralError.message);
+
     // Notify Vendor
     await supabaseAdmin.from('notifications').insert({
       user_id: order.brand_owner_id || order.brand_id,

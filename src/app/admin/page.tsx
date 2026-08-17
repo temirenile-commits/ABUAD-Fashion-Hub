@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   Users, Store, ShoppingBag, TrendingUp, XCircle,
   Search, RefreshCw, Trash2, Star, Eye, ShoppingCart, Loader2, CreditCard, AlertTriangle, Settings, Bell,
-  BarChart3, Activity, ExternalLink, MapPin, Tag, ArrowLeft, ShieldAlert, ShieldCheck, Clock, UtensilsCrossed, Trophy
+  BarChart3, Activity, ExternalLink, MapPin, Tag, ArrowLeft, ShieldAlert, ShieldCheck, Clock, UtensilsCrossed, Trophy, Link2
 } from 'lucide-react';
 import { uploadFile } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
@@ -713,7 +713,7 @@ export default function AdminDashboard() {
       <ResponsiveAdminChrome
         title={activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
         subtitle="Super Admin"
-        items={ADMIN_NAVIGATION.map(([id, label, icon]) => ({ id, label, icon, badge: id === 'vendors' && pendingVendors.length > 0 ? pendingVendors.length : undefined }))}
+        items={[...ADMIN_NAVIGATION.map(([id, label, icon]) => ({ id, label, icon, badge: id === 'vendors' && pendingVendors.length > 0 ? pendingVendors.length : undefined })), { id: 'referrals', label: 'Referral Management', icon: Link2, href: '/admin/referrals' }]}
         activeId={activeTab}
         onSelect={(id) => { setActiveTab(id as Tab); setSearch(''); setActiveVendorId(null); }}
         search={search}
@@ -740,6 +740,7 @@ export default function AdminDashboard() {
           ))}
         </nav>
         <div className={styles.sidebarFooter}>
+          <Link href="/admin/referrals" className={styles.exitLink}><Link2 size={16} /> Referral Management</Link>
           <Link href="/dashboard/vendor" className={styles.exitLink}>My Vendor Store</Link>
           <Link href="/" className={styles.exitLink}>← Public Site</Link>
         </div>

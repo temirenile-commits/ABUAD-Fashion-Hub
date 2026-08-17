@@ -6,6 +6,7 @@ import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import styles from '../auth.module.css';
 import { supabase } from '@/lib/supabase';
 import { getAuthCallbackUrl } from '@/lib/auth-redirect';
+import { claimReferralAttribution } from '@/lib/referral-client';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -67,6 +68,7 @@ export default function LoginPage() {
       if (authError) throw authError;
 
       if (authData.user) {
+        await claimReferralAttribution(authData.session?.access_token);
         // Fetch role to direct appropriately
         const { data: userData, error: userError } = await supabase
           .from('users')

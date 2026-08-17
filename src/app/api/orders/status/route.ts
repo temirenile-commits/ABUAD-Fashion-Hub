@@ -225,6 +225,13 @@ export async function POST(req: Request) {
         // Non-fatal: log but don't block the status update from completing
         console.error('[PAYOUT ENGINE] Failed to create payout record:', payoutErr);
       }
+
+      try {
+        const { error: referralError } = await supabaseAdmin.rpc('process_referral_order', { p_order_id: orderId });
+        if (referralError) console.error('[REFERRAL] Order reward processing failed:', referralError.message);
+      } catch (referralErr) {
+        console.error('[REFERRAL] Order reward processing failed:', referralErr);
+      }
     }
 
     // 5. Notify customer of the status change
