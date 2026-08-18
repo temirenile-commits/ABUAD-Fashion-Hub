@@ -13,6 +13,7 @@ import { useToast } from '@/context/ToastContext';
 import { useMarketplaceStore } from '@/store/marketplaceStore';
 import CountdownTimer from '@/components/CountdownTimer';
 import MilesSettingsPanel from '@/components/MilesSettingsPanel';
+import VendorUniversityTargetPanel from '@/components/VendorUniversityTargetPanel';
 import styles from './dashboard.module.css';
 
 // Icons mapper for dynamic rates
@@ -1776,6 +1777,7 @@ export default function VendorDashboard() {
           <div className={styles.tabContent}>
             <h1 className={styles.title}>Store Settings</h1>
             <p className={styles.subtitle}>Manage your brand identity, contact details, and store policies.</p>
+            <VendorUniversityTargetPanel brandId={brand.id} />
 
             {/* ── Dashboard Operations Section (General Dedicated) ────────────────────────────────── */}
             <div className={styles.settingsSection} style={{ border: '1px solid var(--primary-soft)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', background: 'rgba(0,0,0,0.03)' }}>

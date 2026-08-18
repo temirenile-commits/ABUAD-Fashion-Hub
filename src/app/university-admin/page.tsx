@@ -9,13 +9,14 @@ import {
   LayoutDashboard, Store, Users, ShoppingCart, Star, Bell,
   BarChart3, Globe, Truck, Shield, LogOut, RefreshCw, Search,
   CheckCircle, XCircle, Loader2, AlertTriangle, Plus, UserPlus, Trash2, Tag, Settings, ShoppingBag, Coffee,
-  ShieldCheck, CreditCard, FolderOpen, Clock, Edit2
+  ShieldCheck, CreditCard, FolderOpen, Clock, Clock3, Edit2
 } from "lucide-react";
 import PremiumChart from "@/components/PremiumChart"; 
 import { uploadFile } from "@/lib/storage";
 import ResponsiveAdminChrome from "@/components/ResponsiveAdminChrome";
+import VendorUniversityChangeRequestsPanel from "@/components/VendorUniversityChangeRequestsPanel";
 
-type Tab = "overview" | "vendors" | "customers" | "orders" | "reviews" | "notices" | "analytics" | "insights" | "fleet" | "team" | "catalog" | "merchandising" | "settings" | "promos" | "cafeterias" | "manual_transfers" | "categories";
+type Tab = "overview" | "vendors" | "customers" | "orders" | "reviews" | "notices" | "analytics" | "insights" | "fleet" | "team" | "catalog" | "merchandising" | "settings" | "promos" | "cafeterias" | "manual_transfers" | "categories" | "university_change_requests";
 
 async function uaFetch(path: string, opts: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -275,13 +276,14 @@ export default function UniversityAdminPage() {
     ["overview","Overview",LayoutDashboard],["vendors","Vendors",Store],["cafeterias","Cafeterias",Coffee],["catalog","Catalog",ShoppingCart],["customers","Customers",Users],
     ["orders","Orders",ShoppingCart],["manual_transfers","Manual Transfers",CreditCard],
     ["reviews","Reviews",Star],["notices","Notices",Bell],["merchandising","Merchandising",Tag],
-    ["promos","Promo Codes",Tag],["categories","Categories",FolderOpen],
+    ["promos","Promo Codes",Tag],["categories","Categories",FolderOpen],["university_change_requests","Vendor University Requests",Clock3],
     ["analytics","Analytics",BarChart3],["insights","Insights",Globe],["fleet","Fleet",Truck],["team","My Team",Shield],["settings","Settings",Settings],
   ];
 
   const hasAccess = (tabId: string) => {
     if (userCtx?.role === "admin" || userCtx?.role === "university_admin") return true;
     if (["overview", "analytics", "insights"].includes(tabId)) return true;
+    if (tabId === "university_change_requests" && (userCtx?.role === "admin" || userCtx?.role === "university_admin" || userCtx?.role === "super_admin")) return true;
     // Verifying admins can only access the manual transfers tab
     if (tabId === "manual_transfers" && userCtx?.admin_permissions?.includes("verify_payments")) return true;
     return userCtx?.admin_permissions?.includes(tabId);
@@ -363,6 +365,7 @@ export default function UniversityAdminPage() {
             <div className={styles.loading}><Loader2 size={28} className={styles.spin}/> Loading...</div>
           ) : (
             <>
+              {tab==="university_change_requests" && <VendorUniversityChangeRequestsPanel />}
               {tab==="overview"&&(
                 <>
                   {vendors.filter((v: any) => v.verification_status === "pending").length > 0 && (

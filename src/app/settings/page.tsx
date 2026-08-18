@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -17,6 +17,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import styles from './settings.module.css';
 import MilesSettingsPanel from '@/components/MilesSettingsPanel';
+import UniversityMarketplaceSwitcher from '@/components/UniversityMarketplaceSwitcher';
 
 /** Simple inline toast for confirmations */
 function Toast({ message, kind }: { message: string; kind: 'success' | 'error' }) {
@@ -26,7 +27,7 @@ function Toast({ message, kind }: { message: string; kind: 'success' | 'error' }
 export default function SettingsPage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
-  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; email?: string; role?: string } | null>(null);
 
   // Saved checkout info
   const [phone, setPhone] = useState('');
@@ -36,7 +37,14 @@ export default function SettingsPage() {
   // Password reset
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
-  const [pwStrength, setPwStrength] = useState(0); // 0..4
+  const pwStrength = useMemo(() => {
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+    return score;
+  }, [password]); // 0..4
   const [savingPw, setSavingPw] = useState(false);
 
   // Danger zone
@@ -63,25 +71,17 @@ export default function SettingsPage() {
       setUser(user);
       const { data: profile } = await supabase
         .from('users')
-        .select('phone, default_address')
+        .select('phone, default_address, role')
         .eq('id', user.id)
         .single();
       if (profile) {
         setPhone(profile.phone || '');
         setAddress(profile.default_address || '');
+        setUser((current) => current ? { ...current, role: profile.role } : current);
       }
       setReady(true);
     })();
   }, [router]);
-
-  useEffect(() => {
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-    setPwStrength(score);
-  }, [password]);
 
   const handleSaveCheckoutInfo = async () => {
     if (!user) return;
@@ -111,7 +111,6 @@ export default function SettingsPage() {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       setPassword('');
-      setPwStrength(0);
       showToast('Password updated successfully!', 'success');
     } catch (err: any) {
       showToast(err.message || 'Failed to update password.', 'error');
@@ -159,6 +158,7 @@ export default function SettingsPage() {
         <p className={styles.sub}>{user.email}</p>
 
         <MilesSettingsPanel />
+        {user.role === 'customer' && <UniversityMarketplaceSwitcher />}
 
         {/* ── Saved Checkout Information ─────────────────────────── */}
         <div className={styles.section} style={{ marginTop: '1.5rem' }}>

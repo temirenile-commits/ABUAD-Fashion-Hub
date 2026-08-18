@@ -26,7 +26,32 @@ export async function GET(req: NextRequest) {
     return errRes as NextResponse;
   }
 
-  // â”€â”€ Stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (action === 'vendor_university_change_requests') {
+    let query = supabaseAdmin
+      .from('vendor_university_change_requests')
+      .select('*, brands:vendor_id(id, name, owner_id, verified, verification_status), current_university:current_university_id(id, name, abbreviation), requested_university:requested_university_id(id, name, abbreviation), reviewer:reviewed_by(id, name, email)')
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (!ctx.isFullAdmin) query = query.eq('requested_university_id', universityId);
+    else if (queryUnivId) query = query.eq('requested_university_id', queryUnivId);
+    const status = searchParams.get('status');
+    const vendorId = searchParams.get('vendor_id');
+    const currentUniversityId = searchParams.get('current_university_id');
+    const requestedUniversityId = searchParams.get('requested_university_id');
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
+    if (status && status !== 'ALL') query = query.eq('status', status);
+    if (vendorId) query = query.eq('vendor_id', vendorId);
+    if (currentUniversityId) query = query.eq('current_university_id', currentUniversityId);
+    if (requestedUniversityId) query = query.eq('requested_university_id', requestedUniversityId);
+    if (from) query = query.gte('created_at', from);
+    if (to) query = query.lte('created_at', to);
+    const { data, error } = await query;
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ requests: data || [] });
+  }
+
+  // â”€â”€ Stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (action === 'stats') {
     const periodEnd = searchParams.get('end') ? new Date(searchParams.get('end') as string) : new Date();
     const periodStart = searchParams.get('start')
@@ -475,6 +500,29 @@ export async function POST(req: NextRequest) {
   };
 
   // â”€â”€ Verify vendor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (action === 'review_vendor_university_change_request') {
+    const { requestId, decision, message } = body;
+    const { data, error } = await supabaseAdmin.rpc('review_vendor_university_change_request', {
+      p_request_id: requestId,
+      p_admin_id: ctx.userId,
+      p_decision: decision,
+      p_message: message || null,
+    });
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ success: true, request: data });
+  }
+
+  if (action === 'message_vendor_university_change_request') {
+    const { requestId, message } = body;
+    const { data, error } = await supabaseAdmin.rpc('message_vendor_university_change_request', {
+      p_request_id: requestId,
+      p_admin_id: ctx.userId,
+      p_message: message,
+    });
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ success: Boolean(data) });
+  }
+
   if (action === 'verify_vendor') {
     const { brandId } = body;
     if (!(await ensureScope('brands', brandId))) {
