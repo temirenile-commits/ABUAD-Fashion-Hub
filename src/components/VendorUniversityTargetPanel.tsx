@@ -40,7 +40,7 @@ export default function VendorUniversityTargetPanel({ brandId, defaultOpen = fal
   useEffect(() => { void load(); }, [brandId]);
 
   const pending = requests.find((request) => request.status === 'PENDING');
-  const verified = Boolean(brand?.verified) && brand?.verification_status === 'approved';
+  const verified = Boolean(brand?.verified) && ['approved', 'verified'].includes(String(brand?.verification_status || '').toLowerCase());
 
   const submit = async () => {
     if (!selected) { setMessage('Select a university first.'); return; }
