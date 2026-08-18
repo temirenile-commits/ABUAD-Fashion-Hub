@@ -35,8 +35,10 @@ function destinationForRole(role: string | null | undefined): string {
   }
 }
 
-function chooseDestination(requested: URL, role: string | null | undefined, origin: string): URL {
+function chooseDestination(requested: URL | null, role: string | null | undefined, origin: string): URL {
   const roleDestination = destinationForRole(role);
+  if (!requested) return new URL(roleDestination, origin);
+
   const requestedPath = requested.pathname || '/';
   const isRoleDestination = requestedPath === roleDestination;
   const isSafePublicDestination = PUBLIC_RETURN_PATHS.has(requestedPath);
@@ -64,6 +66,8 @@ export async function GET(request: NextRequest) {
   // Create the redirect response first. Supabase SSR writes exchanged session
   // cookies onto this exact response; returning a different response would
   // silently discard the cookies and recreate the OAuth-state regression.
+  // null means no explicit returnTo was supplied; in that case the resolved
+  // MasterCart role must choose the authenticated landing page.
   const requestedDestination = getSafeCallbackDestination(requestUrl);
   const response = NextResponse.redirect(new URL('/', requestUrl.origin));
   response.headers.set('Cache-Control', 'private, no-store, max-age=0');
