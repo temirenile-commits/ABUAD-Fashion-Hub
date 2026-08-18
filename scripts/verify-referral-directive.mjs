@@ -18,6 +18,8 @@ const onboarding = read('src/app/onboarding/page.tsx');
 const statusRoute = read('src/app/api/orders/status/route.ts');
 const confirmRoute = read('src/app/api/orders/confirm/route.ts');
 const cancelRoute = read('src/app/api/orders/cancel/route.ts');
+const messages = read('src/lib/referral-messages.ts');
+const referralClient = read('src/lib/referral-client.ts');
 
 pass('additive referral tables exist', ['referral_links','referral_attributions','referral_relationships','referral_events','referral_ledger','referral_admin_audit'].every(t => sql.includes(`CREATE TABLE IF NOT EXISTS public.${t}`)));
 pass('canonical foreign keys exist', ['REFERENCES public.users(id)', 'REFERENCES public.brands(id)', 'REFERENCES public.orders(id)'].every(v => sql.includes(v)));
@@ -44,6 +46,14 @@ pass('notifications and qualification trigger exist', eventsSql.includes('handle
 pass('RLS protects owner data', sql.includes('ALTER TABLE public.referral_ledger ENABLE ROW LEVEL SECURITY') && sql.includes('auth.uid() = beneficiary_user_id'));
 pass('admin audit logging exists', api.includes('referral_admin_audit') && sql.includes('previous_value') && sql.includes('new_value'));
 pass('customer referral dashboard uses real API data', customerPage.includes('/api/referrals') && customerPage.includes('No referrals yet.') && customerPage.includes('navigator.share'));
+pass('referral messages are audience-specific', messages.includes('user_to_vendor') && messages.includes("Join MasterCart as a vendor") && messages.includes('Join me on MasterCart'));
+pass('share payload preserves URL source of truth', customerPage.includes('navigator.share') && customerPage.includes('url })') && messages.includes('includeUrl'));
+pass('copy referral message exists', customerPage.includes('Copy ${label} referral message') && customerPage.includes('getReferralMessage'));
+pass('WhatsApp and Telegram sharing exists', customerPage.includes('wa.me') && customerPage.includes('t.me/share/url'));
+pass('landing carries public referral context', resolver.includes('ref_type') && resolver.includes('referrer') && resolver.includes('mc_referral_code'));
+pass('registration and login referral indicators exist', register.includes('referralNotice') && login.includes('referralNotice') && register.includes('referralLoginHref'));
+pass('existing referral relationship is reported without overwrite', api.includes('alreadyAttributed') && referralClient.includes('alreadyAttributed'));
+pass('share does not award referral rewards', customerPage.includes('navigator.share') && !customerPage.includes("action: 'claim'") && sql.includes('claim_referral_attribution'));
 pass('admin referral management exists', adminPage.includes('global_enabled') && adminPage.includes('Referral network') && adminPage.includes('payout_process'));
 pass('responsive referral UI exists', read('src/app/dashboard/customer/referrals/referrals.module.css').includes('@media') && read('src/app/admin/referrals/referrals.module.css').includes('@media'));
 pass('no secrets in new files', ![sql, eventsSql, api, resolver, customerPage, adminPage].some(v => /sk-[A-Za-z0-9_-]{20,}|service_role.{0,20}eyJ/i.test(v)));

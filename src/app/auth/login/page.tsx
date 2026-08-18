@@ -8,14 +8,33 @@ import { supabase } from '@/lib/supabase';
 import { getAuthCallbackUrl } from '@/lib/auth-redirect';
 import { claimReferralAttribution } from '@/lib/referral-client';
 
+type LoginReferralContext = { code: string; notice: string };
+
+function getLoginReferralContext(): LoginReferralContext {
+  if (typeof window === 'undefined') return { code: '', notice: '' };
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('ref') || '';
+  const referrer = params.get('referrer') || 'a MasterCart member';
+  const notice = params.get('ref_error') === 'invalid'
+    ? 'This referral link is invalid or has expired. You can still sign in normally.'
+    : code
+      ? `You’re signing in through ${referrer}'s referral. Your existing referral relationship will not be replaced.`
+      : '';
+  return { code, notice };
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const initialReferralContext = getLoginReferralContext();
+  const [referralNotice, setReferralNotice] = useState(initialReferralContext.notice);
+  const [referralCode] = useState(initialReferralContext.code);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -71,7 +90,9 @@ export default function LoginPage() {
       if (authError) throw authError;
 
       if (authData.user) {
-        await claimReferralAttribution(authData.session?.access_token);
+        const claimResult = await claimReferralAttribution(authData.session?.access_token);
+        if (claimResult.alreadyAttributed) setReferralNotice('Your existing referral relationship was preserved; this link did not replace it.');
+        else if (claimResult.error && referralCode) setReferralNotice(claimResult.error);
         // Fetch role to direct appropriately
         const { data: userData, error: userError } = await supabase
           .from('users')
@@ -113,6 +134,11 @@ export default function LoginPage() {
           <p>Sign in to continue exploring</p>
         </div>
 
+        {referralNotice && (
+          <div style={{ padding: '0.75rem', background: '#F0FDF4', color: '#166534', border: '1px solid #86EFAC', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
+            {referralNotice}
+          </div>
+        )}
         {errorMsg && (
           <div style={{ padding: '0.75rem', background: '#121214', color: '#FFFFFF', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
             {errorMsg}

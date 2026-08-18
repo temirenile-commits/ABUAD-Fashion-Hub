@@ -8,12 +8,32 @@ import { supabase } from '@/lib/supabase';
 import { getAuthCallbackUrl } from '@/lib/auth-redirect';
 import { claimReferralAttribution } from '@/lib/referral-client';
 
+type ReferralContext = { code: string; type: 'user_to_user' | 'user_to_vendor'; notice: string };
+
+function getReferralContext(): ReferralContext {
+  if (typeof window === 'undefined') return { code: '', type: 'user_to_user', notice: '' };
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('ref') || '';
+  const type = params.get('ref_type') === 'user_to_vendor' ? 'user_to_vendor' : 'user_to_user';
+  const referrer = params.get('referrer') || 'a MasterCart member';
+  const notice = params.get('ref_error') === 'invalid'
+    ? 'This referral link is invalid or has expired. You can still join MasterCart normally.'
+    : code
+      ? (type === 'user_to_vendor' ? `You’re joining through ${referrer}'s vendor referral.` : `You’re joining through ${referrer}'s referral.`)
+      : '';
+  return { code, type, notice };
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const [showPass, setShowPass] = useState(false);
   const [role, setRole] = useState('customer');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const initialReferralContext = getReferralContext();
+  const referralCode = initialReferralContext.code;
+  const [referralNotice, setReferralNotice] = useState(initialReferralContext.notice);
+  const [referralType] = useState<'user_to_user' | 'user_to_vendor'>(initialReferralContext.type);
 
   // Form State
   const [name, setName] = useState('');
@@ -23,7 +43,6 @@ export default function RegisterPage() {
   const [universityId, setUniversityId] = useState('');
 
   useEffect(() => {
-    const referralCode = new URLSearchParams(window.location.search).get('ref');
     if (!referralCode) return;
     const timer = window.setTimeout(() => {
       void fetch('/api/referrals', {
@@ -33,7 +52,7 @@ export default function RegisterPage() {
       });
     }, 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [referralCode]);
 
   useEffect(() => {
     supabase.from('universities').select('id, name').eq('is_active', true).then(({ data }) => {
@@ -116,7 +135,9 @@ export default function RegisterPage() {
         }, { onConflict: 'id' });
 
         if (authData.session) {
-          await claimReferralAttribution(authData.session.access_token);
+          const claimResult = await claimReferralAttribution(authData.session.access_token);
+          if (claimResult.alreadyAttributed) setReferralNotice('Your existing referral relationship was preserved; this link did not replace it.');
+          else if (claimResult.error && referralCodeFromUrl()) setReferralNotice(claimResult.error);
         }
 
         // Give a small hint if email confirmation is likely on
@@ -140,6 +161,9 @@ export default function RegisterPage() {
     }
   };
 
+  const referralCodeFromUrl = () => new URLSearchParams(window.location.search).get('ref');
+  const referralLoginHref = typeof window !== 'undefined' && window.location.search ? `/auth/login${window.location.search}` : '/auth/login';
+
   return (
     <div className={styles.page}>
       <Link href="/" className={styles.back}>
@@ -153,6 +177,11 @@ export default function RegisterPage() {
           <p>Join the #1 campus marketplace</p>
         </div>
 
+        {referralNotice && (
+          <div style={{ padding: '0.75rem', background: '#F0FDF4', color: '#166534', border: '1px solid #86EFAC', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
+            {referralNotice} {referralType === 'user_to_vendor' ? 'Please complete registration to connect your vendor account.' : 'Please complete registration to connect your account.'}
+          </div>
+        )}
         {errorMsg && (
           <div style={{ padding: '0.75rem', background: '#121214', color: '#FFFFFF', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
             {errorMsg}
@@ -226,7 +255,7 @@ export default function RegisterPage() {
 
         <div className={styles.divText}>
           Already have an account?{' '}
-          <Link href="/auth/login" className={styles.link}>Login</Link>
+          <Link href={referralLoginHref} className={styles.link}>Login</Link>
         </div>
       </div>
     </div>

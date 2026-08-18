@@ -6,17 +6,6 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
   const normalized = decodeURIComponent(code || '').trim().toUpperCase();
-  const destination = new URL('/auth/register', request.url);
-  destination.searchParams.set('ref', normalized);
-  const response = NextResponse.redirect(destination);
-  response.cookies.set('mc_referral_code', normalized, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 30,
-  });
-
   const { data: link } = await supabaseAdmin
     .from('referral_links')
     .select('id, owner_user_id, referral_type, is_active, click_count')
@@ -29,6 +18,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     invalid.searchParams.set('ref_error', 'invalid');
     return NextResponse.redirect(invalid);
   }
+
+  const { data: owner } = await supabaseAdmin.from('users').select('name').eq('id', link.owner_user_id).maybeSingle();
+  const destination = new URL('/auth/register', request.url);
+  destination.searchParams.set('ref', normalized);
+  destination.searchParams.set('ref_type', link.referral_type);
+  if (owner?.name?.trim()) destination.searchParams.set('referrer', owner.name.trim().slice(0, 80));
+  const response = NextResponse.redirect(destination);
+  response.cookies.set('mc_referral_code', normalized, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 30,
+  });
 
   const visitorKey = request.cookies.get('mc_referral_visitor')?.value || crypto.randomUUID();
   response.cookies.set('mc_referral_visitor', visitorKey, {

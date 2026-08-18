@@ -40,7 +40,10 @@ async function getProfileMap(ids: string[]) {
 }
 
 async function getUserSnapshot(userId: string) {
-  const { data: summary } = await supabaseAdmin.rpc('referral_balance_summary', { p_user_id: userId });
+  const [{ data: summary }, { data: ownerProfile }] = await Promise.all([
+    supabaseAdmin.rpc('referral_balance_summary', { p_user_id: userId }),
+    supabaseAdmin.from('users').select('name').eq('id', userId).maybeSingle(),
+  ]);
   await supabaseAdmin.rpc('refresh_referral_earnings', { p_user_id: userId });
   const [{ data: links }, { data: relationships }, { data: ledger }, { data: events }] = await Promise.all([
     supabaseAdmin.from('referral_links').select('id, referral_type, code, is_active, click_count, registration_count, activated_count, qualified_count, created_at, last_activity_at').eq('owner_user_id', userId).order('created_at', { ascending: false }).limit(10),
@@ -57,6 +60,7 @@ async function getUserSnapshot(userId: string) {
     ledger: ledger || [],
     events: events || [],
     summary: summary?.[0] || { total_earned: 0, pending_earnings: 0, available_earnings: 0, withdrawn_earnings: 0, reversed_earnings: 0 },
+    referrerName: ownerProfile?.name || null,
   };
 }
 
@@ -158,8 +162,17 @@ export async function POST(req: NextRequest) {
     if (action === 'claim') {
       const code = String(body.code || req.cookies.get('mc_referral_code')?.value || '').trim();
       if (!code) return NextResponse.json({ success: true, claimed: false });
-      const { data, error } = await supabaseAdmin.rpc('claim_referral_attribution', { p_code: code, p_referred_user_id: user.id, p_referred_brand_id: body.brandId || null });
-      const response = NextResponse.json(error ? { success: false, error: error.message.includes('invalid') ? 'Referral link is invalid.' : error.message } : { success: true, claimed: Boolean(data), relationshipId: data });
+      const { data: link } = await supabaseAdmin.from('referral_links').select('id, referral_type').eq('code', code.toUpperCase()).eq('is_active', true).maybeSingle();
+      const existingQuery = link
+        ? supabaseAdmin.from('referral_relationships').select('id').eq('referred_user_id', user.id).eq('referral_type', link.referral_type).maybeSingle()
+        : Promise.resolve({ data: null });
+      const [{ data: existingRelationship }, { data, error }] = await Promise.all([
+        existingQuery,
+        supabaseAdmin.rpc('claim_referral_attribution', { p_code: code, p_referred_user_id: user.id, p_referred_brand_id: body.brandId || null }),
+      ]);
+      const response = NextResponse.json(error
+        ? { success: false, error: error.message.includes('invalid') ? 'Referral link is invalid.' : error.message }
+        : { success: true, claimed: Boolean(data) && !existingRelationship, alreadyAttributed: Boolean(existingRelationship), relationshipId: data });
       response.cookies.set('mc_referral_code', '', { path: '/', maxAge: 0 });
       return response;
     }
