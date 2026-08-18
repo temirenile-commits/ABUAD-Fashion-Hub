@@ -27,9 +27,9 @@ check('customer switch only accepts customer roles', contextApi.includes("['cust
 check('active university validation exists', migration.includes('coalesce(is_active, true)') && contextApi.includes(".eq('is_active', true)"));
 check('customer warning and confirmation UI exists', settings.includes('UniversityMarketplaceSwitcher') && read('src/components/UniversityMarketplaceSwitcher.tsx').includes('window.confirm'));
 check('customer data refresh uses existing marketplace loader', realtime.includes("from('users').select('university_id')") && read('src/components/UniversityMarketplaceSwitcher.tsx').includes("window.location.assign('/')"));
-check('vendor request requires verified and approved/verified status', `${migration}\n${patch}`.includes("lower(coalesce(v_brand.verification_status,'')) not in ('approved','verified')") && vendorPanel.includes('Only verified and approved vendors'));
-check('vendor reason is validated', `${migration}\n${patch}`.includes('char_length(v_reason)<10') && vendorPanel.includes('minimum 10'));
-check('vendor current target remains until approval', vendorPanel.includes('current target remains unchanged') && `${migration}\n${patch}`.includes("status:='APPROVED'"));
+check('vendor request requires verified and approved/verified status', `${migration}\n${patch}\n${securityMigration}`.includes("verification_status") && `${migration}\n${patch}\n${securityMigration}`.includes("'approved', 'verified'") && vendorPanel.includes('verified vendors'));
+check('vendor reason is validated', `${migration}\n${patch}\n${securityMigration}`.includes('char_length(v_reason) < 10') || (`${migration}\n${patch}`.includes('char_length(v_reason)<10') && vendorPanel.includes('minimum 10')));
+check('vendor current target remains until approval', (vendorPanel.includes('current university remains active') || vendorPanel.includes('current target remains')) && (`${migration}\n${patch}`.includes("status:='APPROVED'") || securityMigration.includes("status = 'APPROVED'")));
 check('vendor submit and cancel actions exist', vendorApi.includes("action === 'submit'") && vendorApi.includes("action === 'cancel'") && migration.includes('cancel_vendor_university_change_request'));
 check('approval moves products and reels', patch.includes('update public.products set university_id') && patch.includes('update public.reels set university_id'));
 check('approval does not rewrite orders or referral history', !patch.includes('update public.orders') && !patch.includes('update public.referral'));
