@@ -7,6 +7,7 @@ const redirect = fs.readFileSync(`${root}src/lib/auth-redirect.ts`, 'utf8');
 const siteUrl = fs.readFileSync(`${root}src/lib/site-url.ts`, 'utf8');
 const browserClient = fs.readFileSync(`${root}src/lib/supabase.ts`, 'utf8');
 const middleware = fs.readFileSync(`${root}src/middleware.ts`, 'utf8');
+const serverAuth = fs.readFileSync(`${root}src/lib/server-auth.ts`, 'utf8');
 const login = fs.readFileSync(`${root}src/app/auth/login/page.tsx`, 'utf8');
 const register = fs.readFileSync(`${root}src/app/auth/register/page.tsx`, 'utf8');
 const forgotPassword = fs.readFileSync(`${root}src/app/auth/forgot-password/page.tsx`, 'utf8');
@@ -34,6 +35,9 @@ const checks = [
   ['safe relative returnTo', redirect.includes("returnTo.startsWith('/')") && redirect.includes("returnTo.startsWith('//')")],
   ['old-host callback is discarded', middleware.includes("pathname === '/auth/callback'") && middleware.includes('oauth_domain_mismatch')],
   ['role-aware callback routing', callback.includes("return '/dashboard/vendor'") && callback.includes("return '/admin'") && callback.includes("return '/university-admin'")],
+  ['missing returnTo uses role dashboard', redirect.includes('return null') && callback.includes('if (!requested) return new URL(roleDestination, origin)')],
+  ['explicit homepage returnTo remains allowed', callback.includes("PUBLIC_RETURN_PATHS.has(requestedPath)") && redirect.includes('const destination = new URL(safePath, requestUrl.origin)')],
+  ['SSR server auth reconstructs cookies', serverAuth.includes("import { createServerClient } from '@supabase/ssr'") && serverAuth.includes('supabase.auth.getUser()') && !serverAuth.includes("cookie.name.includes('-auth-token')")],
   ['callback exchanges once and writes same response cookies', callback.includes('exchangeCodeForSession(code)') && callback.includes('response.cookies.set(name, value, options)')],
   ['callback is private and non-cacheable', callback.includes("Cache-Control', 'private, no-store, max-age=0")],
   ['password recovery uses canonical origin', forgotPassword.includes('getCanonicalSiteUrl()')],
