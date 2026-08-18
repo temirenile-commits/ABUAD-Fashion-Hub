@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/server-auth';
+import { getAuthenticatedSupabaseClient, getAuthenticatedUser } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
@@ -43,8 +43,8 @@ export async function POST(req: NextRequest) {
       if (!existing || !['customer', 'user'].includes(existing.role)) {
         return NextResponse.json({ error: 'Only customer accounts can switch marketplace university.' }, { status: 403 });
       }
-      const { data, error } = await supabaseAdmin.rpc('switch_marketplace_university', {
-        p_user_id: user.id,
+      const userSupabase = await getAuthenticatedSupabaseClient(req);
+      const { data, error } = await userSupabase.rpc('switch_marketplace_university', {
         p_university_id: body.universityId,
       });
       if (error) return NextResponse.json({ error: error.message }, { status: 400 });

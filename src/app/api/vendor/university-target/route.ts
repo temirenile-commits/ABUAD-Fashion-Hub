@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/server-auth';
+import { getAuthenticatedSupabaseClient, getAuthenticatedUser } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
@@ -43,9 +43,9 @@ export async function POST(req: NextRequest) {
     if (action === 'submit') {
       const { data: brand } = await supabaseAdmin.from('brands').select('id').eq('owner_id', user.id).maybeSingle();
       if (!brand) return NextResponse.json({ error: 'Vendor store not found.' }, { status: 404 });
-      const { data, error } = await supabaseAdmin.rpc('submit_vendor_university_change_request', {
+      const userSupabase = await getAuthenticatedSupabaseClient(req);
+      const { data, error } = await userSupabase.rpc('submit_vendor_university_change_request', {
         p_vendor_id: brand.id,
-        p_requesting_user_id: user.id,
         p_requested_university_id: body.requestedUniversityId,
         p_reason: body.reason,
       });
@@ -54,7 +54,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'cancel') {
-      const { data, error } = await supabaseAdmin.rpc('cancel_vendor_university_change_request', { p_request_id: body.requestId, p_user_id: user.id });
+      const userSupabase = await getAuthenticatedSupabaseClient(req);
+      const { data, error } = await userSupabase.rpc('cancel_vendor_university_change_request', { p_request_id: body.requestId });
       if (error) return NextResponse.json({ error: error.message }, { status: 400 });
       return NextResponse.json({ success: true, request: data });
     }

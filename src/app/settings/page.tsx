@@ -158,7 +158,7 @@ export default function SettingsPage() {
         <p className={styles.sub}>{user.email}</p>
 
         <MilesSettingsPanel />
-        {user.role === 'customer' && <UniversityMarketplaceSwitcher />}
+        {['customer', 'user'].includes(user.role || '') && <UniversityMarketplaceSwitcher />}
 
         {/* ── Saved Checkout Information ─────────────────────────── */}
         <div className={styles.section} style={{ marginTop: '1.5rem' }}>

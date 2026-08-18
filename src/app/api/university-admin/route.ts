@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getAuthenticatedSupabaseClient } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireUniversityAdmin, requireSuperAdmin, getUniversityScope } from '@/lib/rbac';
 
@@ -502,9 +503,9 @@ export async function POST(req: NextRequest) {
   // â”€â”€ Verify vendor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (action === 'review_vendor_university_change_request') {
     const { requestId, decision, message } = body;
-    const { data, error } = await supabaseAdmin.rpc('review_vendor_university_change_request', {
+    const userSupabase = await getAuthenticatedSupabaseClient(req);
+    const { data, error } = await userSupabase.rpc('review_vendor_university_change_request', {
       p_request_id: requestId,
-      p_admin_id: ctx.userId,
       p_decision: decision,
       p_message: message || null,
     });
@@ -514,9 +515,9 @@ export async function POST(req: NextRequest) {
 
   if (action === 'message_vendor_university_change_request') {
     const { requestId, message } = body;
-    const { data, error } = await supabaseAdmin.rpc('message_vendor_university_change_request', {
+    const userSupabase = await getAuthenticatedSupabaseClient(req);
+    const { data, error } = await userSupabase.rpc('message_vendor_university_change_request', {
       p_request_id: requestId,
-      p_admin_id: ctx.userId,
       p_message: message,
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });

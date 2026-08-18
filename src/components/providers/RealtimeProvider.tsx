@@ -50,15 +50,6 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
         let { data: prodData, error: prodError } = await query;
         if (prodError) throw prodError;
 
-        // Fallback: If university-restricted query returns zero products, fetch all products
-        if (!prodData || prodData.length === 0) {
-          const fallbackQuery = await supabase
-            .from('products')
-            .select(`*, brands:brands!products_brand_id_fkey(*, universities:universities!brands_university_id_fkey(*))`)
-            .order('created_at', { ascending: false });
-          prodData = fallbackQuery.data;
-        }
-
         if (active && prodData) {
           const enriched = prodData.map((p: any) => ({
             ...p,
@@ -78,11 +69,6 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
         }
         let { data: brandData, error: bErr } = await brandQuery;
         if (bErr) throw bErr;
-
-        if (!brandData || brandData.length === 0) {
-          const allBrandsRes = await supabase.from('brands').select('*');
-          brandData = allBrandsRes.data;
-        }
 
         if (active && brandData) setVendors(brandData as any);
 
@@ -112,13 +98,25 @@ export default function RealtimeProvider({ children }: { children: React.ReactNo
       }
     };
 
-    // Always re-fetch canonical reels
+    // Re-fetch canonical reels using the same university scope as the initial marketplace load.
     const fetchReels = async () => {
-      const { data: reelData } = await supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      let userUniId: string | null = null;
+      if (session?.user) {
+        const { data: profile } = await supabase.from('users').select('university_id').eq('id', session.user.id).single();
+        userUniId = profile?.university_id || null;
+      }
+      let reelQuery = supabase
         .from('reels')
         .select('*, brands(name, logo_url, verified), reel_products(products(*)), reel_likes(id, user_id), reel_comments(id, content, created_at, user_id)')
         .eq('status', 'published')
         .order('created_at', { ascending: false });
+      if (userUniId) {
+        reelQuery = reelQuery.or(`visibility_type.eq.all,visibility_type.eq.public,and(visibility_type.eq.university,university_id.eq.${userUniId})`);
+      } else {
+        reelQuery = reelQuery.or(`visibility_type.eq.all,visibility_type.eq.public,and(visibility_type.eq.university,university_id.eq.${ABUAD_ID})`);
+      }
+      const { data: reelData } = await reelQuery;
       if (active && reelData) setReels(reelData as any);
     };
 

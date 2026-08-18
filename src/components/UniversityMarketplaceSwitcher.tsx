@@ -35,7 +35,7 @@ export default function UniversityMarketplaceSwitcher() {
     if (!selected || selected === current?.id) return;
     const next = universities.find((university) => university.id === selected);
     if (!next) return;
-    const confirmed = window.confirm(`Switch your marketplace to ${next.name}? Your orders, referral history, account, and authentication will remain unchanged. Only the products, vendors, reels, and recommendations you browse will change.`);
+    const confirmed = window.confirm(`Switch your marketplace to ${next.name}? Products in this university marketplace may not be available in your current area and may be sold or delivered specifically within that university region. Your account, authentication, orders, and referral history will remain unchanged; only your browsing context will change.`);
     if (!confirmed) return;
     setSaving(true); setMessage('');
     try {
@@ -57,7 +57,7 @@ export default function UniversityMarketplaceSwitcher() {
     <p style={{ margin: '0 0 12px', color: 'var(--text-400)', fontSize: 13 }}>Current marketplace: <strong>{current?.name || 'General Marketplace'}</strong>. Select another university to browse its products, vendors, reels, and recommendations.</p>
     <div style={{ display: 'grid', gap: 10 }}>
       <select value={selected} onChange={(event) => setSelected(event.target.value)} disabled={saving} aria-label="Select marketplace university" style={{ width: '100%', padding: '0.7rem', background: 'var(--bg-300)', color: 'var(--text-100)', border: '1px solid var(--border)', borderRadius: 8 }}><option value="">Choose a university</option>{universities.map((university) => <option key={university.id} value={university.id}>{university.name}{university.abbreviation ? ` (${university.abbreviation})` : ''}</option>)}</select>
-      {selected && selected !== current?.id && <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', color: '#fcd34d', fontSize: 13 }}><AlertTriangle size={17} /><span>Switching changes your browsing context only. It does not move your account, orders, referral history, or vendor ownership.</span></div>}
+      {selected && selected !== current?.id && <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', color: '#fcd34d', fontSize: 13 }}><AlertTriangle size={17} /><span>Location warning: products, vendors, reels, and delivery options in this marketplace may be specific to {universities.find((university) => university.id === selected)?.name || 'the selected university'} and may not be available in your current area. Your account, orders, referral history, and vendor ownership will not move.</span></div>}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><button type="button" className="btn btn-primary btn-sm" disabled={saving || !selected || selected === current?.id} onClick={() => void confirmSwitch()}>{saving ? <><Loader2 size={15} className="anim-spin" /> Switching…</> : 'Confirm switch'}</button>{selected && <button type="button" className="btn btn-secondary btn-sm" disabled={saving} onClick={() => setSelected('')}>Cancel</button>}</div>
     </div>
     {message && <div role="status" style={{ marginTop: 10, display: 'flex', gap: 7, alignItems: 'center', color: message.includes('switched') ? '#86efac' : '#fca5a5', fontSize: 13 }}><CheckCircle2 size={15} /> {message}</div>}

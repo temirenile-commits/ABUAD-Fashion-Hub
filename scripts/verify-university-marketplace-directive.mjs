@@ -12,6 +12,10 @@ const settings = read('src/app/settings/page.tsx');
 const vendorPanel = read('src/components/VendorUniversityTargetPanel.tsx');
 const adminPanel = read('src/components/VendorUniversityChangeRequestsPanel.tsx');
 const realtime = read('src/components/providers/RealtimeProvider.tsx');
+const vendorDashboard = read('src/app/dashboard/vendor/page.tsx');
+const adminDashboard = read('src/app/university-admin/page.tsx');
+const auth = read('src/lib/server-auth.ts');
+const securityMigration = read('supabase/migrations/20260818_university_marketplace_rpc_security.sql');
 
 let passed = 0;
 const check = (name, ok) => { if (!ok) throw new Error(`FAIL: ${name}`); passed += 1; console.log(`PASS: ${name}`); };
@@ -35,5 +39,12 @@ check('admin UI has pending approved rejected views', adminPanel.includes('PENDI
 check('vendor receives notifications and messages', migration.includes('public.notifications') && patch.includes('public.messages') && patch.includes('University admin sent you a message'));
 check('vendor ownership and admin scope are enforced server-side', patch.includes('owner_id=p_requesting_user_id') && patch.includes('v_admin.university_id is distinct from v_request.requested_university_id'));
 check('no duplicate authentication or parallel marketplace store', contextApi.includes("from '@/lib/server-auth'") && !contextApi.includes('createClient') && realtime.includes("useMarketplaceStore"));
+check('vendor panel is actually rendered in store settings', vendorDashboard.includes("activeTab === 'settings'") && vendorDashboard.includes('<VendorUniversityTargetPanel brandId={brand.id} />'));
+check('admin panel is actually rendered in its tab', adminDashboard.includes('tab==="university_change_requests"') && adminDashboard.includes('<VendorUniversityChangeRequestsPanel />'));
+check('customer switcher is visible to customer and user roles', settings.includes("['customer', 'user'].includes(user.role || '')"));
+check('location and delivery warning is present', read('src/components/UniversityMarketplaceSwitcher.tsx').includes('may not be available in your current area') && read('src/components/UniversityMarketplaceSwitcher.tsx').includes('sold or delivered specifically within that university region'));
+check('empty university marketplace does not fall back to all products or vendors', !realtime.includes('fallbackQuery') && !realtime.includes('allBrandsRes') && realtime.includes('same university scope as the initial marketplace load'));
+check('RPC identity is derived from authenticated session', securityMigration.includes('auth.uid()') && securityMigration.includes('drop function if exists public.switch_marketplace_university(uuid, uuid)') && auth.includes('getAuthenticatedSupabaseClient'));
+check('university RPCs are not executable by anonymous users', securityMigration.includes('revoke all on function public.switch_marketplace_university(uuid) from public, anon') && securityMigration.includes('grant execute on function public.switch_marketplace_university(uuid) to authenticated'));
 
-console.log(`\nUniversity directive checks passed: ${passed}/19`);
+console.log(`\nUniversity directive checks passed: ${passed}/26`);

@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
@@ -38,6 +39,27 @@ async function getUserFromAuthorizationHeader(req: Request) {
  * canonical Supabase SSR cookie session. Cookie reconstruction is delegated to
  * @supabase/ssr so chunked auth-token cookies are reassembled correctly.
  */
+export async function getAuthenticatedSupabaseClient(req: Request) {
+  const authorization = req.headers.get('authorization') || '';
+  if (authorization && supabaseUrl && supabaseAnonKey) {
+    return createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { headers: { Authorization: authorization } },
+    });
+  }
+
+  const cookieStore = await cookies();
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
+    auth: { flowType: 'pkce', autoRefreshToken: false, persistSession: true, detectSessionInUrl: false },
+    cookies: {
+      getAll() { return cookieStore.getAll(); },
+      setAll(cookiesToSet) {
+        try { cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch { /* read-only cookie context */ }
+      },
+    },
+  });
+}
+
 export async function getAuthenticatedUser(req: Request) {
   const authorization = req.headers.get('authorization') || '';
   if (authorization) return getUserFromAuthorizationHeader(req);
