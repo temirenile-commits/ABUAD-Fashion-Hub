@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ShoppingBag, Truck, CheckCircle, Clock, Loader2, ArrowRight, MessageCircle, Bell, User, Camera } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getStableSession } from '@/lib/auth-session';
 import { formatPrice } from '@/lib/utils';
 import styles from './customer.module.css';
 
@@ -60,9 +61,9 @@ export default function CustomerDashboard() {
 
   useEffect(() => {
     async function fetchOrders() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getStableSession();
       if (!session) {
-        router.push('/auth/login?redirect=/dashboard/customer');
+        router.replace('/auth/login?redirect=/dashboard/customer');
         return;
       }
       setUser(session.user);
