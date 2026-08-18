@@ -59,13 +59,25 @@ export async function verifyTransaction(reference: string) {
 
 // Paystack Payout & Verification APIs
 
-export async function listBanks() {
+export async function listBanks(): Promise<Array<{ name: string; code: string }>> {
   const secret = process.env.PAYSTACK_SECRET_KEY;
+  if (!secret || !secret.startsWith('sk_')) {
+    console.error('[PAYSTACK_BANKS] Secret Key missing or invalid in Vercel environment.');
+    throw new Error('Payment provider is not configured for bank lookup.');
+  }
   const response = await fetch(`${PAYSTACK_BASE_URL}/bank?currency=NGN`, {
+    cache: 'no-store',
     headers: { Authorization: `Bearer ${secret}` },
   });
-  const data = await response.json();
-  return data.data; // Array of { name, code, ... }
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data?.status) {
+    console.error('[PAYSTACK_BANKS_ERROR]', { status: response.status, message: data?.message });
+    throw new Error(data?.message || `Bank provider returned HTTP ${response.status}`);
+  }
+  const banks = Array.isArray(data.data) ? data.data : [];
+  return banks
+    .map((bank: any) => ({ name: String(bank?.name || '').trim(), code: String(bank?.code || '').trim() }))
+    .filter((bank: { name: string; code: string }) => bank.name && bank.code);
 }
 
 export async function resolveAccountNumber(accountNumber: string, bankCode: string) {

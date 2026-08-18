@@ -36,6 +36,8 @@ export default function CustomerReferralsPage() {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawMessage, setWithdrawMessage] = useState('');
   const [banks, setBanks] = useState<BankOption[]>([]);
+  const [bankStatus, setBankStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [bankError, setBankError] = useState('');
   const [bankCode, setBankCode] = useState('');
   const [accountNumberDraft, setAccountNumberDraft] = useState('');
   const [pendingPayoutAccount, setPendingPayoutAccount] = useState<PendingPayoutAccount | null>(null);
@@ -59,11 +61,30 @@ export default function CustomerReferralsPage() {
     setLoading(false);
   }, []);
 
+  const loadBanks = useCallback(async () => {
+    setBankStatus('loading');
+    setBankError('');
+    try {
+      const response = await fetch('/api/referrals?action=banks', { cache: 'no-store' });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.success) throw new Error(payload?.error || 'Unable to load banks. Please try again.');
+      const providerBanks = Array.isArray(payload.banks) ? payload.banks.filter((bank: BankOption) => bank?.name && bank?.code) : [];
+      setBanks(providerBanks);
+      setBankStatus('ready');
+      if (!providerBanks.length) setBankError('No banks available.');
+    } catch (error) {
+      console.error('[REFERRAL_BANK_LIST_CLIENT]', error);
+      setBanks([]);
+      setBankStatus('error');
+      setBankError('Unable to load banks. Please try again.');
+    }
+  }, []);
+
   useEffect(() => {
     const timer = window.setTimeout(() => { void load(); }, 0);
-    void fetch('/api/referrals?action=banks').then(response => response.ok ? response.json() : null).then(payload => { if (payload?.banks) setBanks(payload.banks); }).catch(() => undefined);
-    return () => window.clearTimeout(timer);
-  }, [load]);
+    const bankTimer = window.setTimeout(() => { void loadBanks(); }, 0);
+    return () => { window.clearTimeout(timer); window.clearTimeout(bankTimer); };
+  }, [load, loadBanks]);
 
   const paused = data && !data.config.global_enabled;
   const customerLink = data?.links.find(link => link.referral_type === 'user_to_user');
@@ -119,7 +140,7 @@ export default function CustomerReferralsPage() {
     event.preventDefault();
     setAccountMessage('');
     const selectedBank = banks.find(bank => bank.code === bankCode);
-    if (!selectedBank || !/^\d{10,12}$/.test(accountNumberDraft.replace(/\D/g, ''))) return setAccountMessage('Enter a valid account number and select your bank.');
+    if (bankStatus !== 'ready' || !selectedBank || !/^\d{10,12}$/.test(accountNumberDraft.replace(/\D/g, ''))) return setAccountMessage('Enter a valid account number and select your bank.');
     setVerifyingAccount(true);
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData.session) { setAccountMessage('Please sign in again before verifying your payout account.'); setVerifyingAccount(false); return; }
@@ -173,11 +194,11 @@ export default function CustomerReferralsPage() {
           {!vendorLink ? <button className="btn btn-secondary" disabled={Boolean(paused)} onClick={() => createLink('user_to_vendor')}>Generate vendor link</button> : <LinkRow label="Vendor referrals" link={vendorLink} copied={copied} onCopy={copyLink} onCopyMessage={copyMessage} onShare={share} onPlatformShare={openPlatformShare} />}
         </div>
         <div className={styles.card}><div className={styles.cardTitle}><WalletCards size={18} /><h3>Payout account and cash out</h3></div><p className={styles.muted}>Referral payouts use a verified bank account. Minimum withdrawal: {formatPrice(Number(data?.config.minimum_withdrawal || 0))}.</p>
-          {data?.payoutAccount ? <div className={styles.payoutAccount}><strong>{data.payoutAccount.bank_name}</strong><span>{data.payoutAccount.masked_account_number} · {data.payoutAccount.verified_account_name}</span><small>Verification: {data.payoutAccount.verification_status}</small><button className="btn btn-secondary" type="button" onClick={() => { setPendingPayoutAccount(null); setBankCode(''); setAccountNumberDraft(''); setAccountMessage('Enter a new account to replace the current payout account.'); }}>Change account</button></div> : <form className={styles.form} onSubmit={verifyPayoutAccount}><select className="form-input" value={bankCode} onChange={e => setBankCode(e.target.value)} required><option value="">Select your bank</option>{banks.map(bank => <option key={bank.code} value={bank.code}>{bank.name}</option>)}</select><input className="form-input" inputMode="numeric" placeholder="Account number" value={accountNumberDraft} onChange={e => setAccountNumberDraft(e.target.value)} required /><button className="btn btn-secondary" disabled={verifyingAccount}>{verifyingAccount ? 'Verifying…' : 'Verify bank account'}</button></form>}
+          {data?.payoutAccount ? <div className={styles.payoutAccount}><strong>{data.payoutAccount.bank_name}</strong><span>{data.payoutAccount.masked_account_number} · {data.payoutAccount.verified_account_name}</span><small>Verification: {data.payoutAccount.verification_status}</small><button className="btn btn-secondary" type="button" onClick={() => { setPendingPayoutAccount(null); setBankCode(''); setAccountNumberDraft(''); setAccountMessage('Enter a new account to replace the current payout account.'); }}>Change account</button></div> : (bankStatus === 'error' ? <div className={styles.bankState}><span>{bankError || 'Unable to load banks. Please try again.'}</span><button className="btn btn-secondary" type="button" onClick={() => void loadBanks()}>Retry</button></div> : bankStatus === 'ready' && banks.length === 0 ? <div className={styles.bankState}><span>No banks available.</span><button className="btn btn-secondary" type="button" onClick={() => void loadBanks()}>Retry</button></div> : <form className={styles.form} onSubmit={verifyPayoutAccount}><select className="form-input" value={bankCode} onChange={e => setBankCode(e.target.value)} required disabled={bankStatus !== 'ready'}><option value="">{bankStatus === 'loading' ? 'Loading banks…' : 'Select your bank'}</option>{banks.map(bank => <option key={bank.code} value={bank.code}>{bank.name}</option>)}</select><input className="form-input" inputMode="numeric" placeholder="Account number" value={accountNumberDraft} onChange={e => setAccountNumberDraft(e.target.value)} required disabled={bankStatus !== 'ready'} /><button className="btn btn-secondary" disabled={verifyingAccount || bankStatus !== 'ready' || !bankCode || !/^\d{10,12}$/.test(accountNumberDraft.replace(/\D/g, ''))}>{verifyingAccount ? 'Verifying…' : 'Verify bank account'}</button></form>)}
           {pendingPayoutAccount && <div className={styles.payoutAccount}><span>Bank: {pendingPayoutAccount.bankName}</span><span>Account: {pendingPayoutAccount.maskedAccountNumber}</span><strong>Account name: {pendingPayoutAccount.accountName}</strong><p>Is this your account?</p><button className="btn btn-primary" type="button" onClick={confirmPayoutAccount} disabled={confirmingAccount}>{confirmingAccount ? 'Attaching…' : 'Confirm Account'}</button></div>}
           {accountMessage && <p className={styles.message}>{accountMessage}</p>}
           {!data?.payoutAccount && Number(data?.summary.available_earnings || 0) > 0 && <p className={styles.muted}>Add and verify your bank account to receive referral payouts.</p>}
-          <form className={styles.form} onSubmit={withdraw}><input className="form-input" type="number" min="1" placeholder="Amount" value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)} required /><button className="btn btn-primary" disabled={!data?.payoutAccount || Number(data.summary.available_earnings) <= 0}>Request withdrawal</button></form>{withdrawMessage && <p className={styles.message}>{withdrawMessage}</p>}
+          <form className={`${styles.form} ${styles.withdrawForm}`} onSubmit={withdraw}><input className="form-input" type="number" min="1" placeholder="Amount" value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)} required /><button className="btn btn-primary" disabled={!data?.payoutAccount || Number(data.summary.available_earnings) <= 0}>Request withdrawal</button></form>{withdrawMessage && <p className={styles.message}>{withdrawMessage}</p>}
           {data?.payoutHistory?.length ? <div className={styles.list}>{data.payoutHistory.slice(0, 5).map(row => <div className={styles.row} key={row.id}><div><strong>{formatPrice(Number(row.amount_requested))}</strong><span>{row.status}</span></div><time>{new Date(row.created_at).toLocaleDateString()}</time></div>)}</div> : null}
         </div>
       </section>

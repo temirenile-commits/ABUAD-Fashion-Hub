@@ -140,6 +140,16 @@ export async function GET(req: NextRequest) {
         reversed_earnings: Math.abs((ledger || []).filter(row => row.source_type === 'REFERRAL_REVERSAL').reduce((sum, row) => sum + Number(row.amount || 0), 0)),
       }, payouts: enrichedPayouts, links: linkRows || [], relationships: adminRelationships.map(row => ({ ...row, referrer: adminProfiles.get(row.referrer_user_id) || null, referred: adminProfiles.get(row.referred_user_id) || null })) });
     }
+    if (action === 'banks') {
+      try {
+        const banks = await listBanks();
+        if (!banks.length) return NextResponse.json({ success: true, banks: [], message: 'No banks available.' });
+        return NextResponse.json({ success: true, banks });
+      } catch (error) {
+        console.error('[REFERRAL_BANK_LIST]', error);
+        return NextResponse.json({ success: false, error: 'Unable to load banks. Please try again.' }, { status: 502 });
+      }
+    }
     const user = await requireUser(req);
     return NextResponse.json(await getUserSnapshot(user.id));
   } catch (error: any) {
@@ -204,10 +214,6 @@ export async function POST(req: NextRequest) {
       const response = NextResponse.json({ success: true, relationshipId: data });
       response.cookies.set('mc_referral_code', '', { path: '/', maxAge: 0 });
       return response;
-    }
-    if (action === 'banks') {
-      const banks = await listBanks();
-      return NextResponse.json({ success: true, banks: (banks || []).map((bank: any) => ({ name: bank.name, code: bank.code })) });
     }
     if (action === 'verify_payout_account') {
       const accountNumber = String(body.accountNumber || '').replace(/\D/g, '');
