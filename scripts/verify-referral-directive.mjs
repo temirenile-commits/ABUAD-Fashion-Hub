@@ -6,6 +6,8 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const checks = [];
 const pass = (name, ok, details = '') => checks.push({ name, ok: Boolean(ok), details });
 const sql = read('supabase/migrations/20260817_referral_rewards.sql');
+const financialSql = read('supabase/migrations/20260818_referral_financial_controls.sql');
+const safeguardsSql = read('supabase/migrations/20260818_referral_financial_safeguards.sql');
 const eventsSql = read('supabase/migrations/20260817_referral_event_notifications.sql');
 const api = read('src/app/api/referrals/route.ts');
 const resolver = read('src/app/ref/[code]/route.ts');
@@ -56,7 +58,17 @@ pass('existing referral relationship is reported without overwrite', api.include
 pass('share does not award referral rewards', customerPage.includes('navigator.share') && !customerPage.includes("action: 'claim'") && sql.includes('claim_referral_attribution'));
 pass('admin referral management exists', adminPage.includes('global_enabled') && adminPage.includes('Referral network') && adminPage.includes('payout_process'));
 pass('responsive referral UI exists', read('src/app/dashboard/customer/referrals/referrals.module.css').includes('@media') && read('src/app/admin/referrals/referrals.module.css').includes('@media'));
-pass('no secrets in new files', ![sql, eventsSql, api, resolver, customerPage, adminPage].some(v => /sk-[A-Za-z0-9_-]{20,}|service_role.{0,20}eyJ/i.test(v)));
+pass('no secrets in new files', ![sql, financialSql, safeguardsSql, eventsSql, api, resolver, customerPage, adminPage].some(v => /sk-[A-Za-z0-9_-]{20,}|service_role.{0,20}eyJ/i.test(v)));
+pass('verified payout account schema exists', financialSql.includes('referral_payout_accounts') && financialSql.includes('masked_account_number') && financialSql.includes('verification_status') && financialSql.includes('provider_recipient_code'));
+pass('provider-backed account confirmation exists', api.includes("action === 'verify_payout_account'") && api.includes("action === 'confirm_payout_account'") && api.includes('resolveAccountNumber') && api.includes('createTransferRecipient'));
+pass('verified account required for withdrawals', financialSql.includes('A verified payout account is required') && api.includes('payoutAccountId'));
+pass('finite user and vendor earning windows exist', financialSql.includes('user_to_user_reward_purchase_limit') && financialSql.includes('vendor_referral_qualifying_sale_limit') && financialSql.includes("earning_status = 'EXPIRED'"));
+pass('admin controls expose separate limits', adminPage.includes('user_to_user_reward_purchase_limit') && adminPage.includes('vendor_referral_qualifying_sale_limit'));
+pass('admin funding is traceable', financialSql.includes("MASTER_CART_ADMIN_SHARE") && financialSql.includes('mastercart_share_amount') && financialSql.includes('customer_price') && safeguardsSql.includes('MASTER_CART_ADMIN_FUNDS'));
+pass('customer price remains unchanged by referral reward', financialSql.includes('v_admin_share') && financialSql.includes('customer_price, vendor_earning_amount') && !financialSql.includes('UPDATE public.orders SET total_amount'));
+pass('payout queue includes verified account metadata', api.includes('payout_account') && api.includes('referral_payout_account_id') && adminPage.includes('Verified account'));
+pass('dashboard displays payout account and history', customerPage.includes('payoutAccount') && customerPage.includes('Change account') && customerPage.includes('payoutHistory'));
+pass('historical rates and refund metadata are preserved', financialSql.includes('applied_rate') && sql.includes('refund_ratio') && financialSql.includes('source_transaction_id'));
 
 const failures = checks.filter(c => !c.ok);
 for (const c of checks) console.log(`${c.ok ? 'PASS' : 'FAIL'} ${c.name}${c.details ? ` — ${c.details}` : ''}`);

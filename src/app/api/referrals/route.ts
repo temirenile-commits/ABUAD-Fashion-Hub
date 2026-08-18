@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAuthenticatedUser } from '@/lib/server-auth';
 import { requireSuperAdmin } from '@/lib/rbac';
+import { createTransferRecipient, listBanks, resolveAccountNumber } from '@/lib/paystack';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,10 @@ const defaultConfig = {
   maximum_reward_per_referred_customer: null,
   maximum_vendor_referral_earning: null,
   maximum_lifetime_referral_reward: null,
+  user_to_user_reward_purchase_limit: 5,
+  user_to_user_maximum_reward: null,
+  vendor_referral_qualifying_sale_limit: 10,
+  user_to_vendor_maximum_reward: null,
 };
 
 async function getConfig() {
@@ -40,15 +45,17 @@ async function getProfileMap(ids: string[]) {
 }
 
 async function getUserSnapshot(userId: string) {
-  const [{ data: summary }, { data: ownerProfile }] = await Promise.all([
+  const [{ data: summary }, { data: ownerProfile }, { data: payoutAccount }, { data: payoutHistory }] = await Promise.all([
     supabaseAdmin.rpc('referral_balance_summary', { p_user_id: userId }),
     supabaseAdmin.from('users').select('name').eq('id', userId).maybeSingle(),
+    supabaseAdmin.from('referral_payout_accounts').select('id, bank_code, bank_name, masked_account_number, verified_account_name, verification_status, verified_at, attached_at, is_active').eq('user_id', userId).eq('is_active', true).eq('verification_status', 'verified').maybeSingle(),
+    supabaseAdmin.from('payout_requests').select('id, amount_requested, status, source_type, transfer_reference, created_at, confirmed_at').eq('user_id', userId).eq('source_type', 'referral').order('created_at', { ascending: false }).limit(50),
   ]);
   await supabaseAdmin.rpc('refresh_referral_earnings', { p_user_id: userId });
   const [{ data: links }, { data: relationships }, { data: ledger }, { data: events }] = await Promise.all([
     supabaseAdmin.from('referral_links').select('id, referral_type, code, is_active, click_count, registration_count, activated_count, qualified_count, created_at, last_activity_at').eq('owner_user_id', userId).order('created_at', { ascending: false }).limit(10),
-    supabaseAdmin.from('referral_relationships').select('id, referrer_user_id, referred_user_id, referred_brand_id, referral_type, parent_referral_id, root_referral_id, depth, status, created_at, activated_at, qualified_at').or(`referrer_user_id.eq.${userId},referred_user_id.eq.${userId}`).order('created_at', { ascending: false }).limit(200),
-    supabaseAdmin.from('referral_ledger').select('id, referral_id, referral_type, source_type, source_transaction_id, amount, currency, status, description, created_at, confirmed_at, available_at, withdrawn_at, reversed_at, metadata').eq('beneficiary_user_id', userId).order('created_at', { ascending: false }).limit(200),
+    supabaseAdmin.from('referral_relationships').select('id, referrer_user_id, referred_user_id, referred_brand_id, referral_type, parent_referral_id, root_referral_id, depth, status, earning_status, qualifying_transaction_count, qualifying_transaction_limit, created_at, activated_at, qualified_at').or(`referrer_user_id.eq.${userId},referred_user_id.eq.${userId}`).order('created_at', { ascending: false }).limit(200),
+    supabaseAdmin.from('referral_ledger').select('id, referral_id, referral_type, source_type, source_transaction_id, amount, currency, status, description, created_at, confirmed_at, available_at, withdrawn_at, reversed_at, gross_transaction_amount, applied_rate, funding_source, qualifying_transaction_number, qualifying_transaction_limit, remaining_qualifying_transactions, mastercart_share_amount, customer_price, vendor_earning_amount, metadata').eq('beneficiary_user_id', userId).order('created_at', { ascending: false }).limit(200),
     supabaseAdmin.from('referral_events').select('id, referral_id, event_type, source_order_id, metadata, created_at').or(`actor_user_id.eq.${userId}`).order('created_at', { ascending: false }).limit(100),
   ]);
   const ids = (relationships || []).flatMap(row => [row.referrer_user_id, row.referred_user_id]);
@@ -61,6 +68,8 @@ async function getUserSnapshot(userId: string) {
     events: events || [],
     summary: summary?.[0] || { total_earned: 0, pending_earnings: 0, available_earnings: 0, withdrawn_earnings: 0, reversed_earnings: 0 },
     referrerName: ownerProfile?.name || null,
+    payoutAccount: payoutAccount || null,
+    payoutHistory: payoutHistory || [],
   };
 }
 
@@ -105,10 +114,18 @@ export async function GET(req: NextRequest) {
         supabaseAdmin.from('referral_relationships').select('id', { count: 'exact', head: true }).eq('status', 'activated'),
         supabaseAdmin.from('referral_relationships').select('id', { count: 'exact', head: true }).eq('status', 'qualified'),
         supabaseAdmin.from('referral_ledger').select('amount, status, source_type, referral_type, created_at').limit(5000),
-        supabaseAdmin.from('payout_requests').select('id, user_id, amount_requested, status, source_type, transfer_reference, created_at, confirmed_at').eq('source_type', 'referral').order('created_at', { ascending: false }).limit(200),
+        supabaseAdmin.from('payout_requests').select('id, user_id, amount_requested, status, source_type, transfer_reference, created_at, confirmed_at, referral_payout_account_id, source_metadata').eq('source_type', 'referral').order('created_at', { ascending: false }).limit(200),
         supabaseAdmin.from('referral_links').select('id, owner_user_id, referral_type, code, is_active, click_count, registration_count, activated_count, qualified_count, created_at, last_activity_at').order('created_at', { ascending: false }).limit(500),
-        supabaseAdmin.from('referral_relationships').select('id, referrer_user_id, referred_user_id, referred_brand_id, referral_type, parent_referral_id, root_referral_id, depth, status, created_at, activated_at, qualified_at').order('created_at', { ascending: false }).limit(500),
+        supabaseAdmin.from('referral_relationships').select('id, referrer_user_id, referred_user_id, referred_brand_id, referral_type, parent_referral_id, root_referral_id, depth, status, earning_status, qualifying_transaction_count, qualifying_transaction_limit, created_at, activated_at, qualified_at').order('created_at', { ascending: false }).limit(500),
       ]);
+      const payoutUserIds = [...new Set((payouts || []).map(row => row.user_id))];
+      const [{ data: payoutProfiles }, { data: payoutAccounts }] = await Promise.all([
+        payoutUserIds.length ? supabaseAdmin.from('users').select('id, name, email').in('id', payoutUserIds).limit(500) : Promise.resolve({ data: [] }),
+        payoutUserIds.length ? supabaseAdmin.from('referral_payout_accounts').select('id, user_id, bank_name, masked_account_number, verified_account_name, verification_status, is_active').in('user_id', payoutUserIds).eq('is_active', true).limit(500) : Promise.resolve({ data: [] }),
+      ]);
+      const payoutProfileMap = new Map((payoutProfiles || []).map(profile => [profile.id, profile]));
+      const payoutAccountMap = new Map((payoutAccounts || []).map(account => [account.user_id, account]));
+      const enrichedPayouts = (payouts || []).map(row => ({ ...row, user: payoutProfileMap.get(row.user_id) || null, payout_account: payoutAccountMap.get(row.user_id) || null }));
       const positive = (ledger || []).filter(row => Number(row.amount) > 0);
       const by = (predicate: (row: any) => boolean) => positive.filter(predicate).reduce((sum, row) => sum + Number(row.amount || 0), 0);
       const adminRelationships = relationshipRows || [];
@@ -121,7 +138,7 @@ export async function GET(req: NextRequest) {
         confirmed_earnings: by(row => ['confirmed', 'available'].includes(row.status)),
         withdrawn_earnings: Math.abs((ledger || []).filter(row => row.source_type === 'REFERRAL_WITHDRAWAL' && row.status === 'withdrawn').reduce((sum, row) => sum + Number(row.amount || 0), 0)),
         reversed_earnings: Math.abs((ledger || []).filter(row => row.source_type === 'REFERRAL_REVERSAL').reduce((sum, row) => sum + Number(row.amount || 0), 0)),
-      }, payouts: payouts || [], links: linkRows || [], relationships: adminRelationships.map(row => ({ ...row, referrer: adminProfiles.get(row.referrer_user_id) || null, referred: adminProfiles.get(row.referred_user_id) || null })) });
+      }, payouts: enrichedPayouts, links: linkRows || [], relationships: adminRelationships.map(row => ({ ...row, referrer: adminProfiles.get(row.referrer_user_id) || null, referred: adminProfiles.get(row.referred_user_id) || null })) });
     }
     const user = await requireUser(req);
     return NextResponse.json(await getUserSnapshot(user.id));
@@ -188,10 +205,40 @@ export async function POST(req: NextRequest) {
       response.cookies.set('mc_referral_code', '', { path: '/', maxAge: 0 });
       return response;
     }
+    if (action === 'banks') {
+      const banks = await listBanks();
+      return NextResponse.json({ success: true, banks: (banks || []).map((bank: any) => ({ name: bank.name, code: bank.code })) });
+    }
+    if (action === 'verify_payout_account') {
+      const accountNumber = String(body.accountNumber || '').replace(/\D/g, '');
+      const bankCode = String(body.bankCode || '').trim();
+      const bankName = String(body.bankName || '').trim();
+      if (!/^\d{10,12}$/.test(accountNumber) || !bankCode || !bankName) return NextResponse.json({ error: 'Enter a valid account number and select a bank.' }, { status: 400 });
+      const resolved = await resolveAccountNumber(accountNumber, bankCode);
+      if (!resolved?.account_name) return NextResponse.json({ error: 'The bank could not verify this account.' }, { status: 400 });
+      return NextResponse.json({ success: true, account: { bankCode, bankName, accountNumber, maskedAccountNumber: `******${accountNumber.slice(-4)}`, accountName: String(resolved.account_name).trim(), verificationReference: resolved.account_number || null } });
+    }
+    if (action === 'confirm_payout_account') {
+      const account = body.account || {};
+      const accountNumber = String(account.accountNumber || '').replace(/\D/g, '');
+      const bankCode = String(account.bankCode || '').trim();
+      const bankName = String(account.bankName || '').trim();
+      const accountName = String(account.accountName || '').trim();
+      const verificationReference = account.verificationReference ? String(account.verificationReference) : null;
+      if (!/^\d{10,12}$/.test(accountNumber) || !bankCode || !bankName || !accountName) return NextResponse.json({ error: 'The verified account details are incomplete.' }, { status: 400 });
+      const rechecked = await resolveAccountNumber(accountNumber, bankCode);
+      if (!rechecked?.account_name || String(rechecked.account_name).trim().toLowerCase() !== accountName.toLowerCase()) return NextResponse.json({ error: 'The account verification changed. Please verify it again.' }, { status: 400 });
+      const recipient = await createTransferRecipient(String(rechecked.account_name).trim(), accountNumber, bankCode);
+      const { data, error } = await supabaseAdmin.rpc('attach_referral_payout_account', { p_user_id: user.id, p_bank_code: bankCode, p_bank_name: bankName, p_account_number: accountNumber, p_verified_account_name: String(rechecked.account_name).trim(), p_verification_reference: verificationReference, p_provider_recipient_code: recipient?.recipient_code || null });
+      if (error) return NextResponse.json({ error: error.message.replace(/^.*?:\\s*/, '') }, { status: 400 });
+      await supabaseAdmin.from('referral_admin_audit').insert({ admin_id: user.id, action: 'attached_referral_payout_account', new_value: { payout_account_id: data?.id, bank_code: bankCode, bank_name: bankName, masked_account_number: `******${accountNumber.slice(-4)}` }, metadata: { source: 'user_confirmation' } });
+      return NextResponse.json({ success: true, payoutAccount: data });
+    }
     if (action === 'withdraw') {
       const amount = Number(body.amount);
-      if (!Number.isFinite(amount) || amount <= 0 || !body.bankDetails) return NextResponse.json({ error: 'Enter a valid withdrawal amount and bank details.' }, { status: 400 });
-      const { data, error } = await supabaseAdmin.rpc('request_referral_payout', { p_user_id: user.id, p_amount: amount, p_bank_details: body.bankDetails });
+      const payoutAccountId = String(body.payoutAccountId || '');
+      if (!Number.isFinite(amount) || amount <= 0 || !payoutAccountId) return NextResponse.json({ error: 'Enter a valid withdrawal amount and select a verified payout account.' }, { status: 400 });
+      const { data, error } = await supabaseAdmin.rpc('request_referral_payout', { p_user_id: user.id, p_amount: amount, p_bank_details: { payout_account_id: payoutAccountId } });
       if (error) return NextResponse.json({ error: error.message.replace(/^.*?:\s*/, '') }, { status: 400 });
       return NextResponse.json({ success: true, requestId: data });
     }
