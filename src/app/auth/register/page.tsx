@@ -49,6 +49,9 @@ export default function RegisterPage() {
         provider: 'google',
         options: {
           redirectTo: getAuthCallbackUrl(new URLSearchParams(window.location.search).get('redirect')),
+          queryParams: {
+            prompt: 'select_account',
+          },
         },
       });
       if (error) throw error;
